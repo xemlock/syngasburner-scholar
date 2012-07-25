@@ -37,6 +37,7 @@ function scholar_menu()
         'access arguments' => array('use scholar'),
         'type' => MENU_LOCAL_TASK,
         'page callback' => 'scholar_people_add',
+        'parent' => 'scholar/people',
     );
     $items['scholar/people/edit/%id'] = array(
         'title' => t('Edit person'),
@@ -61,6 +62,10 @@ function scholar_people_form()
 }
 function scholar_people_list()
 {
+    $query = db_query('SELECT * FROM {scholar_people} ORDER BY last_name, first_name');
+    while ($row = db_fetch_array($query)) {
+
+    }
     return __FUNCTION__;
 }
 
