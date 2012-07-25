@@ -1,3 +1,5 @@
+.htaccess
+.svn
 CHANGELOG.txt
 COPYRIGHT.txt
 cron.php
@@ -14,10 +16,8 @@ issues.txt
 LICENSE.txt
 MAINTAINERS.txt
 misc
-modules
 !patches
 profiles
-README
 robots.txt
 schema.sql
 scripts
