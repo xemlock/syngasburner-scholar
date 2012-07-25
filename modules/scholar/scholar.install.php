@@ -1,7 +1,44 @@
 <?php
 
+/**
+ * Schema modułu scholar.
+ *
+ * @author xemlock
+ * @version 2012-07-25
+ */
 function scholar_schema()
 {
+    $schema['scholar_nodes'] = array( // {{{
+        'description' => 'numery węzłów zarządzanych przez obiekty scholara',
+        'fields' => array(
+            'table_name' => array(
+                // people OR objects
+                'type'      => 'varchar',
+                'length'    => 32,
+                'not null'  => true,
+            ),
+            'object_id' => array(
+                // scholar_people.id OR scholar_objects.id
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'node_id' => array(
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'language' => array(
+                // REFERENCES languages (language)
+                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
+                'length'    => 12,
+                'not null'  => true,
+            ),
+        ),
+        'primary key' => array('table_name', 'object_id', 'language'),
+        'unique keys' => array(
+            'node'  => array('node_id'),
+        ),
+    ); // }}}
+
     $schema['scholar_people'] = array( // {{{
         'description' => 'osoby - autorzy prac, prowadzący wykłady etc.',
         'fields' => array(
