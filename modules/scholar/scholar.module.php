@@ -5,14 +5,33 @@ function scholar_form_alter(&$form, &$form_state, $form_id)
     // Nie dopuszczaj do bezposredniej modyfikacji wezlow
     // aktualizowanych automatycznie przez modul scholar.
     // Podobnie z wykorzystawymi eventami.
-    $node = $form['#node'];
-//    echo '<pre>', __FUNCTION__, ': ', $form_id, '</pre>';
+    echo '<code>', $form_id, '</code>';
+    if ('page_node_form' == $form_id  && $form['#node']) {
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
+        $row = db_fetch_array($query);
+        if ($row) {
+            switch ($row['table_name']) {
+                case 'people':
+                    $url = 'scholar/people/edit/' . $row['object_id'];
+                    break;
+
+                default:
+                    $url = null;
+                    break;
+            }
+            echo '<h1 style="color:red">Direct modification of scholar-referenced nodes is not allowed!</h1>';
+            if ($url) {
+                echo '<p>You can edit scholar object <a href="' . url($url) . '">here</a>.</p>';
+            }
+            // exit;
+        }
+    }
 }
 
 function scholar_nodeapi($node, $op)
 {
     if ($op == 'load') {
-//        echo '<pre>', $op, ': ', print_r($node, 1), '</pre>';
+        echo '<pre>', $op, ': ', print_r($node, 1), '</pre>';
     }
 }
 

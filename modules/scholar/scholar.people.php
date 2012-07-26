@@ -170,11 +170,15 @@ function scholar_people_form_submit($form, &$form_state)
         $node->language = $code;
         $node->title    = $values['first_name'] . ' ' . $values['last_name'];
 
-        node_save($node);
+        // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
+        $menu = $values[$code]['menu'];
+        list($menu['menu_name'], $menu['mlid']) = explode(':', $values[$code]['menu']['parent']);
+        // Potencjalnie wiele linkow moze prowadzic do tego wezla,
+        // chodzi o to, zeby byl jeden kanoniczny zarzadzany przez scholara
 
-        // dodaj wpisy menu - FIXME jak obejsc duplikaty?
-        $menu_link = $values[$code];
-        menu_link_save($menu_link);
+        $node->menu = $menu;
+
+        node_save($node);
 
         // dodaj węzeł do indeksu powiązanych węzłów
         scholar_bind_node($node, $row['id'], 'people', $code);
