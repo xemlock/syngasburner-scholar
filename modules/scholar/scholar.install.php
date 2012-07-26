@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-25
+ * @version 2012-07-26
  */
 function scholar_schema()
 {
@@ -56,10 +56,15 @@ function scholar_schema()
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'photo' => array(
-                'description' => 'zdjęcie osoby',
+            'image_id' => array(
+                'description' => 'zdjęcie osoby, REFERENCES image (id)',
                 'type'      => 'varchar',
                 'length'    => 255,
+            ),
+            'status' => array(
+                'type'      => 'int',
+                'size'      => 'tiny',
+                'not null'  => true,
             ),
         ),
         'primary key'  => array('id'),
@@ -151,6 +156,11 @@ function scholar_schema()
                 'description' => 'zewnętrzny URL strony czasopisma lub konferencji',
                 'type'      => 'varchar',
                 'length'    => 255,
+            ),
+            'has_node' => array(
+                'type'      => 'int',
+                'size'      => 'tiny',
+                'not null'  => true,
             ),
             'gallery_id' => array(
                 'description' => 'id galerii - każdy rekord może mieć powiązaną galerię, unikalną dla siebie',

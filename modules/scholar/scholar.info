@@ -2,6 +2,7 @@ name = Scholar
 description = Scientific activity aggregator
 dependencies[] = events
 dependencies[] = gallery
+dependencies[] = taxonomy
 package = ventures
 version = 2012-07-dev
 core = 6.x
