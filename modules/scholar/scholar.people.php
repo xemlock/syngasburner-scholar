@@ -1,6 +1,18 @@
 <?php
 
-function scholar_people_fetch_row($id)
+/*
+ * Narzędzia do manipulowania rekordami osób
+ *
+ * @author xemlock
+ * @version 2012-07-27
+ */
+
+/**
+ * Pobiera z bazy danych rekord osoby o podanym identyfikatorze.
+ *
+ * @param int $id
+ */
+function scholar_people_fetch_row($id) // {{{
 {
     $query = db_query('SELECT * FROM {scholar_people} WHERE id = ' . intval($id));
     $row   = db_fetch_array($query);
@@ -10,9 +22,21 @@ function scholar_people_fetch_row($id)
     }
 
     return $row;
-}
+} // }}}
 
-function scholar_people_form(&$form_state, $id = null)
+/**
+ * Usuwa z bazy danych rekord osoby o podanym identyfikatorze.
+ *
+ * @param int $id
+ */
+function scholar_people_delete($id) // {{{
+{
+    scholar_delete_nodes($id, 'people');
+    db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $id);
+    db_query("DELETE FROM {scholar_people} WHERE id = %d", $id);
+} // }}}
+
+function scholar_people_form(&$form_state, $id = null) // {{{
 {
     // drupal_set_title(t('New person'));
     $row = $id ? scholar_people_fetch_row($id) : null;
@@ -117,6 +141,7 @@ function scholar_people_form(&$form_state, $id = null)
             }
         }
 
+        // nadaj domyslne wartosci ustawieniom wezlow
         foreach ($languages as $code => $name) {
             if ($node = scholar_fetch_node($row['id'], 'people', $code)) {
                 if ($node->menu) {
@@ -135,7 +160,7 @@ function scholar_people_form(&$form_state, $id = null)
     }
 
     return $form;
-}
+} // }}}
 
 /**
  * Zapisanie do bazy nowej osoby, lub modyfikacja istniejącej na
@@ -144,7 +169,7 @@ function scholar_people_form(&$form_state, $id = null)
  * @param array $form
  * @param array &$form_state
  */
-function scholar_people_form_submit($form, &$form_state)
+function scholar_people_form_submit($form, &$form_state) // {{{
 {
     $row    = isset($form['#row']) ? $form['#row'] : null;
     $is_new = empty($row);
@@ -214,18 +239,12 @@ function scholar_people_form_submit($form, &$form_state)
         : t('Person updated successfully')
     );
     drupal_goto('scholar/people');
-}
+} // }}}
 
-function scholar_people_form_validate($form, &$form_state)
+function scholar_people_form_validate($form, &$form_state) // {{{
 {
-    // validate date range
- // if (strlen($form_state['values']['start_date']) && strlen($form_state['values']['end_date']) &&
- //     ($form_state['values']['start_date'] > $form_state['values']['end_date'])) {
- //   form_set_error('end_date', t('Invalid date range specified.'));
- // }
-
     return true;
-}
+} // }}}
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
@@ -234,10 +253,12 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
         return '';
     }
 
-    $form = array();
+    $form = array(
+        '#row'      => $row,
+    );
     $form['id'] = array(
-        '#type' => 'hidden',
-        '#value' => $row['id'],
+        '#type'     => 'hidden',
+        '#value'    => $row['id'],
     );
 
     $form = confirm_form($form,
@@ -247,7 +268,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
                 '%last_name'  => $row['last_name'],
             )
         ),
-        EVENTS_ADMIN_MENU_EDIT . '/' . $row['id'],
+        'scholar/people',
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -257,4 +278,50 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
     return $form;
 } // }}}
 
+function scholar_people_delete_submit($form, &$form_state) // {{{
+{
+    if ($form['#row']) {
+        $row = $form['#row'];
 
+        scholar_people_delete($row['id']);
+        drupal_set_message(t(
+            'Person deleted successfully (%first_name %last_name)',
+            array(
+                '%first_name' => $row['first_name'],
+                '%last_name'  => $row['last_name'],
+            )
+        ));
+    }
+    drupal_goto('scholar/people');
+} // }}}
+
+function scholar_people_list() // {{{
+{
+    $query = db_query('SELECT * FROM {scholar_people} ORDER BY last_name, first_name');
+    $rows = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            check_plain($row['last_name']),
+            check_plain($row['first_name']),
+            l(t('edit'),   "scholar/people/edit/{$row['id']}"), 
+            l(t('delete'), "scholar/people/delete/{$row['id']}")
+        );
+    }
+
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records found'), 'colspan' => 4)
+        );
+    }
+
+    $header = array(
+        array('data' => t('Last name'), 'field' => 'last_name', 'sort' => 'asc'),
+        array('data' => t('First name'), 'field' => 'first_name'),
+        array('data' => t('Operations'), 'colspan' => '2')
+    );
+
+    $html = '';
+    $html .= theme('table', $header, $rows);
+    return $html;
+} // }}}
