@@ -52,6 +52,11 @@ function scholar_menu()
         'parent'            => 'scholar',
         'file'              => 'scholar.people.php',
     );
+    $items['scholar/people/list'] = array(
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => t('List'),
+        'weight'            => -10, // na poczatku listy
+    );
     $items['scholar/people/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => t('Add person'),
