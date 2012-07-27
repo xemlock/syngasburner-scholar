@@ -59,12 +59,14 @@ function scholar_people_form(&$form_state, $id = null)
         ),
     );
 
-    // ustawienia strony w menu zalezne od jezyka
+    // link do wezlow zalezne od jezyka, ustawienia aliasu
+    $languages = Langs::languages();
     $default_lang = Langs::default_lang();
-    foreach (Langs::languages() as $code => $name) {
+
+    foreach ($languages as $code => $name) {
         $form[$code] = array(
             '#type' => 'fieldset',
-            '#title' => t('Menu settings') . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="' . $name . '" style="display:inline;" />)',
+            '#title' => t('Menu settings') . ' <img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />',
             '#collapsible' => true,
             '#collapsed' => $code != $default_lang,
             '#tree' => true,
@@ -73,6 +75,9 @@ function scholar_people_form(&$form_state, $id = null)
             ),
         );
         $form[$code]['menu'] = array();
+        $form[$code]['menu']['mlid'] = array(
+            '#type'     => 'hidden',
+        );
         $form[$code]['menu']['link_title'] = array(
             '#type'     => 'textfield',
             '#title'    => t('Menu link title'),
@@ -91,6 +96,12 @@ function scholar_people_form(&$form_state, $id = null)
             '#default_value' => 0,
             '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
         );
+
+        $form[$code]['path'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('URL path alias'),
+            '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
+        );
     }
 
     $form['submit'] = array(
@@ -106,7 +117,20 @@ function scholar_people_form(&$form_state, $id = null)
             }
         }
 
-        // TODO ustaw menu linki dla wezla
+        foreach ($languages as $code => $name) {
+            if ($node = scholar_fetch_node($row['id'], 'people', $code)) {
+                if ($node->menu) {
+                    foreach ($node->menu as $column => $value) {
+                        if (isset($form[$code]['menu'][$column])) {
+                            $form[$code]['menu'][$column]['#default_value'] = $value;
+                        }
+                    }
+                    $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+                }
+
+                $form[$code]['path']['#default_value'] = $node->path;
+            }
+        }
         
     }
 
@@ -128,7 +152,6 @@ function scholar_people_form_submit($form, &$form_state)
     $nodes  = array();
     $langs  = Langs::languages();
 
-    // utworz rekord osoby
     if ($row) {
         db_query(
             "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s', status = %d WHERE id = %d",
@@ -165,6 +188,8 @@ function scholar_people_form_submit($form, &$form_state)
             $nodes[$code] = scholar_create_node();
         }
 
+        $node = $nodes[$code];
+
         $node->status   = intval($values['status']);
         $node->type     = 'page';
         $node->language = $code;
@@ -172,11 +197,11 @@ function scholar_people_form_submit($form, &$form_state)
 
         // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
         $menu = $values[$code]['menu'];
-        list($menu['menu_name'], $menu['mlid']) = explode(':', $values[$code]['menu']['parent']);
-        // Potencjalnie wiele linkow moze prowadzic do tego wezla,
-        // chodzi o to, zeby byl jeden kanoniczny zarzadzany przez scholara
+        list($menu['menu_name'], $menu['plid']) = explode(':', $values[$code]['menu']['parent']);
 
+        // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
         $node->menu = $menu;
+        $node->path = rtrim($values[$code]['path'], '/');
 
         node_save($node);
 
