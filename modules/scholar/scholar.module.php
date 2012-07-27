@@ -70,27 +70,21 @@ function scholar_menu()
         'parent'            => 'scholar/people',
         'file'              => 'scholar.people.php',
     );
-
+    $items['scholar/people/delete/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Delete person'),
+        'access arguments'  => array('use scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_people_delete_form', 3),
+        'parent'            => 'scholar/people',
+        'file'              => 'scholar.people.php',
+    );
     return $items;
 }
 
 function scholar_index()
 {
     return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
-}
-function scholar_people_list()
-{
-    $query = db_query('SELECT * FROM {scholar_people} ORDER BY last_name, first_name');
-    $html = '';
-    while ($row = db_fetch_array($query)) {
-        $html .= '<div><a href="' . url('scholar/people/edit/' . $row['id']) . '">' . $row['first_name'] . ' ' . $row['last_name'] . '</a></div>';
-    }
-    return $html;
-}
-
-function scholar_people_add()
-{
-    return __FUNCTION__;
 }
 
 function scholar_render($html)

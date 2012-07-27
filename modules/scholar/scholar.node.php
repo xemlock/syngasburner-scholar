@@ -8,6 +8,40 @@
  */
 
 /**
+ * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
+ *
+ * @param int $object_id
+ * @param string $table_name
+ * @param string $language OPTIONAL     jeżeli nie podany zostaną pobrane
+ *                                      wiązania dla wszystkich języków
+ * @return false|array                  false jeżeli podano język, pusta
+ *                                      tablica jeżeli go nie podano
+ */
+function _scholar_fetch_node_binding($object_id, $table_name, $language = null) // {{{
+{
+    $sql = sprintf(
+        "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND object_id = %d",
+        db_escape_string($table_name), $object_id
+    );
+
+    if (null === $language) {
+        $query  = db_query($sql);
+        $result = array();
+
+        while ($row = db_fetch_array($query)) {
+            $result[] = $row;
+        }
+
+    } else {
+        $sql .= sprintf(" AND language = '%s'", db_escape_string($language));
+        $query  = db_query($sql);
+        $result = db_fetch_array($query);
+    }
+
+    return $result;
+} // }}}
+
+/**
  * Tworzy powiązanie między rekordem z podanej tabeli a istniejącym węzłem.
  *
  * @param object &$node
@@ -20,7 +54,6 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
     if (empty($node->nid)) {
         return false;
     }
-//echo __FUNCTION__;echo '<pre>';var_dump($node);echo '<pre>'; exit;
 
     // przygotuj identyfikator powiazanego linka w menu
     $mlid = isset($node->menu['mlid']) ? intval($node->menu['mlid']) : null;
@@ -29,7 +62,11 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
     }
 
     // usuń obecne dowiązanie dla tego wezla i utwórz nowe
-    db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
+    db_query(
+        "DELETE FROM {scholar_nodes} WHERE node_id = %d OR (table_name = '%s' AND object_id = %d AND language = '%s')", 
+        $node->nid, $table_name, $object_id, $language
+    );
+    
     db_query(
         "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, menu_link_id, path_id) VALUES ('%s', %d, %d, '%s', %s, NULL)",
         $table_name, $object_id, $node->nid, $language, $mlid
@@ -41,7 +78,7 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
     $path = null;
 
     if (module_exists('path') && isset($node->path)) {
-        // wyeliminuj problemu z duplikatami
+        // wyeliminuj duplikaty urla aby nie sprawialy problemu
         db_query("DELETE FROM {url_alias} WHERE dst = '%s'", $node->path);
         path_set_alias('node/'. $node->nid, $node->path, NULL, '');
 
@@ -67,14 +104,15 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
  */
 function scholar_fetch_node($object_id, $table_name, $language) // {{{
 {
+    static $_nodes = array();
+
+    if (isset($_nodes[$table_name][$object_id])) {
+        return $_nodes[$table_name][$object_id];
+    }
+
     $result = false;
 
-    $query = db_query(
-        "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND object_id = %d AND language = '%s'",
-        $table_name, $object_id, $language
-    );
-
-    if ($binding = db_fetch_array($query)) {
+    if ($binding = _scholar_fetch_node_binding($object_id, $table_name, $language)) {
         // Reczne pobranie zamiast node_load() zeby nie uniknac wywolania
         // hooka nodeapi, poniewaz dostep do tego wezla ma byc jedynie 
         // dla modulu scholar.
@@ -99,8 +137,9 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
                 $query = db_query("SELECT * FROM {url_alias} WHERE pid = %d", $binding['path_id']);
 
                 if ($row = db_fetch_array($query)) {
-                    // pid jest potrzebne przy usuwaniu/edycji aliasow tak,
-                    // by nie zostawiac osieroconych rekordow
+                    // pid jest potrzebne przy usuwaniu/edycji aliasow tak, by 
+                    // nie zostawiac osieroconych rekordow, patrz dokumentacja
+                    // path_nodeapi()
                     $node->pid  = $row['pid'];
                     $node->path = $row['dst'];
                 }
@@ -109,6 +148,8 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
             $result = $node;
         }
     }
+
+    $_nodes[$table_name][$obejct_id] = $result;
 
     return $result;
 } // }}}
@@ -133,7 +174,11 @@ function scholar_create_node($values = array()) // {{{
     $node->sticky   = 0; // Display top of page ? 1 : 0
     $node->format   = 2; // 1:Filtered HTML, 2: Full HTML
     $node->status   = 1; // Published ? 1 : 0
-    $node->language = 'en';
+    $node->language = '';
+
+    $node->menu     = null;
+    $node->path     = null;
+    $node->pid      = null;
 
     $taxonomy = array();
     if (isset($values['taxonomy'])) {
@@ -145,5 +190,29 @@ function scholar_create_node($values = array()) // {{{
     $node->taxonomy = $taxonomy;
 
     return $node;
+} // }}}
+
+/**
+ * Usuwa węzły powiązane z tym obiektem.
+ *
+ * @param int $object_id
+ * @param string $table_name
+ */
+function scholar_delete_nodes($object_id, $table_name) // {{{
+{
+    $bindings = _scholar_fetch_node_binding($object_id, $table_name);
+    foreach ($bindings as $binding) {
+        // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
+        // usuniete zostana linki menu i aliasy sciezek.
+        node_delete($binding['node_id']);
+
+        // Dla absolutnej pewnosci usun powiazane linki menu i aliasy.
+        // Jezeli dane sa rozspojnione, to oczywiscie zostanie usuniete 
+        // wiecej niz trzeba. Spoko :)
+        db_query("DELETE FROM {menu_links} WHERE mlid = %d", $binding['menu_link_id']);
+        db_query("DELETE FROM {url_alias} WHERE pid =%d", $binding['path_id']);
+
+        db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
+    }
 } // }}}
 
