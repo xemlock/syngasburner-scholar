@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-26
+ * @version 2012-07-27
  */
 function scholar_schema()
 {
@@ -23,8 +23,18 @@ function scholar_schema()
                 'not null'  => true,
             ),
             'node_id' => array(
+                // REFERENCES node (nid)
+                'description' => 'REFERENCES node (nid)',
                 'type'      => 'int',
                 'not null'  => true,
+            ),
+            'menu_link_id' => array(
+                // REFERENCES menu_links (mlid)
+                'type'      => 'int',
+            ),
+            'path_id' => array(
+                // REFERENCES url_alias (pid)
+                'type'      => 'int',
             ),
             'language' => array(
                 // REFERENCES languages (language)
@@ -57,7 +67,7 @@ function scholar_schema()
                 'not null'  => true,
             ),
             'image_id' => array(
-                'description' => 'zdjęcie osoby, REFERENCES image (id)',
+                // REFERENCES image (id)
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
@@ -132,7 +142,8 @@ function scholar_schema()
                 'not null'  => true,
             ), 
             'category' => array(
-                'description' => 'kategoria w obrębie podtypu, REFERENCES scholar_categories (id)', // np. podtypem conference jest konferencja, warsztaty lub seminarium
+                // REFERENCES scholar_categories (id)
+                // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -179,12 +190,12 @@ function scholar_schema()
         'description' => 'autorzy artykułów',
         'fields' => array(
             'person_id' => array(
-                'description' => 'REFERENCES scholar_people (id)',
+                // REFERENCES scholar_people (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
             'object_id' => array(
-                'description' => 'REFERENCES scholar_objects (id)',
+                // REFERENCES scholar_objects (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -202,17 +213,17 @@ function scholar_schema()
         'description' => 'pliki podpięte do wpisów',
         'fields' => array(
             'file_id' => array(
-                'description' => 'REFERENCES files (fid)',
+                // REFERENCES files (fid)
                 'type'      => 'int',
                 'not null'  => true,
             ),
             'object_id' => array(
-                'description' => 'REFERENCES scholar_objects (id)',
+                // REFERENCES scholar_objects (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
             'category_id' => array(
-                'description' => 'REFERENCES scholar_categories (id)',
+                // REFERENCES scholar_categories (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
