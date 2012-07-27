@@ -200,7 +200,9 @@ function scholar_create_node($values = array()) // {{{
  */
 function scholar_delete_nodes($object_id, $table_name) // {{{
 {
-    $bindings = _scholar_fetch_node_binding($object_id, $table_name);
+    $bindings  = _scholar_fetch_node_binding($object_id, $table_name);
+    $url_alias = db_table_exists('url_alias');
+
     foreach ($bindings as $binding) {
         // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
         // usuniete zostana linki menu i aliasy sciezek.
@@ -210,7 +212,10 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
         // Jezeli dane sa rozspojnione, to oczywiscie zostanie usuniete 
         // wiecej niz trzeba. Spoko :)
         db_query("DELETE FROM {menu_links} WHERE mlid = %d", $binding['menu_link_id']);
-        db_query("DELETE FROM {url_alias} WHERE pid =%d", $binding['path_id']);
+
+        if ($url_alias) {
+            db_query("DELETE FROM {url_alias} WHERE pid =%d", $binding['path_id']);
+        }
 
         db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
     }

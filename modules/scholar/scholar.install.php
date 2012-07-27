@@ -42,6 +42,10 @@ function scholar_schema()
                 'length'    => 12,
                 'not null'  => true,
             ),
+            'last_rendered' => array(
+                // kiedy ostatnio renderowano zawartosc wezla
+                'type'      => 'datetime'
+            ),
         ),
         'primary key' => array('table_name', 'object_id', 'language'),
         'unique keys' => array(
@@ -71,7 +75,7 @@ function scholar_schema()
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
-            'status' => array(
+            'status' => array( // czy wezly opublikowane
                 'type'      => 'int',
                 'size'      => 'tiny',
                 'not null'  => true,
