@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * @version 2012-07-29
+ */
+
+/**
  * @file
  * The Zend module for Drupal ensures that the Zend Framework is installed.
  */
@@ -12,6 +16,8 @@ function zend_init() {
   // Due to the dependance on the libraries module being included, we wait until
   // hook_init() to register the Zend Loader.
   if ($path = zend_get_path()) {
+    // add Zend Framework to include path
+    set_include_path(get_include_path() . PATH_SEPARATOR . dirname($path));
     require_once $path .'/Loader/Autoloader.php';
     Zend_Loader_Autoloader::getInstance();
   }
@@ -50,4 +56,77 @@ function zend_get_path() {
   }
 
   return $path;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function zend_menu()
+{
+  $items = array();
+  $items['admin/settings/zend'] = array(
+    'title' => 'Zend Framework',
+    'description' => t('Configure Zend Framework binding for Drupal 6'),
+    'access arguments' => array('administer zend'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('zend_admin_form'), 
+    'parent' => 'admin/settings',
+  );
+  return $items;
+}
+
+function zend_admin_form() {
+  $form = array();
+  
+  $form['zend_path'] = array(
+    '#title' => t('Path to Zend Framework root directory'),
+    '#type' => 'textfield',
+    '#required' => true,
+    '#default_value' => variable_get('zend_path', false),
+    '#description' => t('Absolute path, or a path relative to Drupal index.php file'),
+  );
+  $form['op'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+  $form['#validate'][] = 'zend_admin_form_validate';
+  $form['#submit'][] = 'zend_admin_form_submit';
+  return $form;
+}
+
+function zend_admin_form_validate($form_id, &$form_state) {
+  $path = strval($form_state['values']['zend_path']);
+
+  // normalize directory separator, trim trailing slashes
+  $path = rtrim(str_replace('\\', '/', $path), '/');
+
+  if (empty($path) || !is_dir($path)) {
+    form_set_error('zend_path', t('Invalid path specified'));
+    return false;
+  }
+
+  $found = false;
+
+  if (is_file($path . '/Version.php')) {
+    if (!class_exists('Zend_Version', false)) {
+        require_once $path . '/Version.php';
+    }
+    $found = class_exists('Zend_Version', false);
+  }
+
+  if (!$found) {
+    form_set_error('zend_path', t('Zend Framework not found in given path'));
+    return false;
+  }
+
+  $form_state['values']['zend_path'] = $path;
+
+  return true;
+}
+
+function zend_admin_form_submit($form, &$form_state)
+{
+    variable_set('zend_path', $form_state['values']['zend_path']);
+    drupal_set_message(t('Path to Zend Framework set successfully'));
+    drupal_goto('admin/settings/zend');
 }

@@ -1,12 +1,7 @@
 name = Zend Framework
-description = Ensures that the Zend Framework is installed.
+description = Ensures that the Zend Framework 1.x is installed.
 package = Zend Framework
 core = 6.x
 php = 5.2
-
-; Information added by drupal.org packaging script on 2011-02-25
-version = "6.x-2.x-dev"
-core = "6.x"
+version = "6.x-2.x-dev2"
 project = "zend"
-datestamp = "1298620788"
-

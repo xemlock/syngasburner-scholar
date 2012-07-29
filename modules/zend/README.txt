@@ -1,9 +1,9 @@
 
-Zend 2.x for Drupal 6.x
+Zend 1.x for Drupal 6.x
 --------------------------
 The Zend module provides the complete Zend Framework for Drupal modules to use.
-This module is a developer module providing no end user facing functionality
-or configuration. Once this module is installed other modules can use any
+This module is a modified developer version of zend module (http://drupal.org/project/zend) 
+providing minor fixes and configuration. Once this module is installed other modules can use any
 portion of the Zend Framework starting from hook_init().
 
 For more information on the Zend Framework please see http://framework.zend.com
@@ -31,7 +31,7 @@ system.
    directory.
    
 3. There is a variable named zend_path. This variable can be set to the root
-   of the Zend Library. This vaiable has no UI to set it.
+   of the Zend Library. This variable can be configured via UI (Administer > Site configuration > Zend Framework).
    
 Once the Zend Framework is installed it will be reported on the Status Report
 page and available to all modules to take advantage of.
@@ -41,3 +41,4 @@ Maintainers
 - Matt Farina (mfer) - http://drupal.org/user/25701
 - Rob Loach - http://drupal.org/user/61114
 - mustafa ulu (mustafau) - http://drupal.org/user/207559
+- Xemlock - (version 6.x-2.x-dev2)
