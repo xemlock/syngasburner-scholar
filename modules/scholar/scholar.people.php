@@ -93,9 +93,11 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     );
 
     foreach ($languages as $code => $name) {
-        $form[$code] = array(
-            '#type' => 'scholar_container_field',
-            '#title' => t('Build page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
+        $form[$code] = array();
+       
+        $form[$code]['status'] = array(
+            '#type' => 'scholar_checkboxed_container',
+            '#title' => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
         );
 
         $form[$code]['fieldset'] = array(
@@ -235,6 +237,10 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     // przygotuj wezly, do ktorych zapisywane beda renderingi
     // strony danej osoby
     foreach ($langs as $code => $name) {
+        // TODO
+        // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
+        // jezeli jest wezel to ustaw w nim status na zero
+        // wpp utworz jezeli trzeba wezel i ustaw jego status na 1
         if (empty($nodes[$code])) {
             $nodes[$code] = scholar_create_node();
         }
