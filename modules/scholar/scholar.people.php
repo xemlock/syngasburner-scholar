@@ -87,10 +87,20 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     $languages = Langs::languages();
     $default_lang = Langs::default_lang();
 
+    $form[] = array(
+        '#type' => 'markup',
+        '#value' => '<div style="clear:both;"><hr/></div>',
+    );
+
     foreach ($languages as $code => $name) {
         $form[$code] = array(
+            '#type' => 'scholar_container_field',
+            '#title' => t('Build page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
+        );
+
+        $form[$code]['fieldset'] = array(
             '#type' => 'fieldset',
-            '#title' => t('Menu settings') . ' <img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />',
+            '#title' => t('Menu settings'),
             '#collapsible' => true,
             '#collapsed' => $code != $default_lang,
             '#tree' => true,
@@ -98,22 +108,36 @@ function scholar_people_form(&$form_state, $id = null) // {{{
                 'class' => 'scholar-people-form-menu-settings',
             ),
         );
-        $form[$code]['menu'] = array();
-        $form[$code]['menu']['mlid'] = array(
+
+        $elements = array();
+        $elements['node'] = array();
+        $elements['node']['title'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('Title'),
+            '#description' => t('Page title, if not given it will default to this person\'s full name.'),
+        );
+        $elements['node']['body'] = array(
+            '#type'     => 'textarea',
+            '#title'    => t('Body'),
+            '#description' => t('Use BBCode markup, supperted tags are listed <a href="#!">here</a>'),
+        );
+
+        $elements['menu'] = array();
+        $elements['menu']['mlid'] = array(
             '#type'     => 'hidden',
         );
-        $form[$code]['menu']['link_title'] = array(
+        $elements['menu']['link_title'] = array(
             '#type'     => 'textfield',
             '#title'    => t('Menu link title'),
             '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
         );
-        $form[$code]['menu']['parent'] = array(
+        $elements['menu']['parent'] = array(
             '#type'     => 'select',
             '#title'    => t('Parent item'),
             '#options'  => menu_parent_options(menu_get_menus(), null),
             '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
         );
-        $form[$code]['menu']['weight'] = array(
+        $elements['menu']['weight'] = array(
             '#type'     => 'weight',
             '#title'    => t('Weight'),
             '#delta'    => 50,
@@ -121,11 +145,13 @@ function scholar_people_form(&$form_state, $id = null) // {{{
             '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
         );
 
-        $form[$code]['path'] = array(
+        $elements['path'] = array(
             '#type'     => 'textfield',
             '#title'    => t('URL path alias'),
             '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
         );
+
+        $form[$code]['fieldset'] += $elements;
     }
 
     $form['submit'] = array(

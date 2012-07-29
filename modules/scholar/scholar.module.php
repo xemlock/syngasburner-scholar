@@ -112,4 +112,67 @@ function scholar_render_form()
     return scholar_render($html);
 }
 
+/**
+ * Custom form elements.
+ *
+ * @return array
+ */
+function scholar_elements()
+{
+    var_dump(__FUNCTION__);
+    $elements['scholar_container_field'] = array(
+        '#input' => true,
+        '#process' => array('example_field_process'),
+        '#element_validate' => array('example_field_validate'),
+        '#example_attribute' => 'Something extra',
+    );
+
+    return $elements;
+}
+
+function theme_scholar_container_field($element = null)
+{
+    $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
+    $output .= '<label><input type="checkbox" name="' . $element['#name'] .'" id="'.$element['#id'].'"/>' . $element['#title'] . '</label>';
+    $output .= '<div class="contents">';
+    foreach ($element as $key => $value) {
+        if (!strncmp('#', $key, 1)) {
+            continue;
+        }
+        echo '<span style="color:red">', $key, '</span> ';
+        $output .= $element['#children'];
+    }
+
+
+    $output .= '</div>';
+    $output .= '</div>';
+    $output .= '<script type="text/javascript">/*<![CDATA[*/$(function(){
+        if (!$("#'.$element['#id'].'").is(":checked")) {
+            $("#'.$element['#id'].'-wrapper .contents").hide();
+        }
+})/*]]>*/</script>';
+
+    return $output;
+}
+
+function form_type_scholar_container_field_value($element, $edit = false)
+{
+    var_dump(__FUNCTION__);
+  if (func_num_args() == 1) {
+     return $element['#default_value'];
+  }
+  return $edit;
+}
+
+/*function scholar_theme()
+{
+    var_dump(__FUNCTION__);
+    $theme['scholar_container_field'] = array(
+        'arguments' => array('element' => null),
+    );
+
+    return $theme;
+}*/
+
+
 require_once dirname(__FILE__) . '/scholar.node.php';
