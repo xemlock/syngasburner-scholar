@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-27
+ * @version 2012-07-29
  */
 function scholar_schema()
 {
@@ -74,11 +74,6 @@ function scholar_schema()
                 // REFERENCES image (id)
                 'type'      => 'varchar',
                 'length'    => 255,
-            ),
-            'status' => array( // czy wezly opublikowane
-                'type'      => 'int',
-                'size'      => 'tiny',
-                'not null'  => true,
             ),
         ),
         'primary key'  => array('id'),

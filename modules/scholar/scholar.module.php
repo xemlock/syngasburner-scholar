@@ -9,7 +9,7 @@ function scholar_form_alter(&$form, &$form_state, $form_id)
     // Nie dopuszczaj do bezposredniej modyfikacji wezlow
     // aktualizowanych automatycznie przez modul scholar.
     // Podobnie z wykorzystawymi eventami.
-    echo '<code>', $form_id, '</code>';
+    // echo '<code>', $form_id, '</code>';
     if ('page_node_form' == $form_id  && $form['#node']) {
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
         $row = db_fetch_array($query);
@@ -114,38 +114,27 @@ function scholar_render_form()
 
 /**
  * Custom form elements.
- *
- * @return array
  */
 function scholar_elements()
 {
-    var_dump(__FUNCTION__);
-    $elements['scholar_container_field'] = array(
+    $elements['scholar_checkboxed_container'] = array(
         '#input' => true,
         '#process' => array('example_field_process'),
         '#element_validate' => array('example_field_validate'),
-        '#example_attribute' => 'Something extra',
     );
 
     return $elements;
 }
 
-function theme_scholar_container_field($element = null)
+function theme_scholar_checkboxed_container($element)
 {
     $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
-    $output .= '<label><input type="checkbox" name="' . $element['#name'] .'" id="'.$element['#id'].'"/>' . $element['#title'] . '</label>';
+    $output .= '<label><input type="checkbox" name="' . $element['#name'] .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($element['#value'] ? ' checked="checked"' : ''). '/>' . $element['#title'] . '</label>';
     $output .= '<div class="contents">';
-    foreach ($element as $key => $value) {
-        if (!strncmp('#', $key, 1)) {
-            continue;
-        }
-        echo '<span style="color:red">', $key, '</span> ';
-        $output .= $element['#children'];
-    }
-
-
+    $output .= $element['#children'];
     $output .= '</div>';
     $output .= '</div>';
+
     $output .= '<script type="text/javascript">/*<![CDATA[*/$(function(){
         if (!$("#'.$element['#id'].'").is(":checked")) {
             $("#'.$element['#id'].'-wrapper .contents").hide();
@@ -155,24 +144,27 @@ function theme_scholar_container_field($element = null)
     return $output;
 }
 
-function form_type_scholar_container_field_value($element, $edit = false)
+function form_type_scholar_checkboxed_container_value($element, $edit = false)
 {
-    var_dump(__FUNCTION__);
-  if (func_num_args() == 1) {
-     return $element['#default_value'];
-  }
-  return $edit;
+    if (func_num_args() == 1) {
+        $value = $element['#default_value'];
+    } else {
+        $value = $edit;
+    }
+    return $value ? 1 : 0;
 }
 
-/*function scholar_theme()
+/**
+ * Required to theme custom form elements.
+ */
+function scholar_theme()
 {
-    var_dump(__FUNCTION__);
-    $theme['scholar_container_field'] = array(
+    $theme['scholar_checkboxed_container'] = array(
         'arguments' => array('element' => null),
     );
 
     return $theme;
-}*/
+}
 
 
 require_once dirname(__FILE__) . '/scholar.node.php';
