@@ -83,7 +83,7 @@ function zend_admin_form() {
     '#type' => 'textfield',
     '#required' => true,
     '#default_value' => variable_get('zend_path', false),
-    '#description' => t('Absolute path, or a path relative to Drupal index.php file'),
+    '#description' => t('Either an absolute path or a path relative to the index.php file of Drupal installation.'),
   );
   $form['op'] = array(
     '#type' => 'submit',
