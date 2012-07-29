@@ -2,9 +2,10 @@
 Zend 1.x for Drupal 6.x
 --------------------------
 The Zend module provides the complete Zend Framework for Drupal modules to use.
-This module is a modified developer version of zend module (http://drupal.org/project/zend) 
-providing minor fixes and configuration. Once this module is installed other modules can use any
-portion of the Zend Framework starting from hook_init().
+This module is a modified developer version of zend module 
+(http://drupal.org/project/zend) providing minor fixes and configuration. Once 
+this module is installed other modules can use any portion of the 
+Zend Framework starting from hook_init().
 
 For more information on the Zend Framework please see http://framework.zend.com
 
@@ -20,8 +21,8 @@ First, Install the module.
 Once the module is installed you can go to the Status Report page at (Administer
 > Reports > Status Report) and see the status and version of the Zend Framework.
 
-If the Zend Framework is not installed there are three ways to install it on your
-system.
+If the Zend Framework is not installed there are three ways to install it on 
+your system.
 
 1. Add it to the PHP include path manually or using a tool such as Pear. The
    Pear channel providing the Zend Framework is zend.googlecode.com/svn.
@@ -31,7 +32,8 @@ system.
    directory.
    
 3. There is a variable named zend_path. This variable can be set to the root
-   of the Zend Library. This variable can be configured via UI (Administer > Site configuration > Zend Framework).
+   of the Zend Library. This variable can be configured via UI (Administer 
+   > Site configuration > Zend Framework).
    
 Once the Zend Framework is installed it will be reported on the Status Report
 page and available to all modules to take advantage of.
