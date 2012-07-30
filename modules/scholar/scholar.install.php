@@ -6,7 +6,7 @@
  * @author xemlock
  * @version 2012-07-30
  */
-function scholar_schema()
+function scholar_schema() // {{{
 {
     $schema['scholar_nodes'] = array( // {{{
         'description' => 'numery węzłów zarządzanych przez obiekty scholara',
@@ -50,7 +50,14 @@ function scholar_schema()
             'last_rendered' => array(
                 // kiedy ostatnio renderowano zawartosc wezla, porownywane
                 // z variable(name='scholar_last_change')
+                // pusta wartosc oznacza koniecznosci wygenerowania tresci
                 'type'      => 'datetime'
+            ),
+            'body' => array(
+                // tresc wezla, ktora po przetworzeniu (renderowaniu)
+                // zostanie zapisana do wezla
+                'type'      => 'text',
+                'size'      => 'big',
             ),
         ),
         'primary key' => array('table_name', 'object_id', 'language'),
@@ -236,11 +243,15 @@ function scholar_schema()
     ); // }}}
 
   return $schema;
-}
+} // }}}
 
-function scholar_install() {
+function scholar_install() // {{{
+{
     drupal_install_schema('scholar');
-}
+} // }}}
 
-function scholar_uninstall() {
-}
+function scholar_uninstall() // {{{
+{
+    variable_del('scholar_last_change');
+} // }}}
+

@@ -4,7 +4,7 @@
  * Narzędzia do manipulacji węzłami
  * 
  * @author xemlock
- * @version 2012-07-27
+ * @version 2012-07-30
  */
 
 /**
@@ -47,9 +47,9 @@ function _scholar_fetch_node_binding($object_id, $table_name, $language = null) 
  * @param object &$node
  * @param int $object_id
  * @param string $table_name
- * @param string $language
+ * @param string $body OPTIONAL
  */
-function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
+function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
 {
     if (empty($node->nid)) {
         return false;
@@ -64,12 +64,12 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
     // usuń obecne dowiązanie dla tego wezla i utwórz nowe
     db_query(
         "DELETE FROM {scholar_nodes} WHERE node_id = %d OR (table_name = '%s' AND object_id = %d AND language = '%s')", 
-        $node->nid, $table_name, $object_id, $language
+        $node->nid, $table_name, $object_id, $node->language
     );
     
     db_query(
-        "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, menu_link_id, path_id, status) VALUES ('%s', %d, %d, '%s', %s, NULL, %d)",
-        $table_name, $object_id, $node->nid, $language, $mlid, $node->status
+        "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, status, menu_link_id, path_id, last_rendered, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s')",
+        $table_name, $object_id, $node->nid, $node->language, $node->status, $mlid, $body
     );
 
     // obejscie problemu z aliasami i wielojezykowoscia, poprzez wymuszenie
@@ -95,7 +95,7 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
 
 /**
  * Pobiera z bazy rekord węzła przypisany do rekordu z danej tabeli,
- * bez treści, z wypełnionymi polami menu i path.
+ * z nieprzetworzoną treścią, z wypełnionymi polami menu i path.
  *
  * @param int $object_id
  * @param string $table_name
@@ -120,9 +120,10 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
 
         if ($row = db_fetch_array($query)) {
             $node = (object) $row;
-            $node->menu = null; // menu link
-            $node->path = null; // url alias path dst
-            $node->pid  = null; // url alias path id
+            $node->menu = null; // menu_link
+            $node->path = null; // url_alias path dst
+            $node->pid  = null; // url_alias path id
+            $node->body = $binding['body']; // nieprzetworzona tresc wezla
 
             // Dociagamy menu link i url alias zgodne z danymi w binding
             if ($binding['menu_link_id']) {
@@ -164,17 +165,17 @@ function scholar_create_node($values = array()) // {{{
 {
     $node = new stdClass;
 
-    $node->name     = 'Title';
-    $node->title    = $node->name;
+    $node->title    = '';
     $node->body     = '';
-    $node->type     = 'page';
+    $node->type     = 'scholar';
     $node->created  = time();
-    $node->changed  = $node->created;
+    $node->changed  = null;
     $node->promote  = 0; // Display on front page ? 1 : 0
     $node->sticky   = 0; // Display top of page ? 1 : 0
     $node->format   = 2; // 1:Filtered HTML, 2: Full HTML
     $node->status   = 1; // Published ? 1 : 0
     $node->language = '';
+    $node->revision = null;
 
     $node->menu     = null;
     $node->path     = null;
@@ -190,6 +191,33 @@ function scholar_create_node($values = array()) // {{{
     $node->taxonomy = $taxonomy;
 
     return $node;
+} // }}}
+
+/**
+ * Zapisuje węzeł i podpina go do obiektu z podanej tabeli.
+ *
+ * @param object &$node
+ * @param int $object_id
+ * @param string $table_name
+ */
+function scholar_save_node(&$node, $object_id, $table_name) // {{{
+{
+    $body = $node->body;
+
+    $node->type = 'scholar';
+    $node->body = ''; // puste body, bo tresc do przetworzenia zostanie
+                      // zapisana w bindingu
+
+    $node->revision = null; // nigdy nie tworz nowych rewizji, poniewaz
+                            // tresc jest generowana automatycznie
+
+    node_save($node);
+
+    // dodaj węzeł do indeksu powiązanych węzłów
+    _scholar_bind_node($node, $object_id, $table_name, $body);
+
+    // przywroc body do wartosci sprzed zapisu
+    $node->body = $body;
 } // }}}
 
 /**
@@ -222,13 +250,46 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
 } // }}}
 
 /**
- * Generuje pola formularza do tworzenia/edycji powiązanych węzłów.
+ * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
+ * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
+ * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
+ * w hooku form_alter.
+ */
+function scholar_node_form(&$form_state, $node)
+{
+    // Jezeli wezel jest podpiety do obiektow modulu scholar
+    // przekieruj do strony z edycja danego obiektu.
+    if ($node->type == 'scholar') {
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
+        $row   = db_fetch_array($query);
+
+        if ($row) {
+            $referer = scholar_referer();
+            if ($referer) {
+                $destination = 'destination=' . urlencode($referer);
+            } else {
+                $destination = null;
+            }
+
+            switch ($row['table_name']) {
+                case 'people':
+                    scholar_goto('scholar/people/edit/' . $row['object_id'], $destination);
+            }
+        } else {
+            drupal_set_message(t('Database integrity violation detected. As this is a serious problem, please contact the site administrator.'), 'error');
+            watchdog('scholar', 'Database integrity violation detected. No binding found for node %nid', array('%nid' => $node->nid), WATCHDOG_ERROR);
+        }
+    }
+}
+
+/**
+ * Generuje pola formularza do tworzenia / edycji powiązanych węzłów.
  *
  * @param array $row
  * @param string $table_name
  * @return array
  */
-function scholar_nodes_subform($row = null, $table_name = null)
+function scholar_nodes_subform($row = null, $table_name = null) // {{{
 {
     $languages = Langs::languages();
     $default_lang = Langs::default_lang();
@@ -295,14 +356,17 @@ function scholar_nodes_subform($row = null, $table_name = null)
         $form[$code] = $container;
     }
 
-    // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele do ktorej nalezy
+    // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele,
+    // do ktorej nalezy
     if ($row && $table_name) {
         foreach ($languages as $code => $name) {
             if ($node = scholar_fetch_node($row['id'], $table_name, $code)) {
-                // ustaw status jako wartosc checkboksa w kontenerze dla tego jezyka
+                // ustaw wartosc checkboksa sterujacego kontenerem rowna
+                // wartosci statusu wezla
                 $form[$code]['#default_value'] = $node->status;
-                $form[$code]['title']['#default_value'] = $node->title; // tytul jest przechowywany w wezle
-                $form[$code]['body']['#default_value']  = 'NOT IMPLEMENTED YET!'; // tresc nie, bo tu jest zapisywany rendering
+
+                $form[$code]['title']['#default_value'] = $node->title;
+                $form[$code]['body']['#default_value']  = $node->body;
 
                 if ($node->menu) {
                     foreach ($node->menu as $column => $value) {
@@ -319,4 +383,4 @@ function scholar_nodes_subform($row = null, $table_name = null)
     }
 
     return $form;
-}
+} // }}}
