@@ -27,7 +27,6 @@ function p($var, $label = null)
 function scholar_nodeapi($node, $op)
 {
     if ($op == 'load') {
-        echo '<pre>', $op, ': ', print_r($node, 1), '</pre>';
     }
 }
 
@@ -163,6 +162,49 @@ function scholar_render_form()
     $html = call_user_func_array('drupal_get_form', $args);
     return scholar_render($html);
 }
+
+/**
+ * @return null|string
+ */
+function scholar_referer() // {{{
+{
+    // sciezka od korzenia dokumentow do pliku index.php zakonczona slashem
+    $base_url = preg_replace('/index\.php$/', '', $_SERVER['PHP_SELF']);
+    $referer  = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null;
+
+    if (preg_match('/^https?:\/\//', $referer)) {
+        // usun protokol, nazwe hosta z referera, oraz sciezke do index.php
+        $referer  = preg_replace('/^https?:\/\//', '', $referer);
+        $referer  = substr($referer, strpos($referer, '/') + strlen($base_url));
+
+        // teraz referer przechowuje wzgledna sciezke wewnatrz instalacji Drupala
+        if (strlen($referer)) {
+            return $referer;
+        }
+    }
+
+    return null;
+} // }}}
+
+/**
+ * Przekierowanie bez żadnej wyrafinowanej obsługi zmiennej destination.
+ *
+ * @param string $path
+ * @param string $query
+ */
+function scholar_goto($path, $query = null) // {{{
+{
+    // drupal_goto jest fundamentalnie uposledzone ze wzgledu
+    // na dzika obsluge destination
+    $url = url($path, array('query' => $query, 'absolute' => true));
+    $url = str_replace(array("\r", "\n"), '', $url);
+
+    session_write_close();
+
+    header('Status: 302 Found');
+    header('Location: '. $url, true, 302);
+    exit;
+} // }}}
 
 /**
  * Deklaracja dodatkowych pól formularza.

@@ -158,9 +158,9 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         $node = $nodes[$code];
 
         $node->status   = $status;
-        $node->type     = 'page';
         $node->language = $code;
         $node->title    = $title;
+        $node->body     = trim($values[$code]['body']);
 
         // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
         $menu = $values[$code]['menu'];
@@ -170,11 +170,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         $node->menu = $menu;
         $node->path = rtrim($values[$code]['path'], '/');
 
-        node_save($node);
-
-        // dodaj węzeł do indeksu powiązanych węzłów
-        // TODO treść węzła!!!
-        scholar_bind_node($node, $row['id'], 'people', $code);
+        scholar_save_node($node, $row['id'], 'people');
     }
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 
