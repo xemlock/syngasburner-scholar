@@ -34,6 +34,7 @@ function scholar_people_delete($id) // {{{
     scholar_delete_nodes($id, 'people');
     db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $id);
     db_query("DELETE FROM {scholar_people} WHERE id = %d", $id);
+    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
 
 function scholar_people_form(&$form_state, $id = null) // {{{
@@ -72,7 +73,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     gallery_image_selector($form, 'image_id', isset($row['image_id']) ? $row['image_id'] : null);
     $form['image_id']['#title'] = t('Photo');
 
-    $form['status'] = array(
+    /*$form['status'] = array(
         '#type'     => 'checkbox',
         '#title'    => t('Opublikuj stronę osoby'),
         '#description' => 'If checked an auto-generated page dedicated to this person will be publicly available.',
@@ -81,7 +82,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
             // ukryj fieldsety z ustawieniami menu 
             //'onchange' => "var sel='.scholar-people-form-menu-settings',chk=this.checked;\$(sel).each(function(){\$(this)[chk?'show':'hide']()})",
         ),
-    );
+    );*/
 
     // link do wezlow zalezne od jezyka, ustawienia aliasu
     $languages = Langs::languages();
@@ -92,69 +93,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         '#value' => '<div style="clear:both;"><hr/></div>',
     );
 
-    foreach ($languages as $code => $name) {
-        $form[$code] = array();
-       
-        $form[$code]['status'] = array(
-            '#type' => 'scholar_checkboxed_container',
-            '#title' => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
-        );
-
-        $form[$code]['fieldset'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Menu settings'),
-            '#collapsible' => true,
-            '#collapsed' => $code != $default_lang,
-            '#tree' => true,
-            '#attributes' => array(
-                'class' => 'scholar-people-form-menu-settings',
-            ),
-        );
-
-        $elements = array();
-        $elements['node'] = array();
-        $elements['node']['title'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('Title'),
-            '#description' => t('Page title, if not given it will default to this person\'s full name.'),
-        );
-        $elements['node']['body'] = array(
-            '#type'     => 'textarea',
-            '#title'    => t('Body'),
-            '#description' => t('Use BBCode markup, supperted tags are listed <a href="#!">here</a>'),
-        );
-
-        $elements['menu'] = array();
-        $elements['menu']['mlid'] = array(
-            '#type'     => 'hidden',
-        );
-        $elements['menu']['link_title'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('Menu link title'),
-            '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
-        );
-        $elements['menu']['parent'] = array(
-            '#type'     => 'select',
-            '#title'    => t('Parent item'),
-            '#options'  => menu_parent_options(menu_get_menus(), null),
-            '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
-        );
-        $elements['menu']['weight'] = array(
-            '#type'     => 'weight',
-            '#title'    => t('Weight'),
-            '#delta'    => 50,
-            '#default_value' => 0,
-            '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
-        );
-
-        $elements['path'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('URL path alias'),
-            '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
-        );
-
-        $form[$code]['fieldset'] += $elements;
-    }
+    $form['node'] = scholar_nodes_subform($row);
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -167,24 +106,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
             if (isset($form[$column])) {
                 $form[$column]['#default_value'] = $value;
             }
-        }
-
-        // nadaj domyslne wartosci ustawieniom wezlow
-        foreach ($languages as $code => $name) {
-            if ($node = scholar_fetch_node($row['id'], 'people', $code)) {
-                if ($node->menu) {
-                    foreach ($node->menu as $column => $value) {
-                        if (isset($form[$code]['menu'][$column])) {
-                            $form[$code]['menu'][$column]['#default_value'] = $value;
-                        }
-                    }
-                    $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
-                }
-
-                $form[$code]['path']['#default_value'] = $node->path;
-            }
-        }
-        
+        }        
     }
 
     return $form;
@@ -199,6 +121,8 @@ function scholar_people_form(&$form_state, $id = null) // {{{
  */
 function scholar_people_form_submit($form, &$form_state) // {{{
 {
+    p($form_state['values'], __FUNCTION__); exit;
+
     $row    = isset($form['#row']) ? $form['#row'] : null;
     $is_new = empty($row);
     $values = $form_state['values'];
@@ -265,6 +189,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         // dodaj węzeł do indeksu powiązanych węzłów
         scholar_bind_node($node, $row['id'], 'people', $code);
     }
+    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 
     drupal_set_message($is_new
         ? t('Person created successfully')
