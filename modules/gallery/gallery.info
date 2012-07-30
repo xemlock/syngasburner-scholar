@@ -1,0 +1,7 @@
+name = Gallery
+description = Image gallery
+dependencies[] = langs
+dependencies[] = tabs
+package = ventures
+version = 2010-06-30
+core = 6.x
