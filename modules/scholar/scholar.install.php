@@ -78,8 +78,7 @@ function scholar_schema()
             ),
             'image_id' => array(
                 // REFERENCES image (id)
-                'type'      => 'varchar',
-                'length'    => 255,
+                'type'      => 'int',
             ),
         ),
         'primary key'  => array('id'),

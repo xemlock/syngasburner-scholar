@@ -4,32 +4,24 @@ function scholar_perm() {
   return array('administer scholar', 'manage scholar contents');
 }
 
-function scholar_form_alter(&$form, &$form_state, $form_id)
+function p($var, $label = null)
 {
-    // Nie dopuszczaj do bezposredniej modyfikacji wezlow
-    // aktualizowanych automatycznie przez modul scholar.
-    // Podobnie z wykorzystawymi eventami.
-    // echo '<code>', $form_id, '</code>';
-    if ('page_node_form' == $form_id  && $form['#node']) {
-        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
-        $row = db_fetch_array($query);
-        if ($row) {
-            switch ($row['table_name']) {
-                case 'people':
-                    $url = 'scholar/people/edit/' . $row['object_id'];
-                    break;
+    static $last = 0;
+    $colors = array('brown', 'red', 'orange', 'green', 'blue', 'navy', 'violet', 'magenta', 'purple');
 
-                default:
-                    $url = null;
-                    break;
-            }
-            echo '<h1 style="color:red">Direct modification of scholar-referenced nodes is not allowed!</h1>';
-            if ($url) {
-                echo '<p>You can edit scholar object <a href="' . url($url) . '">here</a>.</p>';
-            }
-            // exit;
-        }
+    if ($label) {
+        $label .= ': ';
     }
+
+    echo '<pre style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px">', $label;
+    if (is_array($var) || is_object($var)) {
+        print_r($var);
+    } else {
+        var_dump($var);
+    }
+    echo '</pre>';
+
+    $last = ($last + 1) % count($colors);
 }
 
 function scholar_nodeapi($node, $op)
@@ -105,21 +97,73 @@ function scholar_render($html)
     return $html;
 }
 
+/**
+ * Do formularzy o identyfikatorze rozpoczynającym się od scholar_
+ * ustawia odpowiednie callbacki oraz atrybut class.
+ *
+ * @param array &$form
+ * @param array &$form_state
+ * @param string $form_id
+ */
+function scholar_form_alter(&$form, &$form_state, $form_id)
+{
+    if (0 === strncmp($form_id, 'scholar_', 8)) {
+        $form['#submit'] = isset($form['#submit']) ? (array) $form['#submit'] : array();
+        $submit_callback = $form_id . '_submit';
+        if (function_exists($submit_callback)) {
+            $form['#submit'][] = $submit_callback;
+        }
+
+        $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
+        $validate_callback = $form_id . '_validate';
+        if (function_exists($validate_callback)) {
+            $form['#submit'][] = $validate_callback;
+        }
+
+        $form['#attributes'] = isset($form['#attributes']) ? (array) $form['#attributes'] : array();
+        $css_class = str_replace('_', '-', $form_id);
+        if (!isset($form['#attributes']['class'])) {
+            $form['#attributes']['class'] = $css_class;
+        } else {
+            $form['#attributes']['class'] .= ' ' . $css_class;
+        }
+
+        return;
+    }
+
+    // Nie dopuszczaj do bezposredniej modyfikacji wezlow
+    // aktualizowanych automatycznie przez modul scholar.
+    // Podobnie z wykorzystawymi eventami.
+    // echo '<code>', $form_id, '</code>';
+    if ('page_node_form' == $form_id  && $form['#node']) {
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
+        $row = db_fetch_array($query);
+        if ($row) {
+            switch ($row['table_name']) {
+                case 'people':
+                    $url = 'scholar/people/edit/' . $row['object_id'];
+                    break;
+
+                default:
+                    $url = null;
+                    break;
+            }
+            echo '<h1 style="color:red">Direct modification of scholar-referenced nodes is not allowed!</h1>';
+            if ($url) {
+                echo '<p>You can edit scholar object <a href="' . url($url) . '">here</a>.</p>';
+            }
+            // exit;
+        }
+    }
+}
+
 function scholar_render_form()
 {
     $args = func_get_args();
     $html = call_user_func_array('drupal_get_form', $args);
     return scholar_render($html);
 }
-function p($array, $func = null)
-{
-    static $last = 0;
-    $colors = array('red', 'green', 'blue', 'navy', 'magenta', 'orange', 'brown', 'violet');
 
-    echo '<pre style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px">', $func, $func ? ': ' : '', print_r($array, 1), '</pre>';
-
-    $last = ($last + 1) % count($colors);
-}
 /**
  * Deklaracja dodatkowych pól formularza.
  *
@@ -143,15 +187,20 @@ function scholar_elements() // {{{
  */
 function theme_scholar_checkboxed_container($element) // {{{
 {
+    $checkbox_name = $element['#checkbox_name'];
+    $checked = isset($element['#value'][$checkbox_name]) && $element['#value'][$checkbox_name];
+
     $parents = $element['#parents'];
     if ($parents) {
-        $name = array_shift($parents) . ($parents ? '[' . implode('][', $parents) . ']' : '') . '[' . $element['#checkbox_name'] . ']';
+        $name = array_shift($parents) 
+              . ($parents ? '[' . implode('][', $parents) . ']' : '')
+              . '[' .$checkbox_name . ']';
     } else {
-        $name = $element['#checkbox_name'];
+        $name = $checkbox_name;
     }
 
     $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
-    $output .= '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($element['#value'] ? ' checked="checked"' : ''). '/><input type="hidden" name="pi" value="3.14159" />' . $element['#title'] . '</label>';
+    $output .= '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($checked ? ' checked="checked"' : ''). '/><input type="hidden" name="pi" value="3.14159" />' . $element['#title'] . '</label>';
     $output .= '<div class="contents">';
     $output .= $element['#children'];
     $output .= '</div>';
@@ -174,15 +223,16 @@ function theme_scholar_checkboxed_container($element) // {{{
 function form_type_scholar_checkboxed_container_value($element, $post = false) // {{{
 {
     $checkbox_name = $element['#checkbox_name'];
+
     if ($post) {
-        $value = isset($post[$checkbox_name]) && $post[$checkbox_name] ? 1 : 0;
+        $value = isset($post[$checkbox_name]) && $post[$checkbox_name];
     } else {
-        $value = $element['#default_value'] ? 1 : 0;
+        $value = (bool) $element['#default_value'];
     }
 
     // musi zwrocic tablice, zeby dzieci kontenera mogly wpisac swoje wartosci
     return array(
-        $checkbox_name => $value
+        $checkbox_name => intval($value)
     );
 } // }}}
 

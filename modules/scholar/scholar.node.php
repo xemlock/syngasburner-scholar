@@ -133,7 +133,7 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
                 }
             }
 
-            if (module_exists('path')) {
+            if (db_table_exists('path')) {
                 $query = db_query("SELECT * FROM {url_alias} WHERE pid = %d", $binding['path_id']);
 
                 if ($row = db_fetch_array($query)) {
@@ -224,9 +224,11 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
 /**
  * Generuje pola formularza do tworzenia/edycji powiązanych węzłów.
  *
+ * @param array $row
+ * @param string $table_name
  * @return array
  */
-function scholar_nodes_subform($object_id = null, $table_name = null)
+function scholar_nodes_subform($row = null, $table_name = null)
 {
     $languages = Langs::languages();
     $default_lang = Langs::default_lang();
@@ -237,6 +239,7 @@ function scholar_nodes_subform($object_id = null, $table_name = null)
             '#type'     => 'scholar_checkboxed_container',
             '#title'    => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
             '#checkbox_name' => 'status',
+            '#default_value' => false,
             '#tree'     => true,
         );
 
@@ -292,10 +295,15 @@ function scholar_nodes_subform($object_id = null, $table_name = null)
         $form[$code] = $container;
     }
 
-    // ustaw wartosci domyslne jezeli podano id obiektu
-    if ($object_id && $table_name) {
+    // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele do ktorej nalezy
+    if ($row && $table_name) {
         foreach ($languages as $code => $name) {
-            if ($node = scholar_fetch_node($object_id, $table_name, $code)) {
+            if ($node = scholar_fetch_node($row['id'], $table_name, $code)) {
+                // ustaw status jako wartosc checkboksa w kontenerze dla tego jezyka
+                $form[$code]['#default_value'] = $node->status;
+                $form[$code]['title']['#default_value'] = $node->title; // tytul jest przechowywany w wezle
+                $form[$code]['body']['#default_value']  = 'NOT IMPLEMENTED YET!'; // tresc nie, bo tu jest zapisywany rendering
+
                 if ($node->menu) {
                     foreach ($node->menu as $column => $value) {
                         if (isset($form[$code]['menu'][$column])) {
