@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-29
+ * @version 2012-07-30
  */
 function scholar_schema()
 {
@@ -42,8 +42,14 @@ function scholar_schema()
                 'length'    => 12,
                 'not null'  => true,
             ),
+            'status' => array( // czy wezel opublikowany
+                'type'      => 'int',
+                'size'      => 'tiny',
+                'not null'  => true,
+            ),
             'last_rendered' => array(
-                // kiedy ostatnio renderowano zawartosc wezla
+                // kiedy ostatnio renderowano zawartosc wezla, porownywane
+                // z variable(name='scholar_last_change')
                 'type'      => 'datetime'
             ),
         ),

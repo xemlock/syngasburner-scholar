@@ -111,25 +111,47 @@ function scholar_render_form()
     $html = call_user_func_array('drupal_get_form', $args);
     return scholar_render($html);
 }
+function p($array, $func = null)
+{
+    static $last = 0;
+    $colors = array('red', 'green', 'blue', 'navy', 'magenta', 'orange', 'brown', 'violet');
 
+    echo '<pre style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px">', $func, $func ? ': ' : '', print_r($array, 1), '</pre>';
+
+    $last = ($last + 1) % count($colors);
+}
 /**
- * Custom form elements.
+ * Deklaracja dodatkowych pól formularza.
+ *
+ * @return array
  */
-function scholar_elements()
+function scholar_elements() // {{{
 {
     $elements['scholar_checkboxed_container'] = array(
         '#input' => true,
-        '#process' => array('example_field_process'),
-        '#element_validate' => array('example_field_validate'),
+        '#checkbox_name' => 'status',
     );
 
     return $elements;
-}
+} // }}}
 
-function theme_scholar_checkboxed_container($element)
+/**
+ * Funkcja renderująca kontener.
+ *
+ * @param array $element
+ * @return string
+ */
+function theme_scholar_checkboxed_container($element) // {{{
 {
+    $parents = $element['#parents'];
+    if ($parents) {
+        $name = array_shift($parents) . ($parents ? '[' . implode('][', $parents) . ']' : '') . '[' . $element['#checkbox_name'] . ']';
+    } else {
+        $name = $element['#checkbox_name'];
+    }
+
     $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
-    $output .= '<label><input type="checkbox" name="' . $element['#name'] .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($element['#value'] ? ' checked="checked"' : ''). '/>' . $element['#title'] . '</label>';
+    $output .= '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($element['#value'] ? ' checked="checked"' : ''). '/><input type="hidden" name="pi" value="3.14159" />' . $element['#title'] . '</label>';
     $output .= '<div class="contents">';
     $output .= $element['#children'];
     $output .= '</div>';
@@ -142,29 +164,41 @@ function theme_scholar_checkboxed_container($element)
 })/*]]>*/</script>';
 
     return $output;
-}
-
-function form_type_scholar_checkboxed_container_value($element, $edit = false)
-{
-    if (func_num_args() == 1) {
-        $value = $element['#default_value'];
-    } else {
-        $value = $edit;
-    }
-    return $value ? 1 : 0;
-}
+} // }}}
 
 /**
- * Required to theme custom form elements.
+ * @param array $element
+ * @param mixed $post           Podtablica z wartościami dla tego elementu
+ * @return array                Wartość checkboksa kontrolujacego ten kontener
  */
-function scholar_theme()
+function form_type_scholar_checkboxed_container_value($element, $post = false) // {{{
+{
+    $checkbox_name = $element['#checkbox_name'];
+    if ($post) {
+        $value = isset($post[$checkbox_name]) && $post[$checkbox_name] ? 1 : 0;
+    } else {
+        $value = $element['#default_value'] ? 1 : 0;
+    }
+
+    // musi zwrocic tablice, zeby dzieci kontenera mogly wpisac swoje wartosci
+    return array(
+        $checkbox_name => $value
+    );
+} // }}}
+
+/**
+ * Funkcja wymagana do renderowania dodatkowych elementów formularza.
+ *
+ * @return array
+ */
+function scholar_theme() // {{{
 {
     $theme['scholar_checkboxed_container'] = array(
         'arguments' => array('element' => null),
     );
 
     return $theme;
-}
+} // }}}
 
 
 require_once dirname(__FILE__) . '/scholar.node.php';

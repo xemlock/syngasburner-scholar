@@ -68,8 +68,8 @@ function scholar_bind_node(&$node, $object_id, $table_name, $language) // {{{
     );
     
     db_query(
-        "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, menu_link_id, path_id) VALUES ('%s', %d, %d, '%s', %s, NULL)",
-        $table_name, $object_id, $node->nid, $language, $mlid
+        "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, menu_link_id, path_id, status) VALUES ('%s', %d, %d, '%s', %s, NULL, %d)",
+        $table_name, $object_id, $node->nid, $language, $mlid, $node->status
     );
 
     // obejscie problemu z aliasami i wielojezykowoscia, poprzez wymuszenie
@@ -221,3 +221,94 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
     }
 } // }}}
 
+/**
+ * Generuje pola formularza do tworzenia/edycji powiązanych węzłów.
+ *
+ * @return array
+ */
+function scholar_nodes_subform($object_id = null, $table_name = null)
+{
+    $languages = Langs::languages();
+    $default_lang = Langs::default_lang();
+    $form = array();
+
+    foreach ($languages as $code => $name) {
+        $container = array(
+            '#type'     => 'scholar_checkboxed_container',
+            '#title'    => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
+            '#checkbox_name' => 'status',
+            '#tree'     => true,
+        );
+
+        $container['title'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('Title'),
+            '#description' => t('Page title, if not given it will default to this person\'s full name.'),
+        );
+        $container['body'] = array(
+            '#type'     => 'textarea',
+            '#title'    => t('Body'),
+            '#description' => t('Use BBCode markup, supperted tags are listed <a href="#!">here</a>'),
+        );
+
+        $container['menu'] = array(
+            '#type'     => 'fieldset',
+            '#title'    => t('Menu settings'),
+            '#collapsible' => true,
+            '#collapsed' => true,
+            '#tree'     => true,
+            '#attributes' => array(
+                'class' => 'scholar-people-form-menu-settings',
+            ),
+        );
+        $container['menu']['mlid'] = array(
+            '#type'     => 'hidden',
+        );
+        $container['menu']['link_title'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('Menu link title'),
+            '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
+        );
+        $container['menu']['parent'] = array(
+            '#type'     => 'select',
+            '#title'    => t('Parent item'),
+            '#options'  => menu_parent_options(menu_get_menus(), null),
+            '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
+        );
+        $container['menu']['weight'] = array(
+            '#type'     => 'weight',
+            '#title'    => t('Weight'),
+            '#delta'    => 50,
+            '#default_value' => 0,
+            '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
+        );
+
+        $container['path'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('URL path alias'),
+            '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
+        );
+
+        $form[$code] = $container;
+    }
+
+    // ustaw wartosci domyslne jezeli podano id obiektu
+    if ($object_id && $table_name) {
+        foreach ($languages as $code => $name) {
+            if ($node = scholar_fetch_node($object_id, $table_name, $code)) {
+                if ($node->menu) {
+                    foreach ($node->menu as $column => $value) {
+                        if (isset($form[$code]['menu'][$column])) {
+                            $form[$code]['menu'][$column]['#default_value'] = $value;
+                        }
+                    }
+                    $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+                }
+
+                $form[$code]['path']['#default_value'] = $node->path;
+            }
+        }
+    }
+
+    return $form;
+}
