@@ -39,21 +39,8 @@ function scholar_people_delete($id) // {{{
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    // drupal_set_title(t('New person'));
-    $row = $id ? scholar_people_fetch_row($id) : null;
-
-    $form = array(
-        '#row'      => $row,
-        '#submit'   => array(
-            'scholar_people_form_submit',
-        ),
-        '#validate' => array(
-            'scholar_people_form_validate',
-        ),
-        '#attributes' => array(
-            'class' => 'scholar-people-form',
-        ),
-    );
+    $row  = $id ? scholar_people_fetch_row($id) : null;
+    $form = array('#row' => $row);
 
     // ustawienia osoby
     $form['id'] = array(
@@ -70,19 +57,8 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         '#required' => true,
     );
 
-    gallery_image_selector($form, 'image_id', isset($row['image_id']) ? $row['image_id'] : null);
+    gallery_image_selector($form, 'image_id', empty($row['image_id']) ? null : $row['image_id']);
     $form['image_id']['#title'] = t('Photo');
-
-    /*$form['status'] = array(
-        '#type'     => 'checkbox',
-        '#title'    => t('Opublikuj stronę osoby'),
-        '#description' => 'If checked an auto-generated page dedicated to this person will be publicly available.',
-        '#default_value' => true,
-        '#attributes' => array(
-            // ukryj fieldsety z ustawieniami menu 
-            //'onchange' => "var sel='.scholar-people-form-menu-settings',chk=this.checked;\$(sel).each(function(){\$(this)[chk?'show':'hide']()})",
-        ),
-    );*/
 
     // link do wezlow zalezne od jezyka, ustawienia aliasu
     $languages = Langs::languages();
@@ -93,7 +69,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         '#value' => '<div style="clear:both;"><hr/></div>',
     );
 
-    $form['node'] = scholar_nodes_subform($row);
+    $form['node'] = scholar_nodes_subform($row, 'people');
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -103,10 +79,14 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     // jezeli formularz dotyczy konkretnego rekordu ustaw domyslne wartosci pol
     if ($row) {
         foreach ($row as $column => $value) {
-            if (isset($form[$column])) {
+            // FIXME ze wzgledu na niedoskonalosc pakietu gallery domyslna wartosc
+            // image_id musi byc ustawiona w gallery_image_selector() i nie 
+            // moze zostac nadpisana tutaj, w przeciwnym razie podglad obrazu
+            // nie zostanie wyswietlony.
+            if (isset($form[$column]) && $column != 'image_id') {
                 $form[$column]['#default_value'] = $value;
             }
-        }        
+        }
     }
 
     return $form;
@@ -121,8 +101,6 @@ function scholar_people_form(&$form_state, $id = null) // {{{
  */
 function scholar_people_form_submit($form, &$form_state) // {{{
 {
-    p($form_state['values'], __FUNCTION__); exit;
-
     $row    = isset($form['#row']) ? $form['#row'] : null;
     $is_new = empty($row);
     $values = $form_state['values'];
@@ -131,11 +109,10 @@ function scholar_people_form_submit($form, &$form_state) // {{{
 
     if ($row) {
         db_query(
-            "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s', status = %d WHERE id = %d",
+            "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s' WHERE id = %d",
             $values['first_name'],
             $values['last_name'],
             $values['image_id'],
-            $values['status'],
             $row['id']
         );
 
@@ -148,11 +125,10 @@ function scholar_people_form_submit($form, &$form_state) // {{{
 
     } else {
         db_query(
-            "INSERT INTO {scholar_people} (first_name, last_name, image_id, status) VALUES ('%s', '%s', %d, %d)",
+            "INSERT INTO {scholar_people} (first_name, last_name, image_id) VALUES ('%s', '%s', %d)",
             $values['first_name'],
             $values['last_name'],
-            $values['image_id'],
-            $values['status']
+            $values['image_id']
         );
         $row = $values;
         $row['id'] = db_last_insert_id('scholar_people', 'id');
@@ -161,20 +137,30 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     // przygotuj wezly, do ktorych zapisywane beda renderingi
     // strony danej osoby
     foreach ($langs as $code => $name) {
-        // TODO
+        $status = intval((bool) $values[$code]['status']);
+
         // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
+        if (!$status && empty($nodes[$code])) {
+            continue;
+        }
+
         // jezeli jest wezel to ustaw w nim status na zero
         // wpp utworz jezeli trzeba wezel i ustaw jego status na 1
         if (empty($nodes[$code])) {
             $nodes[$code] = scholar_create_node();
         }
 
+        $title = trim($values[$code]['title']);
+        if (empty($title)) {
+            $title = $values['first_name'] . ' ' . $values['last_name'];
+        }
+
         $node = $nodes[$code];
 
-        $node->status   = intval($values['status']);
+        $node->status   = $status;
         $node->type     = 'page';
         $node->language = $code;
-        $node->title    = $values['first_name'] . ' ' . $values['last_name'];
+        $node->title    = $title;
 
         // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
         $menu = $values[$code]['menu'];
@@ -187,6 +173,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         node_save($node);
 
         // dodaj węzeł do indeksu powiązanych węzłów
+        // TODO treść węzła!!!
         scholar_bind_node($node, $row['id'], 'people', $code);
     }
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
@@ -252,6 +239,11 @@ function scholar_people_delete_submit($form, &$form_state) // {{{
     drupal_goto('scholar/people');
 } // }}}
 
+/**
+ * Lista osób.
+ *
+ * @return string
+ */
 function scholar_people_list() // {{{
 {
     $query = db_query('SELECT * FROM {scholar_people} ORDER BY last_name, first_name');
