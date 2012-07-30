@@ -1,0 +1,7 @@
+name = Events
+description = Events notifications
+dependencies[] = langs
+dependencies[] = gallery
+package = ventures
+version = 2010-06-30
+core = 6.x
