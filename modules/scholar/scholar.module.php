@@ -39,6 +39,7 @@ function scholar_menu()
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_index',
     );
+
     $items['scholar/people'] = array(
         'title'             => t('People'),
         'access arguments'  => array('administer scholar'),
@@ -53,7 +54,7 @@ function scholar_menu()
     );
     $items['scholar/people/add'] = array(
         'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Add person'),
+        'title'             => t('Add'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form'),
@@ -78,29 +79,26 @@ function scholar_menu()
         'parent'            => 'scholar/people',
         'file'              => 'scholar.people.php',
     );
+
     $items['scholar/files'] = array(
         'title'             => t('Files'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_file_list',
+        'parent'            => 'scholar',
         'file'              => 'scholar.file.php',
     );
     $items['scholar/files/list'] = array(
-        'title'             => MENU_DEFAULT_LOCAL_TASK,
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
         'title'             => t('List'),
-        'weight'            => -10, // na poczatku listy
+        'weight'            => -10,
     );
     $items['scholar/files/upload'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Upload file'),
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Upload'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_upload',
-        'file'              => 'scholar.file.php',
-    );
-    $items['scholar/files/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('List of files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_edit',
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_upload_form'),
+        'parent'            => 'scholar/files',
         'file'              => 'scholar.file.php',
     );
     $items['scholar/files/select'] = array(
@@ -109,6 +107,16 @@ function scholar_menu()
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_file_select',
         'file'              => 'scholar.file.php',
+        'parent'            => 'scholar/files',
+    );
+
+    $items['scholar/files/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('List of files'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_edit',
+        'file'              => 'scholar.file.php',
+        'parent'            => 'scholar/files',
     );
 
     return $items;
