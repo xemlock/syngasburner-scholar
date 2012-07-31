@@ -39,6 +39,8 @@ function scholar_people_delete($id) // {{{
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
+    drupal_set_title(t('Add person'));
+
     $row  = $id ? scholar_people_fetch_row($id) : null;
     $form = array('#row' => $row);
 

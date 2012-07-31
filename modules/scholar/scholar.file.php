@@ -16,11 +16,8 @@ function scholar_file_rebuild()
 
 }
 
-/**
- * Akcja przeznaczona tylko dla okienek i ramek. Bezposredni
- * dostęp jest niewskazany.
- */
-function scholar_file_list()
+// TODO normalna tabela
+function scholar_file_list() // {{{
 {
     $files = array();
 
@@ -35,10 +32,14 @@ function scholar_file_list()
 
     $html .= '<script type="text/javascript">window.console&&console.log(window); if (window !== window.parent) document.body.innerHTML += \'POZDROWIENIA OD POTOMKA\';</script><a href="#!" onclick="window.open(\''.url('scholar/files').'\', \'_blank\');return false">Open</a>';
 
-    return scholar_render($html, true);
-}
+    return theme('table', array(), $files);
+} // }}}
 
-function scholar_file_select()
+/*
+ * Akcja przeznaczona tylko dla okienek i ramek. Bezposredni
+ * dostęp jest niewskazany.
+ */
+function scholar_file_select() // {{{
 {
     $files = array();
 
@@ -130,10 +131,22 @@ Dwukrotne kliknięcie zaznacza element
 <?php
 
     return scholar_render(ob_get_clean(), true);
+} // }}}
+
+function scholar_file_upload_form()
+{
+    drupal_set_title(t('Upload file'));
+
+    $form = array();
+
+    $form['file'] = array(
+        '#type' => 'file',
+        '#title' => t('Upload new file'),
+    );
+
+    return $form;
 }
 
-function scholar_file_upload()
-{}
 
 function scholar_file_edit()
 {}

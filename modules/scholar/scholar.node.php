@@ -420,7 +420,7 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         }
     }
 
-    $files_id = 'files_' . rand();
+    $files_id = 'storage_' . md5(microtime() . rand());
     $html = 
         '<script type="text/javascript">var ' . $files_id . '= new (function() {
             var items = {};
@@ -459,7 +459,7 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         <td><select></select></td>
         <td>22kB</td>
         <td><input type="checkbox" /></td>
-        </tr></tbody></table><button type="button" onclick="window.open(\''.url('scholar/files/select').'#!'.$files_id.'\',\'file-select\', \'menubar=1,resizable=1,width=640,height=480,scrollbars=1\')">Wybierz plik</button><button type="button">Wgraj plik</button>';
+        </tr></tbody></table><button type="button" onclick="window.open(\''.url('scholar/files/select').'#!'.$files_id.'\',\'file-select\', \'menubar=1,resizable=1,width=640,height=480,scrollbars=1\')">Wybierz plik</button><button type="button" onclick="window.open(\''.url('scholar/files/upload', array('query' => 'modal=1')).'#!'.$files_id.'\',\'file-upload\', \'menubar=1,resizable=1,width=640,height=480,scrollbars=1\')">Wgraj plik</button>';
     $form['attachments'] = array(
         '#type'         => 'fieldset',
         '#title'        => t('File attachments'),
