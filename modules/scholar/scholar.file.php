@@ -6,6 +6,16 @@ function scholar_file_dir($filename = null) // {{{
     return str_replace('\\', '/', $path);
 } // }}}
 
+/**
+ * Analizuje zawartość katalogu z plikami i uaktualnia dane
+ * w bazie.
+ */
+function scholar_file_rebuild()
+{
+
+
+}
+
 /*function gallery_get_uploaded_file_name($name) { // {{{
   $tmpname = $_FILES['files']['tmp_name'][$name];
   $ext = gallery_get_ext($tmpname);

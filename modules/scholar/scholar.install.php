@@ -211,16 +211,58 @@ function scholar_schema() // {{{
         'primary key'  => array('person_id', 'object_id'),
     ); // }}}
 
+    // scholar korzysta z wlasnego systemu zarzadzania plikami, miedzy innymi
+    // dlatego, zeby jeden plik mogl byc podpiety do wiecej niz jednego wezla.
     $schema['scholar_files'] = array( // {{{
-        'description' => 'pliki podpięte do wpisów',
         'fields' => array(
-            'file_id' => array(
-                // REFERENCES files (fid)
+            'id' => array(
+                'type'      => 'serial',
+                'not null'  => true,
+            ),
+            'user_id' => array(
+                'type'      => 'int',
+            ),
+            'filename' => array(
+                'type'      => 'varchar',
+                'size'      => 255,
+                'not null'  => true,
+            ),
+            'filepath' => array(
+                'type'      => 'varchar',
+                'size'      => 255,
+                'not null'  => true,
+            ),
+            'filemime' => array(
+                'type'      => 'varchar',
+                'size'      => 64,
+                'not null'  => true,
+            ),
+            'filesize' => array(
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'object_id' => array(
-                // REFERENCES scholar_objects (id)
+            'upload_time' => array(
+                'type'      => 'datetime',
+                'not null'  => true,
+            ),
+        ),
+        'primary key' => array('file_id'),
+        'unique keys' => array(
+            'filepath'  => array('filepath'),
+        ),        
+
+    ); // }}}
+
+    $schema['scholar_attachments'] = array( // {{{
+        'description' => 'pliki podpięte do wpisów',
+        'fields' => array(
+            'file_id' => array(
+                // REFERENCES scholar_files (fid)
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'node_id' => array(
+                // REFERENCES node (nid)
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -230,8 +272,9 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
         ),
-        'primary key' => array('file_id'),
+        'primary key' => array('file_id', 'node_id'),
     ); // }}}
+
 
   return $schema;
 } // }}}

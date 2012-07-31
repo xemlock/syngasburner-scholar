@@ -420,6 +420,29 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         }
     }
 
+
+
+    $html = '<table><thead><tr><th>Filename</th><th>Category</th><th>Size</th>';
+    foreach ($languages as $code => $name) {
+        $html .= '<th><img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" /></th>';
+    }
+    $html .= '</tr></thead><tbody><tr>
+        <td>Plik</td>
+        <td><select></select></td>
+        <td>22kB</td>
+        <td><input type="checkbox" /></td>
+        </tr></tbody></table>';
+    $form['attachments'] = array(
+        '#type'         => 'fieldset',
+        '#title'        => t('File attachments'),
+        '#collapsed'    => true,
+        '#collapsible'  => true,
+    );
+    $form['attachments']['files'] = array(
+        '#type' => 'markup',
+        '#value' => $html,
+    );
+
     return $form;
 } // }}}
 
