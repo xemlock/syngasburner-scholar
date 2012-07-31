@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-30
+ * @version 2012-07-31
  */
 function scholar_schema() // {{{
 {
@@ -211,9 +211,10 @@ function scholar_schema() // {{{
         'primary key'  => array('person_id', 'object_id'),
     ); // }}}
 
-    // scholar korzysta z wlasnego systemu zarzadzania plikami, miedzy innymi
-    // dlatego, zeby jeden plik mogl byc podpiety do wiecej niz jednego wezla.
     $schema['scholar_files'] = array( // {{{
+        // Scholar korzysta z wlasnego systemu zarzadzania plikami, miedzy
+        // innymi dlatego, zeby jeden plik mogl byc podpiety do wiecej niz
+        // jednego wezla.
         'fields' => array(
             'id' => array(
                 'type'      => 'serial',
@@ -239,12 +240,19 @@ function scholar_schema() // {{{
             ),
             'filesize' => array(
                 'type'      => 'int',
+                'unsigned'  => true,
                 'not null'  => true,
             ),
             'upload_time' => array(
                 'type'      => 'datetime',
                 'not null'  => true,
             ),
+            'refcount' => array(
+                'description' => 'Liczba obiektow odwolujacych sie do tego pliku',
+                'type'      => 'int',
+                'unsigned'  => true,
+                'not null'  => true,
+            )
         ),
         'primary key' => array('file_id'),
         'unique keys' => array(
