@@ -420,9 +420,37 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         }
     }
 
-
-
-    $html = '<table><thead><tr><th>Filename</th><th>Category</th><th>Size</th>';
+    $files_id = 'files_' . rand();
+    $html = 
+        '<script type="text/javascript">var ' . $files_id . '= new (function() {
+            var items = {};
+            var receiver;
+            this.has = function(file_id) {
+                return typeof items["_" + file_id] !== "undefined";
+            }
+            this.add = function(file_id) {
+                items["_" + file_id] = true;
+                if (receiver && typeof receiver.notifyAdd == "function") {
+                    receiver.notifyAdd(file_id);
+                }
+            }
+            this.receiver = function(r) {
+                receiver = r;
+            }
+            this.del = function(file_id) {
+                var key = "_" + file_id;
+                if (key in items) {
+                    delete items[key];
+                    if (receiver && typeof receiver.notifyDelete == "function") {
+                        receiver.notifyDelete(file_id);
+                    }
+                }
+            }
+            this.all = function() {
+                return items;
+            }
+        })()</script>'
+         . '<table><thead><tr><th>Filename</th><th>Category</th><th>Size</th>';
     foreach ($languages as $code => $name) {
         $html .= '<th><img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" /></th>';
     }
@@ -431,7 +459,7 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         <td><select></select></td>
         <td>22kB</td>
         <td><input type="checkbox" /></td>
-        </tr></tbody></table>';
+        </tr></tbody></table><button type="button" onclick="window.open(\''.url('scholar/files/select').'#!'.$files_id.'\',\'file-select\', \'menubar=1,resizable=1,width=640,height=480,scrollbars=1\')">Wybierz plik</button><button type="button">Wgraj plik</button>';
     $form['attachments'] = array(
         '#type'         => 'fieldset',
         '#title'        => t('File attachments'),
