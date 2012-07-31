@@ -1,7 +1,7 @@
 <?php
 
 function scholar_perm() {
-  return array('administer scholar', 'manage scholar contents');
+  return array('administer scholar', 'manage Scholar contents');
 }
 
 function p($var, $label = null)
@@ -36,13 +36,18 @@ function scholar_menu()
 
     $items['scholar'] = array(
         'title'             => t('Scholar'),
-        'access arguments'  => array('use scholar'),
+        'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_index',
     );
-
+    $items['scholar/files'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('List of files'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_list',
+    );
     $items['scholar/people'] = array(
         'title'             => t('People'),
-        'access arguments'  => array('use scholar'),
+        'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_people_list',
         'parent'            => 'scholar',
         'file'              => 'scholar.people.php',
@@ -55,7 +60,7 @@ function scholar_menu()
     $items['scholar/people/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => t('Add person'),
-        'access arguments'  => array('use scholar'),
+        'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form'),
         'parent'            => 'scholar/people',
@@ -64,7 +69,7 @@ function scholar_menu()
     $items['scholar/people/edit/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('Edit person'),
-        'access arguments'  => array('use scholar'),
+        'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form', 3),
         'parent'            => 'scholar/people',
@@ -73,7 +78,7 @@ function scholar_menu()
     $items['scholar/people/delete/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('Delete person'),
-        'access arguments'  => array('use scholar'),
+        'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_delete_form', 3),
         'parent'            => 'scholar/people',
@@ -87,9 +92,9 @@ function scholar_index()
     return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
 }
 
-function scholar_render($html)
+function scholar_render($html, $modal = false)
 {
-    if (isset($_REQUEST['modal'])) {
+    if ($modal || isset($_REQUEST['modal'])) {
         echo '<html><head><title>Scholar modal</title></head><body>' . $html . '</body></html>';
         exit;
     }
@@ -217,9 +222,45 @@ function scholar_elements() // {{{
         '#input' => true,
         '#checkbox_name' => 'status',
     );
+    $elements['scholar_file_upload'] = array(
+        '#input' => true,
+    );
 
     return $elements;
 } // }}}
+
+function form_type_scholar_file_upload_value($element, $post = false)
+{
+
+
+
+}
+
+function theme_scholar_file_upload($element)
+{
+    
+}
+
+/**
+ * Akcja przeznaczona tylko dla okienek modalnych.
+ */
+function scholar_file_list()
+{
+    $files = array();
+
+    if (db_table_exists('files')) {
+        $query = db_query("SELECT * FROM {files} ORDER BY filename");
+        while ($row = db_fetch_array($query)) {
+            $files[$row['fid']] = $row;
+        }
+    }
+
+    $html = print_r($files, 1);
+
+    $html .= '<script type="text/javascript">window.console&&console.log(window); if (window !== window.parent) document.body.innerHTML += \'POZDROWIENIA OD POTOMKA\';</script><a href="#!" onclick="window.open(\''.url('scholar/files').'\', \'_blank\');return false">Open</a>';
+
+    return scholar_render($html, true);
+}
 
 /**
  * Funkcja renderująca kontener.
@@ -289,8 +330,12 @@ function scholar_theme() // {{{
         'arguments' => array('element' => null),
     );
 
+    $theme['scholar_file_uplooad'] = array(
+        'arguments' => array('element' => null),
+    );
+
     return $theme;
 } // }}}
 
-
+require_once dirname(__FILE__) . '/scholar.file.php';
 require_once dirname(__FILE__) . '/scholar.node.php';

@@ -4,7 +4,7 @@
  * Narzędzia do manipulacji węzłami
  * 
  * @author xemlock
- * @version 2012-07-30
+ * @version 2012-07-31
  */
 
 /**
@@ -94,6 +94,41 @@ function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
 } // }}}
 
 /**
+ * Ustawia wartości węzła.
+ *
+ * @param object $node
+ * @param array $binding
+ */
+function _scholar_populate_node(&$node, $binding) // {{{
+{
+    $node->menu = null; // menu_link
+    $node->path = null; // url_alias path dst
+    $node->pid  = null; // url_alias path id
+    $node->body = $binding['body']; // nieprzetworzona tresc wezla
+
+    // Dociagamy menu link i url alias zgodne z danymi w binding
+    if ($binding['menu_link_id']) {
+        $query = db_query("SELECT * FROM {menu_links} WHERE mlid = %d", $binding['menu_link_id']);
+
+        if ($row = db_fetch_array($query)) {
+            $node->menu = $row;
+        }
+    }
+
+    if (db_table_exists('url_alias')) {
+        $query = db_query("SELECT * FROM {url_alias} WHERE pid = %d", $binding['path_id']);
+
+        if ($row = db_fetch_array($query)) {
+            // pid jest potrzebne przy usuwaniu/edycji aliasow tak, by 
+            // nie zostawiac osieroconych rekordow, patrz dokumentacja
+            // path_nodeapi()
+            $node->pid  = $row['pid'];
+            $node->path = $row['dst'];
+        }
+    }
+} // }}}
+
+/**
  * Pobiera z bazy rekord węzła przypisany do rekordu z danej tabeli,
  * z nieprzetworzoną treścią, z wypełnionymi polami menu i path.
  *
@@ -118,34 +153,8 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
         // dla modulu scholar.
         $query = db_query("SELECT * FROM {node} WHERE nid = %d", $binding['node_id']);
 
-        if ($row = db_fetch_array($query)) {
-            $node = (object) $row;
-            $node->menu = null; // menu_link
-            $node->path = null; // url_alias path dst
-            $node->pid  = null; // url_alias path id
-            $node->body = $binding['body']; // nieprzetworzona tresc wezla
-
-            // Dociagamy menu link i url alias zgodne z danymi w binding
-            if ($binding['menu_link_id']) {
-                $query = db_query("SELECT * FROM {menu_links} WHERE mlid = %d", $binding['menu_link_id']);
-
-                if ($row = db_fetch_array($query)) {
-                    $node->menu = $row;
-                }
-            }
-
-            if (db_table_exists('path')) {
-                $query = db_query("SELECT * FROM {url_alias} WHERE pid = %d", $binding['path_id']);
-
-                if ($row = db_fetch_array($query)) {
-                    // pid jest potrzebne przy usuwaniu/edycji aliasow tak, by 
-                    // nie zostawiac osieroconych rekordow, patrz dokumentacja
-                    // path_nodeapi()
-                    $node->pid  = $row['pid'];
-                    $node->path = $row['dst'];
-                }
-            }
-
+        if ($node = db_fetch_object($query)) {
+            _scholar_populate_node($node, $binding);
             $result = $node;
         }
     }
@@ -180,15 +189,6 @@ function scholar_create_node($values = array()) // {{{
     $node->menu     = null;
     $node->path     = null;
     $node->pid      = null;
-
-    $taxonomy = array();
-    if (isset($values['taxonomy'])) {
-        $tags = explode(',', $values['taxonomy']);
-        foreach ($tags as $value) {
-            $taxonomy[$value] = taxonomy_get_term($value);
-        }
-    }
-    $node->taxonomy = $taxonomy;
 
     return $node;
 } // }}}
@@ -274,13 +274,47 @@ function scholar_node_form(&$form_state, $node)
             switch ($row['table_name']) {
                 case 'people':
                     scholar_goto('scholar/people/edit/' . $row['object_id'], $destination);
+                    break;
             }
         } else {
-            drupal_set_message(t('Database integrity violation detected. As this is a serious problem, please contact the site administrator.'), 'error');
-            watchdog('scholar', 'Database integrity violation detected. No binding found for node %nid', array('%nid' => $node->nid), WATCHDOG_ERROR);
+            drupal_set_message(t('No binding found for node (%nid)', array('%nid' => $node->nid)));
         }
     }
 }
+
+/*function scholar_node_edit_form(&$form_state, $node_id)
+{
+    // Edycja ustawien wezla niedostepnych przy edycji obiektu scholara.
+    // Tutaj musimy wykorzystac hook_nodeapi aby kazdy z modulow mogl
+    // odpowiednio zmodyfikowac formularz.
+
+    module_load_include('inc', 'node', 'node.pages');
+    $node = node_load(intval($node_id));
+
+    if (empty($node)) {
+        drupal_set_message(t('Invalid node id (%nid)', array('%nid' => $node->nid)));
+        return;
+    }
+
+    if ($node->type != 'scholar') {
+        drupal_set_message(t('Invalid node type (%type)', array('%type' => $node->type)));
+        return;
+    }
+
+    // spraw zeby moduly myslaly, ze modyfikuja standardowy formularz
+    // edycji wezla-strony
+    $form = array();
+    $form['type'] = array(
+        '#type'         => 'textfield',
+        '#value'        => $node->type,
+    );
+    $form['#node'] = $node;
+
+    taxonomy_form_alter(&$form, $form_state, 'scholar_node_form');
+    gallery_form_alter(&$form, $form_state, 'scholar_node_form');
+p($form);
+    return $form;
+}*/
 
 /**
  * Generuje pola formularza do tworzenia / edycji powiązanych węzłów.
@@ -321,9 +355,6 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
             '#collapsible' => true,
             '#collapsed' => true,
             '#tree'     => true,
-            '#attributes' => array(
-                'class' => 'scholar-people-form-menu-settings',
-            ),
         );
         $container['menu']['mlid'] = array(
             '#type'     => 'hidden',
@@ -348,6 +379,12 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         );
 
         $container['path'] = array(
+            '#type'     => 'fieldset',
+            '#title'    => t('URL path settings'),
+            '#collapsible' => true,
+            '#collapsed' => true,
+        );
+        $container['path']['path'] = array(
             '#type'     => 'textfield',
             '#title'    => t('URL path alias'),
             '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
@@ -374,13 +411,15 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
                             $form[$code]['menu'][$column]['#default_value'] = $value;
                         }
                     }
+
                     $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
                 }
 
-                $form[$code]['path']['#default_value'] = $node->path;
+                $form[$code]['path']['path']['#default_value'] = $node->path;
             }
         }
     }
 
     return $form;
 } // }}}
+

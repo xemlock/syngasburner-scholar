@@ -179,15 +179,6 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
-            'has_node' => array(
-                'type'      => 'int',
-                'size'      => 'tiny',
-                'not null'  => true,
-            ),
-            'gallery_id' => array(
-                'description' => 'id galerii - każdy rekord może mieć powiązaną galerię, unikalną dla siebie',
-                'type'      => 'int',
-            ),
         ),
         'primary key' => array('id'),
         'indexes' => array(
@@ -247,6 +238,12 @@ function scholar_schema() // {{{
 
 function scholar_install() // {{{
 {
+    require_once dirname(__FILE__) . '/scholar.file.php';
+    $dir = scholar_file_dir();
+    if (!is_dir($dir) && !mkdir($dir, 0777)) {
+        trigger_error('scholar_install: Unable to create storage directory: ' . $dir, E_USER_ERROR);
+    }
+
     drupal_install_schema('scholar');
 } // }}}
 
