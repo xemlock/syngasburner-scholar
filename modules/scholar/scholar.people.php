@@ -168,7 +168,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
 
         // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
         $node->menu = $menu;
-        $node->path = rtrim($values[$code]['path'], '/');
+        $node->path = rtrim($values[$code]['path']['path'], '/');
 
         scholar_save_node($node, $row['id'], 'people');
     }
