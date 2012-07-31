@@ -39,12 +39,6 @@ function scholar_menu()
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_index',
     );
-    $items['scholar/files'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('List of files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_list',
-    );
     $items['scholar/people'] = array(
         'title'             => t('People'),
         'access arguments'  => array('administer scholar'),
@@ -84,6 +78,39 @@ function scholar_menu()
         'parent'            => 'scholar/people',
         'file'              => 'scholar.people.php',
     );
+    $items['scholar/files'] = array(
+        'title'             => t('Files'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_list',
+        'file'              => 'scholar.file.php',
+    );
+    $items['scholar/files/list'] = array(
+        'title'             => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => t('List'),
+        'weight'            => -10, // na poczatku listy
+    );
+    $items['scholar/files/upload'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Upload file'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_upload',
+        'file'              => 'scholar.file.php',
+    );
+    $items['scholar/files/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('List of files'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_edit',
+        'file'              => 'scholar.file.php',
+    );
+    $items['scholar/files/select'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('File selection'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_select',
+        'file'              => 'scholar.file.php',
+    );
+
     return $items;
 }
 
@@ -239,27 +266,6 @@ function form_type_scholar_file_upload_value($element, $post = false)
 function theme_scholar_file_upload($element)
 {
     
-}
-
-/**
- * Akcja przeznaczona tylko dla okienek modalnych.
- */
-function scholar_file_list()
-{
-    $files = array();
-
-    if (db_table_exists('files')) {
-        $query = db_query("SELECT * FROM {files} ORDER BY filename");
-        while ($row = db_fetch_array($query)) {
-            $files[$row['fid']] = $row;
-        }
-    }
-
-    $html = print_r($files, 1);
-
-    $html .= '<script type="text/javascript">window.console&&console.log(window); if (window !== window.parent) document.body.innerHTML += \'POZDROWIENIA OD POTOMKA\';</script><a href="#!" onclick="window.open(\''.url('scholar/files').'\', \'_blank\');return false">Open</a>';
-
-    return scholar_render($html, true);
 }
 
 /**
