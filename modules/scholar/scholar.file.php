@@ -138,15 +138,41 @@ function scholar_file_upload_form()
     drupal_set_title(t('Upload file'));
 
     $form = array();
+    $form['#attributes'] = array('enctype' => "multipart/form-data");
 
     $form['file'] = array(
-        '#type' => 'file',
+        '#type'  => 'file',
         '#title' => t('Upload new file'),
+    );
+    $form['submit'] = array(
+        '#type'  => 'submit',
+        '#value' => t('Upload file'),
     );
 
     return $form;
 }
 
+function scholar_file_upload_form_submit() {
+//define your limits for the submission here
+    $limits = array() ;
+ 
+  /*$validators = array(
+    'file_validate_extensions' => array($limits['extensions']),
+    'file_validate_image_resolution' => array($limits['resolution']),
+    'file_validate_size' => array(
+        $limits['file_size'],
+        $limits['user_size']
+    ),
+);*/
+    $validators = array();
+ 
+  // Save new file uploads.
+  if ($file = file_save_upload('file_upload', $validators, file_directory_path())) {
+      // Do something with $file here.
+      echo 'ZAPISANO PLIK!';
+      exit;
+  }
+}
 
 function scholar_file_edit()
 {}
