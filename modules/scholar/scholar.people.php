@@ -39,8 +39,6 @@ function scholar_people_delete($id) // {{{
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    drupal_set_title(t('Add person'));
-
     $row  = $id ? scholar_people_fetch_row($id) : null;
     $form = array('#row' => $row);
 
@@ -244,8 +242,6 @@ function scholar_people_delete_submit($form, &$form_state) // {{{
  */
 function scholar_people_list() // {{{
 {
-
-
     $header = array(
         array('data' => t('Last name'), 'field' => 'last_name', 'sort' => 'asc'),
         array('data' => t('First name'), 'field' => 'first_name'),
@@ -274,3 +270,4 @@ function scholar_people_list() // {{{
     $html .= theme('table', $header, $rows);
     return $html;
 } // }}}
+

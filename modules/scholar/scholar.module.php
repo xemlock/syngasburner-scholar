@@ -54,7 +54,7 @@ function scholar_menu()
     );
     $items['scholar/people/add'] = array(
         'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Add'),
+        'title'             => t('Add person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form'),
@@ -101,6 +101,15 @@ function scholar_menu()
         'parent'            => 'scholar/files',
         'file'              => 'scholar.file.php',
     );
+    $items['scholar/files/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit file'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_edit_form', 3),
+        'parent'            => 'scholar/files',
+        'file'              => 'scholar.file.php',
+    );
     $items['scholar/files/select'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('File selection'),
@@ -110,16 +119,44 @@ function scholar_menu()
         'parent'            => 'scholar/files',
     );
 
-    $items['scholar/files/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('List of files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_edit',
-        'file'              => 'scholar.file.php',
-        'parent'            => 'scholar/files',
+    return $items;
+}
+
+function scholar_add_css()
+{
+    drupal_add_css(drupal_get_path('module', 'scholar') . '/scholar.css', 'module', 'all');
+}
+
+function scholar_ascii($string)
+{
+    // http://stackoverflow.com/questions/5048401/why-doesnt-translit-work#answer-5048939
+    // The transliteration done by iconv is not consistent across implementations.
+    // For instance, the glibc implementation transliterates é into e, but libiconv 
+    // transliterates it into 'e.
+
+    $string = str_replace(
+        array("æ",  "Æ",   "ß",  "þ",  "Þ", "–", "’", "‘", "“", "”", "„"),
+        array("ae", "Ae", "ss", "th", "Th", "-", "'", "'", "\"", "\"", "\""), 
+        $string
     );
 
-    return $items;
+    if (ICONV_IMPL === 'glibc') {
+        $string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+    } else {
+        // na podstawie http://smoku.net/artykuly/zend-filter-ascii
+        $string = iconv('UTF-8', 'WINDOWS-1250//TRANSLIT', $string);
+        $string = strtr($string,
+            "\xa5\xa3\xbc\x8c\xa7\x8a\xaa\x8d\x8f\x8e\xaf\xb9\xb3\xbe"
+          . "\x9c\x9a\xba\x9d\x9f\x9e\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6"
+          . "\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4"
+          . "\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2"
+          . "\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0"
+          . "\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe",
+            "ALLSSSSTZZZallssstzzzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYT"
+          . "sraaaalccceeeeiiddnnooooruuuuyt");
+    }
+
+    return $string;
 }
 
 function scholar_index()

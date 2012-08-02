@@ -17,6 +17,109 @@ function scholar_file_rebuild()
 }
 
 /**
+ * @param int $file_id
+ */
+function scholar_fetch_file($file_id)
+{
+    $query = db_query("SELECT * FROM {scholar_files} WHERE id = %d", $file_id);
+    return db_fetch_object($query);
+}
+
+function scholar_file_edit_form(&$form_state, $file_id)
+{
+    $file = scholar_fetch_file($file_id);
+
+    $pos = strrpos($file->filename, '.');
+    $filename  = substr($file->filename, 0, $pos);
+    $extension = substr($file->filename, $pos);
+
+    scholar_add_css();
+
+    $uploader = user_load(intval($file->user_id));
+
+    $form = array();
+    $form['properties'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Properties'),
+        '#attributes' => array('class' => 'scholar'),
+    );
+
+    $url = url($file->filepath, array('absolute' => true));
+    $form['properties'][] = array(
+        '#type' => 'markup',
+        '#value' => '<dl class="scholar">
+<dt>Size</dt><dd>' . format_size($file->filesize) . '</dd>
+<dt>MIME type</dt><dd>' . check_plain($file->filemime) . '</dd>
+<dt>MD5 checksum</dt><dd>' . check_plain($file->md5sum) . '</dd>
+<dt>File URL</dt><dd>' . l($url, $url, array('attributes' => array('target' => '_blank'))) . '</dd>
+<dt>Uploaded</dt><dd>' . check_plain($file->upload_time). ', by <em>' . ($uploader ? ($uploader->name) : 'unknown user') . '</em></dd>
+</dl>',
+    );
+
+    $form['rename'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Rename file'),
+        '#attributes' => array('class' => 'scholar'),
+    );
+    $form['rename']['filename'] = array(
+        '#type' => 'textfield',
+        '#title' => t('File name'),
+        '#required' => true,
+        '#default_value' => $filename,
+        '#field_suffix'  => $extension,
+    );
+    $form['rename']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Rename file'),
+    );
+
+    if ($refcount = intval($file->refcount) + 1) {
+        $header = array(
+            array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
+            array('data' => t('Language'), 'field' => 'language'),
+        );
+
+        $form['ref'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Referencing pages'),
+            '#attributes' => array('class' => 'scholar'),
+        );
+        $query = db_query("SELECT * FROM {node} n JOIN {scholar_attachments} a ON n.nid = a.node_id WHERE a.file_id = %d" . tablesort_sql($header), $file->id);
+        $rows  = array();
+
+        while ($row = db_fetch_array($query)) {
+            $rows[] = array(
+                'title'    => check_plain($row['title']),
+                'language' => check_plain($row['language']),
+            );
+        }
+
+        if (count($rows) != $refcount) {
+            $rows[] = array(
+                array('data' => 
+                    format_plural($refcount,
+                        'Expected %refcount file, but found %count. Database corruption detected.',
+                        'Expected %refcount files, but found %count. Database corruption detected.',
+                        array('%refcount' => $refcount, '%count' => count($rows))
+                    ),
+                    'colspan' => 2
+                ),
+            );
+        }
+
+        $form['ref'][] = array(
+            '#type' => 'markup',
+            '#value' => theme('table', $header, $rows),
+        );
+    }
+
+    //p('Zażółć gęślą jaźń; Herrens bön, även Fader vår eller Vår Fader. ĚØŘ!');
+    //p(scholar_ascii('Zażółć gęślą jaźń; Herrens bön, även Fader vår eller Vår Fader. ĚØŘ!'));
+
+    return $form;
+}
+
+/**
  * Lista plików.
  *
  * @return string
@@ -26,7 +129,6 @@ function scholar_file_list() // {{{
     $header = array(
         array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
         array('data' => t('Size'),      'field' => 'filesize'),
-        array('data' => t('Refcount'),  'field' => 'refcount'),
         array('data' => t('Operations'), 'colspan' => '2')
     );
 
@@ -37,19 +139,18 @@ function scholar_file_list() // {{{
         $rows[] = array(
             check_plain($row['filename']),
             format_size($row['filesize']),
-            check_plain($row['refcount']),
-            l(t('view'), $row['filepath']),
+            l(t('edit'), "scholar/files/edit/{$row['id']}"),
             intval($row['refcount']) ? '' : l(t('delete'), "scholar/files/delete/{$row['id']}"),
         );
     }
 
     if (empty($rows)) {
         $rows[] = array(
-            array('data' => t('No records found'), 'colspan' => 4)
+            array('data' => t('No records found'), 'colspan' => 3)
         );
     }
 
-    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files with refcount value greater than 0 cannot be removed, as they are referenced by other records in the database.</p>');
+    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files referenced by other records in the database cannot be removed.</p>');
 
     return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
 } // }}}
@@ -62,15 +163,10 @@ function scholar_file_select() // {{{
 {
     $files = array();
 
-    if (db_table_exists('files')) {
-        $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
-        while ($row = db_fetch_array($query)) {
-            $files[$row['file_id']] = $row;
-        }
+    $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
+    while ($row = db_fetch_array($query)) {
+        $files[] = $row;
     }
-    $files[] = array('file_id' => 3, 'filename' => 'scholar_manual.pdf', 'filesize' => 910245);
-    $files[] = array('file_id' => 5, 'filename' => 'scholar_overview.png', 'filesize' => 12382918);
-    $files[] = array('file_id' => 8, 'filename' => 'scholar_license.txt', 'filesize' => 135027);
 
     ob_start();
 ?>
@@ -86,8 +182,9 @@ function filter() {
     for (var i = 0; i < items.length; ++i) {
         var v = items[i];
         var vv = v.filename.toLowerCase();
-        var e = document.getElementById('item-' + v.file_id);
+        var e = document.getElementById('item-' + v.id);
         if (e) e.style.display = vv.indexOf(prefix) != -1 ? '' : 'none';
+        else console.log('nie ma ajtema');
     }
 }
 var caller = window.opener ? window.opener : (window.parent != window ? window.parent : null);
@@ -105,6 +202,7 @@ if (callerStorage) callerStorage.receiver({
     }
 });
 window.onload = function() {
+    if (!callerStorage) return;
     var c = document.getElementById('items').childNodes;
     for (var i = 0; i < c.length; ++i) {
         if (c[i].tagName != 'LI') continue;
@@ -138,12 +236,12 @@ user-select: none;
   background: yellow;
 }
 </style>
-Filtruj: <input type="text" onkeyup="filter()" id="name-filter"/><button type="button" onclick="filter('');">Wyczyść</button> <button type="button" onclick="window.close()">Zamknij</button>
+    Filtruj: <input type="text" onkeyup="filter()" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" onclick="filter('');">Wyczyść</button> <button type="button" onclick="window.close()">Zamknij</button>
 Dwukrotne kliknięcie zaznacza element
 <hr/>
 <?php if ($files) { ?>
-<ul id="items"><?php foreach ($files as $id => $file) { ?>
-<li id="item-<?php echo $file['file_id'] ?>" ondblclick="select_item(this)"><?php echo $file['filename'] ?>
+<ul id="items"><?php foreach ($files as $file) { ?>
+<li id="item-<?php echo $file['id'] ?>" ondblclick="select_item(this)"><?php echo $file['filename'] ?>
 </li>
 <?php } ?></ul>
 <?php } else { ?>Nie ma plików<? } ?>
@@ -152,7 +250,12 @@ Dwukrotne kliknięcie zaznacza element
     return scholar_render(ob_get_clean(), true);
 } // }}}
 
-function scholar_file_upload_form()
+/**
+ * Definicja formularza do wgrywania plików.
+ *
+ * @return array
+ */
+function scholar_file_upload_form() // {{{
 {
     drupal_set_title(t('Upload file'));
 
@@ -176,7 +279,7 @@ function scholar_file_upload_form()
     );
 
     return $form;
-}
+} // }}}
 
 /**
  * Zwraca listę rozszerzeń plików, które mogą zostać przesłane.
@@ -258,16 +361,5 @@ function scholar_file_upload_form_submit() // {{{
     }
 } // }}}
 
-/*function gallery_get_uploaded_file_name($name) { // {{{
-  $tmpname = $_FILES['files']['tmp_name'][$name];
-  $ext = gallery_get_ext($tmpname);
-  $fname = md5($tmpname);
-  $dir = gallery_image_dir();
-  $i = 0;
-  do {
-    $file = $dir . sprintf("/%s%02d.%s", $fname, $i, $ext);
-    $i++;
-  } while (file_exists($file));
+// usuwanie plikow
 
-  return $file;
-} // }}}*/

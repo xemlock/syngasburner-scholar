@@ -221,6 +221,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'user_id' => array(
+                // moze byc pusty
                 'type'      => 'int',
             ),
             'filename' => array(
