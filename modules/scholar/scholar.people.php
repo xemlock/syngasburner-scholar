@@ -244,7 +244,15 @@ function scholar_people_delete_submit($form, &$form_state) // {{{
  */
 function scholar_people_list() // {{{
 {
-    $query = db_query('SELECT * FROM {scholar_people} ORDER BY last_name, first_name');
+
+
+    $header = array(
+        array('data' => t('Last name'), 'field' => 'last_name', 'sort' => 'asc'),
+        array('data' => t('First name'), 'field' => 'first_name'),
+        array('data' => t('Operations'), 'colspan' => '2')
+    );
+
+    $query = db_query("SELECT * FROM {scholar_people}" . tablesort_sql($header));
     $rows = array();
 
     while ($row = db_fetch_array($query)) {
@@ -252,7 +260,7 @@ function scholar_people_list() // {{{
             check_plain($row['last_name']),
             check_plain($row['first_name']),
             l(t('edit'),   "scholar/people/edit/{$row['id']}"), 
-            l(t('delete'), "scholar/people/delete/{$row['id']}")
+            l(t('delete'), "scholar/people/delete/{$row['id']}"),
         );
     }
 
@@ -261,12 +269,6 @@ function scholar_people_list() // {{{
             array('data' => t('No records found'), 'colspan' => 4)
         );
     }
-
-    $header = array(
-        array('data' => t('Last name'), 'field' => 'last_name', 'sort' => 'asc'),
-        array('data' => t('First name'), 'field' => 'first_name'),
-        array('data' => t('Operations'), 'colspan' => '2')
-    );
 
     $html = '';
     $html .= theme('table', $header, $rows);

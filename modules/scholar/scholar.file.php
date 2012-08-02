@@ -2,7 +2,7 @@
 
 function scholar_file_dir($filename = null) // {{{
 {
-    $path = conf_path() . '/files/scholar/' . ltrim($filename, '/');
+    $path = rtrim(file_directory_path(), '\\/') . '/scholar/' . ltrim($filename, '/');
     return str_replace('\\', '/', $path);
 } // }}}
 
@@ -12,27 +12,46 @@ function scholar_file_dir($filename = null) // {{{
  */
 function scholar_file_rebuild()
 {
-
+    
 
 }
 
-// TODO normalna tabela
+/**
+ * Lista plików.
+ *
+ * @return string
+ */
 function scholar_file_list() // {{{
 {
-    $files = array();
+    $header = array(
+        array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
+        array('data' => t('Size'),      'field' => 'filesize'),
+        array('data' => t('Refcount'),  'field' => 'refcount'),
+        array('data' => t('Operations'), 'colspan' => '2')
+    );
 
-    if (db_table_exists('files')) {
-        $query = db_query("SELECT * FROM {files} ORDER BY filename");
-        while ($row = db_fetch_array($query)) {
-            $files[$row['fid']] = $row;
-        }
+    $query = db_query("SELECT * FROM {scholar_files}" . tablesort_sql($header));
+    $rows  = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            check_plain($row['filename']),
+            format_size($row['filesize']),
+            check_plain($row['refcount']),
+            l(t('view'), $row['filepath']),
+            intval($row['refcount']) ? '' : l(t('delete'), "scholar/files/delete/{$row['id']}"),
+        );
     }
 
-    $html = print_r($files, 1);
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records found'), 'colspan' => 4)
+        );
+    }
 
-    $html .= '<script type="text/javascript">window.console&&console.log(window); if (window !== window.parent) document.body.innerHTML += \'POZDROWIENIA OD POTOMKA\';</script><a href="#!" onclick="window.open(\''.url('scholar/files').'\', \'_blank\');return false">Open</a>';
+    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files with refcount value greater than 0 cannot be removed, as they are referenced by other records in the database.</p>');
 
-    return theme('table', array(), $files);
+    return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
 } // }}}
 
 /*
@@ -143,6 +162,13 @@ function scholar_file_upload_form()
     $form['file'] = array(
         '#type'  => 'file',
         '#title' => t('Upload new file'),
+        '#description' => t(
+            'The maximum upload size is %filesize. Only files with the following extensions may be uploaded: %extensions. ',
+            array(
+                '%extensions' => scholar_file_allowed_extensions(),
+                '%filesize' => format_size(file_upload_max_size()),
+            )
+        ),
     );
     $form['submit'] = array(
         '#type'  => 'submit',
@@ -152,30 +178,85 @@ function scholar_file_upload_form()
     return $form;
 }
 
-function scholar_file_upload_form_submit() {
-//define your limits for the submission here
-    $limits = array() ;
- 
-  /*$validators = array(
-    'file_validate_extensions' => array($limits['extensions']),
-    'file_validate_image_resolution' => array($limits['resolution']),
-    'file_validate_size' => array(
-        $limits['file_size'],
-        $limits['user_size']
-    ),
-);*/
-    $validators = array();
- 
-  // Save new file uploads.
-  if ($file = file_save_upload('file_upload', $validators, file_directory_path())) {
-      // Do something with $file here.
-      echo 'ZAPISANO PLIK!';
-      exit;
-  }
-}
+/**
+ * Zwraca listę rozszerzeń plików, które mogą zostać przesłane.
+ *
+ * @return string               rozszerzenia plików oddzielone spacjami
+ */
+function scholar_file_allowed_extensions() // {{{
+{
+    return 'bib jpg gif png pdf ps zip';
+} // }}}
 
-function scholar_file_edit()
-{}
+/**
+ * Sprawdza czy w bazie danych nie ma pliku o takiej samej sumie MD5.
+ * Jeżeli nie ma do obiektu reprezentującego plik zostanie zapisana
+ * obliczona suma MD5.
+ *
+ * @param object &$file         obiekt reprezentujący plik
+ * @return array                lista błędów walidacji
+ */
+function scholar_file_validate_md5sum(&$file) // {{{
+{
+    $errors = array();
+
+    $md5 = md5_file($file->filepath);
+
+    $query = db_query("SELECT * FROM {scholar_files} WHERE md5sum = '%s'", $md5);
+    $row   = db_fetch_array($query);
+
+    if ($row) {
+        $errors[] = t('This file aready exists in the database (%filename).', array('%filename' => $row['filename'])); 
+    }
+
+    if (empty($errors)) {
+        $file->md5sum = $md5;
+    }
+
+    return $errors;
+} // }}}
+
+/**
+ * Sprawdza poprawność rozszerzenia pliku.
+ *
+ * @param object &$file         obiekt reprezentujący plik
+ * @return array                lista błędów walidacji
+ */
+function scholar_file_validate_extensions(&$file) // {{{
+{
+    $extensions = scholar_file_allowed_extensions();
+    $regex = '/\.(' . preg_replace('/\s+/', '|', preg_quote($extensions)) . ')$/i';
+
+    $errors = array();
+
+    if (!preg_match($regex, $file->filename)) {
+        $errors[] = t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions));
+    }
+
+    return $errors;
+} // }}}
+
+function scholar_file_upload_form_submit() // {{{
+{ 
+    $validators = array(
+        'scholar_file_validate_md5sum' => array(),
+        'scholar_file_validate_extensions' => array(),
+    );
+
+    if ($file = file_save_upload('file', $validators, scholar_file_dir())) {
+        $file->id = null;
+        $file->upload_time = date('Y-m-d H:i:s', $file->timestamp);
+        $file->user_id = $file->uid;
+
+        drupal_write_record('scholar_files', $file);
+
+        // trzeba usunac plik z tabeli files
+        db_query("DELETE FROM {files} WHERE fid = '%d'", $file->fid);
+
+        drupal_set_message(t('File uploaded successfully'));
+        drupal_goto('scholar/files');
+    }
+} // }}}
 
 /*function gallery_get_uploaded_file_name($name) { // {{{
   $tmpname = $_FILES['files']['tmp_name'][$name];

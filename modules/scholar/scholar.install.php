@@ -225,22 +225,27 @@ function scholar_schema() // {{{
             ),
             'filename' => array(
                 'type'      => 'varchar',
-                'size'      => 255,
+                'length'    => 255,
                 'not null'  => true,
             ),
             'filepath' => array(
                 'type'      => 'varchar',
-                'size'      => 255,
+                'length'    => 255,
                 'not null'  => true,
             ),
             'filemime' => array(
                 'type'      => 'varchar',
-                'size'      => 64,
+                'length'    => 64,
                 'not null'  => true,
             ),
             'filesize' => array(
                 'type'      => 'int',
                 'unsigned'  => true,
+                'not null'  => true,
+            ),
+            'md5sum' => array(
+                'type'      => 'char',
+                'length'    => 32,
                 'not null'  => true,
             ),
             'upload_time' => array(
@@ -251,12 +256,14 @@ function scholar_schema() // {{{
                 'description' => 'Liczba obiektow odwolujacych sie do tego pliku',
                 'type'      => 'int',
                 'unsigned'  => true,
-                'not null'  => true,
+		'not null'  => true,
+		'default'   => 0,
             )
         ),
-        'primary key' => array('file_id'),
+        'primary key' => array('id'),
         'unique keys' => array(
             'filepath'  => array('filepath'),
+            'md5sum'    => array('md5sum'),
         ),        
 
     ); // }}}
@@ -274,9 +281,9 @@ function scholar_schema() // {{{
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'category_id' => array(
-                // REFERENCES scholar_categories (id)
-                'type'      => 'int',
+            'label' => array(
+                'type'      => 'varchar',
+                'length'    => 64,
                 'not null'  => true,
             ),
         ),
@@ -302,4 +309,6 @@ function scholar_uninstall() // {{{
 {
     variable_del('scholar_last_change');
 } // }}}
+
+// DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_objects; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
 
