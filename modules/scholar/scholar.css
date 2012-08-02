@@ -1,0 +1,15 @@
+dl.scholar {
+
+}
+dl.scholar dt {
+  font-weight: bold;
+  font-size: 90%;
+  margin-bottom: 0;
+}
+
+fieldset.scholar > dl, 
+fieldset.scholar > .form-item,
+fieldset.scholar > table,
+fieldset.scholar > table.sticky-header + table {
+  margin-top: 0;
+}
