@@ -110,24 +110,42 @@ function scholar_menu()
         'parent'            => 'scholar/files',
         'file'              => 'scholar.file.php',
     );
+    $items['scholar/files/delete/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit file'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_delete_form', 3),
+        'parent'            => 'scholar/files',
+        'file'              => 'scholar.file.php',
+    );
     $items['scholar/files/select'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('File selection'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_file_select',
-        'file'              => 'scholar.file.php',
         'parent'            => 'scholar/files',
+        'file'              => 'scholar.file.php',
     );
 
     return $items;
 }
 
-function scholar_add_css()
+/**
+ * Dodaje arkusz ze stylami tego modułu.
+ */
+function scholar_add_css() // {{{
 {
     drupal_add_css(drupal_get_path('module', 'scholar') . '/scholar.css', 'module', 'all');
-}
+} // }}}
 
-function scholar_ascii($string)
+/**
+ * Transliteracja z UTF-8 do ASCII
+ *
+ * @param string $string
+ * @return string
+ */
+function scholar_ascii($string) // {{{
 {
     // http://stackoverflow.com/questions/5048401/why-doesnt-translit-work#answer-5048939
     // The transliteration done by iconv is not consistent across implementations.
@@ -157,7 +175,7 @@ function scholar_ascii($string)
     }
 
     return $string;
-}
+} // }}}
 
 function scholar_index()
 {
@@ -184,12 +202,6 @@ function scholar_render($html, $modal = false)
 function scholar_form_alter(&$form, &$form_state, $form_id)
 {
     if (0 === strncmp($form_id, 'scholar_', 8)) {
-        $form['#submit'] = isset($form['#submit']) ? (array) $form['#submit'] : array();
-        $submit_callback = $form_id . '_submit';
-        if (function_exists($submit_callback)) {
-            $form['#submit'][] = $submit_callback;
-        }
-
         $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
         $validate_callback = $form_id . '_validate';
         if (function_exists($validate_callback)) {
@@ -197,11 +209,10 @@ function scholar_form_alter(&$form, &$form_state, $form_id)
         }
 
         $form['#attributes'] = isset($form['#attributes']) ? (array) $form['#attributes'] : array();
-        $css_class = str_replace('_', '-', $form_id);
         if (!isset($form['#attributes']['class'])) {
-            $form['#attributes']['class'] = $css_class;
+            $form['#attributes']['class'] = 'scholar';
         } else {
-            $form['#attributes']['class'] .= ' ' . $css_class;
+            $form['#attributes']['class'] .= ' scholar';
         }
 
         return;
