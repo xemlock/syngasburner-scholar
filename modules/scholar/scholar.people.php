@@ -4,21 +4,25 @@
  * Narzędzia do manipulowania rekordami osób
  *
  * @author xemlock
- * @version 2012-07-27
+ * @version 2012-08-02
  */
 
 /**
  * Pobiera z bazy danych rekord osoby o podanym identyfikatorze.
  *
- * @param int $id
+ * @param int $id               identyfikator osoby
+ * @param bool $redirect        czy zgłosić błąd i przekierować do listy
+ *                              osób, jeżeli osoba nie została znaleziona
  */
-function scholar_people_fetch_row($id) // {{{
+function scholar_people_fetch_row($id, $redirect = false) // {{{
 {
     $query = db_query('SELECT * FROM {scholar_people} WHERE id = ' . intval($id));
     $row   = db_fetch_array($query);
 
     if (empty($row)) {
         drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
+        drupal_goto('scholar/people');
+        exit;
     }
 
     return $row;
@@ -39,7 +43,7 @@ function scholar_people_delete($id) // {{{
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $row  = $id ? scholar_people_fetch_row($id) : null;
+    $row  = $id ? scholar_people_fetch_row($id, true) : null;
     $form = array('#row' => $row);
 
     // ustawienia osoby
@@ -188,19 +192,9 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $row = scholar_people_fetch_row($id);
-    if (empty($row)) {
-        return '';
-    }
+    $row = scholar_people_fetch_row($id, true);
 
-    $form = array(
-        '#row'      => $row,
-    );
-    $form['id'] = array(
-        '#type'     => 'hidden',
-        '#value'    => $row['id'],
-    );
-
+    $form = array('#row' => $row);
     $form = confirm_form($form,
         t('Are you sure you want to delete person (%first_name %last_name)?', 
             array(
@@ -213,16 +207,15 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
         t('Delete'),
         t('Cancel')
     );
-    $form['#submit'][] = 'scholar_people_delete_submit';
+
+    scholar_add_css();
 
     return $form;
 } // }}}
 
-function scholar_people_delete_submit($form, &$form_state) // {{{
+function scholar_people_delete_form_submit($form, &$form_state) // {{{
 {
-    if ($form['#row']) {
-        $row = $form['#row'];
-
+    if ($row = $form['#row']) {
         scholar_people_delete($row['id']);
         drupal_set_message(t(
             'Person deleted successfully (%first_name %last_name)',

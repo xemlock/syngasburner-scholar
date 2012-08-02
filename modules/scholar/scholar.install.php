@@ -225,21 +225,17 @@ function scholar_schema() // {{{
                 'type'      => 'int',
             ),
             'filename' => array(
+                'description' => 'nazwa pliku na dysku wewnatrz katalogu z plikami modulu',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'filepath' => array(
-                'type'      => 'varchar',
-                'length'    => 255,
-                'not null'  => true,
-            ),
-            'filemime' => array(
+            'mimetype' => array(
                 'type'      => 'varchar',
                 'length'    => 64,
                 'not null'  => true,
             ),
-            'filesize' => array(
+            'size' => array(
                 'type'      => 'int',
                 'unsigned'  => true,
                 'not null'  => true,
@@ -263,7 +259,7 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('id'),
         'unique keys' => array(
-            'filepath'  => array('filepath'),
+            'filename'  => array('filename'),
             'md5sum'    => array('md5sum'),
         ),        
 
@@ -283,6 +279,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'label' => array(
+                'description' => 'etykieta pliku, np. w nazwie linku',
                 'type'      => 'varchar',
                 'length'    => 64,
                 'not null'  => true,
