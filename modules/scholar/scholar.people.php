@@ -19,7 +19,7 @@ function scholar_people_fetch_row($id, $redirect = false) // {{{
     $query = db_query('SELECT * FROM {scholar_people} WHERE id = ' . intval($id));
     $row   = db_fetch_array($query);
 
-    if (empty($row)) {
+    if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
         drupal_goto('scholar/people');
         exit;
