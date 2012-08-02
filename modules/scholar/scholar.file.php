@@ -22,19 +22,19 @@ function scholar_file_rebuild()
  * @param bool $redirect        czy zgłosić błąd i przekierować do listy
  *                              plików, jeżeli plik nie został znaleziony
  */
-function scholar_fetch_file($file_id, $redirect = false)
+function scholar_fetch_file($file_id, $redirect = false) // {{{
 {
     $query = db_query("SELECT * FROM {scholar_files} WHERE id = %d", $file_id);
     $row   = db_fetch_object($query);
 
-    if (empty($row)) {
+    if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
         drupal_goto('scholar/files');
         exit;
     }
 
     return $row;
-}
+} // }}}
 
 /**
  * Usuwa plik z bazy danych i dysku.
