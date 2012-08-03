@@ -8,7 +8,7 @@
  * @param string $filename      OPTIONAL nazwa pliku
  * @return string
  */
-function scholar_file_dir($filename = null) // {{{
+function scholar_file_path($filename = null) // {{{
 {
     $path = rtrim(file_directory_path(), '\\/') . '/scholar/' . ltrim($filename, '/');
     return str_replace('\\', '/', $path);
@@ -19,11 +19,13 @@ function scholar_file_dir($filename = null) // {{{
  */
 function scholar_sanitize_filename($filename) // {{{
 {
-    $filename = preg_replace('/\s/', ' ', basename($filename));
-    $filename = trim(scholar_ascii($filename));
+    $filename = scholar_ascii($filename);
 
-    // W wyniku transliteracji niektore znaki moga zostac calkowicie
-    // usuniete (np. alfabety wschodnioazjatyckie).
+    // W wyniku transliteracji do ASCII niektore znaki moga zostac
+    // calkowicie usuniete (np. alfabety wschodnioazjatyckie).
+
+    $filename = basename(str_replace('\\', '/', $filename));
+    $filename = trim(preg_replace('/\s/', ' ', $filename));
 
     if (0 == strlen($filename)) {
         return false;
@@ -49,6 +51,39 @@ function scholar_sanitize_filename($filename) // {{{
 
     return $filename;
 } // }}}
+
+/**
+ * @param object &$file
+ * @param string $filename
+ * @param string &$errmsg       OPTIONAL
+ * @return bool
+ */
+function scholar_rename_file(&$file, $filename, &$errmsg = null)
+{
+    $errmsg   = null;
+    $filename = scholar_sanitize_filename($filename);
+
+    if ($filename == $file->filename) {
+        // nowa nazwa pliku jest taka sama jak stara, nie ustawiaj bledu
+        return false;
+    }
+
+    $filepath = scholar_file_path($filename);
+
+    if (file_exists($filepath)) {
+        $errmsg = t('A file named %filename already exists.', array('%filename' => $filename));
+        return false;
+    }
+
+    if (@rename(scholar_file_path($file->filename), $filepath)) {
+        $file->filename = $filename;
+        db_query("UPDATE {scholar_files} SET filename = '%s' WHERE id = %d", $filename, $file->id);
+        return true;
+    }
+
+    $errmsg = t('Unable to rename the file %from to %to.', array('%from' => $file->filename, '%to' => $filename));
+    return false;
+}
 
 /**
  * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
@@ -103,7 +138,7 @@ function scholar_file_count_attachments($file_id) // {{{
 function scholar_delete_file(&$file) // {{{
 {
     db_query("DELETE FROM {scholar_files} WHERE id = %d", $file->id);
-    @unlink(scholar_file_dir($file->filename));
+    @unlink(scholar_file_path($file->filename));
 } // }}}
 
 /**
@@ -274,7 +309,7 @@ function scholar_file_validate_md5sum(&$file) // {{{
     $md5 = md5_file($file->filepath);
 
     if ($row = scholar_fetch_file(array('md5sum' => $md5))) {
-        $errors[] = t('This file aready exists in the database (%filename).', array('%filename' => $row->filename)); 
+        $errors[] = t('This file aready exists in the database (%filename)', array('%filename' => $row->filename)); 
     }
 
     if (empty($errors)) {
@@ -320,7 +355,7 @@ function scholar_file_validate_filename(&$file) // {{{
         $file->filename = $filename;
         $file->destination = dirname($file->destination) . '/' . $filename;
     } else {
-        $errors[] = t('Invalid file name.');
+        $errors[] = t('Invalid file name');
     }
 
     return $errors;
@@ -368,7 +403,7 @@ function scholar_file_upload_form_submit() // {{{
         'scholar_file_validate_extension' => array(),
     );
 
-    if ($file = file_save_upload('file', $validators, scholar_file_dir())) {
+    if ($file = file_save_upload('file', $validators, scholar_file_path())) {
         // Przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
         // filename po walidacji zawiera bazowa sciezke (ASCII) do wgranego 
         // pliku, czyli dokladnie to co jest potrzebne.
@@ -415,7 +450,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
         '#attributes' => array('class' => 'scholar'),
     );
 
-    $url = url(scholar_file_dir($file->filename), array('absolute' => true));
+    $url = url(scholar_file_path($file->filename), array('absolute' => true));
     $form['properties'][] = array(
         '#type' => 'markup',
         '#value' => '<dl class="scholar">
@@ -488,37 +523,46 @@ function scholar_file_edit_form(&$form_state, $file_id)
         );
     }
 
-    drupal_add_tab(l(t('List'), 'scholar/files'));
-    drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
+    // dodaj taby jezeli dostepny jest modul tabs
+    if (function_exists('drupal_add_tab')) {
+        drupal_add_tab(l(t('List'), 'scholar/files'));
+        drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
 
-    // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron odwolujacych
-    // sie do tego pliku
-    if (0 == $refcount) {
-        drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
+        // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron odwolujacych
+        // sie do tego pliku
+        if (0 == $refcount) {
+            drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
+        }
     }
 
     return $form;
 }
 
-function scholar_file_edit_form_submit($form, &$form_state)
+/**
+ * Obsługa zmiany nazwy pliku.
+ *
+ * @param array $form
+ * @param array &$form_state
+ */
+function scholar_file_edit_form_submit($form, &$form_state) // {{{
 {
-    //p($form_state['values']);
     if ($file = $form['#file']) {
-        $pos       = strrpos($file->filename, '.');
-        $extension = substr($file->filename, $pos);
+        $src = $file->filename;
+        $pos = strrpos($src, '.');
+        $ext = substr($src, $pos);
+        $dst = $form_state['values']['filename'] . $ext;
 
-        $destination = scholar_sanitize_filename($form_state['values']['filename'] . $extension);
-        //p($destination);
-
-        if (empty($destination)) {
-            //p('error');
-            form_set_error('filename', t('Invalid file name'));
-            return;
+        if (scholar_rename_file($file, $dst, $error)) {
+            drupal_set_message(t('File %from renamed successfully to %to', array('%from' => $src, '%to' => $file->filename)));
+            return drupal_goto('scholar/files/edit/' . $file->id);
         }
 
-        return drupal_goto('scholar/files/edit/' . $file->id);
+        form_set_error('', $error);
     }
-}
+
+    // nie przekierowywuj, bo wystapily bledy formularza
+    $form_state['redirect'] = false;
+} // }}}
 
 /**
  * Strona z prośbą o potwierdzenie usunięcia pliku o podanym identyfikatorze.

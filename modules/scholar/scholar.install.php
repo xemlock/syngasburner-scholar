@@ -220,12 +220,8 @@ function scholar_schema() // {{{
                 'type'      => 'serial',
                 'not null'  => true,
             ),
-            'user_id' => array(
-                // moze byc pusty
-                'type'      => 'int',
-            ),
             'filename' => array(
-                'description' => 'nazwa pliku na dysku wewnatrz katalogu z plikami modulu',
+                'description' => 'Nazwa pliku na dysku wewnatrz katalogu z plikami',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
@@ -244,6 +240,10 @@ function scholar_schema() // {{{
                 'type'      => 'char',
                 'length'    => 32,
                 'not null'  => true,
+            ),
+            'user_id' => array(
+                'descriptions' => 'Id uzytkownika, ktory wgral plik, moze byc puste',
+                'type'      => 'int',
             ),
             'upload_time' => array(
                 'type'      => 'datetime',
@@ -287,7 +287,6 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('file_id', 'node_id'),
     ); // }}}
-
 
   return $schema;
 } // }}}
