@@ -148,9 +148,9 @@ function scholar_add_css() // {{{
 function scholar_ascii($string) // {{{
 {
     // http://stackoverflow.com/questions/5048401/why-doesnt-translit-work#answer-5048939
-    // The transliteration done by iconv is not consistent across implementations.
-    // For instance, the glibc implementation transliterates é into e, but libiconv 
-    // transliterates it into 'e.
+    // The transliteration done by iconv is not consistent across
+    // implementations. For instance, the glibc implementation transliterates
+    // é into e, but libiconv transliterates it into 'e.
 
     $string = str_replace(
         array("æ",  "Æ",   "ß",  "þ",  "Þ", "–", "’", "‘", "“", "”", "„"),
@@ -159,10 +159,10 @@ function scholar_ascii($string) // {{{
     );
 
     if (ICONV_IMPL === 'glibc') {
-        $string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+        $string = @iconv('UTF-8', 'ASCII//TRANSLIT', $string);
     } else {
         // na podstawie http://smoku.net/artykuly/zend-filter-ascii
-        $string = iconv('UTF-8', 'WINDOWS-1250//TRANSLIT', $string);
+        $string = @iconv('UTF-8', 'WINDOWS-1250//TRANSLIT', $string);
         $string = strtr($string,
             "\xa5\xa3\xbc\x8c\xa7\x8a\xaa\x8d\x8f\x8e\xaf\xb9\xb3\xbe"
           . "\x9c\x9a\xba\x9d\x9f\x9e\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6"
@@ -173,6 +173,8 @@ function scholar_ascii($string) // {{{
             "ALLSSSSTZZZallssstzzzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYT"
           . "sraaaalccceeeeiiddnnooooruuuuyt");
     }
+
+
 
     return $string;
 } // }}}

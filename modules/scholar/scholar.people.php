@@ -16,7 +16,7 @@
  */
 function scholar_people_fetch_row($id, $redirect = false) // {{{
 {
-    $query = db_query('SELECT * FROM {scholar_people} WHERE id = ' . intval($id));
+    $query = db_query('SELECT * FROM {scholar_people} WHERE id = %d', $id);
     $row   = db_fetch_array($query);
 
     if (empty($row) && $redirect) {
