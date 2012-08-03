@@ -202,6 +202,10 @@ function scholar_render($html, $modal = false)
 function scholar_form_alter(&$form, &$form_state, $form_id)
 {
     if (0 === strncmp($form_id, 'scholar_', 8)) {
+        // callback #submit o nazwie takiej jak nazwa formularza
+        // z przyrostkiem _submit jest automaycznie dodawany przez
+        // drupal_prepare_form() wywolywana przez drupal_get_form().
+
         $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
         $validate_callback = $form_id . '_validate';
         if (function_exists($validate_callback)) {
@@ -218,9 +222,8 @@ function scholar_form_alter(&$form, &$form_state, $form_id)
         return;
     }
 
-    // Nie dopuszczaj do bezposredniej modyfikacji wezlow
-    // aktualizowanych automatycznie przez modul scholar.
-    // Podobnie z wykorzystawymi eventami.
+    // Nie dopuszczaj do bezposredniej modyfikacji wezlow aktualizowanych
+    // automatycznie przez modul scholar. Podobnie z wykorzystawymi eventami.
     // echo '<code>', $form_id, '</code>';
     if ('page_node_form' == $form_id  && $form['#node']) {
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
