@@ -15,7 +15,11 @@ function scholar_file_path($filename = null) // {{{
 } // }}}
 
 /**
- * @return false|string
+ * Przekształca podaną nazwę pliku na czysty ASCII, wykonuje walidację nazwy
+ * pliku oraz rozszerzenia oraz usuwaja potencjalnie problematyczne znaki.
+ *
+ * @return false|string         false jeżeli podana nazwa pliku nie może
+ *                              zostać przekształcona do bezpiecznej postaci
  */
 function scholar_sanitize_filename($filename) // {{{
 {
@@ -53,12 +57,16 @@ function scholar_sanitize_filename($filename) // {{{
 } // }}}
 
 /**
- * @param object &$file
- * @param string $filename
- * @param string &$errmsg       OPTIONAL
- * @return bool
+ * Zmienia nazwę pliku.
+ *
+ * @param object &$file         obiekt reprezentujący plik
+ * @param string $filename      nowa nazwa pliku
+ * @param string &$errmsg       OPTIONAL komunikat o błędzie
+ * @return bool                 false jeżeli zmiana nazwy pliku nie powiodła
+ *                              się, $errmsg zawiera ewentualny komunikat 
+ *                              o błędzie
  */
-function scholar_rename_file(&$file, $filename, &$errmsg = null)
+function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
 {
     $errmsg   = null;
     $filename = scholar_sanitize_filename($filename);
@@ -83,9 +91,11 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null)
 
     $errmsg = t('Unable to rename the file %from to %to.', array('%from' => $file->filename, '%to' => $filename));
     return false;
-}
+} // }}}
 
 /**
+ * Pobiera z bazy danych rekord pliku.
+ *
  * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
  *                              tablica z warunkami wyszukiwania
  * @param bool $redirect        czy zgłosić błąd i przekierować do listy
@@ -117,7 +127,7 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
 } // }}}
 
 /**
- * Policz ile jest rekordów wiążących ten plik z węzłami.
+ * Liczy ile jest rekordów wiążących ten plik z węzłami.
  *
  * @param int $file_id          identyfikator pliku
  * @return int
@@ -327,6 +337,10 @@ function scholar_file_validate_md5sum(&$file) // {{{
  */
 function scholar_file_validate_extension(&$file) // {{{
 {
+    // W zasadzie jest to kopia file_validate_extensions(), z tym, ze
+    // sprawdzanie poprawnosci rozszerzenia dotyczy takze plikow wyslanych
+    // przez admina (uid = 1).
+
     $extensions = scholar_file_allowed_extensions();
     $regex = '/\.(' . preg_replace('/\s+/', '|', preg_quote($extensions)) . ')$/i';
 
@@ -352,6 +366,8 @@ function scholar_file_validate_filename(&$file) // {{{
     $errors = array();
 
     if ($filename = scholar_sanitize_filename($file->filename)) {
+        // Z pol 'filename' i 'destination' korzysta file_save_upload()
+        // podczas zapisu przeslanego pliku.
         $file->filename = $filename;
         $file->destination = dirname($file->destination) . '/' . $filename;
     } else {
@@ -362,7 +378,7 @@ function scholar_file_validate_filename(&$file) // {{{
 } // }}}
 
 /**
- * Definicja formularza do wgrywania plików.
+ * Formularz do wgrywania plików.
  *
  * @return array
  */
@@ -393,7 +409,8 @@ function scholar_file_upload_form() // {{{
 } // }}}
 
 /**
- * Obsługa przesyłania pliku.
+ * Obsługa walidacji i zapisania pliku przesłanego za pomocą formularza 
+ * {@link scholar_file_upload_form()}.
  */
 function scholar_file_upload_form_submit() // {{{
 {
@@ -435,6 +452,8 @@ function scholar_file_edit_form(&$form_state, $file_id)
 {
     $file = scholar_fetch_file($file_id, true);
 
+    // Zakladamy, ze w file->filename jest nazwa pliku w czystym ASCII,
+    // stad uzycie standardowych funkcji do operowania na stringach.
     $pos       = strrpos($file->filename, '.');
     $filename  = substr($file->filename, 0, $pos);
     $extension = substr($file->filename, $pos);
@@ -528,8 +547,8 @@ function scholar_file_edit_form(&$form_state, $file_id)
         drupal_add_tab(l(t('List'), 'scholar/files'));
         drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
 
-        // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron odwolujacych
-        // sie do tego pliku
+        // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron 
+        // odwolujacych sie do tego pliku
         if (0 == $refcount) {
             drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
         }
@@ -547,9 +566,13 @@ function scholar_file_edit_form(&$form_state, $file_id)
 function scholar_file_edit_form_submit($form, &$form_state) // {{{
 {
     if ($file = $form['#file']) {
+        // Zakladamy, ze w file->filename jest nazwa pliku w czystym ASCII,
+        // stad uzycie standardowych funkcji do operowania na stringach.
         $src = $file->filename;
         $pos = strrpos($src, '.');
         $ext = substr($src, $pos);
+
+        // Dodaj do nazwy pliku oryginalne rozszerzenie
         $dst = $form_state['values']['filename'] . $ext;
 
         if (scholar_rename_file($file, $dst, $error)) {
@@ -560,7 +583,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
         form_set_error('', $error);
     }
 
-    // nie przekierowywuj, bo wystapily bledy formularza
+    // nie przekierowywuj, poniewaz wystapily bledy formularza
     $form_state['redirect'] = false;
 } // }}}
 

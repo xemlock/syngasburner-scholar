@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-07-31
+ * @version 2012-08-03
  */
 function scholar_schema() // {{{
 {
