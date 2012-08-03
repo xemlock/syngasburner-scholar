@@ -1,30 +1,75 @@
 <?php
 
+/**
+ * Zwraca ścieżkę do katalogu z plikami zarządzanymi przez ten moduł,
+ * lub gdy podano nazwę pliku ścieżkę do tego pliku wewnątrz wspomnianego
+ * katalogu.
+ *
+ * @param string $filename      OPTIONAL nazwa pliku
+ * @return string
+ */
 function scholar_file_dir($filename = null) // {{{
 {
     $path = rtrim(file_directory_path(), '\\/') . '/scholar/' . ltrim($filename, '/');
     return str_replace('\\', '/', $path);
 } // }}}
 
-
 /**
- * Analizuje zawartość katalogu z plikami i uaktualnia dane
- * w bazie.
+ * @return false|string
  */
-function scholar_file_rebuild()
+function scholar_sanitize_filename($filename) // {{{
 {
-    
+    $filename = preg_replace('/\s/', ' ', basename($filename));
+    $filename = trim(scholar_ascii($filename));
 
-}
+    // W wyniku transliteracji niektore znaki moga zostac calkowicie
+    // usuniete (np. alfabety wschodnioazjatyckie).
+
+    if (0 == strlen($filename)) {
+        return false;
+    }
+
+    $pos = strrpos($filename, '.');
+    if (empty($pos) || (strlen($filename) - 1 == $pos)) {
+        // brak kropki lub brak nazwy pliku (jedyna kropka wystepuje
+        // na poczatku), lub puste rozszerzenie (kropka na koncu)
+        return false;
+    }
+
+    // Usun biale znaki z rozszerzenia. Rozszerzenie zawiera tutaj
+    // przynajmniej jeden niepusty znak.
+    $extension = str_replace(' ', '', substr($filename, $pos));
+
+    // Usun spacje na koncu nazwy pliku, przed rozszerzeniem.
+    // Wiemy, ze nazwa pliku zawiera przynajmniej jeden niepusty znak.
+    $filename  = rtrim(substr($filename, 0, $pos)) . $extension;    
+
+    // zastap potencjalnie problematyczne znaki podkresleniami
+    $filename  = preg_replace('/[^ -_.a-z0-9]/i', '_', $filename);
+
+    return $filename;
+} // }}}
 
 /**
- * @param int $file_id          identyfikator pliku
+ * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
+ *                              tablica z warunkami wyszukiwania
  * @param bool $redirect        czy zgłosić błąd i przekierować do listy
  *                              plików, jeżeli plik nie został znaleziony
  */
 function scholar_fetch_file($file_id, $redirect = false) // {{{
 {
-    $query = db_query("SELECT * FROM {scholar_files} WHERE id = %d", $file_id);
+    $cond = array();
+
+    if (is_array($file_id)) {
+        foreach ($file_id as $key => $value) {
+            $cond[] = db_escape_table($key) . " = '" . db_escape_string($value) . "'";
+        }
+    } else {
+        $cond[] = "id = " . intval($file_id);
+    }
+
+    $cond  = implode(" AND ", $cond);
+    $query = db_query("SELECT * FROM {scholar_files} WHERE " . $cond);
     $row   = db_fetch_object($query);
 
     if (empty($row) && $redirect) {
@@ -34,6 +79,20 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
     }
 
     return $row;
+} // }}}
+
+/**
+ * Policz ile jest rekordów wiążących ten plik z węzłami.
+ *
+ * @param int $file_id          identyfikator pliku
+ * @return int
+ */
+function scholar_file_count_attachments($file_id) // {{{
+{
+    $query = db_query("SELECT COUNT(*) AS cnt FROM {scholar_attachments} WHERE file_id = %d", $file->id);
+    $row   = db_fetch_array($query);
+
+    return intval($row['cnr']);
 } // }}}
 
 /**
@@ -47,107 +106,14 @@ function scholar_delete_file(&$file) // {{{
     @unlink(scholar_file_dir($file->filename));
 } // }}}
 
-function scholar_file_edit_form(&$form_state, $file_id)
+/**
+ * Analizuje zawartość katalogu z plikami i uaktualnia dane
+ * w bazie.
+ */
+function scholar_file_rebuild()
 {
-    $file = scholar_fetch_file($file_id, true);
+    
 
-    $pos       = strrpos($file->filename, '.');
-    $filename  = substr($file->filename, 0, $pos);
-    $extension = substr($file->filename, $pos);
-
-    scholar_add_css();
-
-    $uploader = user_load(intval($file->user_id));
-
-    $form = array();
-    $form['properties'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Properties'),
-        '#attributes' => array('class' => 'scholar'),
-    );
-
-    $url = url(scholar_file_dir($file->filename), array('absolute' => true));
-    $form['properties'][] = array(
-        '#type' => 'markup',
-        '#value' => '<dl class="scholar">
-<dt>Size</dt><dd>' . format_size($file->size) . '</dd>
-<dt>MIME type</dt><dd>' . check_plain($file->mimetype) . '</dd>
-<dt>MD5 checksum</dt><dd>' . check_plain($file->md5sum) . '</dd>
-<dt>File URL</dt><dd>' . l($url, $url, array('attributes' => array('target' => '_blank'))) . '</dd>
-<dt>Uploaded</dt><dd>' . check_plain($file->upload_time). ', by <em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : 'unknown user') . '</em></dd>
-</dl>',
-    );
-
-    $form['rename'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Rename file'),
-        '#attributes' => array('class' => 'scholar'),
-    );
-    $form['rename']['filename'] = array(
-        '#type' => 'textfield',
-        '#title' => t('File name'),
-        '#required' => true,
-        '#default_value' => $filename,
-        '#field_suffix'  => $extension,
-        '#description' => t('All filenames must contain only ASCII characters. Non-letter characters other than dash and underscore will be replaced with the latter.'),
-    );
-    $form['rename']['submit'] = array(
-        '#type' => 'submit',
-        '#value' => t('Rename file'),
-    );
-
-    if ($refcount = intval($file->refcount)) {
-        $header = array(
-            array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
-            array('data' => t('Language'), 'field' => 'language'),
-        );
-
-        $form['ref'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Referencing pages'),
-            '#attributes' => array('class' => 'scholar'),
-        );
-        $query = db_query("SELECT * FROM {node} n JOIN {scholar_attachments} a ON n.nid = a.node_id WHERE a.file_id = %d" . tablesort_sql($header), $file->id);
-        $rows  = array();
-
-        $langs = Langs::languages();
-        while ($row = db_fetch_array($query)) {
-            $rows[] = array(
-                'title'    => check_plain($row['title']),
-                'language' => check_plain(isset($langs[$row['language']]) ? $langs[$row['language']] : t('Language neutral')),
-            );
-        }
-
-        if (count($rows) != $refcount) {
-            $rows[] = array(
-                array(
-                    'data' => format_plural($refcount,
-                        'Expected %refcount file, but found %count. Database corruption detected.',
-                        'Expected %refcount files, but found %count. Database corruption detected.',
-                        array('%refcount' => $refcount, '%count' => count($rows))
-                    ),
-                    'colspan' => 2,
-                ),
-            );
-        }
-
-        $form['ref'][] = array(
-            '#type' => 'markup',
-            '#value' => theme('table', $header, $rows),
-        );
-    }
-
-    drupal_add_tab(l(t('List'), 'scholar/files'));
-    drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
-
-    if (0 == $refcount) {
-        drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
-    }
-
-    //p('Zażółć gęślą jaźń; Herrens bön, även Fader vår eller Vår Fader. ĚØŘ!');
-    //p(scholar_ascii('Zażółć gęślą jaźń; Herrens bön, även Fader vår eller Vår Fader. ĚØŘ!'));
-
-    return $form;
 }
 
 /**
@@ -187,8 +153,10 @@ function scholar_file_list() // {{{
 } // }}}
 
 /*
- * Akcja przeznaczona tylko dla okienek i ramek. Bezposredni
+ * Lista plików. Przeznaczona tylko dla okienek i ramek. Bezposredni
  * dostęp jest niewskazany.
+ *
+ * @return string
  */
 function scholar_file_select() // {{{
 {
@@ -305,11 +273,8 @@ function scholar_file_validate_md5sum(&$file) // {{{
 
     $md5 = md5_file($file->filepath);
 
-    $query = db_query("SELECT * FROM {scholar_files} WHERE md5sum = '%s'", $md5);
-    $row   = db_fetch_array($query);
-
-    if ($row) {
-        $errors[] = t('This file aready exists in the database (%filename).', array('%filename' => $row['filename'])); 
+    if ($row = scholar_fetch_file(array('md5sum' => $md5))) {
+        $errors[] = t('This file aready exists in the database (%filename).', array('%filename' => $row->filename)); 
     }
 
     if (empty($errors)) {
@@ -351,21 +316,11 @@ function scholar_file_validate_filename(&$file) // {{{
 {
     $errors = array();
 
-    $basename = basename($file->filename);
-    $pos      = strrpos($basename, '.');
-    $filename = scholar_ascii(substr($basename, 0, $pos));
-
-    // w tym miejscu jezeli nie ma rozszerzenia filename zawiera 
-    // pusty string, ktory nie przejdzie walidacji
-
-    if (0 == strlen($filename)) {
-        $errors[] = t('Filename must not be empty');
+    if ($filename = scholar_sanitize_filename($file->filename)) {
+        $file->filename = $filename;
+        $file->destination = dirname($file->destination) . '/' . $filename;
     } else {
-        $filename = preg_replace('/[^-_a-z0-9]/i', '_', $filename);
-        $file->filename = $filename . substr($basename, $pos);
-
-        // zaktualizuj docelowe polozenie pliku
-        $file->destination = dirname($file->destination) . '/' . $file->filename;
+        $errors[] = t('Invalid file name.');
     }
 
     return $errors;
@@ -402,12 +357,15 @@ function scholar_file_upload_form() // {{{
     return $form;
 } // }}}
 
+/**
+ * Obsługa przesyłania pliku.
+ */
 function scholar_file_upload_form_submit() // {{{
-{ 
+{
     $validators = array(
         'scholar_file_validate_md5sum'    => array(),
-        'scholar_file_validate_extension' => array(),
         'scholar_file_validate_filename'  => array(),
+        'scholar_file_validate_extension' => array(),
     );
 
     if ($file = file_save_upload('file', $validators, scholar_file_dir())) {
@@ -432,10 +390,141 @@ function scholar_file_upload_form_submit() // {{{
 } // }}}
 
 /**
+ * Formularz edycji pliku, dodatkowo pokazujący właściwości pliku.
+ *
+ * @param array &$form_state
+ * @param int $file_id          identyfikator pliku
+ * @return array
+ */
+function scholar_file_edit_form(&$form_state, $file_id)
+{
+    $file = scholar_fetch_file($file_id, true);
+
+    $pos       = strrpos($file->filename, '.');
+    $filename  = substr($file->filename, 0, $pos);
+    $extension = substr($file->filename, $pos);
+
+    scholar_add_css();
+
+    $uploader = user_load(intval($file->user_id));
+
+    $form = array('#file' => $file);
+    $form['properties'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Properties'),
+        '#attributes' => array('class' => 'scholar'),
+    );
+
+    $url = url(scholar_file_dir($file->filename), array('absolute' => true));
+    $form['properties'][] = array(
+        '#type' => 'markup',
+        '#value' => '<dl class="scholar">
+<dt>Size</dt><dd>' . format_size($file->size) . '</dd>
+<dt>MIME type</dt><dd>' . check_plain($file->mimetype) . '</dd>
+<dt>MD5 checksum</dt><dd>' . check_plain($file->md5sum) . '</dd>
+<dt>File URL</dt><dd>' . l($url, $url, array('attributes' => array('target' => '_blank'))) . '</dd>
+<dt>Uploaded</dt><dd>' . check_plain($file->upload_time). ', by <em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : 'unknown user') . '</em></dd>
+</dl>',
+    );
+
+    $form['rename'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Rename file'),
+        '#attributes' => array('class' => 'scholar'),
+    );
+    $form['rename']['filename'] = array(
+        '#type' => 'textfield',
+        '#title' => t('File name'),
+        '#required' => true,
+        '#default_value' => $filename,
+        '#field_suffix'  => $extension,
+        '#description' => t('Accented characters will be automatically transliterated into their ASCII counterparts. Non-letter characters other than space, dot and dash will be replaced with the underscore character.'), // znaki narodowe
+    );
+    $form['rename']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Rename file'),
+    );
+
+    // wyswietl liste stron odwolujacych sie do tego pliku
+    if ($refcount = intval($file->refcount)) {
+        $header = array(
+            array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
+            array('data' => t('Language'), 'field' => 'language'),
+        );
+
+        $form['ref'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Referencing pages'),
+            '#attributes' => array('class' => 'scholar'),
+        );
+
+        $query = db_query("SELECT * FROM {node} n JOIN {scholar_attachments} a ON n.nid = a.node_id WHERE a.file_id = %d" . tablesort_sql($header), $file->id);
+        $rows  = array();
+        $langs = Langs::languages();
+
+        while ($row = db_fetch_array($query)) {
+            $rows[] = array(
+                'title'    => check_plain($row['title']),
+                'language' => check_plain(isset($langs[$row['language']]) ? $langs[$row['language']] : t('Language neutral')),
+            );
+        }
+
+        if (count($rows) != $refcount) {
+            $rows[] = array(
+                array(
+                    'data' => format_plural($refcount,
+                        'Expected %refcount file, but found %count. Database corruption detected.',
+                        'Expected %refcount files, but found %count. Database corruption detected.',
+                        array('%refcount' => $refcount, '%count' => count($rows))
+                    ),
+                    'colspan' => 2,
+                ),
+            );
+        }
+
+        $form['ref'][] = array(
+            '#type' => 'markup',
+            '#value' => theme('table', $header, $rows),
+        );
+    }
+
+    drupal_add_tab(l(t('List'), 'scholar/files'));
+    drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
+
+    // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron odwolujacych
+    // sie do tego pliku
+    if (0 == $refcount) {
+        drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
+    }
+
+    return $form;
+}
+
+function scholar_file_edit_form_submit($form, &$form_state)
+{
+    //p($form_state['values']);
+    if ($file = $form['#file']) {
+        $pos       = strrpos($file->filename, '.');
+        $extension = substr($file->filename, $pos);
+
+        $destination = scholar_sanitize_filename($form_state['values']['filename'] . $extension);
+        //p($destination);
+
+        if (empty($destination)) {
+            //p('error');
+            form_set_error('filename', t('Invalid file name'));
+            return;
+        }
+
+        return drupal_goto('scholar/files/edit/' . $file->id);
+    }
+}
+
+/**
  * Strona z prośbą o potwierdzenie usunięcia pliku o podanym identyfikatorze.
  *
  * @param array &$form_state
- * @param int $file_id
+ * @param int $file_id          identyfikator pliku
  */
 function scholar_file_delete_form(&$form_state, $file_id) // {{{
 {
@@ -465,19 +554,27 @@ function scholar_file_delete_form_validate($form, &$form_state) // {{{
 {
     $file = $form['#file'];
 
-    if ($file && ($refcount = intval($file->refcount))) {
-        form_set_error('', 
-            format_plural($refcount,
-                'There is one page referencing this file. File cannot be deleted.',
-                'There are %refcount pages referencing this file. File cannot be deleted.',
-                array('%refcount' => $refcount)
-            )
-        );
+    if ($file) {
+        // sprawdzamy dokladnie faktyczna liczbe odwolan do tego pliku,
+        // na wypadek gdyby refcount zawieralo niepoprawna wartosc
+
+        if (scholar_file_count_attachments($file->id)) {
+            form_set_error('', 
+                format_plural($refcount,
+                    'There is one page referencing this file. File cannot be deleted.',
+                    'There are %refcount pages referencing this file. File cannot be deleted.',
+                    array('%refcount' => $refcount)
+                )
+            );
+        }
     }
 } // }}}
 
 /**
  * Wywołuje funkcję usuwającą plik z dysku.
+ *
+ * @param array $form
+ * @param array &$form_state
  */
 function scholar_file_delete_form_submit($form, &$form_state) // {{{
 {
