@@ -325,8 +325,8 @@ p($form);
  */
 function scholar_nodes_subform($row = null, $table_name = null) // {{{
 {
-    $languages = Langs::languages();
-    $default_lang = Langs::default_lang();
+    $languages = scholar_languages();
+    $default_lang = language_default('language');
     $form = array();
 
     foreach ($languages as $code => $name) {

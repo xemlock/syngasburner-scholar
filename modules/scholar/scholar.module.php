@@ -181,7 +181,7 @@ function scholar_add_css() // {{{
 /**
  * Dodaje kod JavaScript tego modułu.
  */
-function scholar_add_css() // {{{
+function scholar_add_js() // {{{
 {
     drupal_add_js(drupal_get_path('module', 'scholar') . '/scholar.js', 'module', 'header');
 } // }}}
@@ -391,39 +391,99 @@ function scholar_render_form()
 function scholar_elements() // {{{
 {
     $elements['scholar_checkboxed_container'] = array(
-        '#input' => true,
-        '#checkbox_name' => 'status',
+        '#input'            => true,
+        '#checkbox_name'    => 'status',
     );
     $elements['scholar_attachment_manager'] = array(
-        '#input' => true,
+        '#input'            => true,
+        '#element_validate' => array('form_type_scholar_attachment_manager_validate'),
     );
 
     return $elements;
 } // }}}
 
+/**
+ * @param array $element
+ * @param array &$form_state
+ */
+function form_type_scholar_attachment_manager_validate($element, &$form_state)
+{
+    $count = count(scholar_languages());
+
+    // jezeli dodano element przynajmniej jedna z etykiet musi byc podana
+    // poniewaz podczas nadawania wartosci polu niepuste etykiety sa ustawiane
+    // tylko dla dostepnych jezykow, wystarczy sprawdzic, czy liczba etykiet
+    // jest rowna liczbie jezykow
+    foreach ((array) $element['#value'] as $data) {
+        if (count($data['labels']) < $count) {
+            // Każdy załączony plik musi mieć nadaną przynajmniej jedną etykietę
+            form_error($element, t('Each attached file must be given at least one label.'));
+            break;
+        }
+    }
+}
+
+/**
+ * @param array $element
+ * @param mixed $post
+ */
 function form_type_scholar_attachment_manager_value($element, $post = false)
 {
-
     $value = array();
 
-    // value: [file_id][language_code] => label
-    // kolejnosc danych odpowiada kolejnosci wg weights
-    if ($post) {
+    if (false === $post) {
+        // formularz nie zostal przeslany, uzyj domyslnej wartosci
+        // na podstawie dolaczonego do elementu obiektu
     
-    
-    } else if ($element['#row']) {
-        
-    
+    } else {
+        $languages = scholar_languages();
+
+        foreach ((array) $post as $data) {
+            if (!isset($data['file_id'])) {
+                continue;
+            }
+
+            $file_id = intval($data['file_id']);
+            $labels  = array();
+
+            foreach ($languages as $language => $name) {
+                if (!isset($data['label'][$language])) {
+                    continue;
+                }
+
+                $label = trim(strval($data['label'][$language]));
+                if (strlen($label)) {
+                    $labels[$language] = $label;
+                }
+            }
+
+            // file_id jako klucz eliminuje ewentualne duplikaty plikow
+            $value[$file_id] = array(
+                'file_id' => $file_id,
+                'labels'  => $labels,
+            );
+        }
     }
 
     return $value;
 }
 
+/**
+ * @param array $element
+ * @return string
+ */
 function theme_scholar_attachment_manager($element)
 {
+    drupal_add_js('misc/tabledrag.js', 'core');
+    scholar_add_js();
 
-    // scholar_add_js();
-    $html = drupal_to_js(module_invoke('locale', 'language_list'));
+    $languages = array(t('All languages')) + scholar_languages();
+
+    $html = '<p class="help">Each file must be given label in at least one language.
+        If label is given, file will be listed on page in that language.</p>' .
+        '<div class="scholar-attachment-manager" data-name="' . $element['#name'] . '"></div>';
+    $html .= drupal_to_js($languages);
+
 
     return $html;
 }

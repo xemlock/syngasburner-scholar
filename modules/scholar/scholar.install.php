@@ -253,8 +253,8 @@ function scholar_schema() // {{{
                 'description' => 'Liczba obiektow odwolujacych sie do tego pliku',
                 'type'      => 'int',
                 'unsigned'  => true,
-		'not null'  => true,
-		'default'   => 0,
+                'not null'  => true,
+                'default'   => 0,
             )
         ),
         'primary key' => array('id'),

@@ -66,7 +66,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
 
     // link do wezlow zalezne od jezyka, ustawienia aliasu
     $languages = scholar_languages();
-    $default_lang = Langs::default_lang();
+    $default_lang = language_default('language');
 
     $form[] = array(
         '#type' => 'markup',
@@ -74,6 +74,9 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     );
 
     $form['attachments'] = array(
+        '#type' => 'fieldset',
+    );
+    $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
     );
 
