@@ -4,7 +4,7 @@
  * Schema modułu scholar.
  *
  * @author xemlock
- * @version 2012-08-03
+ * @version 2012-08-04
  */
 function scholar_schema() // {{{
 {
@@ -268,24 +268,41 @@ function scholar_schema() // {{{
     $schema['scholar_attachments'] = array( // {{{
         'description' => 'pliki podpięte do wpisów',
         'fields' => array(
+            'table_name' => array(
+                'description' => 'do rekordu jakiej tabeli nalezy identyfikator',
+                'type'      => 'varchar',
+                'length'    => 32,
+                'not null'  => true,
+            ),
+            'object_id' => array(
+                'description' => 'scholar_people.id albo scholar_objects.id, rozroznienie na podstawie table_name',
+                'type'      => 'int',
+                'not null'  => true,
+            ),
             'file_id' => array(
                 // REFERENCES scholar_files (fid)
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'node_id' => array(
-                // REFERENCES node (nid)
-                'type'      => 'int',
-                'not null'  => true,
-            ),
             'label' => array(
-                'description' => 'etykieta pliku, np. w nazwie linku',
+                'description' => 'etykieta pliku uzywana np. w nazwie linku do tego pliku',
                 'type'      => 'varchar',
                 'length'    => 64,
                 'not null'  => true,
             ),
+            'language' => array(
+                'description' => 'jezyk etykiety pliku',
+                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
+                'length'    => 12,
+                'not null'  => true,
+            ),
+            'weight' => array(
+                'description' => 'kolejnosc pliku na liscie',
+                'type'      => 'int',
+                'default'   => 0,
+            ),
         ),
-        'primary key' => array('file_id', 'node_id'),
+        'primary key' => array('table_name', 'object_id'),
     ); // }}}
 
   return $schema;
@@ -294,7 +311,8 @@ function scholar_schema() // {{{
 function scholar_install() // {{{
 {
     require_once dirname(__FILE__) . '/scholar.file.php';
-    $dir = scholar_file_dir();
+
+    $dir = scholar_file_path();
     if (!is_dir($dir) && !mkdir($dir, 0777)) {
         trigger_error('scholar_install: Unable to create storage directory: ' . $dir, E_USER_ERROR);
     }

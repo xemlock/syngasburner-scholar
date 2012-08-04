@@ -13,13 +13,18 @@ function p($var, $label = null)
         $label .= ': ';
     }
 
-    echo '<pre style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px">', $label;
+    ob_start();
     if (is_array($var) || is_object($var)) {
         print_r($var);
     } else {
         var_dump($var);
     }
-    echo '</pre>';
+    $contents = ob_get_clean();
+    $contents = str_replace(array("\r\n", "\r", "\n"), "<br/>", $contents);
+
+    echo '<div style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px;font-family:monospace;">', $label;
+    echo $contents;
+    echo '</div>';
 
     $last = ($last + 1) % count($colors);
 }
@@ -129,6 +134,40 @@ function scholar_menu()
     );
 
     return $items;
+}
+
+/**
+ * 
+ *
+ * @param array $header         tablica koloumn tabeli w postaci opisanej
+ *                              w theme_table()
+ * @param string|array $before  jeżeli podano argument typu array, zostanie on
+ *                              użyty zamiast parametru $columns, w przeciwnym
+ *                              razie argument zostanie umieszczony w wynikowym
+ *                              stringu bezpośrednio za klauzulą ORDER BY, przed
+ *                              kodem opisującym sortowanie
+ * @param array $columns        OPTIONAL tablica z dopuszczalnymi nazwami kolumn
+ * @return string
+ */
+function scholar_tablesort_sql($header, $before = '', $columns = null)
+{
+    // jezeli $before jest tablica uzyj jej jako $columns
+    if (is_array($before)) {
+        $columns = $before;
+        $before  = '';
+    }
+
+    // jezeli podano niepusta liste kolumn odfiltruj kolumny,
+    // ktorych w niej nie ma
+    if (is_array($columns)) {
+        foreach ($header as $key => $column) {
+            if (!isset($column['field']) || !in_array($column['field'], $columns)) {
+                unset($header[$key]);
+            }
+        }
+    }
+
+    return tablesort_sql($header, $before, $columns);
 }
 
 /**

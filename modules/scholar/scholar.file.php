@@ -100,6 +100,7 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
  *                              tablica z warunkami wyszukiwania
  * @param bool $redirect        czy zgłosić błąd i przekierować do listy
  *                              plików, jeżeli plik nie został znaleziony
+ * @return object
  */
 function scholar_fetch_file($file_id, $redirect = false) // {{{
 {
@@ -127,17 +128,42 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
 } // }}}
 
 /**
- * Liczy ile jest rekordów wiążących ten plik z węzłami.
+ * Liczy ile jest rekordów wiążących ten plik z rekordami tabel scholar_people
+ * i scholar_objects.
  *
- * @param int $file_id          identyfikator pliku
+ * @param object &$file         obiekt reprezentujący plik
  * @return int
  */
-function scholar_file_count_attachments($file_id) // {{{
+function scholar_file_count_attachments(&$file) // {{{
 {
     $query = db_query("SELECT COUNT(*) AS cnt FROM {scholar_attachments} WHERE file_id = %d", $file->id);
     $row   = db_fetch_array($query);
 
     return intval($row['cnr']);
+} // }}}
+
+/**
+ * Pobiera z bazy danych listę rekordów z tabel scholar_people 
+ * i scholar_objects odwołujących się do tego pliku.
+ *
+ * @param object &$file         obiekt reprezentujący plik
+ * @param array $header         tablica koloumn tabeli w postaci opisanej
+ *                              w theme_table(). Dopuszczalne nazwy kolumn:
+ *                              table_name, object_id, title, label, language
+ * @return array
+ */
+function scholar_file_fetch_dependent_rows(&$file, $header = null) // {{{
+{
+    $sqlsort = scholar_tablesort_sql($header, array('table_name', 'object_id', 'title', 'label', 'language'));
+
+    $query = db_query("SELECT table_name, object_id, CONCAT(first_name, ' ', last_name) AS title, label, language FROM {scholar_people} p JOIN {scholar_attachments} a ON a.table_name = 'people' AND a.object_id = p.id WHERE a.file_id = %d UNION ALL SELECT table_name, object_id, title, label, language FROM {scholar_objects} o JOIN {scholar_attachments} a ON a.table_name = 'objects' AND a.object_id = o.id WHERE a.file_id = %d" . $sqlsort, $file->id, $file->id);
+
+    $rows = array();
+    while ($row = db_fetch_array($query)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
 } // }}}
 
 /**
@@ -198,8 +224,8 @@ function scholar_file_list() // {{{
 } // }}}
 
 /*
- * Lista plików. Przeznaczona tylko dla okienek i ramek. Bezposredni
- * dostęp jest niewskazany.
+ * Lista plików z możliwością wyboru. Przeznaczona tylko dla okienek i ramek. 
+ * Bezposredni dostęp jest niewskazany.
  *
  * @return string
  */
@@ -500,7 +526,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
     );
 
     // wyswietl liste stron odwolujacych sie do tego pliku
-    if ($refcount = intval($file->refcount)) {
+    if (true|| $refcount = intval($file->refcount)) {
         $header = array(
             array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
             array('data' => t('Language'), 'field' => 'language'),
@@ -512,11 +538,10 @@ function scholar_file_edit_form(&$form_state, $file_id)
             '#attributes' => array('class' => 'scholar'),
         );
 
-        $query = db_query("SELECT * FROM {node} n JOIN {scholar_attachments} a ON n.nid = a.node_id WHERE a.file_id = %d" . tablesort_sql($header), $file->id);
         $rows  = array();
         $langs = Langs::languages();
 
-        while ($row = db_fetch_array($query)) {
+        foreach (scholar_file_fetch_dependent_rows($file, $header) as $row) {
             $rows[] = array(
                 'title'    => check_plain($row['title']),
                 'language' => check_plain(isset($langs[$row['language']]) ? $langs[$row['language']] : t('Language neutral')),
