@@ -1,5 +1,6 @@
 name = Scholar
 description = Scientific activity aggregator
+dependencies[] = locale
 dependencies[] = events
 dependencies[] = gallery
 dependencies[] = zend

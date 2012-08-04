@@ -1,10 +1,9 @@
 <?php
 
 /**
- * Schema modułu scholar.
+ * Deklaracja tabel modułu.
  *
- * @author xemlock
- * @version 2012-08-04
+ * @return array
  */
 function scholar_schema() // {{{
 {
@@ -242,8 +241,9 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'user_id' => array(
-                'descriptions' => 'Id uzytkownika, ktory wgral plik, moze byc puste',
+                'descriptions' => 'Id uzytkownika, ktory wgral plik',
                 'type'      => 'int',
+                'not null'  => true,
             ),
             'upload_time' => array(
                 'type'      => 'datetime',
@@ -303,6 +303,9 @@ function scholar_schema() // {{{
             ),
         ),
         'primary key' => array('table_name', 'object_id'),
+        'unique keys' => array(
+            'file_id' => array('table_name', 'object_id', 'file_id'),
+        ),
     ); // }}}
 
   return $schema;

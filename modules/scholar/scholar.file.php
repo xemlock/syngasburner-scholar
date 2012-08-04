@@ -534,17 +534,17 @@ function scholar_file_edit_form(&$form_state, $file_id)
 
         $form['ref'] = array(
             '#type' => 'fieldset',
-            '#title' => t('Referencing pages'),
+            '#title' => t('Dependent database records'),
             '#attributes' => array('class' => 'scholar'),
         );
 
         $rows  = array();
-        $langs = Langs::languages();
+        $langs = scholar_languages();
 
         foreach (scholar_file_fetch_dependent_rows($file, $header) as $row) {
             $rows[] = array(
                 'title'    => check_plain($row['title']),
-                'language' => check_plain(isset($langs[$row['language']]) ? $langs[$row['language']] : t('Language neutral')),
+                'language' => check_plain(scholar_languages($row['language'])),
             );
         }
 

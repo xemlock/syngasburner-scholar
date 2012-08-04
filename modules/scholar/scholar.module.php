@@ -149,7 +149,7 @@ function scholar_menu()
  * @param array $columns        OPTIONAL tablica z dopuszczalnymi nazwami kolumn
  * @return string
  */
-function scholar_tablesort_sql($header, $before = '', $columns = null)
+function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
 {
     // jezeli $before jest tablica uzyj jej jako $columns
     if (is_array($before)) {
@@ -168,7 +168,7 @@ function scholar_tablesort_sql($header, $before = '', $columns = null)
     }
 
     return tablesort_sql($header, $before, $columns);
-}
+} // }}}
 
 /**
  * Dodaje arkusz ze stylami tego modułu.
@@ -179,7 +179,15 @@ function scholar_add_css() // {{{
 } // }}}
 
 /**
- * Transliteracja z UTF-8 do ASCII
+ * Dodaje kod JavaScript tego modułu.
+ */
+function scholar_add_css() // {{{
+{
+    drupal_add_js(drupal_get_path('module', 'scholar') . '/scholar.js', 'module', 'header');
+} // }}}
+
+/**
+ * Transliteracja z UTF-8 do ASCII.
  *
  * @param string $string
  * @return string
@@ -216,8 +224,68 @@ function scholar_ascii($string) // {{{
     return $string;
 } // }}}
 
+/**
+ * Zwraca względną ścieżkę w obrębie bieżącej instalacji Drupala
+ * na podstawie zawartości nagłówka HTTP Referer.
+ *
+ * @return null|string          null jeżeli ścieżka w nagłówku Referer nie
+ *                              jest absolutna, lub jest zewnętrzna względem
+ *                              instalacji Drupala
+ */
+function scholar_referer() // {{{
+{
+    // $base_url zawiera sciezke od korzenia dokumentow na serwerze do pliku
+    // index.php instalacji Drupala zakonczona slashem
+    $base_url = preg_replace('/index\.php$/', '', $_SERVER['PHP_SELF']);
+    $referer  = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null;
+
+    if (preg_match('/^https?:\/\//', $referer)) {
+        // usun protokol, nazwe hosta z referera
+        $referer = preg_replace('/^https?:\/\//', '', $referer);
+        $referer = substr($referer, strpos($referer, '/'));
+
+        // upewnij sie, ze sciezka znajduje sie wewnatrz instalacji drupala,
+        // a nastepnie usun sciezke do index.php
+        $n = strlen($base_url);
+        if (!strncasecmp($referer, $base_url, $n)) {
+            $referer = substr($referer, $n);
+
+            if (strlen($referer)) {
+                return $referer;
+            }
+        }
+    }
+
+    return null;
+} // }}}
+
+/**
+ * Przekierowanie bez żadnej wyrafinowanej obsługi parametru destination.
+ *
+ * @param string $path
+ * @param string $query
+ */
+function scholar_goto($path, $query = null) // {{{
+{
+    // drupal_goto jest fundamentalnie uposledzone ze wzgledu
+    // na dzika obsluge destination
+    $url = url($path, array('query' => $query, 'absolute' => true));
+    $url = str_replace(array("\r", "\n"), '', $url);
+
+    session_write_close();
+
+    header('Status: 302 Found');
+    header('Location: '. $url, true, 302);
+    exit;
+} // }}}
+
+
 function scholar_index()
 {
+    p(scholar_referer());
+    p($_SERVER['HTTP_REFERER']);
+    p(scholar_languages());
+
     return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
 }
 
@@ -229,6 +297,28 @@ function scholar_render($html, $modal = false)
     }
     return $html;
 }
+
+/**
+ * Wykorzystuje locale_language_list().
+ */
+function scholar_languages($language = null, $default = null) // {{{
+{
+    static $languages = null;
+
+    if (null === $languages) {
+        $languages = module_invoke('locale', 'language_list');
+    }
+
+    if (null === $language) {
+        return $languages;
+    }
+
+    if (empty($language) || !isset($languages[$language])) {
+        return t('All languages');
+    }
+
+    return $languages[$language];
+} // }}}
 
 /**
  * Do formularzy o identyfikatorze rozpoczynającym się od scholar_
@@ -294,49 +384,6 @@ function scholar_render_form()
 }
 
 /**
- * @return null|string
- */
-function scholar_referer() // {{{
-{
-    // sciezka od korzenia dokumentow do pliku index.php zakonczona slashem
-    $base_url = preg_replace('/index\.php$/', '', $_SERVER['PHP_SELF']);
-    $referer  = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null;
-
-    if (preg_match('/^https?:\/\//', $referer)) {
-        // usun protokol, nazwe hosta z referera, oraz sciezke do index.php
-        $referer  = preg_replace('/^https?:\/\//', '', $referer);
-        $referer  = substr($referer, strpos($referer, '/') + strlen($base_url));
-
-        // teraz referer przechowuje wzgledna sciezke wewnatrz instalacji Drupala
-        if (strlen($referer)) {
-            return $referer;
-        }
-    }
-
-    return null;
-} // }}}
-
-/**
- * Przekierowanie bez żadnej wyrafinowanej obsługi zmiennej destination.
- *
- * @param string $path
- * @param string $query
- */
-function scholar_goto($path, $query = null) // {{{
-{
-    // drupal_goto jest fundamentalnie uposledzone ze wzgledu
-    // na dzika obsluge destination
-    $url = url($path, array('query' => $query, 'absolute' => true));
-    $url = str_replace(array("\r", "\n"), '', $url);
-
-    session_write_close();
-
-    header('Status: 302 Found');
-    header('Location: '. $url, true, 302);
-    exit;
-} // }}}
-
-/**
  * Deklaracja dodatkowych pól formularza.
  *
  * @return array
@@ -347,23 +394,38 @@ function scholar_elements() // {{{
         '#input' => true,
         '#checkbox_name' => 'status',
     );
-    $elements['scholar_file_upload'] = array(
+    $elements['scholar_attachment_manager'] = array(
         '#input' => true,
     );
 
     return $elements;
 } // }}}
 
-function form_type_scholar_file_upload_value($element, $post = false)
+function form_type_scholar_attachment_manager_value($element, $post = false)
 {
 
+    $value = array();
 
+    // value: [file_id][language_code] => label
+    // kolejnosc danych odpowiada kolejnosci wg weights
+    if ($post) {
+    
+    
+    } else if ($element['#row']) {
+        
+    
+    }
 
+    return $value;
 }
 
-function theme_scholar_file_upload($element)
+function theme_scholar_attachment_manager($element)
 {
-    
+
+    // scholar_add_js();
+    $html = drupal_to_js(module_invoke('locale', 'language_list'));
+
+    return $html;
 }
 
 /**
@@ -434,7 +496,7 @@ function scholar_theme() // {{{
         'arguments' => array('element' => null),
     );
 
-    $theme['scholar_file_uplooad'] = array(
+    $theme['scholar_attachment_manager'] = array(
         'arguments' => array('element' => null),
     );
 

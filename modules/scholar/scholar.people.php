@@ -65,12 +65,16 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     $form['image_id']['#title'] = t('Photo');
 
     // link do wezlow zalezne od jezyka, ustawienia aliasu
-    $languages = Langs::languages();
+    $languages = scholar_languages();
     $default_lang = Langs::default_lang();
 
     $form[] = array(
         '#type' => 'markup',
         '#value' => '<div style="clear:both;"><hr/></div>',
+    );
+
+    $form['attachments'] = array(
+        '#type' => 'scholar_attachment_manager',
     );
 
     $form['node'] = scholar_nodes_subform($row, 'people');
@@ -109,7 +113,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     $is_new = empty($row);
     $values = $form_state['values'];
     $nodes  = array();
-    $langs  = Langs::languages();
+    $langs  = scholar_languages();
 
     if ($row) {
         db_query(
