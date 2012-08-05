@@ -178,10 +178,10 @@ function scholar_delete_file(&$file) // {{{
 } // }}}
 
 /**
- * Analizuje zawartość katalogu z plikami i uaktualnia dane
- * w bazie.
+ * Analizuje zawartość katalogu z plikami i dodaje pliki, których nie
+ * ma w bazie danych. Duplikaty plików istniejących w bazie są ignorowane.
  */
-function scholar_file_rebuild()
+function scholar_file_import()
 {
     
 
