@@ -1,0 +1,147 @@
+dl.scholar {
+
+}
+dl.scholar dt {
+  font-weight: bold;
+  font-size: 90%;
+  margin: 0;
+}
+dl.scholar dd {
+  margin: 0 0 .4em 2em;
+}
+
+fieldset.scholar > dl, 
+fieldset.scholar > .form-item,
+fieldset.scholar > table,
+fieldset.scholar > table.sticky-header + table {
+  margin-top: 0;
+}
+
+form.scholar.confirmation {
+  margin-top: 1em;
+}
+
+form.scholar.confirmation .container-inline {
+  margin-top: 1em;
+}
+
+/* modal {{{ */
+.dialog {
+  background: #f6f6f6;
+  background: rgba(246, 246, 246, .9);
+  padding: 10px;
+  -webkit-box-shadow: 0 0 10px #444;
+     -moz-box-shadow: 0 0 10px #444;
+          box-shadow: 0 0 10px #444;
+}
+.ie7 .dialog,
+.ie8 .dialog {
+  border: 1px solid #999;
+}
+.dialog .title-bar {
+  height: 30px;
+  background: #fbd832;
+  border: 1px solid #f3c015;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+.dialog .title-bar .close {
+  display: block;
+  float: right;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 24px;
+  color: #666;
+  margin-right: 6px;
+}
+.dialog .title-bar .close:hover {
+  color: #000;
+  text-decoration: none;
+}
+.dialog .title-bar .title {
+  float: left;
+  font-size: 16px;
+  line-height: 30px;
+  color: #666;
+  margin-left: 6px;
+  cursor: default;
+  font-weight: bold;
+}
+.dialog .content {
+  border: 1px solid #aeaeae;
+  border-top: none;
+  background: #fff;
+}
+.dialog.loading .content {
+  background: #fff url(../i/v2/throbber.gif) no-repeat 50% 50%;
+}
+.dialog .status-bar {
+  padding: 10px 0 0;
+  positioN: relative;
+}
+.dialog .status {
+  position: absolute;
+  font-size: 14px;
+  padding: 4px 0;
+  color: #777;
+}
+
+.dialog .buttons {
+  text-align: right;
+}
+.dialog .buttons .dialog-button {
+  margin-left: 6px;
+}
+.dialog-button {
+  background: #7c639f;
+  border: 1px solid #633b88;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: normal;
+  padding: 4px 16px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ie7 input.dialog-button,
+.ie7 button.dialog-button {
+  overflow: visible;
+  padding: 1px 16px 2px; /* extra padding bug, 
+                            wartosci paddingow dobrane empirycznie */
+}
+.dialog-button:hover {
+  background: #ad87d1;
+  border-color: #7c639f;
+  color: #fff;
+  text-decoration: none;
+}
+.dialog-button.disabled,
+.dialog-button.disabled:hover {
+  background: #f7f7f7;
+  border-color: #ccc;;
+  color: #ccc;
+  cursor: default;
+}
+.dialog-button.cancel {
+  background-color: #ebebeb;
+  border-color: #999;
+  color: #777;
+}
+.dialog-button.cancel:hover {
+  background-color: #efefef;
+  border-color: #555;
+  color: #555;
+}
+.dialog-button.delete {
+  background-color: #d63110;
+  border-color: #861406;
+  color: #fff;
+}
+.dialog-button.delete:hover {
+  background-color: #e43815;
+  border-color: #861406;
+  color: #fff;
+}
+/* }}} */
+

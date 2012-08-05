@@ -175,7 +175,7 @@ function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
  */
 function scholar_add_css() // {{{
 {
-    drupal_add_css(drupal_get_path('module', 'scholar') . '/scholar.css', 'module', 'all');
+    drupal_add_css(drupal_get_path('module', 'scholar') . '/css/scholar.css', 'module', 'all');
 } // }}}
 
 /**
@@ -474,16 +474,24 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
  */
 function theme_scholar_attachment_manager($element)
 {
+    scholar_add_css();
     drupal_add_js('misc/tabledrag.js', 'core');
     scholar_add_js();
 
     $languages = array(t('All languages')) + scholar_languages();
 
+    $settings = array(
+        'prefix'        => $element['#name'],
+        'urlFileSelect' => url('scholar/files/select'),
+        'urlFileUpload' => url('scholar/files/upload', array('query' => 'modal=1')),
+    );
+
     $html = '<p class="help">Each file must be given label in at least one language.
         If label is given, file will be listed on page in that language.</p>' .
-        '<div class="scholar-attachment-manager" data-name="' . $element['#name'] . '"></div>';
+        '<div id="' . $element['#id'] . '"></div>' .
+        '<script type="text/javascript">new Scholar.attachmentManager(\'#' . $element['#id'] . '\', ' . drupal_to_js($settings) .')</script>';
     $html .= drupal_to_js($languages);
-
+    
 
     return $html;
 }
