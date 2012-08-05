@@ -387,6 +387,13 @@ function scholar_file_upload_form() // {{{
             )
         ),
     );
+
+    // pole dialog jest potrzebne, jezeli strona otwarta jest w IFRAME
+    $form['dialog'] = array(
+        '#type' => 'hidden',
+        '#default_value' => intval($_REQUEST['dialog']),
+    );
+
     $form['submit'] = array(
         '#type'  => 'submit',
         '#value' => t('Upload file'),
@@ -399,13 +406,15 @@ function scholar_file_upload_form() // {{{
  * Obsługa walidacji i zapisania pliku przesłanego za pomocą formularza 
  * {@link scholar_file_upload_form()}.
  */
-function scholar_file_upload_form_submit() // {{{
+function scholar_file_upload_form_submit($form, &$form_state) // {{{
 {
     $validators = array(
         'scholar_file_validate_md5sum'    => array(),
         'scholar_file_validate_filename'  => array(),
         'scholar_file_validate_extension' => array(),
     );
+
+    $dialog = (bool) $form_state['values']['dialog'];
 
     if ($file = file_save_upload('file', $validators, scholar_file_path())) {
         // Przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
@@ -422,6 +431,7 @@ function scholar_file_upload_form_submit() // {{{
 
         // trzeba usunac plik z tabeli files
         db_query("DELETE FROM {files} WHERE fid = '%d'", $file->fid);
+
 
         drupal_set_message(t('File uploaded successfully'));
         drupal_goto('scholar/files');
@@ -570,6 +580,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
     }
 
     // nie przekierowywuj, poniewaz wystapily bledy formularza
+    $form['#redirect'] = false;
     $form_state['redirect'] = false;
 } // }}}
 
