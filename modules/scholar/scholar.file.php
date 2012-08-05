@@ -238,62 +238,20 @@ function scholar_file_select() // {{{
 
     $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
     while ($row = db_fetch_array($query)) {
+        $row['filesize'] = format_size($row['size']);
         $files[] = $row;
     }
 
     ob_start();
 ?>
-<script type="text/javascript">
-var items = <?php echo drupal_to_js($files) ?>;
-function filter() {
-    var elem = document.getElementById('name-filter');
-    if (arguments.length > 0) {
-        elem.value = arguments[0];
-    }
-
-    var prefix = elem.value.toLowerCase();
-    for (var i = 0; i < items.length; ++i) {
-        var v = items[i];
-        var vv = v.filename.toLowerCase();
-        var e = document.getElementById('item-' + v.id);
-        if (e) e.style.display = vv.indexOf(prefix) != -1 ? '' : 'none';
-        else console.log('nie ma ajtema');
-    }
-}
-var caller = window.opener ? window.opener : (window.parent != window ? window.parent : null);
-var hash = window.location.hash.substring(2);
-var callerStorage = caller ? caller[hash] : null;
-
-if (callerStorage) callerStorage.addListener({
-    onDelete: function(file_id) {
-        if (document) { // jezeli okienko jest otwarte
-        var e = document.getElementById('item-' + file_id);
-        if (e) {
-            e.innerHTML = e.innerHTML.replace(/ \(SELECTED\)/, '');
-        }
-        }
-    }
+<script type="text/javascript">$(function() {
+new Scholar.itemSelector(<?php echo drupal_to_js($files) ?>, {
+    filterSelector: '#name-filter',
+    filterSubject: 'filename',
+    itemSelector: '#item-{id}',
+    filterReset: '#reset-filter'
 });
-window.onload = function() {
-    if (!callerStorage) return;
-    var c = document.getElementById('items').childNodes;
-    for (var i = 0; i < c.length; ++i) {
-        if (c[i].tagName != 'LI') continue;
-        if (callerStorage.has(c[i].id.replace(/^item-/, ''))) {
-            c[i].innerHTML += ' (SELECTED)';
-        }
-    }
-}
-function select_item(elem) {
-    if (!callerStorage) return;
-    var id = elem.id.replace(/^item-/, '');
-    if (callerStorage.has(id)) {
-            alert('Already selected!');
-            return;    
-    }
-    callerStorage.add(id);
-    elem.innerHTML += ' (SELECTED)';
-}
+});
 </script>
 <style type="text/css">
 #items li {
@@ -309,12 +267,12 @@ user-select: none;
   background: yellow;
 }
 </style>
-    Filtruj: <input type="text" onkeyup="filter()" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" onclick="filter('');">Wyczyść</button> <button type="button" onclick="window.close()">Zamknij</button>
+    Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
 Dwukrotne kliknięcie zaznacza element
 <hr/>
 <?php if ($files) { ?>
 <ul id="items"><?php foreach ($files as $file) { ?>
-<li id="item-<?php echo $file['id'] ?>" ondblclick="select_item(this)"><?php echo $file['filename'] ?>
+<li id="item-<?php echo $file['id'] ?>"><?php echo $file['filename'] ?>
 </li>
 <?php } ?></ul>
 <?php } else { ?>Nie ma plików<? } ?>

@@ -25,6 +25,13 @@ form.scholar.confirmation .container-inline {
   margin-top: 1em;
 }
 
+.dialog-button {
+  display: -moz-inline-box;
+  display: inline-block;
+  *display: inline;
+  zoom: 1;
+}
+
 /* modal {{{ */
 .dialog {
   background: #f6f6f6;

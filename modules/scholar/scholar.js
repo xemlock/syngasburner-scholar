@@ -18,6 +18,12 @@ var Scholar = {
             _listeners = [];
 
         /**
+         * Przechowuje błędy wywołania funkcji obsługi zdarzeń słuchaczy.
+         * @type Array
+         */
+        this.errors = [];
+
+        /**
          * Zwraca liczbę elementów w zbiorze.
          * @returns {number}
          */
@@ -36,7 +42,7 @@ var Scholar = {
         /**
          * Dodaje identyfikator do zbioru. Ustawienie nowej wartości
          * dla identyfikatora już obecnego w zbiorze nie wywołuje
-         * zdarzenia onInsert.
+         * zdarzenia onAdd.
          * @param id                    identyfikator
          * @param [value]               opcjonalna wartość powiązana 
          *                              z podanym identyfikatorem
@@ -56,7 +62,7 @@ var Scholar = {
                 ++_size;
 
                 // powiadom sluchaczy o dodaniu nowego identyfikatora
-                this.notify('onInsert', id);
+                this.notify('onAdd', id);
             }
 
             return this;
@@ -113,7 +119,11 @@ var Scholar = {
             for (var i = 0; i < _listeners.length; ++i) {
                 var listener = _listeners[i];
                 if (listener && typeof listener[event] === 'function') {
-                    listener[event].apply(listener, args);
+                    try {
+                        listener[event].apply(listener, args);
+                    } catch (e) {
+                        this.errors[this.errors.length] = e;
+                    }
                 }
             }
 
@@ -122,7 +132,7 @@ var Scholar = {
 
         /**
          * Dodaje słuchacza zmian w zbiorze. Obsługiwane zdarzenia to
-         * onInsert i onDelete, przyjmujące jako argument identyfikator.
+         * onAdd i onDelete, przyjmujące jako argument identyfikator.
          * @param {object} listener     słuchacz
          * @returns {number}            wewnętrzny numer nadany słuchaczowi
          */
@@ -192,7 +202,45 @@ var Scholar = {
                     height: 240,
                     iframe: {
                         url: settings.urlFileSelect + '#!' + idsetId,
-                        expand: false
+                        expand: false,
+                        load: function() {
+                            this.button('apply').removeClass('disabled');
+                        }
+                    },
+                    buttons: {
+                        apply: {
+                            label: 'Zastosuj',
+                            disabled: true,
+                            click: function() {
+                                var tbody = j.children('.table-wrapper').html('<table class="sticky-enabled"><thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead><tbody></tbody></table>').find('tbody');
+                                var odd = true;
+                                idset.each(function(id, value) {
+                                    $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
+                                        .append('<td>' + value.filename + '</td>')
+                                        .append('<td>' + value.filesize + '<input type="hidden" class="weight" /></td>')
+                                        .append('<td><input type="text" /></td>')
+                                        .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
+                                            // usun identyfikator pliku ze zbioru
+                                            idset.del(id);
+                                            // usun wiersz
+                                            $(this).parent().remove();
+                                        })).appendTo(tbody);
+                                        odd = !odd;
+                                });
+                                // dodaj tabledrag
+                                var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
+                                    target: 'weight',
+                                    source: 'weight',
+                                    relationship: 'sibling',
+                                    action: 'order',
+                                    hidden: false,
+                                    limit: 0
+                                }] });
+
+                                this.parentDialog.close();
+                            }
+                        },
+                        cancel: 'cancel',
                     }
                 });
                 return false;
@@ -220,73 +268,101 @@ var Scholar = {
 
     /**
      * Kazdy item musi miec ustawione .id
-     * filterSelector -> element z ktorego bedzie brana wartosc do filtrowania
-     * filterSubject -> filtrowanie po tej wlasciwosci itema
+     * filterSelector (opcjonalny) -> element z ktorego bedzie brana wartosc do filtrowania
+     * filterReset (opcjonalny) -> element czyszczący filter
+     * filterSubject (opcjonalny) -> filtrowanie po tej wlasciwosci itema, 
+     *                               musi byc podany jezeli podano filterSelector
      * itemSelector -> selector {id} placeholder dla identyfikatora
      * @constructor
      */
-    itemSelector: function(items, options) {              
+    itemSelector: function(items, options) {
+        /**
+         * Zwraca obiekt jQuery zawierający element drzewa dokumentu
+         * odpowiadający elementowi o podanym identyfikatorze.
+         * @param id
+         * @returns {jQuery}
+         */
+        function _getElementById(id) {
+            return $(options.itemSelector.replace(/\{id\}/g, id));
+        }
+
         /** 
          * Ukrywa te elementy listy, które nie zawierają ciągu znaków
          * podanego w wybranym polu tekstowym.
          */
-        this.filter = function() {
+        function _filter() {
             var filter = $(options.filterSelector);
             if (arguments.length > 0) {
-                filter.value = arguments[0];
+                filter.val(arguments[0]);
             }
 
-            var needle = filter.value.toLowerCase();
+            var needle = filter.val().toLowerCase();
             for (var i = 0; i < items.length; ++i) {
                 var item = items[i],
-                    elem = $(options.itemSelector.replace(/\{id\}/g, item.id)),
+                    elem = _getElementById(item.id),
                     haystack = String(item[options.filterSubject]).toLowerCase();
                 elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
             }
         }
 
-        // okienko (jezeli strona otwarta za pomoca window.open) lub strona 
+        // okno wolajace strone z itemSelectore, moze byc to okno macierzyste
+        // (jezeli strona otwarta za pomoca window.open) lub strona 
         // (jezeli otwarta w IFRAME)
         var trigger = window.opener ? window.opener : (window.parent !== window ? window.parent : null);
 
         // idset umieszczony w oknie otwierajacym przechowujacy wybrane elementy
         var storage = trigger ? trigger[window.location.hash.substr(2)] : null;
 
-        if (storage instanceof Scholar.idSet) {
+        if (storage) {
+            // dodaj sluchaczy do zbioru
             storage.addListener({
                 onAdd: function(id) {
-                    if (!document) {
-                        // jezeli okienko z itemSelectorem zostalo zamkniete,
-                        // nie ma czego aktualizowac
-                        return;
-                    }
-                    var elem = $(options.itemSelector.replace(/\{id\}/g, id));
-                    elem.html(elem.html() + ' (SELECTED)');
+                    // bloki try-catch na wypadek odwolywania sie do zmiennych
+                    // zwolnionych wskutek zamkniecia okienka, skutkujacym np.
+                    // bledem: Attempt to run compile-and-go script on a cleared scope
+                    try {
+                        var elem = _getElementById(id).addClass('selected');
+                        elem.html(elem.html() + ' (SELECTED)');
+                    } catch (e) {}
                 },
                 onDelete: function(id) {
-                    if (!document) {
-                        return;
-                    }
-
-                    var elem = $(options.itemSelector.replace(/\{id\}/g, id));
-                    elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                    try {
+                        var elem = _getElementById(id).removeClass('selected');
+                        elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                    } catch (e) {}
                 }
             });
 
             // zaznacz elementy juz obecne w zbiorze jako wybrane
             storage.each(function (id, value) {
-                var elem = $(options.itemSelector.replace(/\{id\}/g, id));
+                var elem = _getElementById(id);
                 elem.html(elem.html() + ' (SELECTED)');
             });
 
             // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
             $(items).each(function (key, item) {
-                var elem = $(options.itemSelector.replace(/\{id\}/g, item.id));
+                var elem = _getElementById(item.id);
                 elem.click(function() {
-                    storage[storage.has(item.id) ? 'del' : 'add'](item.id);
+                    storage[storage.has(item.id) ? 'del' : 'add'](item.id, item);
                 });
             });
-        }              
+        }
+
+        // jezeli podano selektor elementu, na podstawie wartosci ktorego
+        // beda filtrowane elementy, podepnij filtrowanie po kazdym
+        // wcisnieciu klawisza na klawiaturze
+        if (options.filterSelector) {
+            $(options.filterSelector).keyup(_filter);
+        }
+
+        // jezeli podano selektor elementu czyszczacego filter podepnij
+        // czyszczenie filtra po kliknieciu w niego
+        if (options.filterReset) {
+            $(options.filterReset).click(function() {
+                _filter('');
+                return false;
+            });
+        }
     },
     /**
      * Okienko.
@@ -312,6 +388,10 @@ var Scholar = {
             return jButtons;
         }
 
+        /**
+         * Pozycjonuje okienko na środku ekranu.
+         * @param {boolean} [animate]   jeżeli true pozycjonowanie bedzie animowane
+         */
         function _centerModal(animate) {
             if (_modal) {
                 var d = _modal.css('display');
@@ -337,7 +417,7 @@ var Scholar = {
 
         /**
          * Zwraca przycisk o podanym identyfikatorze
-         * @returns jQuery              element DOM przycisku
+         * @returns {jQuery}            element przycisku
          */
         this.button = function(id) {
             return _getButtons().children('#button-' + id);
@@ -347,7 +427,7 @@ var Scholar = {
         // mozna uzyc rowniez predefiniowanej wartosci 'cancel', ktora tworzy
         // przycisk 'Anuluj' zamykajacy okienko.
         // Funkcja przekazana w .click bedzie miala kontekst elementu przycisku
-        // (DIV.dialog-button), wzbogaconego o dodatkowe pole .parentModal, ktore daje
+        // (DIV.dialog-button), wzbogaconego o dodatkowe pole .parentDialog, ktore daje
         // dostep do okienka, do ktorego przycisk jest podpiety.
         // Ustawienie klasy 'disabled' na przycisku sprawia, ze metoda .click nie
         // bedzie uruchamiana.
@@ -381,6 +461,9 @@ var Scholar = {
                                     return item.click.apply(this);
                                 }
                             });
+                        if (item.disabled) {
+                            btn.addClass('disabled');
+                        }
                         if (item.type) {
                             btn.addClass(item.type);
                         }
@@ -390,7 +473,7 @@ var Scholar = {
 
                     // jQuery nie radzi sobie z przekazywaniem danych miedzy
                     // okienkami za pomoca .data()
-                    btn.get(0).parentModal = self;
+                    btn.get(0).parentDialog = self;
                 });
                 return self;
             }
@@ -419,8 +502,6 @@ var Scholar = {
          * @param {object} options
          */
         this.open = function(options) {
-            
-
             options = $.extend({}, {
                 id:      'scholar-modal',
                 title:   '',
@@ -481,7 +562,7 @@ var Scholar = {
                             _centerModal(true);
 
                             if (options.iframe.load) {
-                                options.iframe.load.apply(_modal, [iframe]);
+                                options.iframe.load.apply(self, [iframe]);
                             }
                         })
                         .attr('src', options.iframe.url)
@@ -595,10 +676,10 @@ var Scholar = {
 Scholar.modal = new Scholar.dialog(window.jQuery);
 
 
-/*$(function() {
-
-    
-$('.scholar-attachment-manager').each(function() {
+$(function() {
+return;
+    $('body').append('<div class="tabledrag-test"/>');
+$('.tabledrag-test').each(function() {
     var prefix = $(this).attr('data-name');
 
     var html = '<table id="temp-table" class="sticky-enabled"><thead><tr><th>File</th><th>Size</th>';
@@ -626,4 +707,4 @@ $('.scholar-attachment-manager').each(function() {
     console.log(td);
 });
 
-});*/
+});
