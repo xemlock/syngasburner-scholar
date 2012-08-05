@@ -289,10 +289,19 @@ function scholar_index()
     return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
 }
 
-function scholar_render($html, $modal = false)
+function scholar_render($html, $dialog = false)
 {
-    if ($modal || isset($_REQUEST['modal'])) {
-        echo '<html><head><title>Scholar modal</title></head><body>' . $html . '</body></html>';
+    if ($dialog || isset($_REQUEST['dialog'])) {
+        init_theme();
+        echo "<!DOCTYPE html>\n"
+           . '<html><head>'
+           . '<title>' . drupal_get_title() . '</title>'
+           . '<link rel="shortcut icon" href="'. check_url(theme_get_setting('favicon')) .'" type="image/x-icon" />'
+           . drupal_get_css()
+           . drupal_get_js()
+           . '</head><body class="scholar-dialog">'
+           . $html
+           . '</body></html>';
         exit;
     }
     return $html;
@@ -483,7 +492,7 @@ function theme_scholar_attachment_manager($element)
     $settings = array(
         'prefix'        => $element['#name'],
         'urlFileSelect' => url('scholar/files/select'),
-        'urlFileUpload' => url('scholar/files/upload', array('query' => 'modal=1')),
+        'urlFileUpload' => url('scholar/files/upload', array('query' => 'dialog=1')),
     );
 
     $html = '<p class="help">Each file must be given label in at least one language.

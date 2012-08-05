@@ -231,6 +231,9 @@ function scholar_file_list() // {{{
  */
 function scholar_file_select() // {{{
 {
+    scholar_add_js();
+    scholar_add_css();
+
     $files = array();
 
     $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
@@ -261,8 +264,8 @@ var caller = window.opener ? window.opener : (window.parent != window ? window.p
 var hash = window.location.hash.substring(2);
 var callerStorage = caller ? caller[hash] : null;
 
-if (callerStorage) callerStorage.receiver({
-    notifyDelete: function(file_id) {
+if (callerStorage) callerStorage.addListener({
+    onDelete: function(file_id) {
         if (document) { // jezeli okienko jest otwarte
         var e = document.getElementById('item-' + file_id);
         if (e) {

@@ -13,8 +13,17 @@ var Scholar = {
      * @constructor
      */
     idSet: function() { // {{{
-        var _items = {};
-        var _listeners = [];
+        var _items = {},
+            _size  = 0,
+            _listeners = [];
+
+        /**
+         * Zwraca liczbę elementów w zbiorze.
+         * @returns {number}
+         */
+        this.size = function() {
+            return _size;
+        }
 
         /**
          * Czy podany identyfikator jest obecny w zbiorze.
@@ -25,7 +34,9 @@ var Scholar = {
         }
 
         /**
-         * Dodaje identyfikator do zbioru.
+         * Dodaje identyfikator do zbioru. Ustawienie nowej wartości
+         * dla identyfikatora już obecnego w zbiorze nie wywołuje
+         * zdarzenia onInsert.
          * @param id                    identyfikator
          * @param [value]               opcjonalna wartość powiązana 
          *                              z podanym identyfikatorem
@@ -35,10 +46,18 @@ var Scholar = {
             if (typeof value === 'undefined') {
                 value = true;
             }
-            _items['_' + id] = value;
 
-            // powiadom sluchaczy o dodaniu nowego identyfikatora
-            this.notify('onInsert', id);
+            var key = '_' + id,
+                added = typeof _items[key] === 'undefined';
+
+            _items[key] = value;
+
+            if (added) {
+                ++_size;
+
+                // powiadom sluchaczy o dodaniu nowego identyfikatora
+                this.notify('onInsert', id);
+            }
 
             return this;
         }
@@ -53,6 +72,7 @@ var Scholar = {
 
             if (key in _items) {
                 delete _items[key];
+                --_size;
                 this.notify('onDelete', id);
                 return true;
             }
@@ -73,7 +93,7 @@ var Scholar = {
 
             for (key in _items) {
                 id = key.substr(1);
-                if (callback.call(id, id) === false) {
+                if (callback.apply(this, [id, _items[key]]) === false) {
                     break;
                 }
             }
@@ -149,30 +169,30 @@ var Scholar = {
     /**
      * Umieszcza w podanym selektorze widget zarządzający załącznikami.
      * @constructor
-     * @requires jQuery
      * @param {string} selector         selektor jQuery wskazujacy element,
      *                                  w którym ma zostać umieszczony widget
      */
     attachmentManager: function(selector, settings) {
         console.log(settings);
-        var j = $(selector)
+        var self = this,
+            j = $(selector)
             .addClass('scholar-attachment-manager')
             .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>');
 
         var uniq = String(Math.random()).substr(2);
         var idset = new Scholar.idSet;
-        idsetId = '_attachmentManager' + uniq;
+        var idsetId = '_attachmentManager' + uniq;
         window[idsetId] = idset;
 
         var btnSelect = $('<button/>')
             .html('Wybierz plik')
             .click(function() {
                 Scholar.modal.open({
-                    width: 500,
+                    width: 480,
                     height: 240,
                     iframe: {
-                        url: settings.urlFileSelect + '#!' + uniq,
-                        expand: true
+                        url: settings.urlFileSelect + '#!' + idsetId,
+                        expand: false
                     }
                 });
                 return false;
@@ -180,22 +200,100 @@ var Scholar = {
         var btnUpload = $('<button/>')
             .html('Wgraj plik')
             .click(function() {
-                window.open(settings.urlFileUpload + '#!' + uniq, 'file-select', 'menubar=1,resizable=1,width=640,height=480,scrollbars=1');
+                Scholar.modal.open({
+                    width: 480,
+                    height: 240,
+                    iframe: {
+                        url: settings.urlFileUpload + '#!' + uniq,
+                        expand: false
+                    }
+                });
                 return false;
             });
 
         j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
-
         this.redraw = function() {
             
         
         }              
     },
+
     /**
-     * Okienko modalne ogólnego zastosowania.
-     * @requires jQuery
+     * Kazdy item musi miec ustawione .id
+     * filterSelector -> element z ktorego bedzie brana wartosc do filtrowania
+     * filterSubject -> filtrowanie po tej wlasciwosci itema
+     * itemSelector -> selector {id} placeholder dla identyfikatora
+     * @constructor
      */
-    modal: new (function($) { // {{{
+    itemSelector: function(items, options) {              
+        /** 
+         * Ukrywa te elementy listy, które nie zawierają ciągu znaków
+         * podanego w wybranym polu tekstowym.
+         */
+        this.filter = function() {
+            var filter = $(options.filterSelector);
+            if (arguments.length > 0) {
+                filter.value = arguments[0];
+            }
+
+            var needle = filter.value.toLowerCase();
+            for (var i = 0; i < items.length; ++i) {
+                var item = items[i],
+                    elem = $(options.itemSelector.replace(/\{id\}/g, item.id)),
+                    haystack = String(item[options.filterSubject]).toLowerCase();
+                elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+            }
+        }
+
+        // okienko (jezeli strona otwarta za pomoca window.open) lub strona 
+        // (jezeli otwarta w IFRAME)
+        var trigger = window.opener ? window.opener : (window.parent !== window ? window.parent : null);
+
+        // idset umieszczony w oknie otwierajacym przechowujacy wybrane elementy
+        var storage = trigger ? trigger[window.location.hash.substr(2)] : null;
+
+        if (storage instanceof Scholar.idSet) {
+            storage.addListener({
+                onAdd: function(id) {
+                    if (!document) {
+                        // jezeli okienko z itemSelectorem zostalo zamkniete,
+                        // nie ma czego aktualizowac
+                        return;
+                    }
+                    var elem = $(options.itemSelector.replace(/\{id\}/g, id));
+                    elem.html(elem.html() + ' (SELECTED)');
+                },
+                onDelete: function(id) {
+                    if (!document) {
+                        return;
+                    }
+
+                    var elem = $(options.itemSelector.replace(/\{id\}/g, id));
+                    elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                }
+            });
+
+            // zaznacz elementy juz obecne w zbiorze jako wybrane
+            storage.each(function (id, value) {
+                var elem = $(options.itemSelector.replace(/\{id\}/g, id));
+                elem.html(elem.html() + ' (SELECTED)');
+            });
+
+            // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
+            $(items).each(function (key, item) {
+                var elem = $(options.itemSelector.replace(/\{id\}/g, item.id));
+                elem.click(function() {
+                    storage[storage.has(item.id) ? 'del' : 'add'](item.id);
+                });
+            });
+        }              
+    },
+    /**
+     * Okienko.
+     * @constructor
+     * @param {jQuery} $                Funkcja jQuery
+     */
+    dialog: function($) { // {{{
         var self = this,
             _modal, _overlay,
             jStatus, jButtons;
@@ -237,6 +335,10 @@ var Scholar = {
             }
         }
 
+        /**
+         * Zwraca przycisk o podanym identyfikatorze
+         * @returns jQuery              element DOM przycisku
+         */
         this.button = function(id) {
             return _getButtons().children('#button-' + id);
         }
@@ -250,7 +352,7 @@ var Scholar = {
         // Ustawienie klasy 'disabled' na przycisku sprawia, ze metoda .click nie
         // bedzie uruchamiana.
         /**
-         * Ustawia przyciski w okienku modalnym.
+         * Ustawia przyciski w okienku modalnym. 
          * @param {object} options
          * @return {jQuery}             element otaczający przyciski
          */
@@ -317,7 +419,7 @@ var Scholar = {
          * @param {object} options
          */
         this.open = function(options) {
-            var self = this;
+            
 
             options = $.extend({}, {
                 id:      'scholar-modal',
@@ -326,7 +428,7 @@ var Scholar = {
                 width:   320,
                 height:  240,
                 overlayColor: '#fff',
-                overlayOpacity: 0.5,
+                overlayOpacity: 0.75,
             }, options);
 
             _modal = $('#' + options.id);
@@ -401,7 +503,11 @@ var Scholar = {
                 var success = options.request.success;
                 options.request.success = function(data, textStatus, jqXHR) {
                     _modal.removeClass('loading');
-                    self.content(data);
+                    if (typeof options.request.content === 'function') {
+                        options.request.content.apply(this, [self, data, textStatus, jqXHR]);
+                    } else {
+                        self.content(data);
+                    }
                     if (success) {
                         success.apply(this, [data, textStatus, jqXHR]);
                     }
@@ -483,8 +589,10 @@ var Scholar = {
                 }
             }
         }
-    })(window.jQuery) // }}}
+    } // }}}
 };
+
+Scholar.modal = new Scholar.dialog(window.jQuery);
 
 
 /*$(function() {
