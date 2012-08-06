@@ -75,6 +75,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
 
     $form['attachments'] = array(
         '#type' => 'fieldset',
+        '#title' => t('File attachments'),
     );
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
@@ -117,7 +118,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     $values = $form_state['values'];
     $nodes  = array();
     $langs  = scholar_languages();
-
+p($values);exit;
     if ($row) {
         db_query(
             "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s' WHERE id = %d",

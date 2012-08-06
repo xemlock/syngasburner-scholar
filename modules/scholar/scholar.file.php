@@ -147,7 +147,7 @@ function scholar_file_count_attachments(&$file) // {{{
  * i scholar_objects odwołujących się do tego pliku.
  *
  * @param object &$file         obiekt reprezentujący plik
- * @param array $header         tablica koloumn tabeli w postaci opisanej
+ * @param array $header         tablica kolumn tabeli w postaci opisanej
  *                              w theme_table(). Dopuszczalne nazwy kolumn:
  *                              table_name, object_id, title, label, language
  * @return array

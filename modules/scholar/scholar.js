@@ -87,6 +87,18 @@ var Scholar = {
         }
 
         /**
+         * Usuwa wszystkie elementy ze zbioru.
+         * @returns {idSet}
+         */
+        this.clear = function() {
+            for (var key in _items) {
+                delete _items[key];
+            }
+            _size = 0;
+            return this;
+        }
+
+        /**
          * Iteruje podaną funkcję po wszystkich identyfikatorach w zbiorze.
          * Argumentem funkcji jest tekstowa reprezentacja identyfikatora. 
          * Zwrócenie przez funkcję wartości false przerywa iterację.
@@ -177,13 +189,17 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Kazdy item musi miec ustawione .id
-     * filterSelector (opcjonalny) -> element z ktorego bedzie brana wartosc do filtrowania
-     * filterReset (opcjonalny) -> element czyszczący filter
-     * filterSubject (opcjonalny) -> filtrowanie po tej wlasciwosci itema, 
-     *                               musi byc podany jezeli podano filterSelector
-     * itemSelector -> selector {id} placeholder dla identyfikatora
+     * Kazdy item musi miec ustawione .id.
      * @constructor
+     * @param {Array} items             lista elementów
+     * @param {object} options          zbiór par klucz/wartość konfigurujących obiekt.
+     * @param {string} options.itemSelector     wzorzec selektora elementu drzewa dokumentu odpowiadającego
+     *                                          elementowi listy, ciąg znaków "{id}" będzie zastąpiony
+     *                                          identyfikatorem konkretnego elementu listy
+     * @param {string} [options.filterSelector] selektor elementu drzewa dokumentu, z ktorego bedzie brana wartosc do filtrowania (zwykle INPUT[type="text"])
+     * @param {string} [options.filterReset]    selektor elementu drzewa dokumentu czyszczącego filtr (zwykle BUTTON lub INPUT[type="button"])
+     * @param {string} [options.filterSubject]  nazwa właściwości elementu, po której lista będzie filtrowana,
+     *                                          musi być podany, jeżeli podano filterSelector
      */
     itemSelector: function(items, options) { // {{{
         /**
@@ -220,51 +236,31 @@ var Scholar = {
             }
         }
 
-        // okno wolajace strone z itemSelectore, moze byc to okno macierzyste
-        // (jezeli strona otwarta za pomoca window.open) lub strona 
-        // (jezeli otwarta w IFRAME)
-        var context = window.opener ? window.opener : (window.parent !== window ? window.parent : null);
+        // zbior buforowy przechowujacy zaznaczone elementy
+        var buffer = new Scholar.idSet;
 
-        // idset umieszczony w oknie otwierajacym przechowujacy wybrane
-        // elementy nazwa zmiennej przechowujacej idset jest przekazywana
-        // w URL jako identyfikator fragmentu poprzedzony wykrzyknikiem
-        // (trzeba obciac #! z poczatku window.location.hash)
-        var storage = context ? context[window.location.hash.substr(2)] : null;
-
-        if (storage) {
-            // dodaj sluchaczy do zbioru
-            storage.addListener({
-                onAdd: function(id) {
-                    // bloki try-catch na wypadek odwolywania sie do zmiennych
-                    // zwolnionych wskutek zamkniecia okienka, skutkujacym np.
-                    // bledem: Attempt to run compile-and-go script on a cleared scope
-                    try {
-                        var elem = _getElementById(id).addClass('selected');
-                        elem.html(elem.html() + ' (SELECTED)');
-                    } catch (e) {}
-                },
-                onDelete: function(id) {
-                    try {
-                        var elem = _getElementById(id).removeClass('selected');
-                        elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
-                    } catch (e) {}
-                }
-            });
-
-            // zaznacz elementy juz obecne w zbiorze jako wybrane
-            storage.each(function (id, value) {
-                var elem = _getElementById(id);
+        // podepnij do zbioru sluchacza zdarzen
+        buffer.addListener({
+            onAdd: function(id) {
+                var elem = _getElementById(id).addClass('selected');
                 elem.html(elem.html() + ' (SELECTED)');
-            });
+            },
+            onDelete: function(id) {
+                var elem = _getElementById(id).removeClass('selected');
+                elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+            }
+        });
 
-            // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
-            $(items).each(function (key, item) {
-                var elem = _getElementById(item.id);
-                elem.click(function() {
-                    storage[storage.has(item.id) ? 'del' : 'add'](item.id, item);
-                });
+        // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
+        $(items).each(function (key, item) {
+            var elem = _getElementById(item.id);
+            elem.click(function() {
+                buffer[buffer.has(item.id) ? 'del' : 'add'](item.id, item);
             });
-        }
+        });
+
+        var instanceId = window.location.hash.substr(2);
+        window['__itemSelector_' + instanceId] = this;
 
         // jezeli podano selektor elementu, na podstawie wartosci ktorego
         // beda filtrowane elementy, podepnij filtrowanie po kazdym
@@ -280,6 +276,14 @@ var Scholar = {
                 _filter('');
                 return false;
             });
+        }
+
+        this.add = function(id, value) {
+            return buffer.add(id, value);
+        }
+
+        this.each = function(callback) {
+            return buffer.each(callback);
         }
     }, // }}}
     /**
@@ -612,13 +616,23 @@ var Scholar = {
         var btnSelect = $('<button/>')
             .html('Wybierz plik')
             .click(function() {
+                var _iframe, _selector;
                 Scholar.modal.open({
                     width: 480,
                     height: 240,
                     iframe: {
                         url: settings.urlFileSelect + '#!' + idsetId,
-                        load: function() {
-                            this.button('apply').removeClass('disabled');
+                        load: function(iframe) {
+                            _iframe = iframe;
+                            var scholar = iframe[0].contentWindow.Scholar;
+                            if (scholar) {
+                                _selector = scholar.itemSelector.getInstance(idsetId);
+                                idset.each(function (k, v) {
+                                    _selector.add(k, v);
+                                });
+
+                                this.button('apply').removeClass('disabled');
+                            }
                         }
                     },
                     buttons: {
@@ -626,8 +640,14 @@ var Scholar = {
                             label: 'Zastosuj',
                             disabled: true,
                             click: function() {
-                                self.redraw();
-                                this.parentDialog.close();
+                                if (_selector) {
+                                    idset.clear();
+                                    _selector.each(function(k, v) {
+                                        idset.add(k, v);
+                                    });
+                                    self.redraw();
+                                    this.parentDialog.close();
+                                }
                             }
                         },
                         cancel: 'cancel',
@@ -711,11 +731,11 @@ var Scholar = {
  * w okienku lub IFRAME otwartej przez menadżera.
  * @static
  * @param {object} file                 reprezentacja rekordu przeslanego pliku
- * @param {string} [fragment]           opcjonalny fragment URL wskazujący na zbiór
+ * @param {string} [urlFragment]        opcjonalny fragment URL wskazujący na zbiór
  *                                      przechowujący identyfikatory plików znajdujący
  *                                      się w okienku-rodzicu
  */
-Scholar.attachmentManager.notifyUpload = function(file, fragment) { // {{{
+Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
     var context, close;
 
     // wyznacz okienko-rodzica, przygotuj funkcje zamykajaca
@@ -734,10 +754,10 @@ Scholar.attachmentManager.notifyUpload = function(file, fragment) { // {{{
         }
     }
 
-    if (context && fragment) {
+    if (context && urlFragment) {
         // po przeslaniu pliku dodaj przeslany plik do attachmentManagera
         // w okienku-rodzicu i zamknij okienko
-        var uniq = String(fragment).substr(1),
+        var uniq = String(urlFragment).substr(1),
             storage = context['_attachmentManager' + uniq];
 
         if (storage) {
@@ -752,5 +772,10 @@ Scholar.attachmentManager.notifyUpload = function(file, fragment) { // {{{
         close();
     }
 } // }}}
+
+Scholar.itemSelector.getInstance = function(id) {
+    alert('itemSelector.getInstance: ' + id);
+    return window['__itemSelector_' + id];
+}
 
 Scholar.modal = new Scholar.dialog(window.jQuery);

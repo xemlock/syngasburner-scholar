@@ -406,6 +406,7 @@ function scholar_elements() // {{{
     );
     $elements['scholar_attachment_manager'] = array(
         '#input'            => true,
+        '#files'            => array(),
         '#element_validate' => array('form_type_scholar_attachment_manager_validate'),
     );
 
@@ -444,6 +445,9 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
     if (false === $post) {
         // formularz nie zostal przeslany, uzyj domyslnej wartosci
         // na podstawie dolaczonego do elementu obiektu
+        if ($element['#files']) {
+            
+        }
     
     } else {
         $languages = scholar_languages();
