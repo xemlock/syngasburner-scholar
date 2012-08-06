@@ -604,6 +604,9 @@ var Scholar = {
         var uniq = String(Math.random()).substr(2);
         var idset = new Scholar.idSet;
         var idsetId = '_attachmentManager' + uniq;
+
+        // podepnij ten obiekt jako widok zbioru
+        idset.attachmentManager = this;
         window[idsetId] = idset;
 
         var btnSelect = $('<button/>')
@@ -654,6 +657,7 @@ var Scholar = {
                             disabled: true,
                             click: function() {
                                 this.parentDialog.status('Przesyłanie pliku...');
+                                this.parentDialog.button('apply').addClass('disabled');
                                 _iframe.contents().find('form').submit();
                             }
                         },
@@ -707,28 +711,46 @@ var Scholar = {
  * w okienku lub IFRAME otwartej przez menadżera.
  * @static
  * @param {object} file                 reprezentacja rekordu przeslanego pliku
+ * @param {string} [fragment]           opcjonalny fragment URL wskazujący na zbiór
+ *                                      przechowujący identyfikatory plików znajdujący
+ *                                      się w okienku-rodzicu
  */
-Scholar.attachmentManager.notifyUpload = function(file, fragment) {
-    var context;
+Scholar.attachmentManager.notifyUpload = function(file, fragment) { // {{{
+    var context, close;
 
+    // wyznacz okienko-rodzica, przygotuj funkcje zamykajaca
+    // okienko z biezaca strona
     if (window.opener) {
+        // strona otwarta w okienku za pomoca window.open
         context = window.opener;
+        close = function() {
+            window.close();
+        }
     } else if (window.parent !== window) {
+        // strona w IFRAME w okienku dialogowym
         context = window.parent;
+        close = function() {
+            context.Scholar.modal.close();
+        }
     }
-    // po przeslaniu pliku dodaj przeslany plik do attachmentManagera
-    // i zamknij okienko
-    if (context) {
-        if (fragment) {
-            var uniq = String(fragment).substr(1),
-                storage = context['_attachmentManager' + uniq];
 
-            if (storage) {
-                storage.add(file.id, file);
-                // TODO trzeba wymusic odswiezenie
+    if (context && fragment) {
+        // po przeslaniu pliku dodaj przeslany plik do attachmentManagera
+        // w okienku-rodzicu i zamknij okienko
+        var uniq = String(fragment).substr(1),
+            storage = context['_attachmentManager' + uniq];
+
+        if (storage) {
+            storage.add(file.id, file);
+
+            if (storage.attachmentManager) {
+                // wymus odswiezenie listy plikow
+                storage.attachmentManager.redraw();
             }
         }
-        context.Scholar.modal.close();
+
+        close();
     }
-}
+} // }}}
+
 Scholar.modal = new Scholar.dialog(window.jQuery);

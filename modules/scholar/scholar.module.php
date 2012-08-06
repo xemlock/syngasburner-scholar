@@ -291,7 +291,7 @@ function scholar_index()
 
 function scholar_render($html, $dialog = false)
 {
-    if ($dialog || isset($_REQUEST['dialog'])) {
+    if ($dialog || (isset($_REQUEST['dialog']) && $_REQUEST['dialog'])) {
         init_theme();
         echo "<!DOCTYPE html>\n"
            . '<html><head>'

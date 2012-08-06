@@ -306,7 +306,7 @@ function scholar_file_validate_md5sum(&$file) // {{{
     $md5 = md5_file($file->filepath);
 
     if ($row = scholar_fetch_file(array('md5sum' => $md5))) {
-        $errors[] = t('This file aready exists in the database (%filename)', array('%filename' => $row->filename)); 
+        $errors[] = t('This file aready exists in the database as %filename', array('%filename' => $row->filename)); 
     }
 
     if (empty($errors)) {
@@ -425,6 +425,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
     );
 
     $dialog = intval($form_state['values']['dialog']);
+    $fragment = strval($form_state['values']['fragment']);
 
     if ($file = file_save_upload('file', $validators, scholar_file_path())) {
         // Przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
@@ -445,12 +446,14 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         if ($dialog) {
             // pliki, ktorych upload zostal zainicjowany za pomoca
             // attachmentManagera zostaja automatycznie dodane do
-            // wybranych plikow
+            // wybranych plikow, przygotuj rozmiar pliku czytelny
+            // dla czlowieka
+            $file->filesize = format_size($file->size);
+
             scholar_add_js();
-            return scholar_render(
-                t('File uploaded successfully')
-              . '<script type="text/javascript">Scholar.attachmentManager.notifyUpload(' . drupal_to_js($file) . ', ' . drupal_to_js(strval($form_state['values']['fragment'])) . ')</script>'
-            , true);
+            drupal_add_js('Scholar.attachmentManager.notifyUpload(' . drupal_to_js($file) . ',' . drupal_to_js($fragment) . ')', 'inline');
+
+            return scholar_render(t('File uploaded successfully'), true);
         }
         
         drupal_set_message(t('File uploaded successfully'));
@@ -459,7 +462,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
 
     // poniewaz w tym miejscu nastapi przeladowanie strony, aby przekazac
     // dalej flage 'dialog' musimy zrobic reczne przeladowanie strony
-    drupal_goto('scholar/files/upload', $dialog ? 'dialog=1' : null);
+    drupal_goto('scholar/files/upload', $dialog ? 'dialog=1' : null, $fragment);
 } // }}}
 
 /**
