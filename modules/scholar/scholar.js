@@ -32,6 +32,21 @@ var Scholar = {
         }
 
         /**
+         * Jeżeli z kluczem nie jest powiązana żadna wartość
+         * zwrócona zostanie wartość undefined.
+         * @param id
+         */
+        this.get = function(id) {
+            var undef, key = '_' + id;
+
+            if (typeof _items[key] !== 'undefined') {
+                return _items[key];
+            }
+
+            return undef;
+        }
+
+        /**
          * Czy podany identyfikator jest obecny w zbiorze.
          * @returns {boolean}
          */
@@ -694,6 +709,27 @@ var Scholar = {
                                 var odd = true;
                                 idset.each(function(id, value) {
                                     $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
+                                        .attr('data-id', id)
+                                        .mouseup(function() {
+                                            // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
+                                            // uszereguj tak elementy w idsecie, zeby ich kolejnosc
+                                            // byla taka sama.
+                                            var selected = [];
+                                            var i = 0;
+                                            $(this).parents('table:first').find('tbody tr[data-id]').each(function() {
+                                                var id = $(this).attr('data-id'),
+                                                    item = idset.get(id);
+                                                if (typeof item !== 'undefined') {
+                                                    selected[selected.length] = [id, item];
+                                                }
+                                            });
+
+                                            idset.clear();
+                                            for (var i = 0, n = selected.length; i < n; ++i) {
+                                                var s = selected[i];
+                                                idset.add(s[0], s[1]);
+                                            }
+                                        })
                                         .append('<td>' + value.filename + '</td>')
                                         .append('<td>' + value.filesize + '<input type="hidden" class="weight" /></td>')
                                         .append('<td><input type="text" /></td>')
