@@ -177,96 +177,6 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Umieszcza w podanym selektorze widget zarządzający załącznikami.
-     * @constructor
-     * @param {string} selector         selektor jQuery wskazujacy element,
-     *                                  w którym ma zostać umieszczony widget
-     */
-    attachmentManager: function(selector, settings) {
-        console.log(settings);
-        var self = this,
-            j = $(selector)
-            .addClass('scholar-attachment-manager')
-            .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>');
-
-        var uniq = String(Math.random()).substr(2);
-        var idset = new Scholar.idSet;
-        var idsetId = '_attachmentManager' + uniq;
-        window[idsetId] = idset;
-
-        var btnSelect = $('<button/>')
-            .html('Wybierz plik')
-            .click(function() {
-                Scholar.modal.open({
-                    width: 480,
-                    height: 240,
-                    iframe: {
-                        url: settings.urlFileSelect + '#!' + idsetId,
-                        expand: false,
-                        load: function() {
-                            this.button('apply').removeClass('disabled');
-                        }
-                    },
-                    buttons: {
-                        apply: {
-                            label: 'Zastosuj',
-                            disabled: true,
-                            click: function() {
-                                var tbody = j.children('.table-wrapper').html('<table class="sticky-enabled"><thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead><tbody></tbody></table>').find('tbody');
-                                var odd = true;
-                                idset.each(function(id, value) {
-                                    $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
-                                        .append('<td>' + value.filename + '</td>')
-                                        .append('<td>' + value.filesize + '<input type="hidden" class="weight" /></td>')
-                                        .append('<td><input type="text" /></td>')
-                                        .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
-                                            // usun identyfikator pliku ze zbioru
-                                            idset.del(id);
-                                            // usun wiersz
-                                            $(this).parent().remove();
-                                        })).appendTo(tbody);
-                                        odd = !odd;
-                                });
-                                // dodaj tabledrag
-                                var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
-                                    target: 'weight',
-                                    source: 'weight',
-                                    relationship: 'sibling',
-                                    action: 'order',
-                                    hidden: false,
-                                    limit: 0
-                                }] });
-
-                                this.parentDialog.close();
-                            }
-                        },
-                        cancel: 'cancel',
-                    }
-                });
-                return false;
-            });
-        var btnUpload = $('<button/>')
-            .html('Wgraj plik')
-            .click(function() {
-                Scholar.modal.open({
-                    width: 480,
-                    height: 240,
-                    iframe: {
-                        url: settings.urlFileUpload + '#!' + uniq,
-                        expand: false
-                    }
-                });
-                return false;
-            });
-
-        j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
-        this.redraw = function() {
-            
-        
-        }              
-    },
-
-    /**
      * Kazdy item musi miec ustawione .id
      * filterSelector (opcjonalny) -> element z ktorego bedzie brana wartosc do filtrowania
      * filterReset (opcjonalny) -> element czyszczący filter
@@ -275,7 +185,7 @@ var Scholar = {
      * itemSelector -> selector {id} placeholder dla identyfikatora
      * @constructor
      */
-    itemSelector: function(items, options) {
+    itemSelector: function(items, options) { // {{{
         /**
          * Zwraca obiekt jQuery zawierający element drzewa dokumentu
          * odpowiadający elementowi o podanym identyfikatorze.
@@ -289,11 +199,16 @@ var Scholar = {
         /** 
          * Ukrywa te elementy listy, które nie zawierają ciągu znaków
          * podanego w wybranym polu tekstowym.
+         * @param {string} [value]        opcjonalna wartość do nadania elementowi filtrującemu
          */
-        function _filter() {
+        function _filter(value) {
             var filter = $(options.filterSelector);
-            if (arguments.length > 0) {
-                filter.val(arguments[0]);
+
+            // Poniewaz funkcja jest uzywana jako obsluga zdarzenia keyup,
+            // ustaw wartosc elementu filtrujacego tylko jezeli value
+            // jest stringiem
+            if (typeof value === 'string') {
+                filter.val(value);
             }
 
             var needle = filter.val().toLowerCase();
@@ -308,10 +223,13 @@ var Scholar = {
         // okno wolajace strone z itemSelectore, moze byc to okno macierzyste
         // (jezeli strona otwarta za pomoca window.open) lub strona 
         // (jezeli otwarta w IFRAME)
-        var trigger = window.opener ? window.opener : (window.parent !== window ? window.parent : null);
+        var context = window.opener ? window.opener : (window.parent !== window ? window.parent : null);
 
-        // idset umieszczony w oknie otwierajacym przechowujacy wybrane elementy
-        var storage = trigger ? trigger[window.location.hash.substr(2)] : null;
+        // idset umieszczony w oknie otwierajacym przechowujacy wybrane
+        // elementy nazwa zmiennej przechowujacej idset jest przekazywana
+        // w URL jako identyfikator fragmentu poprzedzony wykrzyknikiem
+        // (trzeba obciac #! z poczatku window.location.hash)
+        var storage = context ? context[window.location.hash.substr(2)] : null;
 
         if (storage) {
             // dodaj sluchaczy do zbioru
@@ -363,7 +281,7 @@ var Scholar = {
                 return false;
             });
         }
-    },
+    }, // }}}
     /**
      * Okienko.
      * @constructor
@@ -670,41 +588,147 @@ var Scholar = {
                 }
             }
         }
+    }, // }}}
+    /**
+     * Umieszcza w podanym selektorze widget zarządzający załącznikami.
+     * @constructor
+     * @param {string} selector         selektor jQuery wskazujacy element,
+     *                                  w którym ma zostać umieszczony widget
+     */
+    attachmentManager: function(selector, settings) { // {{{
+        var self = this,
+            j = $(selector)
+            .addClass('scholar-attachment-manager')
+            .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>');
+
+        var uniq = String(Math.random()).substr(2);
+        var idset = new Scholar.idSet;
+        var idsetId = '_attachmentManager' + uniq;
+        window[idsetId] = idset;
+
+        var btnSelect = $('<button/>')
+            .html('Wybierz plik')
+            .click(function() {
+                Scholar.modal.open({
+                    width: 480,
+                    height: 240,
+                    iframe: {
+                        url: settings.urlFileSelect + '#!' + idsetId,
+                        load: function() {
+                            this.button('apply').removeClass('disabled');
+                        }
+                    },
+                    buttons: {
+                        apply: {
+                            label: 'Zastosuj',
+                            disabled: true,
+                            click: function() {
+                                self.redraw();
+                                this.parentDialog.close();
+                            }
+                        },
+                        cancel: 'cancel',
+                    }
+                });
+                return false;
+            });
+        var btnUpload = $('<button/>')
+            .html('Wgraj plik')
+            .click(function() {
+                var _iframe;
+                Scholar.modal.open({
+                    width: 480,
+                    height: 240,
+                    iframe: {
+                        url: settings.urlFileUpload + '#!' + uniq,
+                        load: function(iframe) {
+                            _iframe = iframe;
+                            _iframe.contents().find('[type="submit"]').hide();
+                            this.status('');
+                            this.button('apply').removeClass('disabled');
+                        }
+                    },
+                    buttons: {
+                        apply: {
+                            label: 'Prześlij',
+                            disabled: true,
+                            click: function() {
+                                this.parentDialog.status('Przesyłanie pliku...');
+                                _iframe.contents().find('form').submit();
+                            }
+                        },
+                        cancel: 'cancel',
+                    }
+                });
+                return false;
+            });
+
+        j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
+
+        this.redraw = function() {
+            var tbody = j.children('.table-wrapper').html('<table class="sticky-enabled"><thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead><tbody></tbody></table>').find('tbody');
+                                var odd = true;
+                                idset.each(function(id, value) {
+                                    $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
+                                        .append('<td>' + value.filename + '</td>')
+                                        .append('<td>' + value.filesize + '<input type="hidden" class="weight" /></td>')
+                                        .append('<td><input type="text" /></td>')
+                                        .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
+                                            // usun identyfikator pliku ze zbioru
+                                            idset.del(id);
+
+                                            // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
+                                            // nie beda zapisane dopoki formularz nie zostanie przeslany
+                                            $(this).parents('table:first').next('.warning').fadeOut(function() {
+                                                $(this).remove();
+                                            });
+                                                                                        // usun wiersz
+                                            $(this).parent().remove();
+                                        })).appendTo(tbody);
+                                        odd = !odd;
+                                });
+                                // dodaj tabledrag
+                                var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
+                                    target: 'weight',
+                                    source: 'weight',
+                                    relationship: 'sibling',
+                                    action: 'order',
+                                    hidden: false,
+                                    limit: 0
+                                }] });
+        
+        }              
     } // }}}
 };
 
+/**
+ * Informuje powiązaną instancję menadżera załączników
+ * o uploadzie nowego pliku. Funkcja przeznaczona do wywolania
+ * w okienku lub IFRAME otwartej przez menadżera.
+ * @static
+ * @param {object} file                 reprezentacja rekordu przeslanego pliku
+ */
+Scholar.attachmentManager.notifyUpload = function(file, fragment) {
+    var context;
+
+    if (window.opener) {
+        context = window.opener;
+    } else if (window.parent !== window) {
+        context = window.parent;
+    }
+    // po przeslaniu pliku dodaj przeslany plik do attachmentManagera
+    // i zamknij okienko
+    if (context) {
+        if (fragment) {
+            var uniq = String(fragment).substr(1),
+                storage = context['_attachmentManager' + uniq];
+
+            if (storage) {
+                storage.add(file.id, file);
+                // TODO trzeba wymusic odswiezenie
+            }
+        }
+        context.Scholar.modal.close();
+    }
+}
 Scholar.modal = new Scholar.dialog(window.jQuery);
-
-
-$(function() {
-return;
-    $('body').append('<div class="tabledrag-test"/>');
-$('.tabledrag-test').each(function() {
-    var prefix = $(this).attr('data-name');
-
-    var html = '<table id="temp-table" class="sticky-enabled"><thead><tr><th>File</th><th>Size</th>';
-    html += '<th>Label (Polish)</th>' + '<th>Label (English)</th>';
-    html += '</tr></thead>';
-    html += '<tbody>';
-    
-    html += '<tr class="draggable odd"><td>Plik 1</td><td>22 KB</td><td><img style="display:inline" title="Polish" alt="" src="/ventures/i/flags/pl.png"> <input type=text/></td><td><img style="display:inline" title="English" alt="" src="/ventures/i/flags/en.png"> <input type=text/><input class="weight" type="hidden" value=0 /></td></tr>';
-    html += '<tr class="draggable even"><td>Plik 2</td><td>333 KB</td><td><img style="display:inline" title="Polish" alt="" src="/ventures/i/flags/pl.png"> <input type=text/></td><td><img style="display:inline" title="English" alt="" src="/ventures/i/flags/en.png"> <input type=text/><input class="weight" type="hidden" value=0 /></td></tr>';
-    html += '<tr class="draggable odd"><td>Plik 3</td><td>4.44 MB</td><td><img style="display:inline" title="Polish" alt="" src="/ventures/i/flags/pl.png"> <input type=text/></td><td><img style="display:inline" title="English" alt="" src="/ventures/i/flags/en.png"> <input type=text/><input class="weight" type="hidden" value=0 /></td></tr>';
-
-    html += '</tbody>';
-
-    $(this).html(html);
-
-
-    var td = new Drupal.tableDrag($('#temp-table')[0], {weight: [{
-        target: 'weight',
-        source: 'weight',
-        relationship: 'sibling',
-        action: 'order',
-        hidden: false,
-        limit: 0
-    }] });
-    console.log(td);
-});
-
-});

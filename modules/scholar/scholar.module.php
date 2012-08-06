@@ -300,6 +300,7 @@ function scholar_render($html, $dialog = false)
            . drupal_get_css()
            . drupal_get_js()
            . '</head><body class="scholar-dialog">'
+           . theme('status_messages')
            . $html
            . '</body></html>';
         exit;

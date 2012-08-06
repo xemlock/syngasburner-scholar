@@ -394,6 +394,16 @@ function scholar_file_upload_form() // {{{
         '#default_value' => intval($_REQUEST['dialog']),
     );
 
+    // fragment adresu URL (po #) jest istotny jezeli strona jest
+    // otwarta w okienku lub IFRAME, trzeba przekazac go dalej
+    $form['fragment'] = array(
+        '#type' => 'hidden',
+    );
+    drupal_add_js("\$(function() {\$('[name=\"fragment\"]').val(window.location.hash.substr(1)) })", 'inline');
+
+    // Jezeli nie doda sie przycisku submit (nawet gdy formularz jest
+    // w okienku lub IFRAME), nie zostanie wywolana funkcja obslugi 
+    // przeslania formularza (*_submit)
     $form['submit'] = array(
         '#type'  => 'submit',
         '#value' => t('Upload file'),
@@ -414,7 +424,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         'scholar_file_validate_extension' => array(),
     );
 
-    $dialog = (bool) $form_state['values']['dialog'];
+    $dialog = intval($form_state['values']['dialog']);
 
     if ($file = file_save_upload('file', $validators, scholar_file_path())) {
         // Przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
@@ -432,10 +442,24 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         // trzeba usunac plik z tabeli files
         db_query("DELETE FROM {files} WHERE fid = '%d'", $file->fid);
 
-
+        if ($dialog) {
+            // pliki, ktorych upload zostal zainicjowany za pomoca
+            // attachmentManagera zostaja automatycznie dodane do
+            // wybranych plikow
+            scholar_add_js();
+            return scholar_render(
+                t('File uploaded successfully')
+              . '<script type="text/javascript">Scholar.attachmentManager.notifyUpload(' . drupal_to_js($file) . ', ' . drupal_to_js(strval($form_state['values']['fragment'])) . ')</script>'
+            , true);
+        }
+        
         drupal_set_message(t('File uploaded successfully'));
         drupal_goto('scholar/files');
     }
+
+    // poniewaz w tym miejscu nastapi przeladowanie strony, aby przekazac
+    // dalej flage 'dialog' musimy zrobic reczne przeladowanie strony
+    drupal_goto('scholar/files/upload', $dialog ? 'dialog=1' : null);
 } // }}}
 
 /**
