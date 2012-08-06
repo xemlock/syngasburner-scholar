@@ -204,19 +204,28 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Kazdy item musi miec ustawione .id.
+     * Kazdy item musi miec ustawione .id. Ten obiekt podpina się
+     * jedynie za pomocą selektora itemów.
      * @constructor
      * @param {Array} items             lista elementów
+     * @param {string} pattern          wzorzec selektora elementu drzewa dokumentu odpowiadającego
+     *                                  elementowi listy, ciąg znaków "{id}" będzie zastąpiony
+     *                                  identyfikatorem konkretnego elementu listy
      * @param {object} options          zbiór par klucz/wartość konfigurujących obiekt.
-     * @param {string} options.itemSelector     wzorzec selektora elementu drzewa dokumentu odpowiadającego
-     *                                          elementowi listy, ciąg znaków "{id}" będzie zastąpiony
-     *                                          identyfikatorem konkretnego elementu listy
+     * @param {string} [options.idKey='id']     właściwość elementu listy przechowująca jego identyfikator
      * @param {string} [options.filterSelector] selektor elementu drzewa dokumentu, z ktorego bedzie brana wartosc do filtrowania (zwykle INPUT[type="text"])
      * @param {string} [options.filterReset]    selektor elementu drzewa dokumentu czyszczącego filtr (zwykle BUTTON lub INPUT[type="button"])
-     * @param {string} [options.filterSubject]  nazwa właściwości elementu, po której lista będzie filtrowana,
+     * @param {string} [options.filterKey]      nazwa właściwości elementu, po której lista będzie filtrowana,
      *                                          musi być podany, jeżeli podano filterSelector
      */
-    itemSelector: function(items, options) { // {{{
+    itemSelector: function(items, pattern, options) { // {{{
+        // lepiej trzymac konfiguracje w ten sposob, niz w obiekcie
+        // i za kazdym razem dostawac sie do jego wlasciwosci
+        var idKey          = typeof options.idKey === 'undefined' ? 'id' : options.idKey,
+            filterSelector = options.filterSelector
+            filterKey      = options.filterKey,
+            filterReset    = options.filterReset;
+
         /**
          * Zwraca obiekt jQuery zawierający element drzewa dokumentu
          * odpowiadający elementowi o podanym identyfikatorze.
@@ -224,7 +233,7 @@ var Scholar = {
          * @returns {jQuery}
          */
         function _getElementById(id) {
-            return $(options.itemSelector.replace(/\{id\}/g, id));
+            return $(pattern.replace(/\{id\}/g, id));
         }
 
         /** 
@@ -233,7 +242,7 @@ var Scholar = {
          * @param {string} [value]        opcjonalna wartość do nadania elementowi filtrującemu
          */
         function _filter(value) {
-            var filter = $(options.filterSelector);
+            var filter = $(filterSelector);
 
             // Poniewaz funkcja jest uzywana jako obsluga zdarzenia keyup,
             // ustaw wartosc elementu filtrujacego tylko jezeli value
@@ -245,8 +254,8 @@ var Scholar = {
             var needle = filter.val().toLowerCase();
             for (var i = 0; i < items.length; ++i) {
                 var item = items[i],
-                    elem = _getElementById(item.id),
-                    haystack = String(item[options.filterSubject]).toLowerCase();
+                    elem = _getElementById(item[idKey]),
+                    haystack = String(item[filterKey]).toLowerCase();
                 elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
             }
         }
@@ -268,9 +277,9 @@ var Scholar = {
 
         // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
         $(items).each(function (key, item) {
-            var elem = _getElementById(item.id);
+            var elem = _getElementById(item[idKey]);
             elem.click(function() {
-                buffer[buffer.has(item.id) ? 'del' : 'add'](item.id, item);
+                buffer[buffer.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
             });
         });
 
@@ -280,14 +289,14 @@ var Scholar = {
         // jezeli podano selektor elementu, na podstawie wartosci ktorego
         // beda filtrowane elementy, podepnij filtrowanie po kazdym
         // wcisnieciu klawisza na klawiaturze
-        if (options.filterSelector) {
-            $(options.filterSelector).keyup(_filter);
+        if (filterSelector) {
+            $(filterSelector).keyup(_filter);
         }
 
         // jezeli podano selektor elementu czyszczacego filter podepnij
         // czyszczenie filtra po kliknieciu w niego
-        if (options.filterReset) {
-            $(options.filterReset).click(function() {
+        if (filterReset) {
+            $(filterReset).click(function() {
                 _filter('');
                 return false;
             });

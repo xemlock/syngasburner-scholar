@@ -245,10 +245,9 @@ function scholar_file_select() // {{{
     ob_start();
 ?>
 <script type="text/javascript">$(function() {
-new Scholar.itemSelector(<?php echo drupal_to_js($files) ?>, {
+new Scholar.itemSelector(<?php echo drupal_to_js($files) ?>, '#item-{id}', {
     filterSelector: '#name-filter',
     filterSubject: 'filename',
-    itemSelector: '#item-{id}',
     filterReset: '#reset-filter'
 });
 });
