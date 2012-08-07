@@ -234,14 +234,13 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Kazdy item musi miec ustawione .id. Ten obiekt podpina się
-     * jedynie za pomocą selektora itemów.
+     * Widget z listą wyboru elementów.
      * @constructor
+     * @param {string|jQuery} selector  element DOM, w którym ma zostać utworzony widget listy
+     * @param {string} template         szablon określający jak przedstawiać elementy listy,
+     *                                  patrz {@link Scholar.render()} 
      * @param {Array} items             lista elementów
-     * @param {string} pattern          wzorzec selektora elementu drzewa dokumentu odpowiadającego
-     *                                  elementowi listy, ciąg znaków "{id}" będzie zastąpiony
-     *                                  identyfikatorem konkretnego elementu listy
-     * @param {object} options          zbiór par klucz/wartość konfigurujących obiekt.
+     * @param {object} [options]        zbiór par klucz/wartość konfigurujących obiekt.
      * @param {string} [options.idKey='id']     właściwość elementu listy przechowująca jego identyfikator
      * @param {string} [options.filterSelector] selektor elementu drzewa dokumentu, z ktorego bedzie brana wartosc do filtrowania (zwykle INPUT[type="text"])
      * @param {string} [options.filterReset]    selektor elementu drzewa dokumentu czyszczącego filtr (zwykle BUTTON lub INPUT[type="button"])
@@ -249,55 +248,49 @@ var Scholar = {
      *                                          musi być podany, jeżeli podano filterSelector
      */
     itemSelector: function(selector, template, items, options) { // {{{
-        // lepiej trzymac konfiguracje w ten sposob, niz w obiekcie
-        // i za kazdym razem dostawac sie do jego wlasciwosci
-        var idKey          = typeof options.idKey === 'undefined' ? 'id' : options.idKey,
-            filterSelector = options.filterSelector
-            filterKey      = options.filterKey,
-            filterReset    = options.filterReset;
+        var $ = window.jQuery,
 
-        var elementSet, // zbior przechowujacy elementy LI odpowiadajace elementom listy
-            itemSet;    // zbior przechowujacy zaznaczone elementy listy
+        options = $.extend({}, {idKey: 'id'}, options);
 
-        function _init() {
-            elementSet = new Scholar.idSet;
-            itemSet = new Scholar.idSet;
+        var idKey, // nazwa wlasciwosci identyfikujacej element
+            domain,   // zbior przechowujacy wszystkie elementy
+            selected, // zbior przechowujacy elementy zaznaczone przez uzytkownika
+            elements; // zbior tagow LI odpowiadajacych elementom listy
+
+        function _initDomain(items, idKey) {
+            var domain = new Scholar.idSet;
+
+            // wypelnij zbior wszystkich elementow
+            for (var i = 0, n = items.length; i < n; ++i) {
+                var item = items[i];
+                domain.add(item[idKey], item);
+            }
+
+            return domain;
+        }
+
+        function _initSelected() {
+            var selected = new Scholar.idSet;
 
             // podepnij sluchacza zdarzen do zbioru elementow
-            itemSet.addListener({
+            selected.addListener({
                 onAdd: function(id) {
-                    var elem = elementSet.get(id);
+                    var elem = elements.get(id);
                     if (elem) {
                         elem.addClass('selected');
                         elem.html(elem.html() + ' (SELECTED)');
                     }
                 },
                 onDelete: function(id) {
-                    var elem = elementSet.get(id);
+                    var elem = elements.get(id);
                     if (elem) {
                         elem.removeClass('selected');
                         elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
                     }
                 }
             });
-
-            _initElements();
-
-            // jezeli podano selektor elementu, na podstawie wartosci ktorego
-            // beda filtrowane elementy, podepnij filtrowanie po kazdym
-            // wcisnieciu klawisza na klawiaturze
-            if (filterSelector) {
-                $(filterSelector).keyup(_filter);
-            }
-
-            // jezeli podano selektor elementu czyszczacego filter podepnij
-            // czyszczenie filtra po kliknieciu w niego
-            if (filterReset) {
-                $(filterReset).click(function() {
-                    _filter('');
-                    return false;
-                });
-            }   
+        
+            return selected;
         }
 
         /**
@@ -305,24 +298,26 @@ var Scholar = {
          * elementom listy i umieszcza go jako jedyne dziecko selektora
          * podanego w konstruktorze.
          */
-        function _initElements() {
-            var ul = $('<ul/>'),
+        function _initElements(idKey) {
+            var elements = new Scholar.idSet,
+                ul = $('<ul/>'),
                 createElement = function(item, ul) {
                     return $('<li/>')
                         .html(Scholar.render(template, item))
                         .attr('data-id', item[idKey])
                         .click(function() {
-                            itemSet[itemSet.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
+                            selected[selected.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
                         })
                         .appendTo(ul);
                 }
 
-            for (var i = 0, n = items.length; i < n; ++i) {
-                var item = items[i];
-                elementSet.add(item[idKey], createElement(item, ul));
-            }
+            domain.each(function(id, item) {
+                elements.add(id, createElement(item, ul));
+            });
 
             $(selector).empty().append(ul);
+
+            return elements;
         }
 
         /** 
@@ -331,7 +326,7 @@ var Scholar = {
          * @param {string} [value]        opcjonalna wartość do nadania elementowi filtrującemu
          */
         function _filter(value) {
-            var filter = $(filterSelector);
+            var filter = $(options.filterSelector);
 
             // Poniewaz funkcja jest uzywana jako obsluga zdarzenia keyup,
             // ustaw wartosc elementu filtrujacego tylko jezeli value
@@ -344,24 +339,56 @@ var Scholar = {
 
             for (var i = 0, n = items.length; i < n; ++i) {
                 var item = items[i],
-                    elem = elementSet.get(item[idKey]);
+                    elem = elements.get(item[idKey]);
+                    haystack = String(item[options.filterKey]).toLowerCase();
 
-                if (elem) {
-                    var haystack = String(item[filterKey]).toLowerCase();
-                    elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
-                }
+                // elem na pewno istnieje, bo wskaznik do niego jest
+                // przechowuwany w elementSecie, zbudowanym na podstawie
+                // niemutowalnej tablicy items (kopii tej przekazanej
+                // jako argument konstruktora).
+                elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
             }
         } 
 
-        this.add = function(id, value) {
-            return itemSet.add(id, value);
+        /**
+         * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy
+         */
+        this.add = function(id) {
+            // dodaje do zaznaczonych, ale tylko wtedy jezeli id
+            // jest wsrod elementow podanych w konstruktorze
+            var item = domain.get(id);
+
+            if (typeof item !== 'undefined') {
+                selected.add(id, item);
+            }
+
+            return this;
         }
 
         this.each = function(callback) {
-            return itemSet.each(callback);
+            selected.each(callback);
+            return this;
         }
 
-        _init();
+        domain   = _initDomain(items, options.idKey);
+        selected = _initSelected();
+        elements = _initElements(options.idKey);
+
+        // jezeli podano selektor elementu, na podstawie wartosci ktorego
+        // beda filtrowane elementy, podepnij filtrowanie po kazdym
+        // wcisnieciu klawisza na klawiaturze
+        if (options.filterSelector) {
+            $(options.filterSelector).keyup(_filter);
+        }
+
+        // jezeli podano selektor elementu czyszczacego filter podepnij
+        // czyszczenie filtra po kliknieciu w niego
+        if (options.filterReset) {
+            $(options.filterReset).click(function() {
+                _filter('');
+                return false;
+            });
+        }
 
         // podepnij globalny wskaznik do tego obiektu, aby mozna bylo
         // siegnac do niego z zewnatrz
@@ -371,10 +398,10 @@ var Scholar = {
     /**
      * Okienko.
      * @constructor
-     * @param {jQuery} $                Funkcja jQuery
      */
-    dialog: function($) { // {{{
-        var self = this,
+    dialog: function() { // {{{
+        var $ = window.jQuery,
+            self = this,
             _modal, _overlay,
             jStatus, jButtons;
 
