@@ -253,6 +253,9 @@ new Scholar.itemSelector('#items', '{ filename }', <?php echo drupal_to_js($file
 });
 </script>
 <style type="text/css">
+#items li.selected {
+  font-weight: bold;
+}
 #items li {
   cursor:pointer;
 -webkit-touch-callout: none;

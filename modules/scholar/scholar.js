@@ -9,6 +9,12 @@
  */
 var Scholar = {
     /**
+     * Funkcja identycznościowa, używana jako domyślny translator.
+     */
+    id: function(x) { // {{{
+        return x;
+    }, // }}}
+    /**
      * Prosty silnik renderowania szablonów.
      * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
      * aby wstawić lewy nawias klamrowy trzeba użyć {{, aby prawy nie trzeba.
@@ -284,14 +290,12 @@ var Scholar = {
                     var elem = elements.get(id);
                     if (elem) {
                         elem.addClass('selected');
-                        elem.html(elem.html() + ' (SELECTED)');
                     }
                 },
                 onDelete: function(id) {
                     var elem = elements.get(id);
                     if (elem) {
                         elem.removeClass('selected');
-                        elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
                     }
                 }
             });
@@ -591,7 +595,6 @@ var Scholar = {
                 // iframe: {url: string, expand: bool, load: function}
                 var iframe = $('<iframe/>')
                         .load(function() {
-                            console.log('iframe.load');
                             this.style.display = 'block';
 
                             if (options.iframe.expand) {
@@ -811,27 +814,28 @@ var Scholar = {
         j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
 
         var table;
-        function _updateWeights()
+        function _updateWeights(tbody)
         {
             var i = 0;
-            table.find('tbody tr[data-id]:not(.removed)').each(function() {
+            tbody.find('tr[data-id]').each(function() {
                 $(this).find('.weight').val(i++);
             });
         }
 
-        function _reorderSelected()
+        function _reorderSelected(tbody)
         {
+            var i = 0;
+
             // ustawia elementy w zbiorzez selected zgodnie z kolejnoscia
             // wierszy w tabeli
             var selected = [];
-            var i = 0;
-            table.parents('table:first').find('tbody tr[data-id]').each(function() {
+            tbody.find('tr[data-id]').each(function() {
                 var id = $(this).attr('data-id'),
                     item = idset.get(id);
                 if (typeof item !== 'undefined') {
                     selected[selected.length] = [id, item];
                 }
-                $(this).find('.weight').val(i++);
+                $(this).find('input.weight').val(i++);
             });
 
             idset.clear();
@@ -841,36 +845,57 @@ var Scholar = {
             }
         }
 
+        // funkcja do odpalania w kontekscie wiersza tabeli
+        // @param {jQuery} tr
+        function _removeRow(tr) {
+            var tbody = tr.parent();
+
+            // usun identyfikator pliku ze zbioru
+            idset.del(tr.attr('data-id'));
+
+            // usun wiersz
+            tr.remove();
+            _updateWeights(tbody);
+
+            // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
+            // nie beda zapisane dopoki formularz nie zostanie przeslany
+            tbody.parent().next('.warning').fadeOut(function() {
+                $(this).remove();
+            });
+        }
+
+        function _createRow(tbody, file, index) {
+            var cls = 'draggable';
+            if (typeof index === 'number') {
+                cls += index % 2 ? ' odd' : ' even';
+            }
+            return $('<tr class="draggable"/>')
+                .attr({'class': cls, 'data-id': file.id})
+                .mouseup(function() {
+                    _reorderSelected($(this).parent())
+                }) // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
+                                           // uszereguj tak elementy w idsecie, zeby ich kolejnosc
+                                           // byla taka sama
+                .append('<td>' + file.filename + '</td>')
+                .append('<td>' + file.filesize + '</td>')
+                .append('<td><input type="text" /></td>')
+                .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
+                .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
+                    _removeRow($(this).parent());
+                }))
+                .appendTo(tbody);
+        }
+
         this.redraw = function() {
-            table = $('<table/>').appendTo(j.children('.table-wrapper'))
+            var tableWrapper = j.children('.table-wrapper').empty();
+            table = $('<table/>').appendTo(tableWrapper)
                 .html('<thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead></table>');
             var tbody = $('<tbody/>').appendTo(table);
-            var odd = true;
-            idset.each(function(id, value) {
-                $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
-                    .attr('data-id', id)
-                        // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
-                        // uszereguj tak elementy w idsecie, zeby ich kolejnosc
-                        // byla taka sama.                                    
-                    .mouseup(_reorderSelected)
-                    .append('<td>' + value.filename + '</td>')
-                    .append('<td>' + value.filesize + '<input type="text" name="weight" class="weight" /></td>')
-                    .append('<td><input type="text" /></td>')
-                    .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
-                        // usun identyfikator pliku ze zbioru
-                        idset.del(id);
-                                                                    // usun wiersz
-                        $(this).parent().remove();
-                        _updateWeights();
-
-                        // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
-                        // nie beda zapisane dopoki formularz nie zostanie przeslany
-                        table.next('.warning').fadeOut(function() {
-                            $(this).remove();
-                        });
-                    })).appendTo(tbody);
-                    odd = !odd;
+            var i = 0;
+            idset.each(function(id, file) {
+                _createRow(tbody, file, i++);
             });
+            _updateWeights(tbody);
             // dodaj tabledrag
             var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
                 target: 'weight',
