@@ -347,17 +347,15 @@ var Scholar = {
 
             var needle = filter.val().toLowerCase();
 
-            for (var i = 0, n = items.length; i < n; ++i) {
-                var item = items[i],
-                    elem = elements.get(item[idKey]);
+            elements.each(function(id, element) {
+                var item = domain.get(id),
                     haystack = String(item[options.filterKey]).toLowerCase();
 
-                // elem na pewno istnieje, bo wskaznik do niego jest
-                // przechowuwany w elementSecie, zbudowanym na podstawie
-                // niemutowalnej tablicy items (kopii tej przekazanej
-                // jako argument konstruktora).
-                elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
-            }
+                // item na pewno istnieje, bo wskaznik do niego jest
+                // przechowywany w domenie, na podstawie ktorej zbudowane
+                // sa tagi LI odpowiadajace jej elementom
+                element.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+            });
         } 
 
         /**
@@ -813,79 +811,112 @@ var Scholar = {
 
         j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
 
-        var table;
+
+
+        /**
+         * Aktualizuje wartości wag dla elementów tabeli.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         */
         function _updateWeights(tbody)
         {
-            var i = 0;
-            tbody.find('tr[data-id]').each(function() {
-                $(this).find('.weight').val(i++);
+            var weight = 0;
+
+            tbody.find('tr[data-id] input.weight').each(function() {
+                $(this).val(weight++);
             });
         }
 
+        /**
+         * Ustawia elementy w zbiorze wybranych zgodnie z kolejnością
+         * odpowiadających im wierszy tabeli. Funkcja aktualizuje 
+         * wagi wierszy.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         */
         function _reorderSelected(tbody)
         {
-            var i = 0;
+            var weight = 0, queue = [];
 
-            // ustawia elementy w zbiorzez selected zgodnie z kolejnoscia
-            // wierszy w tabeli
-            var selected = [];
+            // przejdz kolejno przez wszystkie wiersze w tabeli i dla kazdego z nich
+            // dodaj do kolejki odpowiadajacy mu element
             tbody.find('tr[data-id]').each(function() {
                 var id = $(this).attr('data-id'),
                     item = idset.get(id);
+
                 if (typeof item !== 'undefined') {
-                    selected[selected.length] = [id, item];
+                    queue[queue.length] = [id, item];
                 }
-                $(this).find('input.weight').val(i++);
+
+                // waga jest zwiekszana leniwie, zeby nie robic inkrementacji
+                // dla nieistniejacych elementow
+                $(this).find('input.weight').each(function() {
+                    $(this).val(weight++);
+                });
             });
 
             idset.clear();
-            for (var i = 0, n = selected.length; i < n; ++i) {
-                var s = selected[i];
-                idset.add(s[0], s[1]);
+
+            for (var i = 0, n = queue.length; i < n; ++i) {
+                var pair = queue[i];
+                idset.add(pair[0], pair[1]);
             }
         }
 
-        // funkcja do odpalania w kontekscie wiersza tabeli
-        // @param {jQuery} tr
+        /**
+         * Usuwa wiersz z tabeli.
+         * @param {jQuery} tr           obiekt jQuery przechowujący element TR tabeli
+         */
         function _removeRow(tr) {
             var tbody = tr.parent();
 
             // usun identyfikator pliku ze zbioru
             idset.del(tr.attr('data-id'));
 
-            // usun wiersz
+            // usun wiersz i zaktualizuj wagi
             tr.remove();
             _updateWeights(tbody);
 
-            // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
-            // nie beda zapisane dopoki formularz nie zostanie przeslany
+            // usun ewentualny komunikat pochodzacy z Drupal.tableDrag o tym,
+            // ze zmiany w tej tabeli nie beda zapisane dopoki formularz nie
+            // zostanie przeslany
             tbody.parent().next('.warning').fadeOut(function() {
                 $(this).remove();
             });
         }
 
-        function _createRow(tbody, file, index) {
+        /**
+         * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go do tabeli.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         * @param {object} file
+         * @param {number} [position]   numer wiersza, potrzebny do określenia klasy CSS
+         *                              czy jest to wiersz parzysty czy nieparzysty
+         */
+        function _createRow(tbody, file, position) {
             var cls = 'draggable';
-            if (typeof index === 'number') {
-                cls += index % 2 ? ' odd' : ' even';
+            if (typeof position === 'number') {
+                cls += position % 2 ? ' odd' : ' even';
             }
             return $('<tr class="draggable"/>')
                 .attr({'class': cls, 'data-id': file.id})
                 .mouseup(function() {
+                    // To zdarzenie jest wywolane zmiana kolejnosci ulozenia
+                    // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
+                    // zeby ich kolejnosc odpowiadala wierszom tabeli.
                     _reorderSelected($(this).parent())
-                }) // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
-                                           // uszereguj tak elementy w idsecie, zeby ich kolejnosc
-                                           // byla taka sama
+                })
                 .append('<td>' + file.filename + '</td>')
                 .append('<td>' + file.filesize + '</td>')
                 .append('<td><input type="text" /></td>')
                 .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
-                .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
-                    _removeRow($(this).parent());
-                }))
+                .append(
+                    $('<td style="cursor:pointer">DELETE</td>')
+                        .click(function() {
+                            _removeRow($(this).parent());
+                        })
+                )
                 .appendTo(tbody);
         }
 
+        var table;
         this.redraw = function() {
             var tableWrapper = j.children('.table-wrapper').empty();
             table = $('<table/>').appendTo(tableWrapper)
@@ -902,7 +933,7 @@ var Scholar = {
                 source: 'weight',
                 relationship: 'sibling',
                 action: 'order',
-                hidden: false,
+                hidden: true,
                 limit: 0
             }] });
             // TODO sticky table 
