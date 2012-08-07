@@ -492,7 +492,15 @@ function theme_scholar_attachment_manager($element)
     drupal_add_js('misc/tabledrag.js', 'core');
     scholar_add_js();
 
-    $languages = array(t('All languages')) + scholar_languages();
+    $langicons = module_exists('languageicons');
+    $languages = array();
+    foreach (scholar_languages() as $code => $name) {
+        $languages[] = array(
+            'code' => $code,
+            'name' => $name,
+            'flag' => $langicons ? theme('languageicons_icon', (object) array('language' => $code), $name) : null,
+        );
+    }
 
     $settings = array(
         'prefix'        => $element['#name'],
@@ -503,8 +511,7 @@ function theme_scholar_attachment_manager($element)
     $html = '<p class="help">Each file must be given label in at least one language.
         If label is given, file will be listed on page in that language.</p>' .
         '<div id="' . $element['#id'] . '"></div>' .
-        '<script type="text/javascript">new Scholar.attachmentManager(\'#' . $element['#id'] . '\', ' . drupal_to_js($settings) .')</script>';
-    $html .= drupal_to_js($languages);
+        '<script type="text/javascript">new Scholar.attachmentManager(\'#' . $element['#id'] . '\', ' . drupal_to_js($settings) .', ' . drupal_to_js($languages) . ')</script>';
     
 
     return $html;

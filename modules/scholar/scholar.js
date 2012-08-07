@@ -1,13 +1,49 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-05
+ * @version 2012-08-07
  */
 
 /**
  * @namespace Przestrzeń nazw dla funkcji modułu.
  */
 var Scholar = {
+    /**
+     * Prosty silnik renderowania szablonów.
+     * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
+     * aby wstawić lewy nawias klamrowy trzeba użyć {{, aby prawy nie trzeba.
+     * @param {string} template
+     * @param obj
+     */
+    render: function(template, vars) {
+        // W pierwszej kolejnosci rozbij wejsciowy ciag znakow za pomoca 
+        // '{{' aby usunac escape'owane nawiasy klamrowe
+        var output = String(template).split(/\{\{/),
+            regex  = /\}\}|\{(\.[^\}]*)\}/g,
+            renderer = function($0, $1) {
+                // Escape'owany klamrowy nawias zamykajacy
+                if ($0 == '}}') {
+                    return '}';
+                }
+
+                // Kropka odpowiada calemu obiektowi podanemu jako argument
+                // vars funkcji render()
+                if ($1 == '.') {
+                    return vars;
+                }
+
+                // Odwolanie do konkretnej zmiennej
+                return typeof vars[$1] === 'undefined' ? '' : vars[$1];
+            }
+
+        // Zastap placeholdery odpowiednimi wartosciami
+        for (var i = 0, n = output.length; i < n; ++i) {
+            output[i] = output[i].replace(regex, renderer);
+        }
+
+        // przywroc nawiasy klamrowe
+        return output.join('{');
+    },
     /**
      * Zbiór identyfikatorów.
      * @constructor
@@ -622,8 +658,9 @@ var Scholar = {
      * @constructor
      * @param {string} selector         selektor jQuery wskazujacy element,
      *                                  w którym ma zostać umieszczony widget
+     *
      */
-    attachmentManager: function(selector, settings) { // {{{
+    attachmentManager: function(selector, settings, languages) { // {{{
         var self = this,
             j = $(selector)
             .addClass('scholar-attachment-manager')
@@ -731,6 +768,7 @@ var Scholar = {
                                                 if (typeof item !== 'undefined') {
                                                     selected[selected.length] = [id, item];
                                                 }
+                                                $(this).find('.weight').val(i);
                                             });
 
                                             idset.clear();
@@ -740,7 +778,7 @@ var Scholar = {
                                             }
                                         })
                                         .append('<td>' + value.filename + '</td>')
-                                        .append('<td>' + value.filesize + '<input type="hidden" class="weight" /></td>')
+                                        .append('<td>' + value.filesize + '<input type="text" name="weight" class="weight" /></td>')
                                         .append('<td><input type="text" /></td>')
                                         .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
                                             // usun identyfikator pliku ze zbioru
