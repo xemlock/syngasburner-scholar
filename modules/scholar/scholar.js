@@ -730,6 +730,10 @@ var Scholar = {
         var idset = new Scholar.idSet;
         var idsetId = '_attachmentManager' + uniq;
 
+        if (typeof settings.translate !== 'function') {
+            settings.translate = Scholar.id;        
+        }
+
         // podepnij ten obiekt jako widok zbioru - potrzebne podczas
         // uploadowania plikow
         idset.attachmentManager = this;
@@ -828,7 +832,7 @@ var Scholar = {
 
         /**
          * Ustawia elementy w zbiorze wybranych zgodnie z kolejnością
-         * odpowiadających im wierszy tabeli. Funkcja aktualizuje 
+         * odpowiadających im wierszy tabeli. Funkcja aktualizuje
          * wagi wierszy.
          * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
          */
@@ -908,7 +912,7 @@ var Scholar = {
                 .append('<td><input type="text" /></td>')
                 .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
                 .append(
-                    $('<td style="cursor:pointer">DELETE</td>')
+                    $('<td style="cursor:pointer"><a href="#!">' + settings.translate('Delete') + '</a></td>')
                         .click(function() {
                             _removeRow($(this).parent());
                         })
@@ -917,27 +921,45 @@ var Scholar = {
         }
 
         var table;
+        var headerSpec = ['Plik', 'Rozmiar', 'Etykieta', 'Waga'];
         this.redraw = function() {
             var tableWrapper = j.children('.table-wrapper').empty();
-            table = $('<table/>').appendTo(tableWrapper)
-                .html('<thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead></table>');
+            table = $('<table class="sticky-enabled"/>').appendTo(tableWrapper);
+
+            var thead = '<thead>';
+            for (var i = 0, n = headerSpec.length; i < n; ++i) {
+                thead += '<th>' + headerSpec[i] + '</th>';
+            }
+            // jedna dodatkowa kolumna na usuwacza
+            thead += '<th></th></thead>';
+            table.append(thead);
+
             var tbody = $('<tbody/>').appendTo(table);
             var i = 0;
             idset.each(function(id, file) {
                 _createRow(tbody, file, i++);
             });
             _updateWeights(tbody);
-            // dodaj tabledrag
-            var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
-                target: 'weight',
-                source: 'weight',
-                relationship: 'sibling',
-                action: 'order',
-                hidden: true,
-                limit: 0
-            }] });
-            // TODO sticky table 
-        }              
+
+            if (window.Drupal) {
+                // dodaj przeciaganie i upuszczanie wierszy
+                if (Drupal.tableDrag) {
+                    var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
+                        target: 'weight',
+                        source: 'weight',
+                        relationship: 'sibling',
+                        action: 'order',
+                        hidden: false,//true,
+                        limit: 0
+                    }] });
+                }
+
+                // dodaj ruchomy naglowek tabeli
+                Drupal.behaviors.tableHeader();
+            }
+        }
+
+        this.redraw();
     } // }}}
 };
 

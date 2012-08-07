@@ -490,6 +490,8 @@ function theme_scholar_attachment_manager($element)
 {
     scholar_add_css();
     drupal_add_js('misc/tabledrag.js', 'core');
+    drupal_add_js('misc/tableheader.js', 'core');
+
     scholar_add_js();
 
     $langicons = module_exists('languageicons');
