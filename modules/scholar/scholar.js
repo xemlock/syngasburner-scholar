@@ -720,7 +720,10 @@ var Scholar = {
      * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
-    attachmentManager: function(selector, settings, languages) { // {{{
+    attachmentManager: function(selector, settings, languages) { 
+        var ms = new Scholar.multiSelect(selector, settings, languages);
+    },
+    multiSelect: function(selector, settings, languages) { // {{{
         var self = this,
             j = $(selector)
             .addClass('scholar-attachment-manager')
@@ -887,32 +890,60 @@ var Scholar = {
             });
         }
 
+        var headerSpec = ['Plik', 'Rozmiar', 'Etykieta'];
+        settings.templates = ['{ filename }', '{ filesize }', function() {
+            return 'Langname: <input type="text" />';
+        }];
+
         /**
          * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go do tabeli.
          * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
-         * @param {object} file
+         * @param id
+         * @param file
          * @param {number} [position]   numer wiersza, potrzebny do określenia klasy CSS
          *                              czy jest to wiersz parzysty czy nieparzysty
          */
-        function _createRow(tbody, file, position) {
+        function _createRow(tbody, id, file, position) {
             var cls = 'draggable';
             if (typeof position === 'number') {
                 cls += position % 2 ? ' odd' : ' even';
             }
+            var html = '';
+            for (var i = 0, n = headerSpec.length; i < n; ++i) {
+                var result, template = settings.templates[i];
+
+                switch (typeof template) {
+                    case 'undefined':
+                        result = '';
+                        break;
+
+                    case 'function':
+                        result = template(file);
+                        break;
+
+                    case 'string':
+                        result = Scholar.render(template, file);
+                        break;
+
+                    default:
+                        result = String(template);
+                        break;
+                }
+                html += '<td>' + result + '</td>';
+            }
+
             return $('<tr class="draggable"/>')
-                .attr({'class': cls, 'data-id': file.id})
+                .attr({'class': cls, 'data-id': id})
                 .mouseup(function() {
                     // To zdarzenie jest wywolane zmiana kolejnosci ulozenia
                     // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
                     // zeby ich kolejnosc odpowiadala wierszom tabeli.
                     _reorderSelected($(this).parent())
                 })
-                .append('<td>' + file.filename + '</td>')
-                .append('<td>' + file.filesize + '</td>')
-                .append('<td><input type="text" /></td>')
+                .html(html)
                 .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
                 .append(
-                    $('<td style="cursor:pointer"><a href="#!">' + settings.translate('Delete') + '</a></td>')
+                    $('<td><a href="#!">' + settings.translate('Delete') + '</a></td>')
                         .click(function() {
                             _removeRow($(this).parent());
                         })
@@ -920,24 +951,23 @@ var Scholar = {
                 .appendTo(tbody);
         }
 
-        var table;
-        var headerSpec = ['Plik', 'Rozmiar', 'Etykieta', 'Waga'];
         this.redraw = function() {
             var tableWrapper = j.children('.table-wrapper').empty();
-            table = $('<table class="sticky-enabled"/>').appendTo(tableWrapper);
+            var table = $('<table class="sticky-enabled"/>').appendTo(tableWrapper);
 
             var thead = '<thead>';
             for (var i = 0, n = headerSpec.length; i < n; ++i) {
                 thead += '<th>' + headerSpec[i] + '</th>';
             }
             // jedna dodatkowa kolumna na usuwacza
+            thead += '<th>' + settings.translate('Weight') + '</th>';
             thead += '<th></th></thead>';
             table.append(thead);
 
             var tbody = $('<tbody/>').appendTo(table);
             var i = 0;
             idset.each(function(id, file) {
-                _createRow(tbody, file, i++);
+                _createRow(tbody, id, file, i++);
             });
             _updateWeights(tbody);
 
@@ -949,7 +979,7 @@ var Scholar = {
                         source: 'weight',
                         relationship: 'sibling',
                         action: 'order',
-                        hidden: false,//true,
+                        hidden: true,
                         limit: 0
                     }] });
                 }

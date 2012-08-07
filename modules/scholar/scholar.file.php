@@ -490,7 +490,9 @@ function scholar_file_edit_form(&$form_state, $file_id)
         '#attributes' => array('class' => 'scholar'),
     );
 
-    $url = url(scholar_file_path($file->filename), array('absolute' => true));
+    global $base_url;
+    $url = $base_url . '/' . scholar_file_path($file->filename);
+
     $form['properties'][] = array(
         '#type' => 'markup',
         '#value' => '<dl class="scholar">
