@@ -16,7 +16,8 @@ var Scholar = {
      * @param vars
      */
     render: function(template, vars) { // {{{
-        var regex  = /\{\{|\}\}|\{([^\{\}]*)\}/g,
+        var $ = window.jQuery,
+            regex  = /\{\{|\}\}|\{([^\{\}]*)\}/g,
             renderer = function($0, $1) {
                 // Escape'owany nawias klamrowy
                 switch ($0) {
@@ -26,14 +27,16 @@ var Scholar = {
                         return '}';
                 }
 
+                var key = $.trim($1);
+
                 // Kropka odpowiada calemu obiektowi podanemu jako argument
                 // vars funkcji render()
-                if ($1 == '.') {
+                if (key == '.') {
                     return vars;
                 }
 
                 // Odwolanie do konkretnej zmiennej
-                return typeof vars[$1] === 'undefined' ? '' : vars[$1];
+                return typeof vars[key] === 'undefined' ? '' : vars[key];
             }
 
         return String(template).replace(regex, renderer);
@@ -269,6 +272,9 @@ var Scholar = {
             return domain;
         }
 
+        /**
+         * Przygotowuje zbior zaznaczonych elementow.
+         */
         function _initSelected() {
             var selected = new Scholar.idSet;
 
@@ -351,11 +357,12 @@ var Scholar = {
         } 
 
         /**
-         * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy
+         * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy,
+         * gdy taki element jest wśród elementów podanych w konstruktorze.
+         * @param id                    identyfikator elementu
+         * @returns {itemSelector}      obiekt, na którym wywołano tę metodę
          */
         this.add = function(id) {
-            // dodaje do zaznaczonych, ale tylko wtedy jezeli id
-            // jest wsrod elementow podanych w konstruktorze
             var item = domain.get(id);
 
             if (typeof item !== 'undefined') {
@@ -365,6 +372,10 @@ var Scholar = {
             return this;
         }
 
+        /**
+         * Iteruje po zbiorze zaznaczonych elementów.
+         * @returns {itemSelector}      obiekt, na którym wywołano tę metodę
+         */
         this.each = function(callback) {
             selected.each(callback);
             return this;
@@ -705,8 +716,7 @@ var Scholar = {
     /**
      * Umieszcza w podanym selektorze widget zarządzający załącznikami.
      * @constructor
-     * @param {string} selector         selektor jQuery wskazujacy element,
-     *                                  w którym ma zostać umieszczony widget
+     * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
     attachmentManager: function(selector, settings, languages) { // {{{
@@ -719,7 +729,8 @@ var Scholar = {
         var idset = new Scholar.idSet;
         var idsetId = '_attachmentManager' + uniq;
 
-        // podepnij ten obiekt jako widok zbioru
+        // podepnij ten obiekt jako widok zbioru - potrzebne podczas
+        // uploadowania plikow
         idset.attachmentManager = this;
         window[idsetId] = idset;
 
@@ -799,63 +810,95 @@ var Scholar = {
 
         j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
 
+        var table;
+        function _updateWeights()
+        {
+            var i = 0;
+            table.find('tbody tr[data-id]:not(.removed)').each(function() {
+                $(this).find('.weight').val(i++);
+            });
+        }
+
+        function _reorderSelected()
+        {
+            // ustawia elementy w zbiorzez selected zgodnie z kolejnoscia
+            // wierszy w tabeli
+            var selected = [];
+            var i = 0;
+            table.parents('table:first').find('tbody tr[data-id]').each(function() {
+                var id = $(this).attr('data-id'),
+                    item = idset.get(id);
+                if (typeof item !== 'undefined') {
+                    selected[selected.length] = [id, item];
+                }
+                $(this).find('.weight').val(i++);
+            });
+
+            idset.clear();
+            for (var i = 0, n = selected.length; i < n; ++i) {
+                var s = selected[i];
+                idset.add(s[0], s[1]);
+            }
+        }
+
         this.redraw = function() {
-            var tbody = j.children('.table-wrapper').html('<table class="sticky-enabled"><thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead><tbody></tbody></table>').find('tbody');
-                                var odd = true;
-                                idset.each(function(id, value) {
-                                    $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
-                                        .attr('data-id', id)
-                                        .mouseup(function() {
-                                            // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
-                                            // uszereguj tak elementy w idsecie, zeby ich kolejnosc
-                                            // byla taka sama.
-                                            var selected = [];
-                                            var i = 0;
-                                            $(this).parents('table:first').find('tbody tr[data-id]').each(function() {
-                                                var id = $(this).attr('data-id'),
-                                                    item = idset.get(id);
-                                                if (typeof item !== 'undefined') {
-                                                    selected[selected.length] = [id, item];
-                                                }
-                                                $(this).find('.weight').val(i);
-                                            });
+            table = $('<table/>').appendTo(j.children('.table-wrapper'))
+                .html('<thead><tr><th>Plik</th><th>Rozmiar</th><th>Etykieta</th><th></th></tr></thead></table>');
+            var tbody = $('<tbody/>').appendTo(table);
+            var odd = true;
+            idset.each(function(id, value) {
+                $('<tr class="draggable ' + (odd ? 'odd' : 'even') + '"/>')
+                    .attr('data-id', id)
+                        // nastapila zmiana kolejnosci ulozenia wierszy tabeli,
+                        // uszereguj tak elementy w idsecie, zeby ich kolejnosc
+                        // byla taka sama.                                    
+                    .mouseup(_reorderSelected)
+                    .append('<td>' + value.filename + '</td>')
+                    .append('<td>' + value.filesize + '<input type="text" name="weight" class="weight" /></td>')
+                    .append('<td><input type="text" /></td>')
+                    .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
+                        // usun identyfikator pliku ze zbioru
+                        idset.del(id);
+                                                                    // usun wiersz
+                        $(this).parent().remove();
+                        _updateWeights();
 
-                                            idset.clear();
-                                            for (var i = 0, n = selected.length; i < n; ++i) {
-                                                var s = selected[i];
-                                                idset.add(s[0], s[1]);
-                                            }
-                                        })
-                                        .append('<td>' + value.filename + '</td>')
-                                        .append('<td>' + value.filesize + '<input type="text" name="weight" class="weight" /></td>')
-                                        .append('<td><input type="text" /></td>')
-                                        .append($('<td style="cursor:pointer">DELETE</td>').click(function() {
-                                            // usun identyfikator pliku ze zbioru
-                                            idset.del(id);
-
-                                            // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
-                                            // nie beda zapisane dopoki formularz nie zostanie przeslany
-                                            $(this).parents('table:first').next('.warning').fadeOut(function() {
-                                                $(this).remove();
-                                            });
-                                                                                        // usun wiersz
-                                            $(this).parent().remove();
-                                        })).appendTo(tbody);
-                                        odd = !odd;
-                                });
-                                // dodaj tabledrag
-                                var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
-                                    target: 'weight',
-                                    source: 'weight',
-                                    relationship: 'sibling',
-                                    action: 'order',
-                                    hidden: false,
-                                    limit: 0
-                                }] });
-        
+                        // usun ewentualny komunikat o tym, ze zmiany w tej tabeli
+                        // nie beda zapisane dopoki formularz nie zostanie przeslany
+                        table.next('.warning').fadeOut(function() {
+                            $(this).remove();
+                        });
+                    })).appendTo(tbody);
+                    odd = !odd;
+            });
+            // dodaj tabledrag
+            var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
+                target: 'weight',
+                source: 'weight',
+                relationship: 'sibling',
+                action: 'order',
+                hidden: false,
+                limit: 0
+            }] });
+            // TODO sticky table 
         }              
     } // }}}
 };
+
+/**
+ * Ustawia / zwraca instancję itemSelectora o podanym identyfikatorze.
+ * @static 
+ * @param {string} id
+ */
+Scholar.itemSelector.instance = function(id, obj) { // {{{
+    var key = '__itemSelector_' + id;
+
+    if (obj) {
+        window[key] = obj;
+    }
+
+    return window[key];
+} // }}}
 
 /**
  * Informuje powiązaną instancję menadżera załączników
@@ -863,9 +906,7 @@ var Scholar = {
  * w okienku lub IFRAME otwartej przez menadżera.
  * @static
  * @param {object} file                 reprezentacja rekordu przeslanego pliku
- * @param {string} [urlFragment]        opcjonalny fragment URL wskazujący na zbiór
- *                                      przechowujący identyfikatory plików znajdujący
- *                                      się w okienku-rodzicu
+ * @param {string} [urlFragment]        opcjonalny fragment URL wskazujący na zbiór przechowujący identyfikatory plików znajdujący się w okienku-rodzicu
  */
 Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
     var context, close;
@@ -903,21 +944,6 @@ Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
 
         close();
     }
-} // }}}
-
-/**
- * Ustawia / zwraca instancję itemSelectora
- * @static 
- * @param {string} id
- */
-Scholar.itemSelector.instance = function(id, obj) { // {{{
-    var key = '__itemSelector_' + id;
-
-    if (obj) {
-        window[key] = obj;
-    }
-
-    return window[key];
 } // }}}
 
 Scholar.modal = new Scholar.dialog(window.jQuery);
