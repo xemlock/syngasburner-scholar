@@ -245,7 +245,7 @@ function scholar_file_select() // {{{
     ob_start();
 ?>
 <script type="text/javascript">$(function() {
-new Scholar.itemSelector(<?php echo drupal_to_js($files) ?>, '#item-{id}', {
+new Scholar.itemSelector('#items', '{filename}', <?php echo drupal_to_js($files) ?>, {
     filterSelector: '#name-filter',
     filterSubject: 'filename',
     filterReset: '#reset-filter'
@@ -269,12 +269,7 @@ user-select: none;
     Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
 Dwukrotne kliknięcie zaznacza element
 <hr/>
-<?php if ($files) { ?>
-<ul id="items"><?php foreach ($files as $file) { ?>
-<li id="item-<?php echo $file['id'] ?>"><?php echo $file['filename'] ?>
-</li>
-<?php } ?></ul>
-<?php } else { ?>Nie ma plików<? } ?>
+<div id="items"></div>
 <?php
 
     return scholar_render(ob_get_clean(), true);

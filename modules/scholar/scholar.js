@@ -13,17 +13,17 @@ var Scholar = {
      * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
      * aby wstawić lewy nawias klamrowy trzeba użyć {{, aby prawy nie trzeba.
      * @param {string} template
-     * @param obj
+     * @param vars
      */
-    render: function(template, vars) {
-        // W pierwszej kolejnosci rozbij wejsciowy ciag znakow za pomoca 
-        // '{{' aby usunac escape'owane nawiasy klamrowe
-        var output = String(template).split(/\{\{/),
-            regex  = /\}\}|\{(\.[^\}]*)\}/g,
+    render: function(template, vars) { // {{{
+        var regex  = /\{\{|\}\}|\{([^\{\}]*)\}/g,
             renderer = function($0, $1) {
-                // Escape'owany klamrowy nawias zamykajacy
-                if ($0 == '}}') {
-                    return '}';
+                // Escape'owany nawias klamrowy
+                switch ($0) {
+                    case '{{':
+                        return '{';
+                    case '}}':
+                        return '}';
                 }
 
                 // Kropka odpowiada calemu obiektowi podanemu jako argument
@@ -36,14 +36,8 @@ var Scholar = {
                 return typeof vars[$1] === 'undefined' ? '' : vars[$1];
             }
 
-        // Zastap placeholdery odpowiednimi wartosciami
-        for (var i = 0, n = output.length; i < n; ++i) {
-            output[i] = output[i].replace(regex, renderer);
-        }
-
-        // przywroc nawiasy klamrowe
-        return output.join('{');
-    },
+        return String(template).replace(regex, renderer);
+    }, // }}}
     /**
      * Zbiór identyfikatorów.
      * @constructor
@@ -254,7 +248,7 @@ var Scholar = {
      * @param {string} [options.filterKey]      nazwa właściwości elementu, po której lista będzie filtrowana,
      *                                          musi być podany, jeżeli podano filterSelector
      */
-    itemSelector: function(items, pattern, options) { // {{{
+    itemSelector: function(selector, template, items, options) { // {{{
         // lepiej trzymac konfiguracje w ten sposob, niz w obiekcie
         // i za kazdym razem dostawac sie do jego wlasciwosci
         var idKey          = typeof options.idKey === 'undefined' ? 'id' : options.idKey,
@@ -262,15 +256,11 @@ var Scholar = {
             filterKey      = options.filterKey,
             filterReset    = options.filterReset;
 
-        /**
-         * Zwraca obiekt jQuery zawierający element drzewa dokumentu
-         * odpowiadający elementowi o podanym identyfikatorze.
-         * @param id
-         * @returns {jQuery}
-         */
-        function _getElementById(id) {
-            return $(pattern.replace(/\{id\}/g, id));
-        }
+        // zbior przechowujacy elementy LI odpowiadajace elementom listy
+        var elementSet = new Scholar.idSet;
+
+        // zbior przechowujacy zaznaczone elementy
+        var itemSet = new Scholar.idSet;
 
         /** 
          * Ukrywa te elementy listy, które nie zawierają ciągu znaków
@@ -288,39 +278,70 @@ var Scholar = {
             }
 
             var needle = filter.val().toLowerCase();
-            for (var i = 0; i < items.length; ++i) {
+
+            for (var i = 0, n = items.length; i < n; ++i) {
                 var item = items[i],
-                    elem = _getElementById(item[idKey]),
-                    haystack = String(item[filterKey]).toLowerCase();
-                elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+                    elem = elementSet.get(item[idKey]);
+
+                if (elem) {
+                    var haystack = String(item[filterKey]).toLowerCase();
+                    elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+                }
             }
         }
 
-        // zbior buforowy przechowujacy zaznaczone elementy
-        var buffer = new Scholar.idSet;
+        /**
+         * Przygotowuje element UL z elementami LI odpowiadającymi 
+         * elementom listy i umieszcza go jako jedyne dziecko selektora
+         * podanego w konstruktorze.
+         */
+        function _initElements() {
+            var ul = $('<ul/>'),
+                createElement = function(item, ul) {
+                    return $('<li/>')
+                        .html(Scholar.render(template, item))
+                        .attr('data-id', item[idKey])
+                        .click(function() {
+                            itemSet[itemSet.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
+                        })
+                        .appendTo(ul);
+                }
 
-        // podepnij do zbioru sluchacza zdarzen
-        buffer.addListener({
+            for (var i = 0, n = items.length; i < n; ++i) {
+                var item = items[i];
+                elementSet.add(item[idKey], createElement(item, ul));
+            }
+
+            $(selector).empty().append(ul);
+        }
+
+        this.add = function(id, value) {
+            return itemSet.add(id, value);
+        }
+
+        this.each = function(callback) {
+            return itemSet.each(callback);
+        }
+
+        // podepnij sluchacza zdarzen do zbioru
+        itemSet.addListener({
             onAdd: function(id) {
-                var elem = _getElementById(id).addClass('selected');
-                elem.html(elem.html() + ' (SELECTED)');
+                var elem = elementSet.get(id);
+                if (elem) {
+                    elem.addClass('selected');
+                    elem.html(elem.html() + ' (SELECTED)');
+                }
             },
             onDelete: function(id) {
-                var elem = _getElementById(id).removeClass('selected');
-                elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                var elem = elementSet.get(id);
+                if (elem) {
+                    elem.removeClass('selected');
+                    elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                }
             }
         });
 
-        // podepnij dodawanie / usuwanie elementow za pomoca klikniecia
-        $(items).each(function (key, item) {
-            var elem = _getElementById(item[idKey]);
-            elem.click(function() {
-                buffer[buffer.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
-            });
-        });
-
-        var instanceId = window.location.hash.substr(2);
-        window['__itemSelector_' + instanceId] = this;
+        _initElements();
 
         // jezeli podano selektor elementu, na podstawie wartosci ktorego
         // beda filtrowane elementy, podepnij filtrowanie po kazdym
@@ -338,13 +359,10 @@ var Scholar = {
             });
         }
 
-        this.add = function(id, value) {
-            return buffer.add(id, value);
-        }
-
-        this.each = function(callback) {
-            return buffer.each(callback);
-        }
+        // podepnij globalny wskaznik do tego obiektu, aby mozna bylo
+        // siegnac do niego z zewnatrz
+        var instanceId = window.location.hash.substr(2);
+        window['__itemSelector_' + instanceId] = this;
     }, // }}}
     /**
      * Okienko.
@@ -856,9 +874,13 @@ Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
     }
 } // }}}
 
-Scholar.itemSelector.getInstance = function(id) {
-    alert('itemSelector.getInstance: ' + id);
+/**
+ * Zwraca instancję itemSelectora
+ * @static 
+ * @param {string} id
+ */
+Scholar.itemSelector.getInstance = function(id) { // {{{
     return window['__itemSelector_' + id];
-}
+} // }}}
 
 Scholar.modal = new Scholar.dialog(window.jQuery);
