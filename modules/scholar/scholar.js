@@ -256,38 +256,48 @@ var Scholar = {
             filterKey      = options.filterKey,
             filterReset    = options.filterReset;
 
-        // zbior przechowujacy elementy LI odpowiadajace elementom listy
-        var elementSet = new Scholar.idSet;
+        var elementSet, // zbior przechowujacy elementy LI odpowiadajace elementom listy
+            itemSet;    // zbior przechowujacy zaznaczone elementy listy
 
-        // zbior przechowujacy zaznaczone elementy
-        var itemSet = new Scholar.idSet;
+        function _init() {
+            elementSet = new Scholar.idSet;
+            itemSet = new Scholar.idSet;
 
-        /** 
-         * Ukrywa te elementy listy, które nie zawierają ciągu znaków
-         * podanego w wybranym polu tekstowym.
-         * @param {string} [value]        opcjonalna wartość do nadania elementowi filtrującemu
-         */
-        function _filter(value) {
-            var filter = $(filterSelector);
-
-            // Poniewaz funkcja jest uzywana jako obsluga zdarzenia keyup,
-            // ustaw wartosc elementu filtrujacego tylko jezeli value
-            // jest stringiem
-            if (typeof value === 'string') {
-                filter.val(value);
-            }
-
-            var needle = filter.val().toLowerCase();
-
-            for (var i = 0, n = items.length; i < n; ++i) {
-                var item = items[i],
-                    elem = elementSet.get(item[idKey]);
-
-                if (elem) {
-                    var haystack = String(item[filterKey]).toLowerCase();
-                    elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+            // podepnij sluchacza zdarzen do zbioru elementow
+            itemSet.addListener({
+                onAdd: function(id) {
+                    var elem = elementSet.get(id);
+                    if (elem) {
+                        elem.addClass('selected');
+                        elem.html(elem.html() + ' (SELECTED)');
+                    }
+                },
+                onDelete: function(id) {
+                    var elem = elementSet.get(id);
+                    if (elem) {
+                        elem.removeClass('selected');
+                        elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
+                    }
                 }
+            });
+
+            _initElements();
+
+            // jezeli podano selektor elementu, na podstawie wartosci ktorego
+            // beda filtrowane elementy, podepnij filtrowanie po kazdym
+            // wcisnieciu klawisza na klawiaturze
+            if (filterSelector) {
+                $(filterSelector).keyup(_filter);
             }
+
+            // jezeli podano selektor elementu czyszczacego filter podepnij
+            // czyszczenie filtra po kliknieciu w niego
+            if (filterReset) {
+                $(filterReset).click(function() {
+                    _filter('');
+                    return false;
+                });
+            }   
         }
 
         /**
@@ -315,6 +325,34 @@ var Scholar = {
             $(selector).empty().append(ul);
         }
 
+        /** 
+         * Ukrywa te elementy listy, które nie zawierają ciągu znaków
+         * podanego w wybranym polu tekstowym.
+         * @param {string} [value]        opcjonalna wartość do nadania elementowi filtrującemu
+         */
+        function _filter(value) {
+            var filter = $(filterSelector);
+
+            // Poniewaz funkcja jest uzywana jako obsluga zdarzenia keyup,
+            // ustaw wartosc elementu filtrujacego tylko jezeli value
+            // jest stringiem
+            if (typeof value === 'string') {
+                filter.val(value);
+            }
+
+            var needle = filter.val().toLowerCase();
+
+            for (var i = 0, n = items.length; i < n; ++i) {
+                var item = items[i],
+                    elem = elementSet.get(item[idKey]);
+
+                if (elem) {
+                    var haystack = String(item[filterKey]).toLowerCase();
+                    elem.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+                }
+            }
+        } 
+
         this.add = function(id, value) {
             return itemSet.add(id, value);
         }
@@ -323,46 +361,12 @@ var Scholar = {
             return itemSet.each(callback);
         }
 
-        // podepnij sluchacza zdarzen do zbioru
-        itemSet.addListener({
-            onAdd: function(id) {
-                var elem = elementSet.get(id);
-                if (elem) {
-                    elem.addClass('selected');
-                    elem.html(elem.html() + ' (SELECTED)');
-                }
-            },
-            onDelete: function(id) {
-                var elem = elementSet.get(id);
-                if (elem) {
-                    elem.removeClass('selected');
-                    elem.html(elem.html().replace(/ \(SELECTED\)/, ''));
-                }
-            }
-        });
-
-        _initElements();
-
-        // jezeli podano selektor elementu, na podstawie wartosci ktorego
-        // beda filtrowane elementy, podepnij filtrowanie po kazdym
-        // wcisnieciu klawisza na klawiaturze
-        if (filterSelector) {
-            $(filterSelector).keyup(_filter);
-        }
-
-        // jezeli podano selektor elementu czyszczacego filter podepnij
-        // czyszczenie filtra po kliknieciu w niego
-        if (filterReset) {
-            $(filterReset).click(function() {
-                _filter('');
-                return false;
-            });
-        }
+        _init();
 
         // podepnij globalny wskaznik do tego obiektu, aby mozna bylo
         // siegnac do niego z zewnatrz
         var instanceId = window.location.hash.substr(2);
-        window['__itemSelector_' + instanceId] = this;
+        Scholar.itemSelector.instance(instanceId, this);
     }, // }}}
     /**
      * Okienko.
@@ -705,7 +709,7 @@ var Scholar = {
                             _iframe = iframe;
                             var scholar = iframe[0].contentWindow.Scholar;
                             if (scholar) {
-                                _selector = scholar.itemSelector.getInstance(idsetId);
+                                _selector = scholar.itemSelector.instance(idsetId);
                                 idset.each(function (k, v) {
                                     _selector.add(k, v);
                                 });
@@ -875,12 +879,18 @@ Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
 } // }}}
 
 /**
- * Zwraca instancję itemSelectora
+ * Ustawia / zwraca instancję itemSelectora
  * @static 
  * @param {string} id
  */
-Scholar.itemSelector.getInstance = function(id) { // {{{
-    return window['__itemSelector_' + id];
+Scholar.itemSelector.instance = function(id, obj) { // {{{
+    var key = '__itemSelector_' + id;
+
+    if (obj) {
+        window[key] = obj;
+    }
+
+    return window[key];
 } // }}}
 
 Scholar.modal = new Scholar.dialog(window.jQuery);
