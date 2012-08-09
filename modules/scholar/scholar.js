@@ -8,12 +8,16 @@
  * @namespace Przestrzeń nazw dla funkcji modułu.
  */
 var Scholar = {
-    /**
-     * Funkcja identycznościowa, używana jako domyślny translator.
-     */
-    id: function(x) { // {{{
-        return x;
-    }, // }}}
+    i18n: {
+        /**
+         * @param {string} message
+         * @returns {string}
+         */
+        _: function(message) {
+            return String(typeof this.dictionary[message] === 'undefined' ? message : this.dictionary[message]);
+        },
+        dictionary: {}
+    },
     /**
      * Prosty silnik renderowania szablonów.
      * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
@@ -437,11 +441,18 @@ var Scholar = {
      * Okienko.
      * @constructor
      */
-    Dialog: function() { // {{{
+    Dialog: function(options) { // {{{
         var $ = window.jQuery,
             self = this,
             _modal, _overlay,
-            jStatus, jButtons;
+            jStatus, jButtons,
+            _translator;
+
+        options = $.extend({}, options);
+
+        if (typeof options.translate === 'function') {
+            _translator = options.translate;
+        }
 
         function _getStatusBar() {
             if (!jStatus) {
@@ -517,7 +528,7 @@ var Scholar = {
 
                     if (item === 'cancel') {
                         // predefiniowany przycisk
-                        btn.html('Anuluj')
+                        btn.html(self.translate('Cancel'))
                            .click(function() { self.close() })
                            .addClass('cancel');
                     } else {
@@ -581,8 +592,6 @@ var Scholar = {
                 overlayOpacity: 0.75
             }, options);
 
-            var translate = typeof options.translate === 'function' ? options.translate : Scholar.id;
-
             _modal = $('#' + options.id);
             if (!_modal.length) {
                 _modal = $('<div class="dialog"/>').attr('id', options.id).appendTo('body');
@@ -590,7 +599,7 @@ var Scholar = {
 
             _modal.css('display', 'none').html(
                 '<div class="title-bar">' +
-                '<div class="close" title="' + translate('Close') + '" role="button">&times;</div>' +
+                '<div class="close" title="' + self.translate('Close') + '" role="button">&times;</div>' +
                 '<div class="title">' + options.title + '</div>' +
                 '</div>' +
                 '<div class="content"></div>'
@@ -743,6 +752,267 @@ var Scholar = {
                 }
             }
         }
+
+        this.translate = function(text) {
+            return _translator ? _translator(text) : text;
+        }
+    }, // }}}
+    SortableMultiselect: function(selector, settings, languages) { // {{{
+        var self = this,
+            _selected = new Scholar.IdSet,
+            _header, _templates,
+            _translator;
+
+        if (!settings.header) {
+            throw new Error(');
+        }
+
+
+        if (typeof settings.translate === 'function') {
+            _translator = settings.translate;
+        }
+
+        settings.header = ['Plik', 'Rozmiar', 'Etykieta'];
+        settings.templates = ['{ filename }', '{ filesize }', function() {
+            return 'Langname: <input type="text" />';
+        }];
+
+        /**
+         * Aktualizuje wartości wag dla elementów tabeli.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         */
+        function _updateWeights(tbody)
+        {
+            var weight = 0;
+
+            tbody.find('tr[data-id] input.weight').each(function() {
+                $(this).val(weight++);
+            });
+        }
+
+        /**
+         * Ustawia elementy w zbiorze wybranych zgodnie z kolejnością
+         * odpowiadających im wierszy tabeli. Funkcja aktualizuje
+         * wagi wierszy.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         */
+        function _reorderSelected(tbody)
+        {
+            var weight = 0, queue = [];
+
+            // przejdz kolejno przez wszystkie wiersze w tabeli i dla kazdego z nich
+            // dodaj do kolejki odpowiadajacy mu element
+            tbody.find('tr[data-id]').each(function() {
+                var id = $(this).attr('data-id'),
+                    item = _selected.get(id);
+
+                if (typeof item !== 'undefined') {
+                    queue[queue.length] = [id, item];
+                }
+
+                // waga jest zwiekszana leniwie, zeby nie robic inkrementacji
+                // dla nieistniejacych elementow
+                $(this).find('input.weight').each(function() {
+                    $(this).val(weight++);
+                });
+            });
+
+            _selected.clear();
+
+            for (var i = 0, n = queue.length; i < n; ++i) {
+                var pair = queue[i];
+                _selected.add(pair[0], pair[1]);
+            }
+        }
+
+        /**
+         * Usuwa wiersz z tabeli.
+         * @param {jQuery} tr           obiekt jQuery przechowujący element TR tabeli
+         */
+        function _removeRow(tr) {
+            var tbody = tr.parent();
+
+            // usun identyfikator pliku ze zbioru
+            _selected.del(tr.attr('data-id'));
+
+            // usun wiersz i zaktualizuj wagi
+            tr.remove();
+            _updateWeights(tbody);
+
+            // usun ewentualny komunikat pochodzacy z Drupal.tableDrag o tym,
+            // ze zmiany w tej tabeli nie beda zapisane dopoki formularz nie
+            // zostanie przeslany
+            tbody.parent().next('.warning').fadeOut(function() {
+                $(this).remove();
+            });
+        }
+
+        /**
+         * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go do tabeli.
+         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         * @param id
+         * @param item
+         * @param {number} [position]   numer wiersza, potrzebny do określenia klasy CSS
+         *                              czy jest to wiersz parzysty czy nieparzysty
+         */
+        function _createRow(tbody, id, item, position) {
+            var html = '', cls = 'draggable';
+
+            if (typeof position === 'number') {
+                cls += position % 2 ? ' odd' : ' even';
+            }
+
+            for (var i = 0, n = settings.header.length; i < n; ++i) {
+                var result, template = settings.templates[i];
+
+                switch (typeof template) {
+                    case 'undefined':
+                        result = '';
+                        break;
+
+                    case 'function':
+                        result = template(item);
+                        break;
+
+                    case 'string':
+                        result = Scholar.render(template, item);
+                        break;
+
+                    default:
+                        result = String(template);
+                        break;
+                }
+                html += '<td>' + result + '</td>';
+            }
+
+            return $('<tr class="draggable"/>')
+                .attr({'class': cls, 'data-id': id})
+                .mouseup(function() {
+                    // To zdarzenie jest wywolane zmiana kolejnosci ulozenia
+                    // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
+                    // zeby ich kolejnosc odpowiadala wierszom tabeli.
+                    _reorderSelected($(this).parent())
+                })
+                .html(html)
+                .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
+                .append(
+                    $('<td><a href="#!">' + self.translate('Delete') + '</a></td>')
+                        .click(function() {
+                            _removeRow($(this).parent());
+                        })
+                )
+                .appendTo(tbody);
+        }
+
+        /**
+         * Ustawia główne przyciski kontrolujące widget.
+         * @param {array} buttons               specyfikacja przycisków
+         * @return {SortableMultiselect}        obiekt, na któym wywołano metodę
+         */
+        this.setButtons = function(buttons) {
+            var container = $(selector).children('.buttons-wrapper').empty();
+
+            for (var i = 0, n = buttons.length; i < n; ++i) {
+                var options = buttons[i];
+
+                $('<button/>')
+                    .html(options.label)
+                    .click(options.click)
+                    .appendTo(container);
+            }
+
+            return this;
+        }
+
+        this.redraw = function() {
+            var wrapper = $(selector).children('.table-wrapper'),
+                table = $('<table class="sticky-enabled"/>'),
+                thead, tbody;
+
+            // zbuduj naglowek w oparciu o specyfikacje
+            thead = '<thead>';
+            for (var i = 0, n = settings.header.length; i < n; ++i) {
+                thead += '<th>' + settings.header[i] + '</th>';
+            }
+            // utworz dwie dodatkowe kolumny, z waga wiersza i wyzwalacz usuwania wiersza
+            thead += '<th>' + self.translate('Weight') + '</th>';
+            thead += '<th></th></thead>';
+            table.append(thead);
+
+            // utworz wiersze tabeli na bazie wybranych elementow
+            tbody = $('<tbody/>').appendTo(table);
+
+            var position = 0;
+            _selected.each(function(id, item) {
+                _createRow(tbody, id, item, position++);
+            });
+            _updateWeights(tbody);
+
+            // wygenerowana tablice podepnij jako jedyne dziecko wrappera
+            wrapper.empty().append(table);
+
+            if (window.Drupal) {
+                // dodaj przeciaganie i upuszczanie wierszy
+                if (Drupal.tableDrag) {
+                    var td = new Drupal.tableDrag(table[0], {weight: [{
+                        target: 'weight',
+                        source: 'weight',
+                        relationship: 'sibling',
+                        action: 'order',
+                        hidden: true,
+                        limit: 0
+                    }] });
+                }
+
+                // dodaj ruchomy naglowek tabeli
+                Drupal.behaviors.tableHeader();
+            }
+        }
+
+        /**
+         * Dodaje podany element do zbioru zaznaczonych
+         * @param id
+         * @param item
+         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         */
+        this.add = function(id, item) {
+            _selected.add(id, item);
+            return this;
+        }
+
+        /**
+         * Iteruje po zbiorze zaznaczonych elementów.
+         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         */
+        this.each = function(callback) {
+            _selected.each(callback);
+            return this;
+        }
+
+        /**
+         * Usuwa ze zbioru zaznaczonych wszystkie elementy.
+         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         */
+        this.clear = function() {
+            _selected.clear();
+            return this;
+        }
+
+        /**
+         * Tłumaczy tekst.
+         * @param {string} text
+         * @returns {string}
+         */
+        this.translate = function(text) {
+            return _translator ? _translator(text) : text;
+        }
+
+        // inicjalizacja
+        $(selector)
+            .addClass('scholar-attachment-manager')
+            .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>'); 
+
+        this.redraw();
     }, // }}}
     mixins: {
         /**
@@ -752,8 +1022,9 @@ var Scholar = {
          * settings.url
          * [settings.width=480]
          * [settings.height=240]
+         * @param {SortableMultiselect} widget
          */
-        openItemPicker: function(sortableMultiselect, settings) { // {{{
+        openItemPicker: function(widget, settings) { // {{{
             var _selector,
                 key = '!' + String(Math.random()).substr(2);
 
@@ -770,7 +1041,7 @@ var Scholar = {
 
                         if (_selector) {
                             // poinformuj otwartego itemPickera o juz wybranych elementach
-                            sortableMultiselect.each(function (k, v) {
+                            widget.each(function (k, v) {
                                 _selector.add(k, v);
                             });
 
@@ -780,31 +1051,32 @@ var Scholar = {
                 },
                 buttons: {
                     apply: {
-                        label: sortableMultiselect.translate('Apply'),
+                        label: widget.translate('Apply'),
                         disabled: true,
                         click: function() {
                             if (_selector) {
                                 // przygotuj podpiety zbior do przyjecia nowowybranych elementow
-                                sortableMultiselect.clear();
+                                widget.clear();
                                 // dodaj wszystkie elementy z itemPickera do zbiory
                                 _selector.each(function(k, v) {
-                                    sortableMultiselect.add(k, v);
+                                    widget.add(k, v);
                                 });
-                                sortableMultiselect.redraw();
+                                widget.redraw();
                                 this.parentDialog.close();
                             }
                         }
                     },
                     cancel: 'cancel',
                 },
-                translate: sortableMultiselect.translate
+                translate: widget.translate
             });
 
             return false;
         }, // }}}
         /**
+         * @param {SortableMultiselect} widget
          */
-        openFileUploader: function(sortableMultiselect, settings) { // {{{
+        openFileUploader: function(widget, settings) { // {{{
             var iframe,
                 key = '!' + String(Math.random()).substr(2);
 
@@ -822,8 +1094,8 @@ var Scholar = {
                             file = data.get(key)
 
                         if (file) {
-                            sortableMultiselect.add(file.id, file);
-                            sortableMultiselect.redraw();
+                            widget.add(file.id, file);
+                            widget.redraw();
                             dialog.close();
                         } else {
                             iframe = $(this);
@@ -836,17 +1108,17 @@ var Scholar = {
                 },
                 buttons: {
                     apply: {
-                        label: sortableMultiselect.translate('Upload'),
+                        label: widget.translate('Upload'),
                         disabled: true,
                         click: function() {
-                            this.parentDialog.status(sortableMultiselect.translate('Uploading file...'));
+                            this.parentDialog.status(widget.translate('Uploading file...'));
                             this.parentDialog.button('apply').addClass('disabled');
                             iframe.contents().find('form').submit();
                         }
                     },
                     cancel: 'cancel',
                 },
-                translate: sortableMultiselect.translate
+                translate: widget.translate
             });
             return false;
         } // }}}
@@ -883,239 +1155,7 @@ var Scholar = {
             }
         
         ]);
-    }, // }}}
-    SortableMultiselect: function(selector, settings, languages) { // {{{
-        var self = this,
-            j = $(selector)
-            .addClass('scholar-attachment-manager')
-            .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>');
-
-        var translate = typeof settings.translate === 'function'
-                      ? settings.translate : Scholar.id;
-
-        this.translate = function(text) {
-            return translate(text);
-        }
-
-        var idset = new Scholar.IdSet;
-
-        if (typeof settings.translate !== 'function') {
-            settings.translate = Scholar.id;        
-        }
-
-        /**
-         * @param {array} buttons               specyfikacja przycisków
-         * @return {SortableMultiselect}        obiekt, na któym wywołano metodę
-         */
-        this.setButtons = function(buttons) {
-            var container = j.children('.buttons-wrapper').empty();
-
-            for (var i = 0, n = buttons.length; i < n; ++i) {
-                var spec = buttons[i];
-
-                if (typeof spec.click == 'string') {
-                    spec.click = this.getButtonPlugin(spec.click, spec);
-                }
-
-                $('<button/>')
-                    .html(spec.label)
-                    .click(spec.click)
-                    .appendTo(container);
-            }
-
-            return this;
-        }
-
-        /**
-         * Aktualizuje wartości wag dla elementów tabeli.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
-         */
-        function _updateWeights(tbody)
-        {
-            var weight = 0;
-
-            tbody.find('tr[data-id] input.weight').each(function() {
-                $(this).val(weight++);
-            });
-        }
-
-        /**
-         * Ustawia elementy w zbiorze wybranych zgodnie z kolejnością
-         * odpowiadających im wierszy tabeli. Funkcja aktualizuje
-         * wagi wierszy.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
-         */
-        function _reorderSelected(tbody)
-        {
-            var weight = 0, queue = [];
-
-            // przejdz kolejno przez wszystkie wiersze w tabeli i dla kazdego z nich
-            // dodaj do kolejki odpowiadajacy mu element
-            tbody.find('tr[data-id]').each(function() {
-                var id = $(this).attr('data-id'),
-                    item = idset.get(id);
-
-                if (typeof item !== 'undefined') {
-                    queue[queue.length] = [id, item];
-                }
-
-                // waga jest zwiekszana leniwie, zeby nie robic inkrementacji
-                // dla nieistniejacych elementow
-                $(this).find('input.weight').each(function() {
-                    $(this).val(weight++);
-                });
-            });
-
-            idset.clear();
-
-            for (var i = 0, n = queue.length; i < n; ++i) {
-                var pair = queue[i];
-                idset.add(pair[0], pair[1]);
-            }
-        }
-
-        /**
-         * Usuwa wiersz z tabeli.
-         * @param {jQuery} tr           obiekt jQuery przechowujący element TR tabeli
-         */
-        function _removeRow(tr) {
-            var tbody = tr.parent();
-
-            // usun identyfikator pliku ze zbioru
-            idset.del(tr.attr('data-id'));
-
-            // usun wiersz i zaktualizuj wagi
-            tr.remove();
-            _updateWeights(tbody);
-
-            // usun ewentualny komunikat pochodzacy z Drupal.tableDrag o tym,
-            // ze zmiany w tej tabeli nie beda zapisane dopoki formularz nie
-            // zostanie przeslany
-            tbody.parent().next('.warning').fadeOut(function() {
-                $(this).remove();
-            });
-        }
-
-        var headerSpec = ['Plik', 'Rozmiar', 'Etykieta'];
-        settings.templates = ['{ filename }', '{ filesize }', function() {
-            return 'Langname: <input type="text" />';
-        }];
-
-        /**
-         * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go do tabeli.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
-         * @param id
-         * @param file
-         * @param {number} [position]   numer wiersza, potrzebny do określenia klasy CSS
-         *                              czy jest to wiersz parzysty czy nieparzysty
-         */
-        function _createRow(tbody, id, file, position) {
-            var cls = 'draggable';
-            if (typeof position === 'number') {
-                cls += position % 2 ? ' odd' : ' even';
-            }
-            var html = '';
-            for (var i = 0, n = headerSpec.length; i < n; ++i) {
-                var result, template = settings.templates[i];
-
-                switch (typeof template) {
-                    case 'undefined':
-                        result = '';
-                        break;
-
-                    case 'function':
-                        result = template(file);
-                        break;
-
-                    case 'string':
-                        result = Scholar.render(template, file);
-                        break;
-
-                    default:
-                        result = String(template);
-                        break;
-                }
-                html += '<td>' + result + '</td>';
-            }
-
-            return $('<tr class="draggable"/>')
-                .attr({'class': cls, 'data-id': id})
-                .mouseup(function() {
-                    // To zdarzenie jest wywolane zmiana kolejnosci ulozenia
-                    // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
-                    // zeby ich kolejnosc odpowiadala wierszom tabeli.
-                    _reorderSelected($(this).parent())
-                })
-                .html(html)
-                .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
-                .append(
-                    $('<td><a href="#!">' + settings.translate('Delete') + '</a></td>')
-                        .click(function() {
-                            _removeRow($(this).parent());
-                        })
-                )
-                .appendTo(tbody);
-        }
-
-        this.redraw = function() {
-            var tableWrapper = j.children('.table-wrapper').empty();
-            var table = $('<table class="sticky-enabled"/>').appendTo(tableWrapper);
-
-            var thead = '<thead>';
-            for (var i = 0, n = headerSpec.length; i < n; ++i) {
-                thead += '<th>' + headerSpec[i] + '</th>';
-            }
-            // jedna dodatkowa kolumna na usuwacza
-            thead += '<th>' + settings.translate('Weight') + '</th>';
-            thead += '<th></th></thead>';
-            table.append(thead);
-
-            var tbody = $('<tbody/>').appendTo(table);
-            var i = 0;
-            idset.each(function(id, file) {
-                _createRow(tbody, id, file, i++);
-            });
-            _updateWeights(tbody);
-
-            if (window.Drupal) {
-                // dodaj przeciaganie i upuszczanie wierszy
-                if (Drupal.tableDrag) {
-                    var td = new Drupal.tableDrag(j.find('.table-wrapper > table')[0], {weight: [{
-                        target: 'weight',
-                        source: 'weight',
-                        relationship: 'sibling',
-                        action: 'order',
-                        hidden: true,
-                        limit: 0
-                    }] });
-                }
-
-                // dodaj ruchomy naglowek tabeli
-                Drupal.behaviors.tableHeader();
-            }
-        }
-
-        this.add = function(id, item) {
-            idset.add(id, item);
-            return this;
-        }
-
-        /**
-         * Iteruje po zbiorze zaznaczonych elementów.
-         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
-         */
-        this.each = function(callback) {
-            idset.each(callback);
-            return this;
-        }
-
-        this.clear = function() {
-            idset.clear();
-            return this;
-        }
-
-        this.redraw();
-    } // }}};
+    } // }}}
 }
 
-Scholar.modal = new Scholar.Dialog(window.jQuery);
+Scholar.modal = new Scholar.Dialog;
