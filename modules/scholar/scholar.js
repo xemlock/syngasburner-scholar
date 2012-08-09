@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-08
+ * @version 2012-08-09
  */
 
 /**
@@ -757,25 +757,80 @@ var Scholar = {
             return _translator ? _translator(text) : text;
         }
     }, // }}}
-    SortableMultiselect: function(selector, settings, languages) { // {{{
-        var self = this,
-            _selected = new Scholar.IdSet,
-            _header, _templates,
-            _translator;
+    /**
+     * Widget wielokrotnego wyboru i sortowania elementów.
+     * @param {string|jQuery|element} target
+     * @param {object} [options]
+     * @param {Array} [options.header]
+     * @param {Array} [options.templates]
+     * @param {string|function} [options.weightTemplate="weight[{ id }]"]    szablon nazwy pola przechowującego wagę wiersza, jeżeli funkcja to musi zwracać string i przyjmuje jako argument identyfikator obiektu powiązanego z wierszem
+     * @param {boolean} [options.drawOnInit=true]       generuj tablicę wyświetlającą elementy podczas inicjalizacji obiektu
+     * @param {function} [options.translate]
+     */
+    SortableMultiselect: function(target, options) { // {{{
+        var $ = window.jQuery,
+            self = this,
+            _element, _selected, _header, _templates, _weightTemplate, _translator;
 
-        if (!settings.header) {
-            throw new Error(');
+        /**
+         * Inicjalizuje prywatne zmienne obiektu.
+         * @param target
+         * @param {object} options
+         */
+        function _init(target, options) {
+            _element   = $(target);
+            _selected  = new Scholar.IdSet;
+            _header    = [];
+            _templates = [];
+
+            // ustaw nazwy kolumn tabeli
+            if (options.header) {
+                for (var i = 0, n = options.header.length; i < n; ++i) {
+                    _header[_header.length] = String(options.header[i]);
+                }
+            }
+
+            // ustaw szablony do wyswietlania wierszy zaznaczonych elementow,
+            // szablony musza odpowiadac kolumnom naglowka o tym samym indeksie
+            // w tablicy, jezeli ich nie ma - jest ok, bo wartosc undefined
+            // jest poprawnie obslugiwana
+            if (options.templates) {
+                for (var i = 0, n = _header.length; i < n; ++i) {
+                    _templates[i] = options.templates[i];
+                }
+            }
+
+            // zainicjuj tlumacza
+            if (typeof options.translate === 'function') {
+                _translator = options.translate;
+            }
+
+console.log(options);
+            // zainicjuj szablon nazwy pola z waga wiersza, uzyj wartosci
+            // z ustawien tylko wtedy gdy jest to string lub funkcja
+            switch (typeof options.weightTemplate) {
+                case 'string':
+                case 'function':
+                    _weightTemplate = options.weightTemplate;
+                    break;
+
+                default:
+                    _weightTemplate = 'weight[{ id }]';
+                    break;
+            }
+
+            // inicjalizacja markupu
+            _element
+                .addClass('scholar-attachment-manager')
+                .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>')
+                .data('sortableMultiselect', self);
+
+            // nie generuj tabeli, jezeli zaznaczono, zeby tego nie robic
+            // podczas inicjalizacji - bedzie to zrobione recznie
+            if (typeof options.drawOnInit === 'undefined' || options.drawOnInit) {
+                self.redraw();
+            }
         }
-
-
-        if (typeof settings.translate === 'function') {
-            _translator = settings.translate;
-        }
-
-        settings.header = ['Plik', 'Rozmiar', 'Etykieta'];
-        settings.templates = ['{ filename }', '{ filesize }', function() {
-            return 'Langname: <input type="text" />';
-        }];
 
         /**
          * Aktualizuje wartości wag dla elementów tabeli.
@@ -856,14 +911,32 @@ var Scholar = {
          *                              czy jest to wiersz parzysty czy nieparzysty
          */
         function _createRow(tbody, id, item, position) {
-            var html = '', cls = 'draggable';
+            var html = '', cls = 'draggable', weightName;
 
             if (typeof position === 'number') {
                 cls += position % 2 ? ' odd' : ' even';
             }
 
-            for (var i = 0, n = settings.header.length; i < n; ++i) {
-                var result, template = settings.templates[i];
+            // wygeneruj nazwe pola przechowujacego wage wiersza
+            switch (typeof _weightTemplate) {
+                case 'string':
+                    weightName = Scholar.render(_weightTemplate, {id: id});
+
+                    break;
+
+                case 'function':
+                    weightName = _weightTemplate(id);
+                    break;
+            }
+
+            // zastap cudzyslowy encjami, zeby uniknac uszkodzenia markupu
+            weightName = String(weightName).replace(/"/g, '&quot;');
+
+            // wygeneruj wartosci kolumn w tym wierszu na podstawie
+            // powiazanego obiektu
+            for (var i = 0, n = _templates.length; i < n; ++i) {
+                var template = _templates[i],
+                    result;
 
                 switch (typeof template) {
                     case 'undefined':
@@ -882,19 +955,20 @@ var Scholar = {
                         result = String(template);
                         break;
                 }
+
                 html += '<td>' + result + '</td>';
             }
 
             return $('<tr class="draggable"/>')
                 .attr({'class': cls, 'data-id': id})
                 .mouseup(function() {
-                    // To zdarzenie jest wywolane zmiana kolejnosci ulozenia
+                    // To zdarzenie wywolywane jest zmiana kolejnosci ulozenia
                     // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
-                    // zeby ich kolejnosc odpowiadala wierszom tabeli.
+                    // zeby ich kolejnosc odpowiadala wierszom.
                     _reorderSelected($(this).parent())
                 })
                 .html(html)
-                .append('<td><input type="text" name="' + settings.namePrefix + '[weight]" class="weight" /></td>')
+                .append('<td><input type="text" name="' + weightName + '" class="weight" /></td>')
                 .append(
                     $('<td><a href="#!">' + self.translate('Delete') + '</a></td>')
                         .click(function() {
@@ -910,7 +984,7 @@ var Scholar = {
          * @return {SortableMultiselect}        obiekt, na któym wywołano metodę
          */
         this.setButtons = function(buttons) {
-            var container = $(selector).children('.buttons-wrapper').empty();
+            var container = _element.children('.buttons-wrapper').empty();
 
             for (var i = 0, n = buttons.length; i < n; ++i) {
                 var options = buttons[i];
@@ -924,15 +998,20 @@ var Scholar = {
             return this;
         }
 
+        /**
+         * Generuje tabelę na podstawie wybranych elementów.
+         */
         this.redraw = function() {
-            var wrapper = $(selector).children('.table-wrapper'),
+            // utworz za kazdym razem nowa tabele, zeby odpiac Drupalowe
+            // dodatki
+            var wrapper = _element.children('.table-wrapper'),
                 table = $('<table class="sticky-enabled"/>'),
                 thead, tbody;
 
             // zbuduj naglowek w oparciu o specyfikacje
             thead = '<thead>';
-            for (var i = 0, n = settings.header.length; i < n; ++i) {
-                thead += '<th>' + settings.header[i] + '</th>';
+            for (var i = 0, n = _header.length; i < n; ++i) {
+                thead += '<th>' + self.translate(_header[i]) + '</th>';
             }
             // utworz dwie dodatkowe kolumny, z waga wiersza i wyzwalacz usuwania wiersza
             thead += '<th>' + self.translate('Weight') + '</th>';
@@ -951,10 +1030,11 @@ var Scholar = {
             // wygenerowana tablice podepnij jako jedyne dziecko wrappera
             wrapper.empty().append(table);
 
-            if (window.Drupal) {
+            // jezeli istnieja jakiekolwiek wiersze dodaj efekty Drupalowe
+            if (position && window.Drupal) {
                 // dodaj przeciaganie i upuszczanie wierszy
                 if (Drupal.tableDrag) {
-                    var td = new Drupal.tableDrag(table[0], {weight: [{
+                    self.tableDrag = new Drupal.tableDrag(table[0], {weight: [{
                         target: 'weight',
                         source: 'weight',
                         relationship: 'sibling',
@@ -1007,12 +1087,8 @@ var Scholar = {
             return _translator ? _translator(text) : text;
         }
 
-        // inicjalizacja
-        $(selector)
-            .addClass('scholar-attachment-manager')
-            .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>'); 
-
-        this.redraw();
+        // zainicjuj obiekt
+        _init(target, options || {});
     }, // }}}
     mixins: {
         /**
@@ -1066,7 +1142,7 @@ var Scholar = {
                             }
                         }
                     },
-                    cancel: 'cancel',
+                    cancel: 'cancel'
                 },
                 translate: widget.translate
             });
@@ -1116,7 +1192,7 @@ var Scholar = {
                             iframe.contents().find('form').submit();
                         }
                     },
-                    cancel: 'cancel',
+                    cancel: 'cancel'
                 },
                 translate: widget.translate
             });
@@ -1129,8 +1205,15 @@ var Scholar = {
      * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
-    attachmentManager: function(selector, settings, languages) { // {{{
-        var widget = new Scholar.SortableMultiselect(selector, settings, languages);
+    attachmentManager: function(target, settings, languages) { // {{{
+        settings.header = ['Plik', 'Rozmiar', 'Etykieta'];
+        settings.templates = ['{ filename }', '{ filesize }', function() {
+            return 'Langname: <input type="text" />';
+        }];
+        settings.drawOnInit = false;
+        settings.weightTemplate = 'files[{ id }][weight]';
+
+        var widget = new Scholar.SortableMultiselect(target, settings);
 
         widget.setButtons([
             {
