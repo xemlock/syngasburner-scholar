@@ -245,7 +245,7 @@ function scholar_file_select() // {{{
     ob_start();
 ?>
 <script type="text/javascript">$(function() {
-new Scholar.itemSelector('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
+new Scholar.ItemSelector('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
     filterSelector: '#name-filter',
     filterKey: 'filename',
     filterReset: '#reset-filter'
@@ -448,7 +448,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
             $file->filesize = format_size($file->size);
 
             scholar_add_js();
-            drupal_add_js('Scholar.attachmentManager.notifyUpload(' . drupal_to_js($file) . ',' . drupal_to_js($fragment) . ')', 'inline');
+            drupal_add_js('(new Scholar.Data).set(' . drupal_to_js($fragment) . ',' . drupal_to_js($file) . ')', 'inline');
 
             return scholar_render(t('File uploaded successfully'), true);
         }

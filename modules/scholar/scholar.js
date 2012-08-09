@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-07
+ * @version 2012-08-08
  */
 
 /**
@@ -51,7 +51,7 @@ var Scholar = {
      * Zbiór identyfikatorów.
      * @constructor
      */
-    idSet: function() { // {{{
+    IdSet: function() { // {{{
         var _items = {},
             _size  = 0,
             _listeners = [];
@@ -100,7 +100,7 @@ var Scholar = {
          * @param id                    identyfikator
          * @param [value]               opcjonalna wartość powiązana 
          *                              z podanym identyfikatorem
-         * @returns {idSet}             zbiór na którym wywołano metodę
+         * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.add = function(id, value) {
             if (typeof value === 'undefined') {
@@ -142,7 +142,7 @@ var Scholar = {
 
         /**
          * Usuwa wszystkie elementy ze zbioru.
-         * @returns {idSet}
+         * @returns {IdSet}
          */
         this.clear = function() {
             for (var key in _items) {
@@ -158,7 +158,7 @@ var Scholar = {
          * Zwrócenie przez funkcję wartości false przerywa iterację.
          * @param {function} callback   funkcja wywoływana dla każdego 
          *                              identyfikatora.
-         * @returns {idSet}             zbiór na którym wywołano metodę
+         * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.each = function(callback) {
             var id, key;
@@ -176,7 +176,7 @@ var Scholar = {
         /**
          * Informuje słuchaczy o zajściu zdarzenia.
          * @param {string} event        nazwa zdarzenia
-         * @returns {idSet}             zbiór na którym wywołano metodę
+         * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.notify = function(event)
         {
@@ -243,6 +243,30 @@ var Scholar = {
         }
     }, // }}}
     /**
+     * Rejestr.
+     * @constructor
+     * @param iframe Element DOM przechowujący IFRAME. Wtedy rejestr ma dostęp do danych
+     * Jeżeli podano niepoprawny iframe rejestr nie będzie miał możliwości odczytu / zapisu.
+     */
+    Data: function(context) { // {{{
+        if (0 == arguments.length) {
+            context = window;
+        }
+
+        if (typeof context.__scholarData === 'undefined') {
+            context.__scholarData = {};
+        }
+
+        this.get = function(key) {
+            return context.__scholarData['_' + key];
+        }
+
+        this.set = function(key, value) {
+            context.__scholarData['_' + key] = value;
+            return this;
+        }
+    }, // }}}
+    /**
      * Widget z listą wyboru elementów.
      * @constructor
      * @param {string|jQuery} selector  element DOM, w którym ma zostać utworzony widget listy
@@ -256,18 +280,17 @@ var Scholar = {
      * @param {string} [options.filterKey]      nazwa właściwości elementu, po której lista będzie filtrowana,
      *                                          musi być podany, jeżeli podano filterSelector
      */
-    itemSelector: function(selector, template, items, options) { // {{{
+    ItemSelector: function(selector, template, items, options) { // {{{
         var $ = window.jQuery,
 
         options = $.extend({}, {idKey: 'id'}, options);
 
-        var idKey, // nazwa wlasciwosci identyfikujacej element
-            domain,   // zbior przechowujacy wszystkie elementy
+        var domain,   // zbior przechowujacy wszystkie elementy
             selected, // zbior przechowujacy elementy zaznaczone przez uzytkownika
             elements; // zbior tagow LI odpowiadajacych elementom listy
 
         function _initDomain(items, idKey) {
-            var domain = new Scholar.idSet;
+            var domain = new Scholar.IdSet;
 
             // wypelnij zbior wszystkich elementow
             for (var i = 0, n = items.length; i < n; ++i) {
@@ -282,7 +305,7 @@ var Scholar = {
          * Przygotowuje zbior zaznaczonych elementow.
          */
         function _initSelected() {
-            var selected = new Scholar.idSet;
+            var selected = new Scholar.IdSet;
 
             // podepnij sluchacza zdarzen do zbioru elementow
             selected.addListener({
@@ -309,7 +332,7 @@ var Scholar = {
          * podanego w konstruktorze.
          */
         function _initElements(idKey) {
-            var elements = new Scholar.idSet,
+            var elements = new Scholar.IdSet,
                 ul = $('<ul/>'),
                 createElement = function(item, ul) {
                     return $('<li/>')
@@ -362,7 +385,7 @@ var Scholar = {
          * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy,
          * gdy taki element jest wśród elementów podanych w konstruktorze.
          * @param id                    identyfikator elementu
-         * @returns {itemSelector}      obiekt, na którym wywołano tę metodę
+         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
          */
         this.add = function(id) {
             var item = domain.get(id);
@@ -376,7 +399,7 @@ var Scholar = {
 
         /**
          * Iteruje po zbiorze zaznaczonych elementów.
-         * @returns {itemSelector}      obiekt, na którym wywołano tę metodę
+         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
          */
         this.each = function(callback) {
             selected.each(callback);
@@ -405,14 +428,16 @@ var Scholar = {
 
         // podepnij globalny wskaznik do tego obiektu, aby mozna bylo
         // siegnac do niego z zewnatrz
-        var instanceId = window.location.hash.substr(2);
-        Scholar.itemSelector.instance(instanceId, this);
+        var external = window.location.hash.substr(1);
+        if (external.length) {
+            (new Scholar.Data(window)).set(external, this);
+        }
     }, // }}}
     /**
      * Okienko.
      * @constructor
      */
-    dialog: function() { // {{{
+    Dialog: function() { // {{{
         var $ = window.jQuery,
             self = this,
             _modal, _overlay,
@@ -553,8 +578,10 @@ var Scholar = {
                 width:   320,
                 height:  240,
                 overlayColor: '#fff',
-                overlayOpacity: 0.75,
+                overlayOpacity: 0.75
             }, options);
+
+            var translate = typeof options.translate === 'function' ? options.translate : Scholar.id;
 
             _modal = $('#' + options.id);
             if (!_modal.length) {
@@ -563,7 +590,7 @@ var Scholar = {
 
             _modal.css('display', 'none').html(
                 '<div class="title-bar">' +
-                '<div class="close" title="Zamknij" role="button">&times;</div>' +
+                '<div class="close" title="' + translate('Close') + '" role="button">&times;</div>' +
                 '<div class="title">' + options.title + '</div>' +
                 '</div>' +
                 '<div class="content"></div>'
@@ -591,6 +618,7 @@ var Scholar = {
 
             if (options.iframe) {
                 // iframe: {url: string, expand: bool, load: function}
+                // iframe.load: this - iframe element, this.parentDialog - dialog
                 var iframe = $('<iframe/>')
                         .load(function() {
                             this.style.display = 'block';
@@ -604,8 +632,10 @@ var Scholar = {
                             _modal.removeClass('loading');
                             _centerModal(true);
 
+                            this.parentDialog = self;
+
                             if (options.iframe.load) {
-                                options.iframe.load.apply(self, [iframe]);
+                                options.iframe.load.apply(this);
                             }
                         })
                         .attr('src', options.iframe.url)
@@ -714,111 +744,187 @@ var Scholar = {
             }
         }
     }, // }}}
+    mixins: {
+        /**
+         * Funkcja otwierajaca itemPickera powiązanego ze zbiorem wybranych
+         * elementów tego obiektu.
+         * @returns {false}
+         * settings.url
+         * [settings.width=480]
+         * [settings.height=240]
+         */
+        openItemPicker: function(sortableMultiselect, settings) { // {{{
+            var _selector,
+                key = '!' + String(Math.random()).substr(2);
+
+            Scholar.modal.open({
+                width: settings.width || 480,
+                height: settings.height || 240,
+                iframe: {
+                    // strona, ktora ma w sobie ItemSelectora
+                    url: settings.url + '#' + key,
+                    load: function() {
+                        var data = new Scholar.Data(this.contentWindow);
+                        // uzyskaj dostep do itemPickera w ramce
+                        _selector = data.get(key);
+
+                        if (_selector) {
+                            // poinformuj otwartego itemPickera o juz wybranych elementach
+                            sortableMultiselect.each(function (k, v) {
+                                _selector.add(k, v);
+                            });
+
+                            this.parentDialog.button('apply').removeClass('disabled');
+                        }
+                    }
+                },
+                buttons: {
+                    apply: {
+                        label: sortableMultiselect.translate('Apply'),
+                        disabled: true,
+                        click: function() {
+                            if (_selector) {
+                                // przygotuj podpiety zbior do przyjecia nowowybranych elementow
+                                sortableMultiselect.clear();
+                                // dodaj wszystkie elementy z itemPickera do zbiory
+                                _selector.each(function(k, v) {
+                                    sortableMultiselect.add(k, v);
+                                });
+                                sortableMultiselect.redraw();
+                                this.parentDialog.close();
+                            }
+                        }
+                    },
+                    cancel: 'cancel',
+                },
+                translate: sortableMultiselect.translate
+            });
+
+            return false;
+        }, // }}}
+        /**
+         */
+        openFileUploader: function(sortableMultiselect, settings) { // {{{
+            var iframe,
+                key = '!' + String(Math.random()).substr(2);
+
+            Scholar.modal.open({
+                width: settings.width || 480,
+                height: settings.height || 240,
+                iframe: {
+                    url: settings.url + '#' + key,
+                    load: function() {
+                        // poniewaz upload pliku przeladowuje strone, zostanie
+                        // jeszcze raz odpalona metoda load, trzeba sprawdzic, czy 
+                        // do rejestru nie zostal dodany klucz z informacja o dodanym pliku
+                        var dialog = this.parentDialog,
+                            data = new Scholar.Data(this.contentWindow),
+                            file = data.get(key)
+
+                        if (file) {
+                            sortableMultiselect.add(file.id, file);
+                            sortableMultiselect.redraw();
+                            dialog.close();
+                        } else {
+                            iframe = $(this);
+                            iframe.contents().find('[type="submit"]').hide();
+
+                            dialog.status('');
+                            dialog.button('apply').removeClass('disabled');
+                        }
+                    }
+                },
+                buttons: {
+                    apply: {
+                        label: sortableMultiselect.translate('Upload'),
+                        disabled: true,
+                        click: function() {
+                            this.parentDialog.status(sortableMultiselect.translate('Uploading file...'));
+                            this.parentDialog.button('apply').addClass('disabled');
+                            iframe.contents().find('form').submit();
+                        }
+                    },
+                    cancel: 'cancel',
+                },
+                translate: sortableMultiselect.translate
+            });
+            return false;
+        } // }}}
+    },
     /**
      * Umieszcza w podanym selektorze widget zarządzający załącznikami.
      * @constructor
      * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
-    attachmentManager: function(selector, settings, languages) { 
-        var ms = new Scholar.multiSelect(selector, settings, languages);
-    },
-    multiSelect: function(selector, settings, languages) { // {{{
+    attachmentManager: function(selector, settings, languages) { // {{{
+        var widget = new Scholar.SortableMultiselect(selector, settings, languages);
+
+        widget.setButtons([
+            {
+                label: widget.translate('Select file'),
+                click: function() {
+                    return Scholar.mixins.openItemPicker(widget, {
+                        url: settings.urlFileSelect,
+                        width: 480,
+                        height: 240
+                    });
+                }
+            },
+            {
+                label: widget.translate('Upload file'),
+                click: function() {
+                    return Scholar.mixins.openFileUploader(widget, {
+                        url: settings.urlFileUpload,
+                        width: 480,
+                        height: 240
+                    });
+                }
+            }
+        
+        ]);
+    }, // }}}
+    SortableMultiselect: function(selector, settings, languages) { // {{{
         var self = this,
             j = $(selector)
             .addClass('scholar-attachment-manager')
             .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>');
 
-        var uniq = String(Math.random()).substr(2);
-        var idset = new Scholar.idSet;
-        var idsetId = '_attachmentManager' + uniq;
+        var translate = typeof settings.translate === 'function'
+                      ? settings.translate : Scholar.id;
+
+        this.translate = function(text) {
+            return translate(text);
+        }
+
+        var idset = new Scholar.IdSet;
 
         if (typeof settings.translate !== 'function') {
             settings.translate = Scholar.id;        
         }
 
-        // podepnij ten obiekt jako widok zbioru - potrzebne podczas
-        // uploadowania plikow
-        idset.attachmentManager = this;
-        window[idsetId] = idset;
+        /**
+         * @param {array} buttons               specyfikacja przycisków
+         * @return {SortableMultiselect}        obiekt, na któym wywołano metodę
+         */
+        this.setButtons = function(buttons) {
+            var container = j.children('.buttons-wrapper').empty();
 
-        var btnSelect = $('<button/>')
-            .html('Wybierz plik')
-            .click(function() {
-                var _iframe, _selector;
-                Scholar.modal.open({
-                    width: 480,
-                    height: 240,
-                    iframe: {
-                        url: settings.urlFileSelect + '#!' + idsetId,
-                        load: function(iframe) {
-                            _iframe = iframe;
-                            var scholar = iframe[0].contentWindow.Scholar;
-                            if (scholar) {
-                                _selector = scholar.itemSelector.instance(idsetId);
-                                idset.each(function (k, v) {
-                                    _selector.add(k, v);
-                                });
+            for (var i = 0, n = buttons.length; i < n; ++i) {
+                var spec = buttons[i];
 
-                                this.button('apply').removeClass('disabled');
-                            }
-                        }
-                    },
-                    buttons: {
-                        apply: {
-                            label: 'Zastosuj',
-                            disabled: true,
-                            click: function() {
-                                if (_selector) {
-                                    idset.clear();
-                                    _selector.each(function(k, v) {
-                                        idset.add(k, v);
-                                    });
-                                    self.redraw();
-                                    this.parentDialog.close();
-                                }
-                            }
-                        },
-                        cancel: 'cancel',
-                    }
-                });
-                return false;
-            });
-        var btnUpload = $('<button/>')
-            .html('Wgraj plik')
-            .click(function() {
-                var _iframe;
-                Scholar.modal.open({
-                    width: 480,
-                    height: 240,
-                    iframe: {
-                        url: settings.urlFileUpload + '#!' + uniq,
-                        load: function(iframe) {
-                            _iframe = iframe;
-                            _iframe.contents().find('[type="submit"]').hide();
-                            this.status('');
-                            this.button('apply').removeClass('disabled');
-                        }
-                    },
-                    buttons: {
-                        apply: {
-                            label: 'Prześlij',
-                            disabled: true,
-                            click: function() {
-                                this.parentDialog.status('Przesyłanie pliku...');
-                                this.parentDialog.button('apply').addClass('disabled');
-                                _iframe.contents().find('form').submit();
-                            }
-                        },
-                        cancel: 'cancel',
-                    }
-                });
-                return false;
-            });
+                if (typeof spec.click == 'string') {
+                    spec.click = this.getButtonPlugin(spec.click, spec);
+                }
 
-        j.children('.buttons-wrapper').append(btnSelect).append(btnUpload);
+                $('<button/>')
+                    .html(spec.label)
+                    .click(spec.click)
+                    .appendTo(container);
+            }
 
-
+            return this;
+        }
 
         /**
          * Aktualizuje wartości wag dla elementów tabeli.
@@ -989,69 +1095,27 @@ var Scholar = {
             }
         }
 
+        this.add = function(id, item) {
+            idset.add(id, item);
+            return this;
+        }
+
+        /**
+         * Iteruje po zbiorze zaznaczonych elementów.
+         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
+         */
+        this.each = function(callback) {
+            idset.each(callback);
+            return this;
+        }
+
+        this.clear = function() {
+            idset.clear();
+            return this;
+        }
+
         this.redraw();
-    } // }}}
-};
+    } // }}};
+}
 
-/**
- * Ustawia / zwraca instancję itemSelectora o podanym identyfikatorze.
- * @static 
- * @param {string} id
- */
-Scholar.itemSelector.instance = function(id, obj) { // {{{
-    var key = '__itemSelector_' + id;
-
-    if (obj) {
-        window[key] = obj;
-    }
-
-    return window[key];
-} // }}}
-
-/**
- * Informuje powiązaną instancję menadżera załączników
- * o uploadzie nowego pliku. Funkcja przeznaczona do wywolania
- * w okienku lub IFRAME otwartej przez menadżera.
- * @static
- * @param {object} file                 reprezentacja rekordu przeslanego pliku
- * @param {string} [urlFragment]        opcjonalny fragment URL wskazujący na zbiór przechowujący identyfikatory plików znajdujący się w okienku-rodzicu
- */
-Scholar.attachmentManager.notifyUpload = function(file, urlFragment) { // {{{
-    var context, close;
-
-    // wyznacz okienko-rodzica, przygotuj funkcje zamykajaca
-    // okienko z biezaca strona
-    if (window.opener) {
-        // strona otwarta w okienku za pomoca window.open
-        context = window.opener;
-        close = function() {
-            window.close();
-        }
-    } else if (window.parent !== window) {
-        // strona w IFRAME w okienku dialogowym
-        context = window.parent;
-        close = function() {
-            context.Scholar.modal.close();
-        }
-    }
-
-    if (context && urlFragment) {
-        // po przeslaniu pliku dodaj przeslany plik do attachmentManagera
-        // w okienku-rodzicu i zamknij okienko
-        var uniq = String(urlFragment).substr(1),
-            storage = context['_attachmentManager' + uniq];
-
-        if (storage) {
-            storage.add(file.id, file);
-
-            if (storage.attachmentManager) {
-                // wymus odswiezenie listy plikow
-                storage.attachmentManager.redraw();
-            }
-        }
-
-        close();
-    }
-} // }}}
-
-Scholar.modal = new Scholar.dialog(window.jQuery);
+Scholar.modal = new Scholar.Dialog(window.jQuery);
