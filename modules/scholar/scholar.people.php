@@ -83,7 +83,6 @@ function scholar_people_form(&$form_state, $id = null) // {{{
                             ? scholar_fetch_attachments($row['id'], 'people')
                             : null
                         );
-    p($form['attachments']['files']['#default_value']);
 
     $form['node'] = scholar_nodes_subform($row, 'people');
 

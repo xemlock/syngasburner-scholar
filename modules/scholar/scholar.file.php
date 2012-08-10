@@ -344,7 +344,9 @@ function scholar_file_select() // {{{
 new Scholar.ItemPicker('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
     filterSelector: '#name-filter',
     filterKey: 'filename',
-    filterReset: '#reset-filter'
+    filterReset: '#reset-filter',
+    showOnInit: false,
+    emptyMessage: 'No files found'
 });
 });
 </script>

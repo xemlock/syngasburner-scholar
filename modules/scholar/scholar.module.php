@@ -32,7 +32,14 @@ function p($var, $label = null)
 
 function scholar_nodeapi($node, $op)
 {
-    if ($op == 'load') {
+    if ($op == 'load' && $node->type = 'scholar') {
+        // trzeba wyrenderowac tresc!!!
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
+        $binding = db_fetch_array($query);
+//        p($binding);
+//        if (empty($binding['last_rendered']) || $binding['last_rendered']
+
+
     }
 }
 
@@ -333,7 +340,7 @@ function scholar_index()
     return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
 }
 
-function scholar_render($html, $dialog = false)
+function scholar_render($html, $dialog = false) // {{{
 {
     if ($dialog || (isset($_REQUEST['dialog']) && $_REQUEST['dialog'])) {
         init_theme();
@@ -350,7 +357,7 @@ function scholar_render($html, $dialog = false)
         exit;
     }
     return $html;
-}
+} // }}}
 
 /**
  * Wykorzystuje locale_language_list().

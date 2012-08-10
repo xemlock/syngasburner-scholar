@@ -10,6 +10,7 @@
 var Scholar = {
     /**
      * Narzędzia do manipulacji stringów
+     * @namespace
      */
     str: {
         /**
@@ -41,6 +42,7 @@ var Scholar = {
     },
     /**
      * Narzędzia internacjonalizacji.
+     * @namespace
      */
     i18n: {
         /**
@@ -141,9 +143,12 @@ var Scholar = {
          * onAdd, którego parametrami są kolejno: dodany identyfikator,
          * wartość logiczna mówiąca czy taki klucz został dodany po raz
          * pierwszy do zbioru.
-         * @param id                    identyfikator
-         * @param [value]               opcjonalna wartość powiązana z podanym identyfikatorem
-         * @returns {IdSet}             zbiór na którym wywołano metodę
+         * @param id
+         *     identyfikator
+         * @param [value]
+         *     opcjonalna wartość powiązana z podanym identyfikatorem
+         * @returns {IdSet}
+         *     zbiór na którym wywołano metodę
          */
         this.add = function(id, value) {
             if (typeof value === 'undefined') {
@@ -167,8 +172,10 @@ var Scholar = {
 
         /**
          * Usuwa identyfikator ze zbioru.
-         * @param id                    identyfikator
-         * @returns {boolean}           czy identyfikator został usunięty
+         * @param id
+         *     identyfikator
+         * @returns {boolean}
+         *     czy identyfikator został usunięty
          */
         this.del = function(id) {
             var key = '_' + id;
@@ -185,7 +192,8 @@ var Scholar = {
 
         /**
          * Usuwa wszystkie elementy ze zbioru.
-         * @returns {IdSet}             zbiór na którym wywołano metodę
+         * @returns {IdSet}
+         *     zbiór na którym wywołano metodę
          */
         this.clear = function() {
             for (var key in _items) {
@@ -199,8 +207,10 @@ var Scholar = {
          * Iteruje podaną funkcję po wszystkich identyfikatorach w zbiorze.
          * Argumentem funkcji jest tekstowa reprezentacja identyfikatora. 
          * Zwrócenie przez funkcję wartości false przerywa iterację.
-         * @param {function} callback   funkcja wywoływana dla każdego identyfikatora
-         * @returns {IdSet}             zbiór na którym wywołano metodę
+         * @param {function} callback
+         *     funkcja wywoływana dla każdego identyfikatora
+         * @returns {IdSet}
+         *     zbiór na którym wywołano metodę
          */
         this.each = function(callback) {
             var id, key;
@@ -217,8 +227,10 @@ var Scholar = {
 
         /**
          * Informuje słuchaczy o zajściu zdarzenia.
-         * @param {string} event        nazwa zdarzenia
-         * @returns {IdSet}             zbiór na którym wywołano metodę
+         * @param {string} event
+         *     nazwa zdarzenia
+         * @returns {IdSet}
+         *     zbiór na którym wywołano metodę
          */
         this.notify = function(event)
         {
@@ -241,8 +253,10 @@ var Scholar = {
         /**
          * Dodaje słuchacza zmian w zbiorze. Obsługiwane zdarzenia to
          * onAdd i onDelete, przyjmujące jako argument identyfikator.
-         * @param {object} listener     słuchacz
-         * @returns {number}            wewnętrzny numer nadany słuchaczowi
+         * @param {object} listener
+         *     słuchacz
+         * @returns {number}
+         *     wewnętrzny numer nadany słuchaczowi
          */
         this.addListener = function(listener) {
             // upewnij sie, ze nie ma duplikatow
@@ -260,8 +274,10 @@ var Scholar = {
 
         /**
          * Usuwa słuchacza z listy.
-         * @param {object|number} listener słuchacz lub jego numer na liście
-         * @returns {boolean}           czy słuchacz został usunięty
+         * @param {object|number} listener
+         *     słuchacz lub jego numer na liście
+         * @returns {boolean}
+         *     czy słuchacz został usunięty
          */
         this.removeListener = function(listener) {
             var removed = false;
@@ -302,10 +318,19 @@ var Scholar = {
             context.__scholarData = {};
         }
 
+        /**
+         * Zwraca wartość powiązaną z podanym kluczem.
+         * @param {string} key
+         */
         this.get = function(key) {
             return context.__scholarData['_' + key];
         }
 
+        /**
+         * Ustawia wartość powiązaną z podanym kluczem.
+         * @param {string} key
+         * @param value
+         */
         this.set = function(key, value) {
             context.__scholarData['_' + key] = value;
             return this;
@@ -321,7 +346,7 @@ var Scholar = {
      *     element dokumentu, w którym ma zostać utworzony widget listy
      * @param {string} template
      *     szablon określający jak przedstawiać elementy wybieralne, patrz 
-     *     {@link Scholar.render()}
+     *     {@link Scholar.render}
      * @param {Array} items
      *     lista elementów wybieralnych
      * @param {object} [options]
@@ -329,7 +354,7 @@ var Scholar = {
      * @param {string} [options.idKey='id']
      *     właściwość elementu wybieralnego przechowująca jego identyfikator
      * @param {string} [options.filterSelector] 
-     *     selektor elementu dokumentu (pola tekstoweg), z ktorego bedzie
+     *     selektor elementu dokumentu (pola tekstowego), z ktorego bedzie
      *     brana wartosc do filtrowania listy elementów wybieralnych
      * @param {string} [options.filterReset]
      *     selektor elementu dokumentu (przycisku), do którego zostanie 
@@ -337,51 +362,49 @@ var Scholar = {
      * @param {string} [options.filterKey]
      *     nazwa właściwości elementu wybieralnego, po której lista będzie
      *     filtrowana. Musi zostać podany, jeżeli podano filterSelector
+     * @param {boolean} [options.showOnInit=true]
+     * @param {string} [options.emptyMessage]
      */
     ItemPicker: function(selector, template, items, options) { // {{{
         var $ = window.jQuery,
 
         options = $.extend({}, {idKey: 'id'}, options);
 
-        var domain,   // zbior przechowujacy wszystkie elementy
-            selected, // zbior przechowujacy elementy zaznaczone przez uzytkownika
-            elements; // zbior tagow LI odpowiadajacych elementom listy
+        var _domain,   // zbior przechowujacy wszystkie elementy
+            _selected, // zbior przechowujacy elementy zaznaczone przez uzytkownika
+            _elements; // zbior tagow LI odpowiadajacych elementom listy
 
         function _initDomain(items, idKey) {
-            var domain = new Scholar.IdSet;
+            _domain = new Scholar.IdSet;
 
             // wypelnij zbior wszystkich elementow
             for (var i = 0, n = items.length; i < n; ++i) {
                 var item = items[i];
-                domain.add(item[idKey], item);
+                _domain.add(item[idKey], item);
             }
-
-            return domain;
         }
 
         /**
          * Przygotowuje zbior zaznaczonych elementow.
          */
         function _initSelected() {
-            var selected = new Scholar.IdSet;
+            _selected = new Scholar.IdSet;
 
             // podepnij sluchacza zdarzen do zbioru elementow
-            selected.addListener({
+            _selected.addListener({
                 onAdd: function(id) {
-                    var elem = elements.get(id);
+                    var elem = _elements.get(id);
                     if (elem) {
                         elem.addClass('selected');
                     }
                 },
                 onDelete: function(id) {
-                    var elem = elements.get(id);
+                    var elem = _elements.get(id);
                     if (elem) {
                         elem.removeClass('selected');
                     }
                 }
             });
-        
-            return selected;
         }
 
         /**
@@ -390,25 +413,42 @@ var Scholar = {
          * podanego w konstruktorze.
          */
         function _initElements(idKey) {
-            var elements = new Scholar.IdSet,
-                ul = $('<ul/>'),
+            _elements = new Scholar.IdSet;
+
+            var ul = $('<ul class="scholar-item-picker" />'),
                 createElement = function(item, ul) {
                     return $('<li/>')
                         .html(Scholar.render(template, item))
                         .attr('data-id', item[idKey])
                         .click(function() {
-                            selected[selected.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
+                            $(this).removeClass('initial');
+                            _selected[_selected.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
                         })
                         .appendTo(ul);
                 }
 
-            domain.each(function(id, item) {
-                elements.add(id, createElement(item, ul));
+            _domain.each(function(id, item) {
+                _elements.add(id, createElement(item, ul));
             });
 
-            $(selector).empty().append(ul);
+            // jezeli podano komunikat dla pustej listy, dodaj go na koniec
+            if (typeof options.emptyMessage === 'string') {
+                $('<li class="empty-message" style="display:none" />')
+                    .append(options.emptyMessage)
+                    .appendTo(ul);
+            }
 
-            return elements;
+            $(selector).hide().empty().append(ul);
+        }
+
+        /**
+         * Pokazuje lub ukrywa komunikat z informacją, że lista elementów
+         * jest pusta.
+         * @param {boolean} [show=true]
+         */
+        function _showEmptyMessage(show) {
+            var j = $(selector).find('> ul > li.empty-message');
+            j[typeof show === 'undefined' || show ? 'show' : 'hide']();
         }
 
         /** 
@@ -426,30 +466,48 @@ var Scholar = {
                 filter.val(value);
             }
 
-            var needle = filter.val().toLowerCase();
+            var needle = filter.val().toLowerCase(),
+                vis = 0;
 
-            elements.each(function(id, element) {
-                var item = domain.get(id),
+            _elements.each(function(id, element) {
+                var item = _domain.get(id),
                     haystack = String(item[options.filterKey]).toLowerCase();
 
                 // item na pewno istnieje, bo wskaznik do niego jest
                 // przechowywany w domenie, na podstawie ktorej zbudowane
                 // sa tagi LI odpowiadajace jej elementom
+
                 element.css('display', haystack.indexOf(needle) != -1 ? '' : 'none');
+
+                // tu musimy zbadac rzeczywista wartosc display
+                if (element.is(':visible')) {
+                    ++vis;
+                }
             });
+
+            _showEmptyMessage(0 == vis);
         } 
 
         /**
          * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy,
          * gdy taki element jest wśród elementów podanych w konstruktorze.
-         * @param id                    identyfikator elementu
+         * Metoda jest przeznaczona do ustawiania początkowego zaznaczania.
+         * Elementy LI zaznaczone tą metodą (a nie przez kliknięcie użytkownika)
+         * mają dodatkową klasę <em>initial</em>.
+         *
+         * @param id                  identyfikator elementu
          * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
          */
         this.add = function(id) {
-            var item = domain.get(id);
+            var item = _domain.get(id);
 
             if (typeof item !== 'undefined') {
-                selected.add(id, item);
+                var elem = _elements.get(id);
+                if (elem) {
+                    elem.addClass('initial');
+                }
+
+                _selected.add(id, item);
             }
 
             return this;
@@ -460,13 +518,29 @@ var Scholar = {
          * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
          */
         this.each = function(callback) {
-            selected.each(callback);
+            _selected.each(callback);
             return this;
         }
 
-        domain   = _initDomain(items, options.idKey);
-        selected = _initSelected();
-        elements = _initElements(options.idKey);
+        this.show = function(animate) {
+            $(selector)[animate ? 'fadeIn' : 'show']();
+
+            // jezeli wszystkie elementy wybieralne sa ukryte, pokaz komunikat
+            // o braku elementow
+            var vis = 0;
+
+            _elements.each(function (id, element) {
+                if (element.is(':visible')) {
+                    ++vis;
+                }
+            });
+
+            _showEmptyMessage(0 == vis);
+        }
+
+        _initDomain(items, options.idKey);
+        _initSelected();
+        _initElements(options.idKey);
 
         // jezeli podano selektor elementu, na podstawie wartosci ktorego
         // beda filtrowane elementy, podepnij filtrowanie po kazdym
@@ -482,6 +556,12 @@ var Scholar = {
                 _filter('');
                 return false;
             });
+        }
+
+        // nie pokazuj listy, jezeli zaznaczono, zeby tego nie robic
+        // podczas inicjalizacji - bedzie to zrobione recznie
+        if (typeof options.showOnInit === 'undefined' || options.showOnInit) {
+            this.show();
         }
 
         // podepnij globalny wskaznik do tego obiektu, aby mozna bylo
@@ -562,7 +642,7 @@ var Scholar = {
         /**
          * Ustawia przyciski w okienku modalnym. 
          * @param {object} options
-         * @return {jQuery}             element otaczający przyciski
+         * @returns {jQuery}             element otaczający przyciski
          */
         this.buttons = function(options) {
             var container = _getButtons();
@@ -612,7 +692,7 @@ var Scholar = {
         /**
          * Ustawia lub zwraca tekst w polu statusu okienka.
          * @param {string} [text]
-         * @return {string|Scholar.modal}
+         * @returns {string|Scholar.modal}
          */
         this.status = function(text) {
             var j = _getStatusBar().children('.status');
@@ -819,6 +899,7 @@ var Scholar = {
      * dokumentacji <em>element dokumentu</em> oznacza element drzewa DOM, zaś
      * <em>element wybieralny</em> odnosi się do obiektu prezentowanego na
      * liście lub w tabeli.
+     * @constructor
      * @param {string|jQuery|element} target
      *     element dokumentu, do którego zostanie podpięty widget
      * @param {object} [options]
@@ -832,13 +913,13 @@ var Scholar = {
      *     jQuery lub element DOM), albo tablicę tych wartości (eliminuje to
      *     tworzenie niepotrzebnych wrapperów). Gdy rendererem jest string,
      *     zostanie on używaty jako szablon i przekazany do funkcji
-     *     {@link Scholar.render()} z elementem wybieralnym jako kontenerem
+     *     {@link Scholar.render} z elementem wybieralnym jako kontenerem
      *     zmiennych.
      * @param {string|function} [options.weightTemplate="weight[{ id }]"]
      *     szablon nazwy pola przechowującego wagę wiersza. Jeżeli jest to
      *     funkcja, musi ona zwracać string i przyjmować jako argument
      *     identyfikator elementu wybieralnego powiązanego z tym wierszem.
-     * @param {boolean} [options.drawOnInit=true]
+     * @param {boolean} [options.showOnInit=true]
      *     flaga mówiąca czy tablica prezentująca elementy wybieralne ma
      *     zostać dołączona do dokumentu podczas inicjalizacji widgeta
      * @param {function} [options.translate]
@@ -904,14 +985,15 @@ var Scholar = {
 
             // nie generuj tabeli, jezeli zaznaczono, zeby tego nie robic
             // podczas inicjalizacji - bedzie to zrobione recznie
-            if (typeof options.drawOnInit === 'undefined' || options.drawOnInit) {
+            if (typeof options.showOnInit === 'undefined' || options.showOnInit) {
                 self.redraw();
             }
         }
 
         /**
          * Aktualizuje wartości wag dla elementów tabeli.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         * @param {jQuery} tbody
+         *     obiekt jQuery przechowujący element TBODY tabeli
          */
         function _updateWeights(tbody)
         {
@@ -926,14 +1008,15 @@ var Scholar = {
          * Ustawia elementy w zbiorze wybranych zgodnie z kolejnością
          * odpowiadających im wierszy tabeli. Funkcja aktualizuje
          * wagi wierszy.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         * @param {jQuery} tbody
+         *     obiekt jQuery przechowujący element TBODY tabeli
          */
         function _reorderSelected(tbody)
         {
             var weight = 0, queue = [];
 
-            // przejdz kolejno przez wszystkie wiersze w tabeli i dla kazdego z nich
-            // dodaj do kolejki odpowiadajacy mu element
+            // przejdz kolejno przez wszystkie wiersze w tabeli i dla 
+            // kazdego z nich dodaj do kolejki odpowiadajacy mu element
             tbody.find('tr[data-id]').each(function() {
                 var id = $(this).attr('data-id'),
                     item = _selected.get(id);
@@ -959,7 +1042,8 @@ var Scholar = {
 
         /**
          * Usuwa wiersz z tabeli.
-         * @param {jQuery} tr           obiekt jQuery przechowujący element TR tabeli
+         * @param {jQuery} tr
+         *     obiekt jQuery przechowujący element TR tabeli
          */
         function _removeRow(tr) {
             var tbody = tr.parent();
@@ -980,12 +1064,16 @@ var Scholar = {
         }
 
         /**
-         * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go do tabeli.
-         * @param {jQuery} tbody        obiekt jQuery przechowujący element TBODY tabeli
+         * Tworzy wiersz tabeli odpowiadający obiektowi zbioru i podpina go 
+         * do tabeli.
+         * @param {jQuery} tbody
+         *     obiekt jQuery przechowujący element TBODY tabeli
          * @param id
          * @param item
-         * @param {number} [position]   numer wiersza, potrzebny do określenia klasy CSS
-         *                              czy jest to wiersz parzysty czy nieparzysty
+         * @param {number} [position]
+         *     numer wiersza, potrzebny do określenia klasy CSS odpowiadającej
+         *     wierszowi parzystemu (klasa <em>even</em>) czy nieparzystemu
+         *     (klasa <em>odd</em>)
          */
         function _createRow(tbody, id, item, position) {
             var tr = $('<tr/>'), cls = 'draggable', weightName;
@@ -1072,8 +1160,10 @@ var Scholar = {
 
         /**
          * Ustawia główne przyciski kontrolujące widget.
-         * @param {array} buttons               specyfikacja przycisków
-         * @return {SortableMultiselect}        obiekt, na któym wywołano metodę
+         * @param {array} buttons
+         *     specyfikacja przycisków
+         * @returns {SortableMultiselect}
+         *     obiekt, na któym wywołano metodę
          */
         this.setButtons = function(buttons) {
             var container = _element.children('.buttons-wrapper').empty();
@@ -1105,7 +1195,8 @@ var Scholar = {
             for (var i = 0, n = _header.length; i < n; ++i) {
                 thead += '<th>' + self.translate(_header[i]) + '</th>';
             }
-            // utworz dwie dodatkowe kolumny, z waga wiersza i wyzwalacz usuwania wiersza
+            // utworz dwie dodatkowe kolumny, z waga wiersza i wyzwalacz
+            // usuwania wiersza
             thead += '<th>' + self.translate('Weight') + '</th>';
             thead += '<th></th></thead>';
             table.append(thead);
@@ -1144,10 +1235,11 @@ var Scholar = {
         }
 
         /**
-         * Dodaje podany element do zbioru zaznaczonych
+         * Dodaje podany element do zbioru zaznaczonych.
          * @param id
          * @param item
-         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         * @returns {SortableMultiselect}
+         *     obiekt, na którym wywołano tę metodę
          */
         this.add = function(id, item) {
             _selected.add(id, item);
@@ -1156,7 +1248,8 @@ var Scholar = {
 
         /**
          * Iteruje po zbiorze zaznaczonych elementów.
-         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         * @returns {SortableMultiselect}
+         *     obiekt, na którym wywołano tę metodę
          */
         this.each = function(callback) {
             _selected.each(callback);
@@ -1165,7 +1258,8 @@ var Scholar = {
 
         /**
          * Usuwa ze zbioru zaznaczonych wszystkie elementy.
-         * @returns {SortableMultiselect}       obiekt, na którym wywołano tę metodę
+         * @returns {SortableMultiselect}
+         *     obiekt, na którym wywołano tę metodę
          */
         this.clear = function() {
             _selected.clear();
@@ -1186,25 +1280,28 @@ var Scholar = {
     }, // }}}
     /**
      * Biblioteka funkcji operujących na widgetach.
+     * @namespace
      */
     mixins: {
         /**
          * Funkcja otwierajaca widget wyboru elementów (patrz {@link 
          * Scholar.ItemPicker}) powiązanego ze zbiorem wybranych elementów
          * widgetu typu {@link Scholar.SortableMultiselect}.
+         * @param {SortableMultiselect} widget
+         *      widget, na którym operować ma widget wyboru elementów
          * @param {object} settings
          *     zbiór par klucz/wartość konfigurujących wywołanie funkcji
          * @param {string} settings.url
          *     adres strony z umieszczonym w niej widgetem ItemPicker
+         * @param {string} settings.title
+         *     tytuł okienka modalnego
          * @param {number} [settings.width=480]
          *     domyślna szerokość okienka modalnego
          * @param {number} [settings.height=240]
          *     domyślna wysokość okienka modalnego
-         * @param {SortableMultiselect} widget
-         *      widget, na którym operować ma widget wyboru elementów
          */
         openItemPicker: function(widget, settings) { // {{{
-            var _selector,
+            var picker,
                 key = '!' + String(Math.random()).substr(2);
 
             Scholar.modal.open({
@@ -1217,13 +1314,16 @@ var Scholar = {
                     load: function() {
                         var data = new Scholar.Data(this.contentWindow);
                         // uzyskaj dostep do itemPickera w ramce
-                        _selector = data.get(key);
+                        picker = data.get(key);
 
-                        if (_selector) {
-                            // poinformuj otwartego itemPickera o juz wybranych elementach
+                        if (picker) {
+                            // poinformuj otwartego itemPickera o juz 
+                            // wybranych elementach
                             widget.each(function (k, v) {
-                                _selector.add(k, v);
+                                picker.add(k, v);
                             });
+
+                            picker.show(true);
 
                             this.parentDialog.button('apply').removeClass('disabled');
                         }
@@ -1234,14 +1334,15 @@ var Scholar = {
                         label: widget.translate('Apply'),
                         disabled: true,
                         click: function() {
-                            if (_selector) {
-                                // przygotuj podpiety zbior do przyjecia nowowybranych elementow
-                                // nie usuwaj elementow ze zbioru za pomoca .clear(), bo w ten
-                                // sposob moglibysmy stracic wartosci, ktore nie wystepuja na 
-                                // liscie powiazanego itemPickera. Duplikaty sa poprawnie obslugiwane.
-
-                                // dodaj wszystkie elementy z itemPickera do zbioru
-                                _selector.each(function(k, v) {
+                            // Przygotuj podpiety zbior do przyjecia 
+                            // nowowybranych elementow.
+                            // Nie usuwaj elementow ze zbioru za pomoca clear(),
+                            // bo w ten sposob moglibysmy stracic wartosci,
+                            // ktore nie wystepuja na liscie powiazanego 
+                            // itemPickera. Duplikaty sa poprawnie obslugiwane.
+                            if (picker) {
+                                // dodaj wszystkie elementy z pickera do zbioru
+                                picker.each(function(k, v) {
                                     widget.add(k, v);
                                 });
                                 widget.redraw();
@@ -1256,6 +1357,20 @@ var Scholar = {
         }, // }}}
         /**
          * @param {SortableMultiselect} widget
+         * @param {object} settings
+         *     zbiór par klucz/wartość konfigurujących wywołanie funkcji
+         * @param {string} settings.url
+         *     adres strony z formularzem do wgrywania plików. Po pomyślnym
+         *     wgraniu pliku strona musi za pomocą rejestru 
+         *     {@link Scholar.Data} ustawić dla klucza podanego 
+         *     w <code>window.location.hash.substr(1)</code> wartość będącą 
+         *     rekordem dodanego pliku.
+         * @param {string} settings.title
+         *     tytuł okienka modalnego
+         * @param {number} [settings.width=480]
+         *     domyślna szerokość okienka modalnego
+         * @param {number} [settings.height=240]
+         *     domyślna wysokość okienka modalnego
          */
         openFileUploader: function(widget, settings) { // {{{
             var iframe,
@@ -1269,8 +1384,9 @@ var Scholar = {
                     url: settings.url + '#' + key,
                     load: function() {
                         // poniewaz upload pliku przeladowuje strone, zostanie
-                        // jeszcze raz odpalona metoda load, trzeba sprawdzic, czy 
-                        // do rejestru nie zostal dodany klucz z informacja o dodanym pliku
+                        // jeszcze raz odpalona metoda load, trzeba sprawdzic,
+                        // czy do rejestru nie zostal dodany klucz z informacja
+                        // o dodanym pliku
                         var dialog = this.parentDialog,
                             data = new Scholar.Data(this.contentWindow),
                             file = data.get(key)
@@ -1306,7 +1422,6 @@ var Scholar = {
     },
     /**
      * Umieszcza w podanym selektorze widget zarządzający załącznikami.
-     * @constructor
      * @param {string|jQuery|element} target
      *     element dokumentu, do którego zostanie podpięty widget
      * @param {string} name
@@ -1330,7 +1445,7 @@ var Scholar = {
                 var fieldname = name + '[' + item.id + ']';
 
                 return [
-                    '<input type="hidden" name="' + fieldname + '[id]" />',
+                    '<input type="hidden" name="' + fieldname + '[id]" value="' + item.id + '"/>',
                     $('<input type="text" name="' + fieldname + '[label]" class="form-text" />')
                         .val(label ? label : '')
                         .change(function() {
@@ -1348,7 +1463,7 @@ var Scholar = {
                      + '<input type="hidden" name="' + fieldname + '[size]" value="' + item.size + '" />';
             }
         ];
-        settings.drawOnInit = false;
+        settings.showOnInit = false;
         settings.weightTemplate = name + '[{ id }][weight]';
         settings.translate = function (text) {
             return Scholar.i18n.tr(text);

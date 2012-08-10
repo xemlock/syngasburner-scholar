@@ -46,6 +46,16 @@ fieldset.scholar legend .language-icon {
   border: 1px solid #ccc;
 }
 
+.scholar-item-picker .initial {
+  display: none;
+}
+.scholar-item-picker .empty-message,
+.scholar-item-picker .empty-message:hover {
+  font-style: italic;
+  cursor: default;
+  background: none;
+}
+
 .dialog-button {
   display: -moz-inline-box;
   display: inline-block;
