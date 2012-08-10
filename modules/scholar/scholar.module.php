@@ -36,8 +36,30 @@ function scholar_nodeapi($node, $op)
         // trzeba wyrenderowac tresc!!!
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
         $binding = db_fetch_array($query);
-//        p($binding);
-//        if (empty($binding['last_rendered']) || $binding['last_rendered']
+      //  p($binding);
+
+        if (empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
+       //     p('RENDERING');
+            // trzeba wygenerowac body
+            switch ($binding['table_name']) {
+                case 'people':
+                    $timestamp = time();
+                    $markup = $binding['body']
+                            . "\n"
+                            . "[PUBLIKACJE]\n"
+                            . "[SZKOLENIA]\n";
+                    db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
+                    $node->body = $markup;
+                    $node->created = $node->changed = $timestamp;
+                    db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
+
+                    db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
+                    break;
+            
+            
+            }
+        }
+       // else p('VALID');
 
 
     }

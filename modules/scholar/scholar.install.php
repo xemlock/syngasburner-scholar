@@ -50,7 +50,7 @@ function scholar_schema() // {{{
                 // kiedy ostatnio renderowano zawartosc wezla, porownywane
                 // z variable(name='scholar_last_change')
                 // pusta wartosc oznacza koniecznosci wygenerowania tresci
-                'type'      => 'datetime'
+                'type'      => 'timestamp',
             ),
             'body' => array(
                 // tresc wezla, ktora po przetworzeniu (renderowaniu)
