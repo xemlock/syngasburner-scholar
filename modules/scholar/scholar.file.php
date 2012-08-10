@@ -50,8 +50,9 @@ function scholar_sanitize_filename($filename) // {{{
     // Wiemy, ze nazwa pliku zawiera przynajmniej jeden niepusty znak.
     $filename  = rtrim(substr($filename, 0, $pos)) . $extension;    
 
-    // zastap potencjalnie problematyczne znaki podkresleniami
-    $filename  = preg_replace('/[^ -_.a-z0-9]/i', '_', $filename);
+    // zastap potencjalnie problematyczne znaki podkresleniami, uwaga
+    // na pozycje myslnika w wyrazeniu regularnym, musi byc zaraz za ^
+    $filename  = preg_replace('/[^-_. a-z0-9]/i', '_', $filename);
 
     return $filename;
 } // }}}
@@ -94,6 +95,107 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
 } // }}}
 
 /**
+ * Pobiera listę załączników dla obiektu o podanym identyfikatorze
+ * znajdujęcego się w podanej tabeli. Jeżeli podano język, zwrócone 
+ * zostaną tylko załączniki dla danego języka.
+ * @param int $object_id
+ * @param string $table_name
+ * @return array
+ */
+function scholar_fetch_attachments($object_id, $table_name, $language = null) // {{{
+{
+    $conds = array(
+        'table_name' => $table_name,
+        'object_id'  => $object_id,
+    );
+
+    if (null !== $language) {
+        $language = strval($language);
+        $conds['language'] = $language;
+    }
+
+    $where = scholar_db_where($conds);
+    $query = db_query("SELECT * FROM {scholar_attachments} a JOIN {scholar_files} f ON a.file_id = f.id WHERE " . $where . " ORDER BY language, weight");
+    $rows = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[$row['language']][] = $row;
+    }
+
+    if (null !== $language) {
+        return isset($rows[$language]) ? $rows[$language] : array();
+    }
+
+    return $rows;
+} // }}}
+
+/**
+ * Ustawia załączniki dla obiektu z podanej tabeli, wszystkie poprzednie
+ * powiązania tego obiektu z załącznikami zostaną usunięte.
+ * @param int $object_id
+ * @param string $table_name
+ * @param array $attachments Taka jak wartosć z elementu scholar_attachment_manager.
+ * @return int liczba dodanych rekordów
+ */
+function scholar_save_attachments($object_id, $table_name, $attachments) // {{{
+{
+    // wez pod uwage tylko identyfikatory istniejacych plikow, w tym celu
+    // dokonaj ekstrakcji identyfikatorow plikow
+    $ids = array();
+
+    foreach ($attachments as $language => $files) {
+        foreach ($files as $file) {
+            $ids[intval($file['id'])] = false;
+        }
+    }
+
+    // zaznacz, ktore z wyekstrahowanych identyfikatorow plikow sa poprawne
+    $where = scholar_db_where(array('id' => array_keys($ids)));
+    $query = db_query("SELECT id FROM {scholar_files} WHERE " . $where);
+
+    while ($row = db_fetch_array($query)) {
+        $ids[$row['id']] = true;
+    }
+
+    // usun aktualne dowiazania, zeby nie kolidowaly z nowo wstawionymi
+    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND object_id = %d", $table_name, $object_id);
+
+    // przechowuje aktualny rekord do przekazania funkcji drupal_write_record
+    $record = new stdClass;
+    $count = 0;
+
+    foreach ($attachments as $language => $files) {
+        $saved = array();
+
+        foreach ($files as $file) {
+            $file_id = intval($file['id']);
+
+            // Zapisz tylko powiazania z poprawnymi identyfikatorami plikow.
+            // Pilnuj, zeby nie bylo zduplikowanych plikow w obrebie jezyka,
+            // bo baza danych zglosi duplikat klucza glownego.
+            if (!$ids[$file_id] || isset($saved[$file_id])) {
+                continue;
+            }
+
+            $record->file_id    = $file_id;
+            $record->table_name = $table_name;
+            $record->object_id  = $object_id;
+            $record->label      = $file['label'];
+            $record->language   = $language;
+            $record->weight     = $file['weight'];
+
+            if (drupal_write_record('scholar_attachments', $record)) {
+                $saved[$file_id] = true;
+            }
+        }
+
+        $count += count($saved);
+    }
+
+    return $count;
+} // }}}
+
+/**
  * Pobiera z bazy danych rekord pliku.
  *
  * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
@@ -104,17 +206,12 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
  */
 function scholar_fetch_file($file_id, $redirect = false) // {{{
 {
-    $cond = array();
-
     if (is_array($file_id)) {
-        foreach ($file_id as $key => $value) {
-            $cond[] = db_escape_table($key) . " = '" . db_escape_string($value) . "'";
-        }
+        $cond = scholar_db_where($file_id);
     } else {
-        $cond[] = "id = " . intval($file_id);
+        $cond = "id = " . intval($file_id);
     }
 
-    $cond  = implode(" AND ", $cond);
     $query = db_query("SELECT * FROM {scholar_files} WHERE " . $cond);
     $row   = db_fetch_object($query);
 
@@ -141,12 +238,6 @@ function scholar_file_count_attachments(&$file) // {{{
 
     return intval($row['cnr']);
 } // }}}
-
-function scholar_file_fetch_attachments($file)
-{
-    
-}
-
 
 /**
  * Pobiera z bazy danych listę rekordów z tabel scholar_people 

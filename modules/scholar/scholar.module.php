@@ -172,6 +172,49 @@ function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
 } // }}}
 
 /**
+ * Dodaje do wartości znaki unikowe na użytek zapytań SQL oraz otacza
+ * ją pojedynczymi apostrofami.
+ *
+ * @param mixed $value
+ * @return string
+ */
+function scholar_db_quote($value) // {{{
+{
+    if (null === $value) {
+        return 'NULL';
+    } else if (is_int($value)) {
+        return $value;
+    } else if (is_float($value)) {
+        // %F non-locale aware floating-point number
+        return sprintf('%F', $value);
+    }
+    return "'" . db_escape_string($value) . "'";
+} // }}}
+
+/**
+ * Jeżeli wartosć jest tablicą zostanie użyta klauzula WHERE IN.
+ * @param array $conds          tablica z warunkami
+ */
+function scholar_db_where($conds) // {{{
+{
+    $where = array();
+
+    foreach ($conds as $key => $value) {
+        if (is_array($value)) {
+            $values = count($value) 
+                    ? '(' . join(',', array_map('scholar_db_quote', $value)) . ')'
+                    : '(NULL)';
+            $where[] = db_escape_table($key) . ' IN ' . $values;
+        } else {
+            $where[] = db_escape_table($key) . " = " . scholar_db_quote($value);
+        }
+    }
+
+    return implode(' AND ', $where);
+} // }}}
+
+
+/**
  * Dodaje arkusz ze stylami tego modułu.
  */
 function scholar_add_css() // {{{
@@ -449,21 +492,13 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
 
     if (false === $post) {
         // formularz nie zostal przeslany, uzyj domyslnej wartosci
-        // na podstawie dolaczonego do elementu obiektu
-        //if ($element['#default_value']) {
-            $value['pl'][] = array(
-                'id' => 777,
-                'label' => '',
-                'weight' => 0,
-                'size' => 3263511,
-                'filename' => 'Plik niewiadomego pochodzenia.pdf'
-            );
-        //}
-    
-    } else {
-        $languages = scholar_languages();
+        if ($element['#default_value']) {
+            $post = $element['#default_value'];
+        }
+    }
 
-        foreach ($languages as $language => $name) {
+    if ($post) {
+        foreach (scholar_languages() as $language => $name) {
             if (!isset($post[$language])) {
                 continue;
             }
@@ -474,11 +509,11 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
                 // file_id jako klucz eliminuje ewentualne duplikaty plikow
                 $value[$language][$file_id] = array(
                     'id'       => $file_id,
-                    'label'    => isset($data['label'])  ? trim(strval($data['label'])) : '',
+                    'label'    => isset($data['label']) ? trim(strval($data['label'])) : '',
                     'weight'   => isset($data['weight']) ? intval($data['weight']) : 0,
                     // nazwa i rozmiar pliku sa uzywane podczas renderowania
                     // tego elementu
-                    'size'     => isset($data['size'])   ? intval($data['size']) : 0,
+                    'size'     => isset($data['size']) ? intval($data['size']) : 0,
                     'filename' => isset($data['filename']) ? strval($data['filename']) : '',
                 );
             }

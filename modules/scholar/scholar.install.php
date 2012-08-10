@@ -302,10 +302,7 @@ function scholar_schema() // {{{
                 'default'   => 0,
             ),
         ),
-        'primary key' => array('table_name', 'object_id'),
-        'unique keys' => array(
-            'file_id' => array('table_name', 'object_id', 'file_id'),
-        ),
+        'primary key' => array('table_name', 'object_id', 'file_id', 'language'),
     ); // }}}
 
   return $schema;

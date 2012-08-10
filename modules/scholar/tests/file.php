@@ -11,6 +11,7 @@ $tests = array(
     'a . b' => 'a.b',
     ' Żółć. b情報 ' => 'Zolc.b',
     'セーラームーン 5.jpg' => '5.jpg',
+    '280px-Western_color_scheme_of_a_Rubik\'s_Cube.svg_.png' => '280px-Western_color_scheme_of_a_Rubik_s_Cube.svg_.png',
 );
 
 var_dump(preg_replace('/[^\pL\pN\pP\pS\pZ]/u', '?', 'Żółćセーラームーン'));

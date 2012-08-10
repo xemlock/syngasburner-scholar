@@ -80,9 +80,10 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
         '#default_value' => $row
-                            ? scholar_file_fetch_attachments(array('table_name' => 'people', 'object_id' => $row['id']))
+                            ? scholar_fetch_attachments($row['id'], 'people')
                             : null
-    );
+                        );
+    p($form['attachments']['files']['#default_value']);
 
     $form['node'] = scholar_nodes_subform($row, 'people');
 
@@ -121,7 +122,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     $values = $form_state['values'];
     $nodes  = array();
     $langs  = scholar_languages();
-p($values);exit;
+
     if ($row) {
         db_query(
             "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s' WHERE id = %d",
@@ -148,6 +149,9 @@ p($values);exit;
         $row = $values;
         $row['id'] = db_last_insert_id('scholar_people', 'id');
     }
+
+    // zapisz zalaczniki
+    scholar_save_attachments($row['id'], 'people', $values['files']);
 
     // przygotuj wezly, do ktorych zapisywane beda renderingi
     // strony danej osoby

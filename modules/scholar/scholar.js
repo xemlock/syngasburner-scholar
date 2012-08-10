@@ -1168,6 +1168,7 @@ var Scholar = {
                         if (_selector) {
                             // poinformuj otwartego itemPickera o juz wybranych elementach
                             widget.each(function (k, v) {
+                                console.log(v);
                                 _selector.add(k, v);
                             });
 
@@ -1182,7 +1183,10 @@ var Scholar = {
                         click: function() {
                             if (_selector) {
                                 // przygotuj podpiety zbior do przyjecia nowowybranych elementow
-                                // widget.clear();
+                                // nie usuwaj elementow ze zbioru za pomoca .clear(), bo w ten
+                                // sposob moglibysmy stracic wartosci, ktore nie wystepuja na 
+                                // liscie powiazanego itemPickera. Duplikaty sa poprawnie obslugiwane.
+
                                 // dodaj wszystkie elementy z itemPickera do zbioru
                                 _selector.each(function(k, v) {
                                     widget.add(k, v);
@@ -1316,7 +1320,7 @@ var Scholar = {
                         url: settings.urlFileUpload,
                         width: 480,
                         height: 240,
-                        title: $(this).html() + ' (' + language.name + ')'
+                        title: $(this).html()
                     });
                 }
             }
@@ -1334,6 +1338,7 @@ var Scholar = {
                 }
             }
         }
+        console.log(values);
 
         widget.redraw();
     } // }}}
