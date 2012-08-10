@@ -418,22 +418,26 @@ function scholar_elements() // {{{
  * @param array $element
  * @param array &$form_state
  */
-function form_type_scholar_attachment_manager_validate($element, &$form_state)
+function form_type_scholar_attachment_manager_validate($element, &$form_state) // {{{
 {
-    $count = count(scholar_languages());
+    // jezeli podane sa pliki, to kazdy z nich musi miec niepusta etykiete
+    // unikalną dla tego języka
+    // jezeli dodano element musi byc podana
+    foreach ($element['#value'] as $language => $files) {
+        $labels = array();
 
-    // jezeli dodano element przynajmniej jedna z etykiet musi byc podana
-    // poniewaz podczas nadawania wartosci polu niepuste etykiety sa ustawiane
-    // tylko dla dostepnych jezykow, wystarczy sprawdzic, czy liczba etykiet
-    // jest rowna liczbie jezykow
-    foreach ((array) $element['#value'] as $data) {
-        if (count($data['labels']) < $count) {
-            // Każdy załączony plik musi mieć nadaną przynajmniej jedną etykietę
-            form_error($element, t('Each attached file must be given at least one label.'));
-            break;
+        foreach ($files as $file) {
+            $label = strtolower($file['label']);
+            if (0 == strlen($file['label']) || isset($labels[$label])) {
+                // Każdy załączony plik musi mieć nadaną etykietę
+                form_error($element, t('Each attached file must be given a unique (case insensitive) label.'));
+                break;
+            }
+
+            $labels[$label] = true;
         }
     }
-}
+} // }}}
 
 /**
  * @param array $element
@@ -446,39 +450,38 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
     if (false === $post) {
         // formularz nie zostal przeslany, uzyj domyslnej wartosci
         // na podstawie dolaczonego do elementu obiektu
-        if ($element['#files']) {
-            
-        }
+        //if ($element['#default_value']) {
+            $value['pl'][] = array(
+                'id' => 777,
+                'label' => '',
+                'weight' => 0,
+                'size' => 3263511,
+                'filename' => 'Plik niewiadomego pochodzenia.pdf'
+            );
+        //}
     
     } else {
         $languages = scholar_languages();
 
-        foreach ((array) $post as $file_id => $data) {
-            $file_id = intval($file_id);
-
-            if (!$file_id) {
+        foreach ($languages as $language => $name) {
+            if (!isset($post[$language])) {
                 continue;
             }
 
-            $labels  = array();
+            foreach ((array) $post[$language] as $file_id => $data) {
+                $file_id = intval($file_id);
 
-            foreach ($languages as $language => $name) {
-                if (!isset($data['labels'][$language])) {
-                    continue;
-                }
-
-                $label = trim(strval($data['labels'][$language]));
-                if (strlen($label)) {
-                    $labels[$language] = $label;
-                }
+                // file_id jako klucz eliminuje ewentualne duplikaty plikow
+                $value[$language][$file_id] = array(
+                    'id'       => $file_id,
+                    'label'    => isset($data['label'])  ? trim(strval($data['label'])) : '',
+                    'weight'   => isset($data['weight']) ? intval($data['weight']) : 0,
+                    // nazwa i rozmiar pliku sa uzywane podczas renderowania
+                    // tego elementu
+                    'size'     => isset($data['size'])   ? intval($data['size']) : 0,
+                    'filename' => isset($data['filename']) ? strval($data['filename']) : '',
+                );
             }
-
-            // file_id jako klucz eliminuje ewentualne duplikaty plikow
-            $value[$file_id] = array(
-                'file_id' => $file_id,
-                'labels'  => $labels,
-                'weight'  => isset($data['weight']) ? intval($data['weight']) : 0,
-            );
         }
     }
 
@@ -498,14 +501,6 @@ function theme_scholar_attachment_manager($element)
     scholar_add_js();
 
     $langicons = module_exists('languageicons');
-    $languages = array();
-    foreach (scholar_languages() as $code => $name) {
-        $languages[] = array(
-            'code' => $code,
-            'name' => $name,
-            'flag' => $langicons ? theme('languageicons_icon', (object) array('language' => $code), $name) : null,
-        );
-    }
 
     $settings = array(
         'prefix'        => $element['#name'],
@@ -516,11 +511,21 @@ function theme_scholar_attachment_manager($element)
     $html = '<p class="help">Each file must be given label in at least one language.
         If label is given, file will be listed on page in that language.</p>';
 
+    $language = new stdClass;
     foreach (scholar_languages() as $code => $name) {
+        $values = isset($element['#value'][$code]) ? array_values($element['#value'][$code]) : 0;
+
+        // spraw zeby languageicons_icon myslal, ze dostaje obiekt jezyka
+        $language->language = $code;
+        $language->name     = $name;
+
+        $legend = ($langicons ? theme('languageicons_icon', $language, $name) . ' ' : '') . $name;
         $id = $element['#id'] . '-' . $code;
-        $html .= '<fieldset class="scholar"><legend>' . $name . '</legend>' .
+
+        $settings['language'] = $language;
+        $html .= '<fieldset class="scholar"><legend>' . $legend . '</legend>' .
         '<div id="' . htmlspecialchars($id) . '" class="form-item"></div>' .
-        '<script type="text/javascript">new Scholar.attachmentManager(' . drupal_to_js('#' . $id) . ', ' . drupal_to_js($settings) .', ' . drupal_to_js($name) . ')</script>'.
+        '<script type="text/javascript">new Scholar.attachmentManager(' . drupal_to_js('#' . $id) . ',' . drupal_to_js("{$element['#name']}[{$code}]") . ' ,' . drupal_to_js($settings) . ',' . drupal_to_js($values) . ')</script>'.
         '</fieldset>';
     }
 

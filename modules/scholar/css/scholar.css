@@ -42,6 +42,10 @@ form.scholar.confirmation .container-inline {
   margin-bottom: 1em;
 }
 
+fieldset.scholar legend .language-icon {
+  border: 1px solid #ccc;
+}
+
 .dialog-button {
   display: -moz-inline-box;
   display: inline-block;

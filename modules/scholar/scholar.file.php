@@ -142,6 +142,12 @@ function scholar_file_count_attachments(&$file) // {{{
     return intval($row['cnr']);
 } // }}}
 
+function scholar_file_fetch_attachments($file)
+{
+    
+}
+
+
 /**
  * Pobiera z bazy danych listę rekordów z tabel scholar_people 
  * i scholar_objects odwołujących się do tego pliku.
@@ -238,7 +244,6 @@ function scholar_file_select() // {{{
 
     $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
     while ($row = db_fetch_array($query)) {
-        $row['filesize'] = format_size($row['size']);
         $files[] = $row;
     }
 
@@ -443,10 +448,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         if ($dialog) {
             // pliki, ktorych upload zostal zainicjowany za pomoca
             // attachmentManagera zostaja automatycznie dodane do
-            // wybranych plikow, przygotuj rozmiar pliku czytelny
-            // dla czlowieka
-            $file->filesize = format_size($file->size);
-
+            // wybranych plikow
             scholar_add_js();
             drupal_add_js('(new Scholar.Data).set(' . drupal_to_js($fragment) . ',' . drupal_to_js($file) . ')', 'inline');
 

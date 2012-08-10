@@ -8,16 +8,47 @@
  * @namespace Przestrzeń nazw dla funkcji modułu.
  */
 var Scholar = {
-    i18n: { // {{{
+    /**
+     * Narzędzia do manipulacji stringów
+     */
+    str: {
+        /**
+         * Przekształca liczbę podaną w bajtach na rozmiar czytelny dla człowieka.
+         * @param {number} bytes
+         * @param {string} [separator=" "]
+         */
+        filesize: function(bytes, separator) { // {{{
+            var idx = 0,
+                rdx = 1024,
+                pre = ['', 'K', 'M', 'G', 'T', 'P'],
+                end = pre.length - 1,
+                sep = typeof separator === 'undefined' ? ' ' : String(separator);
+
+            while (bytes > rdx) {
+                bytes /= rdx;
+                if (idx == end) {
+                    break;
+                }
+                ++idx;
+            }
+
+            bytes = Math.round(100 * bytes) / 100;
+            return bytes + sep + pre[idx] + 'B';
+        } // }}}
+    },
+    /**
+     * Narzędzia internacjonalizacji.
+     */
+    i18n: {
         /**
          * @param {string} message
          * @returns {string}
          */
-        tr: function(message) {
+        tr: function(message) { // {{{
             return String(typeof this.dictionary[message] === 'undefined' ? message : this.dictionary[message]);
-        },
+        }, // }}}
         dictionary: {}
-    }, // }}}
+    },
     /**
      * Prosty silnik renderowania szablonów.
      * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
@@ -98,9 +129,10 @@ var Scholar = {
         }
 
         /**
-         * Dodaje identyfikator do zbioru. Ustawienie nowej wartości
-         * dla identyfikatora już obecnego w zbiorze nie wywołuje
-         * zdarzenia onAdd.
+         * Dodaje identyfikator do zbioru. Funkcja wywołuje zdarzenie
+         * onAdd, którego parametrami są kolejno: dodany identyfikator,
+         * wartość logiczna mówiąca czy taki klucz został dodany po raz
+         * pierwszy do zbioru.
          * @param id                    identyfikator
          * @param [value]               opcjonalna wartość powiązana z podanym identyfikatorem
          * @returns {IdSet}             zbiór na którym wywołano metodę
@@ -117,10 +149,10 @@ var Scholar = {
 
             if (added) {
                 ++_size;
-
-                // powiadom sluchaczy o dodaniu nowego identyfikatora
-                this.notify('onAdd', id);
             }
+
+            // powiadom sluchaczy o dodaniu nowego identyfikatora
+            this.notify('onAdd', id, added);
 
             return this;
         }
@@ -763,7 +795,7 @@ var Scholar = {
      * @param {string|jQuery|element} target
      * @param {object} [options]
      * @param {Array} [options.header]
-     * @param {Array} [options.templates]
+     * @param {Array} [options.templates] lista rendererów wartości w kolejnych kolumnach wiersza. Jeżeli funkcja to musi zwrócić albo coś rozumiane przez jQuery.append (string, element, jQuery), albo tablicę tych wartości - wtedy zostaną dodane kolejno (dzięki czemu nie trzeba tworzyć żadnych wrapperów)
      * @param {string|function} [options.weightTemplate="weight[{ id }]"]    szablon nazwy pola przechowującego wagę wiersza, jeżeli funkcja to musi zwracać string i przyjmuje jako argument identyfikator obiektu powiązanego z wierszem
      * @param {boolean} [options.drawOnInit=true]       generuj tablicę wyświetlającą elementy podczas inicjalizacji obiektu
      * @param {function} [options.translate]
@@ -954,6 +986,7 @@ var Scholar = {
 
                     case 'function':
                         result = template(item);
+
                         break;
 
                     case 'string':
@@ -965,7 +998,15 @@ var Scholar = {
                         break;
                 }
 
-                td.append(result);
+                // jezeli funkcja renderujaca zawartosc komorki tabeli zwrocila
+                // tablice dodaj wszystkie znajdujace sie w niej elementy
+                if (result instanceof Array) {
+                    for (var j = 0, m = result.length; j < m; ++j) {
+                        td.append(result[j]);
+                    }
+                } else {
+                    td.append(result);
+                }
                 tr.append(td);
             }
 
@@ -1141,8 +1182,8 @@ var Scholar = {
                         click: function() {
                             if (_selector) {
                                 // przygotuj podpiety zbior do przyjecia nowowybranych elementow
-                                widget.clear();
-                                // dodaj wszystkie elementy z itemPickera do zbiory
+                                // widget.clear();
+                                // dodaj wszystkie elementy z itemPickera do zbioru
                                 _selector.each(function(k, v) {
                                     widget.add(k, v);
                                 });
@@ -1215,27 +1256,41 @@ var Scholar = {
      * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
-    attachmentManager: function(target, settings, language) { // {{{
-        var labels = new Scholar.IdSet;
+    attachmentManager: function(target, name, settings, values) { // {{{
+        var labels = new Scholar.IdSet,
+            language = settings.language;
 
         settings.header = ['', 'File name <span class="form-required">*</span>', 'Size'];
-        settings.templates = ['', function(item) {
-            var label = labels.get(item.id);
-            if (typeof label === 'undefined') {
-                label = item.filename;
-                labels.add(item.id, label);
-            }
-            var div = $('<div/>'),
-                input = $('<input type="text" name="files[' + item.id + '][' + language.code + ']" class="form-text" />')
+        settings.templates = [
+            '',
+            function(item) {
+                var label = labels.get(item.id);
+                if (typeof label === 'undefined') {
+                    label = item.filename;
+                    labels.add(item.id, label);
+                }
+                var fieldname = name + '[' + item.id + '][label]';
+
+                return [
+                    $('<input type="text" name="' + fieldname + '" class="form-text" />')
                         .val(label ? label : '')
                         .change(function() {
                             labels.add(item.id, this.value);
-                        }).appendTo(div);
-                div.append('<div class="description">' + String(item.filename).replace(/</, '&lt;') + '</div>');
-            return div;
-        }, '{ filesize }'];
+                        }),
+                    '<div class="description">' + String(item.filename).replace(/</, '&lt;') + '</div>'
+                ];
+            },
+            function(item) {
+                // poza rozmiarem pliku dodaj jeszcze ukryte pola przechowujace
+                // nazwe i rozmiar pliku
+                var fieldname = name + '[' + item.id + ']';
+                return Scholar.str.filesize(item.size) 
+                     + '<input type="hidden" name="' + fieldname + '[filename]" value="' + item.filename + '" />'
+                     + '<input type="hidden" name="' + fieldname + '[size]" value="' + item.size + '" />';
+            }
+        ];
         settings.drawOnInit = false;
-        settings.weightTemplate = 'files[{ id }][weight]';
+        settings.weightTemplate = name + '[{ id }][weight]';
         settings.translate = function (text) {
             return Scholar.i18n.tr(text);
         }
@@ -1250,7 +1305,7 @@ var Scholar = {
                         url: settings.urlFileSelect,
                         width: 480,
                         height: 240,
-                        title: $(this).html() + ' (' + language + ')'
+                        title: $(this).html() + ' (' + language.name + ')'
                     });
                 }
             },
@@ -1261,13 +1316,24 @@ var Scholar = {
                         url: settings.urlFileUpload,
                         width: 480,
                         height: 240,
-                        title: $(this).html() + ' (' + language + ')'
+                        title: $(this).html() + ' (' + language.name + ')'
                     });
                 }
             }
         
         ]);
-        // TODO ustaw initial value, dodaj labele do idsetu
+
+        // ustaw wartosc poczatkowa
+        if (values) {
+            for (var i = 0, n = values.length; i < n; ++i) {
+                var value = values[i];
+                widget.add(value.id, value);
+                // dodaj etykiete
+                if (value.label) {
+                    labels.add(value.id, value.label);
+                }
+            }
+        }
 
         widget.redraw();
     } // }}}
