@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-09
+ * @version 2012-08-10
  */
 
 /**
@@ -13,9 +13,12 @@ var Scholar = {
      */
     str: {
         /**
-         * Przekształca liczbę podaną w bajtach na rozmiar czytelny dla człowieka.
+         * Przekształca liczbę podaną w bajtach na rozmiar czytelny
+         * dla człowieka.
          * @param {number} bytes
+         *     liczba bajtów
          * @param {string} [separator=" "]
+         *     separator oddzielający liczbę i jej jednostkę
          */
         filesize: function(bytes, separator) { // {{{
             var idx = 0,
@@ -51,10 +54,15 @@ var Scholar = {
     },
     /**
      * Prosty silnik renderowania szablonów.
-     * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
-     * aby wstawić lewy nawias klamrowy trzeba użyć {{, aby prawy nie trzeba.
      * @param {string} template
-     * @param vars
+     *     zawartość szablonu. Wstawienie konktretnej właściwości obiektu
+     *     przekazanego w parametrze vars do szablonu uzyskuje się pisząc
+     *     <code>{nazwa_właściwości}</code>, odwołanie do zmiennej vars to
+     *     <code>{.}</code>. Nawiasy wąsowe uzyskuje się pisząc je dwukrotnie
+     *     (<code>{{</code> i <code>}}</code>), przy czym nawias zamykający
+     *     może być pisany pojedynczo.
+     * @param {object} vars
+     *     kontener ze zmiennymi przekazanymi do szablonu
      */
     render: function(template, vars) { // {{{
         var $ = window.jQuery,
@@ -279,8 +287,11 @@ var Scholar = {
     /**
      * Rejestr.
      * @constructor
-     * @param context Element window, do którego ma zostać podpięty rejestr. Możę być to okno należące do IFRAME (iframe.contentWindow)
-     * Jeżeli podano niepoprawny iframe rejestr nie będzie miał możliwości odczytu / zapisu.
+     * @param [context=window]
+     *     obiekt, do którego ma zostać podpięty rejestr. Może być to
+     *     bieżące okno (<code>window</code>) lub okno należące do ramki
+     *     (<code>iframe.contentWindow</code>), w ogólności może to być
+     *     dowolny obiekt.
      */
     Data: function(context) { // {{{
         if (0 == arguments.length) {
@@ -301,20 +312,33 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Widget z listą wyboru elementów.
+     * Widget z listą wyboru elementów. W dalszej części dokumentacji
+     * <em>element dokumentu</em> oznacza element drzewa DOM, zaś <em>element
+     * wybieralny</em> odnosi się do obiektu prezentowanego na liście, który
+     * może zostać zaznaczony przez użytkownika.
      * @constructor
-     * @param {string|jQuery} selector  element DOM, w którym ma zostać utworzony widget listy
-     * @param {string} template         szablon określający jak przedstawiać elementy listy,
-     *                                  patrz {@link Scholar.render()} 
-     * @param {Array} items             lista elementów
-     * @param {object} [options]        zbiór par klucz/wartość konfigurujących obiekt.
-     * @param {string} [options.idKey='id']     właściwość elementu listy przechowująca jego identyfikator
-     * @param {string} [options.filterSelector] selektor elementu drzewa dokumentu, z ktorego bedzie brana wartosc do filtrowania (zwykle INPUT[type="text"])
-     * @param {string} [options.filterReset]    selektor elementu drzewa dokumentu czyszczącego filtr (zwykle BUTTON lub INPUT[type="button"])
-     * @param {string} [options.filterKey]      nazwa właściwości elementu, po której lista będzie filtrowana,
-     *                                          musi być podany, jeżeli podano filterSelector
+     * @param {string|jQuery|element} selector
+     *     element dokumentu, w którym ma zostać utworzony widget listy
+     * @param {string} template
+     *     szablon określający jak przedstawiać elementy wybieralne, patrz 
+     *     {@link Scholar.render()}
+     * @param {Array} items
+     *     lista elementów wybieralnych
+     * @param {object} [options]
+     *     zbiór par klucz/wartość konfigurujących obiekt
+     * @param {string} [options.idKey='id']
+     *     właściwość elementu wybieralnego przechowująca jego identyfikator
+     * @param {string} [options.filterSelector] 
+     *     selektor elementu dokumentu (pola tekstoweg), z ktorego bedzie
+     *     brana wartosc do filtrowania listy elementów wybieralnych
+     * @param {string} [options.filterReset]
+     *     selektor elementu dokumentu (przycisku), do którego zostanie 
+     *     podpięta obsługa zdarzenia click czyszcząca filtr
+     * @param {string} [options.filterKey]
+     *     nazwa właściwości elementu wybieralnego, po której lista będzie
+     *     filtrowana. Musi zostać podany, jeżeli podano filterSelector
      */
-    ItemSelector: function(selector, template, items, options) { // {{{
+    ItemPicker: function(selector, template, items, options) { // {{{
         var $ = window.jQuery,
 
         options = $.extend({}, {idKey: 'id'}, options);
@@ -419,7 +443,7 @@ var Scholar = {
          * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy,
          * gdy taki element jest wśród elementów podanych w konstruktorze.
          * @param id                    identyfikator elementu
-         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
+         * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
          */
         this.add = function(id) {
             var item = domain.get(id);
@@ -433,7 +457,7 @@ var Scholar = {
 
         /**
          * Iteruje po zbiorze zaznaczonych elementów.
-         * @returns {ItemSelector}      obiekt, na którym wywołano tę metodę
+         * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
          */
         this.each = function(callback) {
             selected.each(callback);
@@ -791,19 +815,40 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Widget wielokrotnego wyboru i sortowania elementów.
+     * Widget wielokrotnego wyboru i sortowania elementów. W dalszej części
+     * dokumentacji <em>element dokumentu</em> oznacza element drzewa DOM, zaś
+     * <em>element wybieralny</em> odnosi się do obiektu prezentowanego na
+     * liście lub w tabeli.
      * @param {string|jQuery|element} target
+     *     element dokumentu, do którego zostanie podpięty widget
      * @param {object} [options]
      * @param {Array} [options.header]
-     * @param {Array} [options.templates] lista rendererów wartości w kolejnych kolumnach wiersza. Jeżeli funkcja to musi zwrócić albo coś rozumiane przez jQuery.append (string, element, jQuery), albo tablicę tych wartości - wtedy zostaną dodane kolejno (dzięki czemu nie trzeba tworzyć żadnych wrapperów)
-     * @param {string|function} [options.weightTemplate="weight[{ id }]"]    szablon nazwy pola przechowującego wagę wiersza, jeżeli funkcja to musi zwracać string i przyjmuje jako argument identyfikator obiektu powiązanego z wierszem
-     * @param {boolean} [options.drawOnInit=true]       generuj tablicę wyświetlającą elementy podczas inicjalizacji obiektu
+     *     lista tytułów kolumn tabeli prezentującej elementy wybieralne
+     * @param {Array} [options.templates]
+     *     lista rendererów wartości w kolejnych kolumnach wiersza tabeli
+     *     reprezentującego element wybieralny. Jeżeli rendererem jest funkcja,
+     *     musi ona przyjmować jako jedyny argument element wybieralny, oraz
+     *     zwracać wartość akceptowaną przez jQuery.append (string, 
+     *     jQuery lub element DOM), albo tablicę tych wartości (eliminuje to
+     *     tworzenie niepotrzebnych wrapperów). Gdy rendererem jest string,
+     *     zostanie on używaty jako szablon i przekazany do funkcji
+     *     {@link Scholar.render()} z elementem wybieralnym jako kontenerem
+     *     zmiennych.
+     * @param {string|function} [options.weightTemplate="weight[{ id }]"]
+     *     szablon nazwy pola przechowującego wagę wiersza. Jeżeli jest to
+     *     funkcja, musi ona zwracać string i przyjmować jako argument
+     *     identyfikator elementu wybieralnego powiązanego z tym wierszem.
+     * @param {boolean} [options.drawOnInit=true]
+     *     flaga mówiąca czy tablica prezentująca elementy wybieralne ma
+     *     zostać dołączona do dokumentu podczas inicjalizacji widgeta
      * @param {function} [options.translate]
+     *     funkcja do tłumaczenia napisów
      */
     SortableMultiselect: function(target, options) { // {{{
         var $ = window.jQuery,
             self = this,
-            _element, _selected, _header, _templates, _weightTemplate, _translator;
+            _element, _selected, _header,
+            _templates, _weightTemplate, _translator;
 
         /**
          * Inicjalizuje prywatne zmienne obiektu.
@@ -1139,15 +1184,24 @@ var Scholar = {
         // zainicjuj obiekt
         _init(target, options || {});
     }, // }}}
+    /**
+     * Biblioteka funkcji operujących na widgetach.
+     */
     mixins: {
         /**
-         * Funkcja otwierajaca itemPickera powiązanego ze zbiorem wybranych
-         * elementów tego obiektu.
-         * @returns {false}
-         * settings.url
-         * [settings.width=480]
-         * [settings.height=240]
+         * Funkcja otwierajaca widget wyboru elementów (patrz {@link 
+         * Scholar.ItemPicker}) powiązanego ze zbiorem wybranych elementów
+         * widgetu typu {@link Scholar.SortableMultiselect}.
+         * @param {object} settings
+         *     zbiór par klucz/wartość konfigurujących wywołanie funkcji
+         * @param {string} settings.url
+         *     adres strony z umieszczonym w niej widgetem ItemPicker
+         * @param {number} [settings.width=480]
+         *     domyślna szerokość okienka modalnego
+         * @param {number} [settings.height=240]
+         *     domyślna wysokość okienka modalnego
          * @param {SortableMultiselect} widget
+         *      widget, na którym operować ma widget wyboru elementów
          */
         openItemPicker: function(widget, settings) { // {{{
             var _selector,
@@ -1158,7 +1212,7 @@ var Scholar = {
                 width: settings.width || 480,
                 height: settings.height || 240,
                 iframe: {
-                    // strona, ktora ma w sobie ItemSelectora
+                    // strona, ktora ma w sobie ItemPickera
                     url: settings.url + '#' + key,
                     load: function() {
                         var data = new Scholar.Data(this.contentWindow);
@@ -1168,7 +1222,6 @@ var Scholar = {
                         if (_selector) {
                             // poinformuj otwartego itemPickera o juz wybranych elementach
                             widget.each(function (k, v) {
-                                console.log(v);
                                 _selector.add(k, v);
                             });
 
@@ -1200,8 +1253,6 @@ var Scholar = {
                 },
                 translate: widget.translate
             });
-
-            return false;
         }, // }}}
         /**
          * @param {SortableMultiselect} widget
@@ -1251,14 +1302,17 @@ var Scholar = {
                 },
                 translate: widget.translate
             });
-            return false;
         } // }}}
     },
     /**
      * Umieszcza w podanym selektorze widget zarządzający załącznikami.
      * @constructor
-     * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
-     *
+     * @param {string|jQuery|element} target
+     *     element dokumentu, do którego zostanie podpięty widget
+     * @param {string} name
+     *     przedrostek używany w nazwie we wszystkich polach formularza
+     *     generowanych przez ten widget
+     * @param {Array} [values]
      */
     attachmentManager: function(target, name, settings, values) { // {{{
         var labels = new Scholar.IdSet,
@@ -1273,10 +1327,11 @@ var Scholar = {
                     label = item.filename;
                     labels.add(item.id, label);
                 }
-                var fieldname = name + '[' + item.id + '][label]';
+                var fieldname = name + '[' + item.id + ']';
 
                 return [
-                    $('<input type="text" name="' + fieldname + '" class="form-text" />')
+                    '<input type="hidden" name="' + fieldname + '[id]" />',
+                    $('<input type="text" name="' + fieldname + '[label]" class="form-text" />')
                         .val(label ? label : '')
                         .change(function() {
                             labels.add(item.id, this.value);
@@ -1305,23 +1360,25 @@ var Scholar = {
             {
                 label: widget.translate('Select file'),
                 click: function() {
-                    return Scholar.mixins.openItemPicker(widget, {
+                    Scholar.mixins.openItemPicker(widget, {
                         url: settings.urlFileSelect,
                         width: 480,
                         height: 240,
                         title: $(this).html() + ' (' + language.name + ')'
                     });
+                    return false;
                 }
             },
             {
                 label: widget.translate('Upload file'),
                 click: function() {
-                    return Scholar.mixins.openFileUploader(widget, {
+                    Scholar.mixins.openFileUploader(widget, {
                         url: settings.urlFileUpload,
                         width: 480,
                         height: 240,
                         title: $(this).html()
                     });
+                    return false;
                 }
             }
         
@@ -1338,7 +1395,6 @@ var Scholar = {
                 }
             }
         }
-        console.log(values);
 
         widget.redraw();
     } // }}}

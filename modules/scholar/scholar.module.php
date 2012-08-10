@@ -486,7 +486,7 @@ function form_type_scholar_attachment_manager_validate($element, &$form_state) /
  * @param array $element
  * @param mixed $post
  */
-function form_type_scholar_attachment_manager_value($element, $post = false)
+function form_type_scholar_attachment_manager_value($element, $post = false) // {{{
 {
     $value = array();
 
@@ -503,12 +503,12 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
                 continue;
             }
 
-            foreach ((array) $post[$language] as $file_id => $data) {
-                $file_id = intval($file_id);
+            foreach ((array) $post[$language] as $data) {
+                $id = intval($data['id']);
 
-                // file_id jako klucz eliminuje ewentualne duplikaty plikow
-                $value[$language][$file_id] = array(
-                    'id'       => $file_id,
+                // id jako klucz eliminuje ewentualne duplikaty plikow
+                $value[$language][$id] = array(
+                    'id'       => $id,
                     'label'    => isset($data['label']) ? trim(strval($data['label'])) : '',
                     'weight'   => isset($data['weight']) ? intval($data['weight']) : 0,
                     // nazwa i rozmiar pliku sa uzywane podczas renderowania
@@ -521,13 +521,13 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
     }
 
     return $value;
-}
+} // }}}
 
 /**
  * @param array $element
  * @return string
  */
-function theme_scholar_attachment_manager($element)
+function theme_scholar_attachment_manager($element) // {{{
 {
     scholar_add_css();
     drupal_add_js('misc/tabledrag.js', 'core');
@@ -565,7 +565,7 @@ function theme_scholar_attachment_manager($element)
     }
 
     return $html;
-}
+} // }}}
 
 /**
  * Funkcja renderująca kontener.

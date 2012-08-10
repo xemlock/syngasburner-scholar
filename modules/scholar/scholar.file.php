@@ -341,7 +341,7 @@ function scholar_file_select() // {{{
     ob_start();
 ?>
 <script type="text/javascript">$(function() {
-new Scholar.ItemSelector('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
+new Scholar.ItemPicker('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
     filterSelector: '#name-filter',
     filterKey: 'filename',
     filterReset: '#reset-filter'

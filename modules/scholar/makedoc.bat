@@ -25,6 +25,6 @@ set PRIVATE=on
 :: nie owijac PATH_PHPDOC w ciapki, bo wtedy nie dziala poprawnie %~dp0
 echo phpdoc -f "%PATH_FILE%" -d "%PATH_PROJECT%" -t "%PATH_DOCS%" -ti "%TITLE%" -dn "%PACKAGES%" -o %OUTPUTFORMAT%:%CONVERTER%:%TEMPLATE% -pp %PRIVATE% -ue
 
-phpdoc -f "%PATH_FILE%" -d "%PATH_PROJECT%" -t "%PATH_DOCS%" -ti "%TITLE%" -dn "%PACKAGES%" \
--o %OUTPUTFORMAT%:%CONVERTER%:%TEMPLATE% -pp %PRIVATE% -ue
-pause
+:: phpdoc -f "%PATH_FILE%" -d "%PATH_PROJECT%" -t "%PATH_DOCS%" -ti "%TITLE%" -dn "%PACKAGES%" \
+:: -o %OUTPUTFORMAT%:%CONVERTER%:%TEMPLATE% -pp %PRIVATE% -ue
+:: pause
