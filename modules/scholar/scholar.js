@@ -8,16 +8,16 @@
  * @namespace Przestrzeń nazw dla funkcji modułu.
  */
 var Scholar = {
-    i18n: {
+    i18n: { // {{{
         /**
          * @param {string} message
          * @returns {string}
          */
-        _: function(message) {
+        tr: function(message) {
             return String(typeof this.dictionary[message] === 'undefined' ? message : this.dictionary[message]);
         },
         dictionary: {}
-    },
+    }, // }}}
     /**
      * Prosty silnik renderowania szablonów.
      * Placeholdery {.} - zmienna po prostu, {property} - właściwość property podanej zmiennej,
@@ -102,8 +102,7 @@ var Scholar = {
          * dla identyfikatora już obecnego w zbiorze nie wywołuje
          * zdarzenia onAdd.
          * @param id                    identyfikator
-         * @param [value]               opcjonalna wartość powiązana 
-         *                              z podanym identyfikatorem
+         * @param [value]               opcjonalna wartość powiązana z podanym identyfikatorem
          * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.add = function(id, value) {
@@ -146,7 +145,7 @@ var Scholar = {
 
         /**
          * Usuwa wszystkie elementy ze zbioru.
-         * @returns {IdSet}
+         * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.clear = function() {
             for (var key in _items) {
@@ -160,8 +159,7 @@ var Scholar = {
          * Iteruje podaną funkcję po wszystkich identyfikatorach w zbiorze.
          * Argumentem funkcji jest tekstowa reprezentacja identyfikatora. 
          * Zwrócenie przez funkcję wartości false przerywa iterację.
-         * @param {function} callback   funkcja wywoływana dla każdego 
-         *                              identyfikatora.
+         * @param {function} callback   funkcja wywoływana dla każdego identyfikatora
          * @returns {IdSet}             zbiór na którym wywołano metodę
          */
         this.each = function(callback) {
@@ -249,7 +247,7 @@ var Scholar = {
     /**
      * Rejestr.
      * @constructor
-     * @param iframe Element DOM przechowujący IFRAME. Wtedy rejestr ma dostęp do danych
+     * @param context Element window, do którego ma zostać podpięty rejestr. Możę być to okno należące do IFRAME (iframe.contentWindow)
      * Jeżeli podano niepoprawny iframe rejestr nie będzie miał możliwości odczytu / zapisu.
      */
     Data: function(context) { // {{{
@@ -441,18 +439,12 @@ var Scholar = {
      * Okienko.
      * @constructor
      */
-    Dialog: function(options) { // {{{
+    Dialog: function() { // {{{
         var $ = window.jQuery,
             self = this,
             _modal, _overlay,
             jStatus, jButtons,
             _translator;
-
-        options = $.extend({}, options);
-
-        if (typeof options.translate === 'function') {
-            _translator = options.translate;
-        }
 
         function _getStatusBar() {
             if (!jStatus) {
@@ -591,6 +583,10 @@ var Scholar = {
                 overlayColor: '#fff',
                 overlayOpacity: 0.75
             }, options);
+
+            if (typeof options.translate === 'function') {
+                _translator = options.translate;
+            }
 
             _modal = $('#' + options.id);
             if (!_modal.length) {
@@ -753,8 +749,13 @@ var Scholar = {
             }
         }
 
+        /**
+         * Tłumaczy podany tekst.
+         * @param {string} text
+         * @returns {string}
+         */
         this.translate = function(text) {
-            return _translator ? _translator(text) : text;
+            return String(_translator ? _translator(text) : text);
         }
     }, // }}}
     /**
@@ -805,7 +806,6 @@ var Scholar = {
                 _translator = options.translate;
             }
 
-console.log(options);
             // zainicjuj szablon nazwy pola z waga wiersza, uzyj wartosci
             // z ustawien tylko wtedy gdy jest to string lub funkcja
             switch (typeof options.weightTemplate) {
@@ -911,11 +911,19 @@ console.log(options);
          *                              czy jest to wiersz parzysty czy nieparzysty
          */
         function _createRow(tbody, id, item, position) {
-            var html = '', cls = 'draggable', weightName;
+            var tr = $('<tr/>'), cls = 'draggable', weightName;
 
             if (typeof position === 'number') {
                 cls += position % 2 ? ' odd' : ' even';
             }
+
+            tr.attr({'class': cls, 'data-id': id});
+            tr.mouseup(function() {
+                // To zdarzenie wywolywane jest zmiana kolejnosci ulozenia
+                // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
+                // zeby ich kolejnosc odpowiadala wierszom.
+                _reorderSelected($(this).parent())
+            })
 
             // wygeneruj nazwe pola przechowujacego wage wiersza
             switch (typeof _weightTemplate) {
@@ -935,7 +943,8 @@ console.log(options);
             // wygeneruj wartosci kolumn w tym wierszu na podstawie
             // powiazanego obiektu
             for (var i = 0, n = _templates.length; i < n; ++i) {
-                var template = _templates[i],
+                var td = $('<td/>'),
+                    template = _templates[i],
                     result;
 
                 switch (typeof template) {
@@ -956,26 +965,23 @@ console.log(options);
                         break;
                 }
 
-                html += '<td>' + result + '</td>';
+                td.append(result);
+                tr.append(td);
             }
 
-            return $('<tr class="draggable"/>')
-                .attr({'class': cls, 'data-id': id})
-                .mouseup(function() {
-                    // To zdarzenie wywolywane jest zmiana kolejnosci ulozenia
-                    // wierszy w tabeli. Skoro tak, uszereguj elementy w zbiorze
-                    // zeby ich kolejnosc odpowiadala wierszom.
-                    _reorderSelected($(this).parent())
+            // dodaj kolumne z waga i wyzwalacz usuwania wiersza
+            tr.append('<td><input type="text" name="' + weightName + '" class="weight" /></td>');
+            tr.append(
+                $('<td><a href="#!">' + self.translate('Delete') + '</a></td>')
+                .click(function() {
+                    _removeRow($(this).parent());
                 })
-                .html(html)
-                .append('<td><input type="text" name="' + weightName + '" class="weight" /></td>')
-                .append(
-                    $('<td><a href="#!">' + self.translate('Delete') + '</a></td>')
-                        .click(function() {
-                            _removeRow($(this).parent());
-                        })
-                )
-                .appendTo(tbody);
+            );
+
+            // podepnij wiersz do tabeli
+            tr.appendTo(tbody);
+
+            return tr;
         }
 
         /**
@@ -1019,13 +1025,15 @@ console.log(options);
             table.append(thead);
 
             // utworz wiersze tabeli na bazie wybranych elementow
-            tbody = $('<tbody/>').appendTo(table);
+            tbody = $('<tbody/>');
 
             var position = 0;
             _selected.each(function(id, item) {
                 _createRow(tbody, id, item, position++);
             });
             _updateWeights(tbody);
+
+            table.append(tbody);
 
             // wygenerowana tablice podepnij jako jedyne dziecko wrappera
             wrapper.empty().append(table);
@@ -1084,7 +1092,7 @@ console.log(options);
          * @returns {string}
          */
         this.translate = function(text) {
-            return _translator ? _translator(text) : text;
+            return String(_translator ? _translator(text) : text);
         }
 
         // zainicjuj obiekt
@@ -1105,6 +1113,7 @@ console.log(options);
                 key = '!' + String(Math.random()).substr(2);
 
             Scholar.modal.open({
+                title: settings.title || '',
                 width: settings.width || 480,
                 height: settings.height || 240,
                 iframe: {
@@ -1157,6 +1166,7 @@ console.log(options);
                 key = '!' + String(Math.random()).substr(2);
 
             Scholar.modal.open({
+                title: settings.title || '',
                 width: settings.width || 480,
                 height: settings.height || 240,
                 iframe: {
@@ -1205,13 +1215,30 @@ console.log(options);
      * @param {string} selector         selektor jQuery wskazujacy element, w którym ma zostać umieszczony widget
      *
      */
-    attachmentManager: function(target, settings, languages) { // {{{
-        settings.header = ['Plik', 'Rozmiar', 'Etykieta'];
-        settings.templates = ['{ filename }', '{ filesize }', function() {
-            return 'Langname: <input type="text" />';
-        }];
+    attachmentManager: function(target, settings, language) { // {{{
+        var labels = new Scholar.IdSet;
+
+        settings.header = ['', 'File name <span class="form-required">*</span>', 'Size'];
+        settings.templates = ['', function(item) {
+            var label = labels.get(item.id);
+            if (typeof label === 'undefined') {
+                label = item.filename;
+                labels.add(item.id, label);
+            }
+            var div = $('<div/>'),
+                input = $('<input type="text" name="files[' + item.id + '][' + language.code + ']" class="form-text" />')
+                        .val(label ? label : '')
+                        .change(function() {
+                            labels.add(item.id, this.value);
+                        }).appendTo(div);
+                div.append('<div class="description">' + String(item.filename).replace(/</, '&lt;') + '</div>');
+            return div;
+        }, '{ filesize }'];
         settings.drawOnInit = false;
         settings.weightTemplate = 'files[{ id }][weight]';
+        settings.translate = function (text) {
+            return Scholar.i18n.tr(text);
+        }
 
         var widget = new Scholar.SortableMultiselect(target, settings);
 
@@ -1222,7 +1249,8 @@ console.log(options);
                     return Scholar.mixins.openItemPicker(widget, {
                         url: settings.urlFileSelect,
                         width: 480,
-                        height: 240
+                        height: 240,
+                        title: $(this).html() + ' (' + language + ')'
                     });
                 }
             },
@@ -1232,13 +1260,18 @@ console.log(options);
                     return Scholar.mixins.openFileUploader(widget, {
                         url: settings.urlFileUpload,
                         width: 480,
-                        height: 240
+                        height: 240,
+                        title: $(this).html() + ' (' + language + ')'
                     });
                 }
             }
         
         ]);
+        // TODO ustaw initial value, dodaj labele do idsetu
+
+        widget.redraw();
     } // }}}
 }
 
 Scholar.modal = new Scholar.Dialog;
+

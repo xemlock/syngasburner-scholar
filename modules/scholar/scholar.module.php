@@ -21,6 +21,7 @@ function p($var, $label = null)
     }
     $contents = ob_get_clean();
     $contents = str_replace(array("\r\n", "\r", "\n"), "<br/>", $contents);
+    $contents = str_replace('  ', '&nbsp;&nbsp;', $contents);
 
     echo '<div style="color:' . $colors[$last] . ';border:1px dotted #999;background:#eee;padding:10px;font-family:monospace;">', $label;
     echo $contents;
@@ -452,20 +453,21 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
     } else {
         $languages = scholar_languages();
 
-        foreach ((array) $post as $data) {
-            if (!isset($data['file_id'])) {
+        foreach ((array) $post as $file_id => $data) {
+            $file_id = intval($file_id);
+
+            if (!$file_id) {
                 continue;
             }
 
-            $file_id = intval($data['file_id']);
             $labels  = array();
 
             foreach ($languages as $language => $name) {
-                if (!isset($data['label'][$language])) {
+                if (!isset($data['labels'][$language])) {
                     continue;
                 }
 
-                $label = trim(strval($data['label'][$language]));
+                $label = trim(strval($data['labels'][$language]));
                 if (strlen($label)) {
                     $labels[$language] = $label;
                 }
@@ -475,6 +477,7 @@ function form_type_scholar_attachment_manager_value($element, $post = false)
             $value[$file_id] = array(
                 'file_id' => $file_id,
                 'labels'  => $labels,
+                'weight'  => isset($data['weight']) ? intval($data['weight']) : 0,
             );
         }
     }
@@ -511,10 +514,15 @@ function theme_scholar_attachment_manager($element)
     );
 
     $html = '<p class="help">Each file must be given label in at least one language.
-        If label is given, file will be listed on page in that language.</p>' .
-        '<div id="' . $element['#id'] . '"></div>' .
-        '<script type="text/javascript">new Scholar.attachmentManager(\'#' . $element['#id'] . '\', ' . drupal_to_js($settings) .', ' . drupal_to_js($languages) . ')</script>';
-    
+        If label is given, file will be listed on page in that language.</p>';
+
+    foreach (scholar_languages() as $code => $name) {
+        $id = $element['#id'] . '-' . $code;
+        $html .= '<fieldset class="scholar"><legend>' . $name . '</legend>' .
+        '<div id="' . htmlspecialchars($id) . '" class="form-item"></div>' .
+        '<script type="text/javascript">new Scholar.attachmentManager(' . drupal_to_js('#' . $id) . ', ' . drupal_to_js($settings) .', ' . drupal_to_js($name) . ')</script>'.
+        '</fieldset>';
+    }
 
     return $html;
 }

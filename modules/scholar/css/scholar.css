@@ -25,6 +25,23 @@ form.scholar.confirmation .container-inline {
   margin-top: 1em;
 }
 
+.scholar-attachment-manager .draggable a.tabledrag-handle {
+  padding-right: 0.5em;
+}
+
+.scholar-attachment-manager th:first-child,
+.scholar-attachment-manager td:first-child {
+  padding-right: 0;
+}
+
+.scholar-attachment-manager .form-text {
+  width: 95%;
+}
+
+.scholar-attachment-manager div.warning {
+  margin-bottom: 1em;
+}
+
 .dialog-button {
   display: -moz-inline-box;
   display: inline-block;
