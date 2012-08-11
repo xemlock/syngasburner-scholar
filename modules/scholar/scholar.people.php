@@ -190,7 +190,9 @@ function scholar_people_form_submit($form, &$form_state) // {{{
 
         scholar_save_node($node, $row['id'], 'people');
     }
-    variable_set('scholar_last_change', time());
+
+    // zapisz czas ostatniej zmiany danych
+    scholar_last_change(time());
 
     drupal_set_message($is_new
         ? t('Person created successfully')

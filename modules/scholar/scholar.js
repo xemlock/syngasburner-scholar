@@ -489,14 +489,17 @@ var Scholar = {
         } 
 
         /**
-         * Dodaje element o podanym id do zaznaczonych, ale tylko wtedy,
-         * gdy taki element jest wśród elementów podanych w konstruktorze.
+         * Dodaje element wybieralny o podanym identyfikatorze do zaznaczonych,
+         * ale tylko wtedy, gdy taki element jest wśród elementów podanych 
+         * w konstruktorze.
          * Metoda jest przeznaczona do ustawiania początkowego zaznaczania.
-         * Elementy LI zaznaczone tą metodą (a nie przez kliknięcie użytkownika)
-         * mają dodatkową klasę <em>initial</em>.
+         * Elementy LI zaznaczone tą metodą (nie przez kliknięcie użytkownika)
+         * mają nadaną dodatkową klasę <em>initial</em>.
          *
-         * @param id                  identyfikator elementu
-         * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
+         * @param id
+         *     identyfikator elementu wybieralnego
+         * @returns {ItemPicker}
+         *     obiekt, na którym wywołano tę metodę
          */
         this.add = function(id) {
             var item = _domain.get(id);
@@ -515,15 +518,24 @@ var Scholar = {
 
         /**
          * Iteruje po zbiorze zaznaczonych elementów.
-         * @returns {ItemPicker}      obiekt, na którym wywołano tę metodę
+         * @returns {ItemPicker}
+         *     obiekt, na którym wywołano tę metodę
          */
         this.each = function(callback) {
             _selected.each(callback);
             return this;
         }
 
-        this.show = function(animate) {
-            $(selector)[animate ? 'fadeIn' : 'show']();
+        /**
+         * Pokazuje listę elementów.
+         * @param {boolean} fadeIn
+         *     czy do pokazywania użyć efektu stopniowego narastania 
+         *     nieprzezroczystości czy pokazać od razu
+         * @returns {ItemPicker}
+         *     obiekt, na którym wywołano tę metodę
+         */
+        this.show = function(fadeIn) {
+            $(selector)[fadeIn ? 'fadeIn' : 'show']();
 
             // jezeli wszystkie elementy wybieralne sa ukryte, pokaz komunikat
             // o braku elementow
@@ -536,6 +548,8 @@ var Scholar = {
             });
 
             _showEmptyMessage(0 == vis);
+
+            return this;
         }
 
         _initDomain(items, options.idKey);
@@ -708,6 +722,9 @@ var Scholar = {
         /**
          * Otwiera okienko modalne.
          * @param {object} options
+         * @param {object} [options.iframe]
+         * @param {object} [options.request]
+         * @param {function} [options.translate]
          */
         this.open = function(options) {
             options = $.extend({}, {
@@ -903,6 +920,7 @@ var Scholar = {
      * @param {string|jQuery|element} target
      *     element dokumentu, do którego zostanie podpięty widget
      * @param {object} [options]
+     *     zbiór par klucz/wartość konfigurujących widget
      * @param {Array} [options.header]
      *     lista tytułów kolumn tabeli prezentującej elementy wybieralne
      * @param {Array} [options.templates]

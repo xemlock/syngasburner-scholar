@@ -128,7 +128,7 @@ function scholar_schema() // {{{
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
     ); // }}}
 
-    $schema['scholar_objects'] = array( // {{{
+    $schema['scholar_generics'] = array( // {{{
         'description' => 'Generyczna tabela na obiekty: kontenery na publikacje: czasopisma, monografie lub wykłady: konferencje, seminaria, oraz ich elementy',
         'fields' => array(
             'id' => array(
@@ -139,13 +139,11 @@ function scholar_schema() // {{{
                 'type'      => 'int', // references scholar_objects (id)
             ),
             'subtype' => array(
-                // predefiniowane: 
-                //   journal (czasopismo, książka, monografia, proceedings), 
+                // predefiniowane:  
                 //   conference (jak journal ale z dokładną datą początku),
+                //   presentation (element składowy conference),
+                //   journal (czasopismo, książka, monografia, proceedings),
                 //   article (element składowy journal),
-                //   lecture (element składowy conference),
-                //   block (generyczny kontener używany w CV, istotny tylko tytuł),
-                //   resume (element bloku w CV)
                 'description' => 'predefiniowany typ, raz ustalony nie podlega zmianie',
                 'type'      => 'varchar', 
                 'length'    => 32,
@@ -157,11 +155,21 @@ function scholar_schema() // {{{
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'start_date'     => array(
+            'start_date' => array(
                 'type'      => 'datetime',
             ),
             'end_date' => array(
                 'type'      => 'datetime',
+            ),
+            'locality' => array(
+                'description' => 'nazwa miejscowosci / miasta',
+                'type'      => 'varchar',
+                'length'    => 128,
+            ),
+            'country' => array(
+                'description' => 'kraj',
+                'type'      => 'char',
+                'length'    => 2,
             ),
             'title' => array(
                 'type'      => 'varchar',
@@ -169,7 +177,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'details' => array(
-                'description' => 'article: dodatkowa specyfikacja uzupełniająca bibliografię',
+                'description' => 'article - dodatkowa specyfikacja uzupełniająca bibliografię',
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
@@ -325,5 +333,5 @@ function scholar_uninstall() // {{{
     variable_del('scholar_last_change');
 } // }}}
 
-// DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_objects; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
+// DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
 
