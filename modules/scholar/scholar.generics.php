@@ -1,5 +1,33 @@
 <?php
 
+function scholar_new_generic()
+{
+    return new stdClass;
+}
+
+/**
+ * @return false|object
+ */
+function scholar_load_generic($id)
+{
+    $query = db_query("SELECT * FROM {scholar_generics} WHERE id = %d", $id);
+    return db_fetch_object($query);
+}
+
+/**
+ * @param object &$generic
+ */
+function scholar_save_generic(&$generic)
+{
+    if ($generic->id) {
+        drupal_write_record('scholar_generics', $generic, 'id');
+    } else {
+        drupal_write_record('scholar_generics', $generic);
+    }
+
+    // TODO zapisz powiazane wezly, eventy, zalaczniki
+}
+
 function scholar_generics_list($subtype) // {{{
 {
     $func = 'scholar_' . $subtype . '_list';
@@ -77,7 +105,9 @@ function scholar_conference_list()
 
 function scholar_conference_form(&$form_state, $id = null)
 {
-    $row = null;
+    $record = scholar_load_generic($id);
+
+    $form['#record'] = $record;
 
     $form['title'] = array(
         '#type'      => 'textfield',
@@ -95,7 +125,6 @@ function scholar_conference_form(&$form_state, $id = null)
     $form['end_date'] = array(
         '#type'      => 'textfield',
         '#maxlength' => 10,
-        '#required'  => true,
         '#title'     => t('End date'),
         '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
     );
@@ -125,11 +154,11 @@ function scholar_conference_form(&$form_state, $id = null)
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
         '#default_value' => $row
-                            ? scholar_fetch_attachments($row['id'], 'generics')
+                            ? scholar_fetch_attachments($record->id, 'generics')
                             : null
     );
 
-    $form['node'] = scholar_nodes_subform($row, 'generics');
+    $form['node'] = scholar_nodes_subform($record, 'generics');
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -137,6 +166,13 @@ function scholar_conference_form(&$form_state, $id = null)
     );
 
     return $form;
+}
+
+function scholar_conference_form_submit($form, &$form_state)
+{
+    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
+p($record); exit;
+    scholar_save_generic($record);
 }
 
 // vim: fdm=marker

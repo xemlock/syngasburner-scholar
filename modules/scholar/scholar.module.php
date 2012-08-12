@@ -288,7 +288,7 @@ function scholar_add_css() // {{{
  */
 function scholar_add_js() // {{{
 {
-    drupal_add_js(drupal_get_path('module', 'scholar') . '/scholar.js', 'module', 'header');
+    drupal_add_js(drupal_get_path('module', 'scholar') . '/js/scholar.js', 'module', 'header');
 } // }}}
 
 /**

@@ -395,8 +395,9 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
     // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele,
     // do ktorej nalezy
     if ($row && $table_name) {
+        $rowid = is_object($row) ? $row->id : $row['id'];
         foreach ($languages as $code => $name) {
-            if ($node = scholar_fetch_node($row['id'], $table_name, $code)) {
+            if ($node = scholar_fetch_node($rowid, $table_name, $code)) {
                 // ustaw wartosc checkboksa sterujacego kontenerem rowna
                 // wartosci statusu wezla
                 $form[$code]['#default_value'] = $node->status;
