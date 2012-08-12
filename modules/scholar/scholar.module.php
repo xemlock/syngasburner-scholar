@@ -531,3 +531,5 @@ function scholar_block()
 require_once dirname(__FILE__) . '/scholar.form.php';
 require_once dirname(__FILE__) . '/scholar.file.php';
 require_once dirname(__FILE__) . '/scholar.node.php';
+
+// vim: fdm=marker

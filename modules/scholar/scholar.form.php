@@ -11,6 +11,16 @@ function scholar_elements() // {{{
         '#input'            => true,
         '#description'      => t('Use BBCode markup, supported tags are listed <a href="#!">here</a>'),
     );
+    $elements['scholar_country'] = array(
+        '#input'            => true,
+        '#options'          => scholar_countries(),
+        '#default_value'    => 'PL',
+    );
+    $elements['scholar_date'] = array(
+        '#input'            => true,
+        '#maxlength'        => 10,
+        '#yearonly'         => false,
+    );
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
@@ -25,12 +35,67 @@ function scholar_elements() // {{{
 } // }}}
 
 /**
+ * Zwraca listę wszystkich krajów.
+ */
+function scholar_countries($code = null) // {{{
+{
+    global $language;
+    static $countries;
+
+    if (null === $countries) {
+        $key = 'scholar_countries_' . $language->language;
+
+        if (!($data = cache_get($key))) {
+            $locale = new Zend_Locale($language->language);
+            $zflang = $locale->getLanguage();
+
+            $countries = Zend_Locale::getTranslationList('Territory', $zflang, 2);
+            // filter out unknown region (ZZ)
+            unset($countries['ZZ']);
+
+            switch ($zflang) {
+                case 'pl':
+                    // remove SAR part from China administered country names, as
+                    // it is not obligatory, see: 
+                    // http://en.wikipedia.org/wiki/Hong_Kong#cite_note-1
+                    foreach ($countries as $key => $value) {
+                        $countries[$key] = str_ireplace(', Specjalny Region Administracyjny Chin', '', $value);
+                    }
+                    break;
+            }
+
+            // this of course won't work on Windows, see:
+            // https://bugs.php.net/bug.php?id=46165
+            asort($countries, SORT_LOCALE_STRING);
+
+            cache_set($key, $countries);
+        } else {
+            $countries = (array) $data->data;
+        }
+    }
+
+    if (null === $code) {
+        return $countries;
+    }
+
+    return isset($countries[$code]) ? $countries[$code] : null;
+} // }}}
+
+/**
  * Funkcja wymagana do renderowania dodatkowych elementów formularza.
  *
  * @return array
  */
 function scholar_elements_theme() // {{{
 {
+    $theme['scholar_country'] = array(
+        'arguments' => array('element' => null),
+    );
+
+    $theme['scholar_date'] = array(
+        'arguments' => array('element' => null),
+    );
+
     $theme['scholar_textarea'] = array(
         'arguments' => array('element' => null),
     );
@@ -127,6 +192,13 @@ function form_type_scholar_attachment_manager_value($element, $post = false) // 
     }
 
     return $value;
+} // }}}
+
+/**
+ * Przekierowuje do theme_select.
+ */
+function theme_scholar_country($element) { // {{{
+    return theme_select($element);
 } // }}}
 
 function theme_scholar_textarea($element) // {{{

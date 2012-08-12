@@ -138,6 +138,12 @@ function scholar_schema() // {{{
             'parent_id' => array(
                 'type'      => 'int', // references scholar_objects (id)
             ),
+            'refcount' => array(
+                'description' => 'liczba dzieci powiazanych z tym obiektem',
+                'type'      => 'int',
+                'not null'  => true,
+                'default'   => 0,
+            ),
             'subtype' => array(
                 // predefiniowane:  
                 //   conference (jak journal ale z dokładną datą początku),

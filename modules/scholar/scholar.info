@@ -5,5 +5,5 @@ dependencies[] = events
 dependencies[] = gallery
 dependencies[] = zend
 package = ventures
-version = 2012-07-dev
+version = 2012-08-dev
 core = 6.x
