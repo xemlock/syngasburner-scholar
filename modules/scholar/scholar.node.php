@@ -344,9 +344,8 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
             '#description' => t('Page title, if not given it will default to this person\'s full name.'),
         );
         $container['body'] = array(
-            '#type'     => 'textarea',
+            '#type'     => 'scholar_textarea',
             '#title'    => t('Body'),
-            '#description' => t('Use BBCode markup, supperted tags are listed <a href="#!">here</a>'),
         );
 
         $container['menu'] = array(

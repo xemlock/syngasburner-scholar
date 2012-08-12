@@ -7,6 +7,10 @@
  */
 function scholar_elements() // {{{
 {
+    $elements['scholar_textarea'] = array(
+        '#input'            => true,
+        '#description'      => t('Use BBCode markup, supported tags are listed <a href="#!">here</a>'),
+    );
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
@@ -27,6 +31,10 @@ function scholar_elements() // {{{
  */
 function scholar_elements_theme() // {{{
 {
+    $theme['scholar_textarea'] = array(
+        'arguments' => array('element' => null),
+    );
+
     $theme['scholar_checkboxed_container'] = array(
         'arguments' => array('element' => null),
     );
@@ -37,6 +45,23 @@ function scholar_elements_theme() // {{{
 
     return $theme;
 } // }}}
+
+/**
+ * @return string|null
+ */
+function form_type_scholar_textarea_value($element, $post = false) // {{{
+{
+    if (false === $post) {
+        $value = $element['#default_value'];
+    } else {
+        $value = $post;
+    }
+
+    $value = trim(strval($value));
+
+    return strlen($value) ? $value : null;
+} // }}}
+
 
 /**
  * @param array $element
@@ -102,6 +127,16 @@ function form_type_scholar_attachment_manager_value($element, $post = false) // 
     }
 
     return $value;
+} // }}}
+
+function theme_scholar_textarea($element) // {{{
+{
+    if (is_array($element['#description'])) {
+        $element['#description'] = implode('', $element['#description']);
+    }
+
+    $textarea = theme_textarea($element);
+    return $textarea;
 } // }}}
 
 /**

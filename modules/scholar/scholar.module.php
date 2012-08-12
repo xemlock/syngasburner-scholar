@@ -163,6 +163,38 @@ function scholar_menu()
         'file'              => 'scholar.file.php',
     );
 
+    $items['scholar/conferences'] = array(
+        'title'             => t('Conferences'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_generics_list',
+        'page arguments'    => array('conference'),
+        'parent'            => 'scholar',
+        'file'              => 'scholar.generics.php',
+    );
+    $items['scholar/conferences/list'] = array(
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => t('List'),
+        'weight'            => -10,
+    );
+    $items['scholar/conferences/add'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Add'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_generics_form', 'conference'),
+        'parent'            => 'scholar/conferences',
+        'file'              => 'scholar.generics.php',
+    );
+    $items['scholar/conferences/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit conference'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_generics_form', 'conference', 3),
+        'parent'            => 'scholar/conferences',
+        'file'              => 'scholar.generics.php',
+    );
+
     return $items;
 }
 
@@ -489,6 +521,12 @@ function scholar_theme() // {{{
 {
     return scholar_elements_theme();
 } // }}}
+
+function scholar_block()
+{
+    
+}
+
 
 require_once dirname(__FILE__) . '/scholar.form.php';
 require_once dirname(__FILE__) . '/scholar.file.php';

@@ -50,7 +50,7 @@ function scholar_schema() // {{{
                 // kiedy ostatnio renderowano zawartosc wezla, porownywane
                 // z variable(name='scholar_last_change')
                 // pusta wartosc oznacza koniecznosci wygenerowania tresci
-                'type'      => 'timestamp',
+                'type'      => 'int', // timestamp
             ),
             'body' => array(
                 // tresc wezla, ktora po przetworzeniu (renderowaniu)
@@ -194,6 +194,38 @@ function scholar_schema() // {{{
         ),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
     ); // }}}
+
+    $schema['scholar_events'] = array(
+        'description' => 'Powiazania miedzy rekordami generycznymi a zdarzeniami',
+        'fields' => array(
+            'generic_id'  => array(
+                // REFERENCES scholar_generics (id)
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'event_id' => array(
+                // REFERENCES events (id)
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'language' => array(
+                // REFERENCES languages (language)
+                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
+                'length'    => 12,
+                'not null'  => true,
+            ),
+            'body' => array(
+                // tresc wydarzenia, ktora po przetworzeniu (renderowaniu)
+                // zostanie zapisana do wezla
+                'type'      => 'text',
+                'size'      => 'medium',
+            ),
+        ),
+        'primary key' => array('generic_id', 'event_id', 'language'),
+        'unique keys' => array(
+            'event' => array('event_id'), // kazdy event moze byc podpiety do co najwyzej jednego rekordu generycznego
+        ),
+    );
 
     $schema['scholar_authors'] = array( // {{{
         'description' => 'autorzy artykułów',

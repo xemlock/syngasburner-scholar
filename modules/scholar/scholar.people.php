@@ -76,6 +76,8 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     $form['attachments'] = array(
         '#type' => 'fieldset',
         '#title' => t('File attachments'),
+//        '#collapsible' => true, // collapsible psuje ukrywanie kolumny z waga
+//        '#collapsed' => true,
     );
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
