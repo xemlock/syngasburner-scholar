@@ -346,6 +346,7 @@ function scholar_schema() // {{{
                 'description' => 'kolejnosc pliku na liscie',
                 'type'      => 'int',
                 'default'   => 0,
+                'not null'  => true,
             ),
         ),
         'primary key' => array('table_name', 'object_id', 'file_id', 'language'),

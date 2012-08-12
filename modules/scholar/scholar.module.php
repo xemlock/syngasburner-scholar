@@ -274,6 +274,56 @@ function scholar_db_where($conds) // {{{
     return implode(' AND ', $where);
 } // }}}
 
+/**
+ * Zwraca wyrażenie SQL, które przekształca kod kraju w jego nazwę
+ * w bieżącym języku.
+ * @param string $column        nazwa kolumny przechowującej dwuliterowy kod kraju
+ * @param string $table         nazwa tabeli
+ * @return string               wyrażenie CASE przekształcające kod kraju w jego nazwę
+ */
+function scholar_db_country_name($column, $table) // {{{
+{
+    $column = db_escape_table($column);
+    $table  = db_escape_table($table);
+
+    if (empty($column) || empty($table)) {
+        return 'NULL';
+    }
+
+    // pobierz liste wystepujacych w tabeli krajow
+    $query = db_query("SELECT DISTINCT $column FROM {$table} WHERE $column IS NOT NULL");
+    $codes = array();
+
+    while ($row = db_fetch_array($query)) {
+        $codes[] = $row[$column];
+    }
+
+    // jezeli przeszukiwania w podanej kolumnie nie daly zadnych wynikow
+    // nazwa kraju bedzie pusta
+    if (empty($codes)) {
+        return 'NULL';
+    }
+
+    $countries = scholar_countries();
+
+    $sql = "CASE $column";
+    foreach ($codes as $code) {
+        $country = isset($countries[$code]) ? $countries[$code] : null;
+        $sql .= " WHEN " . scholar_db_quote($code) . " THEN " . scholar_db_quote($country);
+    }
+    $sql .= " ELSE NULL END";
+
+    return $sql;
+} // }}}
+
+// drupal_write_record dziala dobrze, jezeli zadna z wartosci obiektu nie
+// jest nullem, co jest ok, gdy operujemy na tabelach gdzie wszystkie kolumny
+// maja wlasciwosc NOT NULL. Dla tabeli z generykami to oczywiscie nie jest
+// prawdziwe i funkcja drupalowa po prostu nie dziala.
+function scholar_db_write_record($table, &$record, $update = array())
+{
+    return drupal_write_record($table, $record, $update);
+}
 
 /**
  * Dodaje arkusz ze stylami tego modułu.

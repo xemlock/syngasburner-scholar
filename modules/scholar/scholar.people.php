@@ -282,3 +282,4 @@ function scholar_people_list() // {{{
     return $html;
 } // }}}
 
+// vim: fdm=marker
