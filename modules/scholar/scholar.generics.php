@@ -30,7 +30,19 @@ function scholar_load_generic($id) // {{{
  */
 function scholar_load_attached_events($row_id, $table_name)
 {
+    $rows  = array();
+    $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
 
+    // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
+    while ($row = db_fetch_array($query)) {
+        $event = events_load_event($row['event_id']);
+        if ($event) {
+            $rows[$event->language] = (array) $event;
+            $rows[$event->language]['body'] = $row['body']; // uzyj zrodla tresci, a nie renderingu
+        }
+    }
+
+    return $rows;
 }
 
 /**
@@ -54,7 +66,7 @@ function scholar_save_attached_events($row_id, $table_name, $events)
             $event = events_load_event($relation['event_id']);
         }
 
-        $status = intval($nodes[$code]['status']) ? 1 : 0;
+        $status = intval($events[$code]['status']) ? 1 : 0;
 
         // jezeli nie bylo relacji lub jest niepoprawna utworz nowy event
         if (empty($event)) {
@@ -275,6 +287,17 @@ function scholar_conference_form(&$form_state, $id = null)
     );
 
     $form['event'] = scholar_events_form(false);
+    if ($record) {
+        $events = scholar_load_attached_events($record->id, 'generics');
+        foreach ($events as $code => $event) {
+            foreach ($event as $key => $value) {
+                if (isset($form['event'][$code][$key])) {
+                    $form['event'][$code][$key]['#default_value'] = $value;
+                }
+            }
+            $form['event'][$code]['#default_value'] = $event['status'];
+        }
+    }
 
     $form['node'] = scholar_nodes_subform($record, 'generics');
 
@@ -284,7 +307,7 @@ function scholar_conference_form(&$form_state, $id = null)
     );
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
-        '#default_value' => $row
+        '#default_value' => $record
                             ? scholar_fetch_attachments($record->id, 'generics')
                             : null
     );
@@ -322,8 +345,6 @@ function scholar_conference_form_submit($form, &$form_state)
 
     // validate date
     $record->subtype = 'conference';
-    p($values);
-    p($record);
 
     $events = array();
     foreach ($values['event'] as $code => $name) {
@@ -340,10 +361,14 @@ function scholar_conference_form_submit($form, &$form_state)
             'url'        => $record->url,
             'language'   => $code,
             'image_id'   => $record->image_id,
+            'status'     => $values['event'][$code]['status'],
         );
     }
 
     $record->event = $events;
+
+    // node
+    // files
 
     scholar_save_generic($record);
 

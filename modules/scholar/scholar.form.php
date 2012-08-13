@@ -337,11 +337,7 @@ function scholar_language_label($language, $name = null) // {{{
 function scholar_events_form($date = true)
 {
     $form = array(
-        '#type'          => 'scholar_checkboxed_container',
-        '#checkbox_name' => 'status',
-        '#title'         => 'Add event',
-        '#validate'      => array('scholar_events_form_validate'),
-        '#tree'          => true,
+        '#tree' => true,
     );
 
     if ($date) {
@@ -362,11 +358,10 @@ function scholar_events_form($date = true)
 
     foreach (scholar_languages() as $code => $name) {
         $form[$code] = array(
-            '#type'        => 'fieldset',
-            '#title'       => scholar_language_label($code, $name),
-            '#tree'        => true,
-            '#collapsible' => true,
-            '#attributes'  => array('class' => 'scholar'),
+            '#type'          => 'scholar_checkboxed_container',
+            '#checkbox_name' => 'status',
+            '#title'         => 'Add event in language: ' . scholar_language_label($code, $name),
+            '#tree'          => true,
         );
 
         $form[$code]['title'] = array(
