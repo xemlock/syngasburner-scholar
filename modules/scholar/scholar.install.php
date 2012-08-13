@@ -231,7 +231,7 @@ function scholar_schema() // {{{
                 'size'      => 'medium',
             ),
         ),
-        'primary key' => array('generic_id', 'event_id', 'language'),
+        'primary key' => array('generic_id', 'language'),
         'unique keys' => array(
             'event' => array('event_id'), // kazdy event moze byc podpiety do co najwyzej jednego rekordu generycznego
         ),

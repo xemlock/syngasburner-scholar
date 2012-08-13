@@ -312,7 +312,27 @@ function form_type_scholar_checkboxed_container_value($element, $post = false) /
     );
 } // }}}
 
+function scholar_language_label($language, $name = null) // {{{
+{
+    static $have_languageicons = null;
 
+    if (null === $have_languageicons) {
+        $have_languageicons = module_exists('languageicons');
+    }
+
+    if (null === $name) {
+        $name = scholar_languages($language);
+    }
+
+    if ($have_languageicons) {
+        $dummy = new stdClass;
+        $dummy->language = $language;
+
+        return theme('languageicons_icon', $dummy, $name) . ' ' . $name;
+    }
+    
+    return $name;
+} // }}}
 
 function scholar_events_form($date = true)
 {
@@ -321,6 +341,7 @@ function scholar_events_form($date = true)
         '#checkbox_name' => 'status',
         '#title'         => 'Add event',
         '#validate'      => array('scholar_events_form_validate'),
+        '#tree'          => true,
     );
 
     if ($date) {
@@ -339,17 +360,13 @@ function scholar_events_form($date = true)
         );
     }
 
-    $langicons = module_exists('languageicons');
-    $language = new stdClass;
     foreach (scholar_languages() as $code => $name) {
-        $language->language = $code;
-        $legend = ($langicons ? theme('languageicons_icon', $language, $name) . ' ' : '') . $name;
-
         $form[$code] = array(
             '#type'        => 'fieldset',
-            '#title'       => $legend,
+            '#title'       => scholar_language_label($code, $name),
             '#tree'        => true,
             '#collapsible' => true,
+            '#attributes'  => array('class' => 'scholar'),
         );
 
         $form[$code]['title'] = array(

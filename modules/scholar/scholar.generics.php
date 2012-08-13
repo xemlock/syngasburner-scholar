@@ -29,8 +29,10 @@ function scholar_load_generic($id) // {{{
 function scholar_save_generic(&$generic)
 {
     foreach (get_object_vars($generic) as $key => $value) {
-        $value = trim($value);
-        $generic->$key = strlen($value) ? $value : null;
+        if (is_string($value)) {
+            $value = trim($value);
+            $generic->$key = strlen($value) ? $value : null;
+        }
     }
 
     if ($generic->id) {
@@ -40,6 +42,43 @@ function scholar_save_generic(&$generic)
     }
 
     // TODO zapisz powiazane wezly, eventy, zalaczniki
+    if ($generic->event) {
+        // event: start_date, end_date, url, image_id, [language] => (title, body)
+        foreach (scholar_languages() as $code => $name) {
+            if (empty($generic->event[$code])) {
+                continue;
+            }
+
+            // sprawdz czy istnieje binding miedzy generykiem a eventem
+            $event = false;
+            $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $generic->id, $code);
+
+            if ($rel = db_fetch_array($query)) {
+                $event = events_load_event($rel['event_id']);
+            }
+
+            if (empty($event)) {
+                $event = events_new_event();
+            }
+
+            foreach ($generic->event[$code] as $key => $value) {
+                $event->$key = $value;
+            }
+
+            $body = $event->body;
+            $event->body = '[[ Autogen ]]';
+
+            // zapisz event
+            if (events_save_event($event)) {
+                p($event);
+                // zapisz powiazanie uprzednio usuwajac wczesniejsze powiazania
+                db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)", $generic->id, $code, $event->id);
+                db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
+                    $generic->id, $event->id, $code, $body);
+            } else p('fail');
+            p($event);
+        }
+    }
 }
 
 function scholar_generics_list($subtype) // {{{
@@ -226,8 +265,29 @@ function scholar_conference_form_submit($form, &$form_state)
     // validate date
     $record->subtype = 'conference';
     p($values);
-p($record);
-scholar_save_generic($record);
+    p($record);
+
+    $events = array();
+    foreach ($values['event'] as $code => $name) {
+        $title = trim($generic->event[$code]['title']);
+        if (0 == strlen($title)) {
+            $title = $record->title;
+        }
+
+        $events[$code] = array(
+            'start_date' => $record->start_date,
+            'end_date'   => $record->end_date,
+            'title'      => $values['event'][$code]['title'],
+            'body'       => $values['event'][$code]['body'],
+            'url'        => $record->url,
+            'language'   => $code,
+            'image_id'   => $record->image_id,
+        );
+    }
+
+    $record->event = $events;
+
+    scholar_save_generic($record);
 exit;
 }
 

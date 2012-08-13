@@ -44,6 +44,10 @@ form.scholar.confirmation .container-inline {
 
 fieldset.scholar legend .language-icon {
   border: 1px solid #ccc;
+  display: inline-block;
+  display: -moz-inline-box;
+  *display: block;
+  *zoom: 1;
 }
 
 .scholar-item-picker .initial {
@@ -62,6 +66,9 @@ fieldset.scholar legend .language-icon {
   *display: inline;
   zoom: 1;
 }
+
+
+
 
 /* modal {{{ */
 .dialog {
