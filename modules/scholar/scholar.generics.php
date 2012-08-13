@@ -177,6 +177,10 @@ function scholar_conference_form(&$form_state, $id = null)
         '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
     );
 
+    $form['event'] = scholar_events_form(false);
+
+    $form['node'] = scholar_nodes_subform($record, 'generics');
+
     $form['attachments'] = array(
         '#type' => 'fieldset',
         '#title' => t('File attachments'),
@@ -187,8 +191,6 @@ function scholar_conference_form(&$form_state, $id = null)
                             ? scholar_fetch_attachments($record->id, 'generics')
                             : null
     );
-
-    $form['node'] = scholar_nodes_subform($record, 'generics');
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -223,6 +225,7 @@ function scholar_conference_form_submit($form, &$form_state)
 
     // validate date
     $record->subtype = 'conference';
+    p($values);
 p($record);
 scholar_save_generic($record);
 exit;

@@ -312,3 +312,168 @@ function form_type_scholar_checkboxed_container_value($element, $post = false) /
     );
 } // }}}
 
+
+
+function scholar_events_form($date = true)
+{
+    $form = array(
+        '#type'          => 'scholar_checkboxed_container',
+        '#checkbox_name' => 'status',
+        '#title'         => 'Add event',
+        '#validate'      => array('scholar_events_form_validate'),
+    );
+
+    if ($date) {
+        $form['start_date'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Start date'),
+            '#maxlength' => 10,
+            '#required' => true,
+            '#description' => t('Date format: YYYY-MM-DD.'),
+        );
+        $form['end_date'] = array(
+            '#type' => 'textfield',
+            '#title' => t('End date'),
+            '#maxlength' => 10,
+            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
+        );
+    }
+
+    $langicons = module_exists('languageicons');
+    $language = new stdClass;
+    foreach (scholar_languages() as $code => $name) {
+        $language->language = $code;
+        $legend = ($langicons ? theme('languageicons_icon', $language, $name) . ' ' : '') . $name;
+
+        $form[$code] = array(
+            '#type'        => 'fieldset',
+            '#title'       => $legend,
+            '#tree'        => true,
+            '#collapsible' => true,
+        );
+
+        $form[$code]['title'] = array(
+            '#type'        => 'textfield',
+            '#title'       => t('Title'),
+            '#description' => t('If not given title of referenced record will be used.'),
+        );
+        
+        $form[$code]['body'] = array(
+            '#type'        => 'scholar_textarea',
+            '#title'       => t('Description'),
+            '#description' => t('Detailed description about this event'),
+        );
+    }
+
+    return $form;
+}
+
+/**
+ * Generuje pola formularza do tworzenia / edycji powiązanych węzłów.
+ *
+ * @param array $row
+ * @param string $table_name
+ * @return array
+ */
+function scholar_nodes_subform($row = null, $table_name = null) // {{{
+{
+    $languages = scholar_languages();
+    $default_lang = language_default('language');
+    $form = array(
+        '#tree' => true,
+    );
+
+    foreach ($languages as $code => $name) {
+        $container = array(
+            '#type'     => 'scholar_checkboxed_container',
+            '#title'    => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
+            '#checkbox_name' => 'status',
+            '#default_value' => false,
+            '#tree'     => true,
+        );
+
+        $container['title'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('Title'),
+            '#description' => t('Page title, if not given it will default to this person\'s full name.'),
+        );
+        $container['body'] = array(
+            '#type'     => 'scholar_textarea',
+            '#title'    => t('Body'),
+        );
+
+        $container['menu'] = array(
+            '#type'     => 'fieldset',
+            '#title'    => t('Menu settings'),
+            '#collapsible' => true,
+            '#collapsed' => true,
+            '#tree'     => true,
+        );
+        $container['menu']['mlid'] = array(
+            '#type'     => 'hidden',
+        );
+        $container['menu']['link_title'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('Menu link title'),
+            '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
+        );
+        $container['menu']['parent'] = array(
+            '#type'     => 'select',
+            '#title'    => t('Parent item'),
+            '#options'  => menu_parent_options(menu_get_menus(), null),
+            '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
+        );
+        $container['menu']['weight'] = array(
+            '#type'     => 'weight',
+            '#title'    => t('Weight'),
+            '#delta'    => 50,
+            '#default_value' => 0,
+            '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
+        );
+
+        $container['path'] = array(
+            '#type'     => 'fieldset',
+            '#title'    => t('URL path settings'),
+            '#collapsible' => true,
+            '#collapsed' => true,
+        );
+        $container['path']['path'] = array(
+            '#type'     => 'textfield',
+            '#title'    => t('URL path alias'),
+            '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
+        );
+
+        $form[$code] = $container;
+    }
+
+    // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele,
+    // do ktorej nalezy
+    if ($row && $table_name) {
+        $rowid = is_object($row) ? $row->id : $row['id'];
+        foreach ($languages as $code => $name) {
+            if ($node = scholar_fetch_node($rowid, $table_name, $code)) {
+                // ustaw wartosc checkboksa sterujacego kontenerem rowna
+                // wartosci statusu wezla
+                $form[$code]['#default_value'] = $node->status;
+
+                $form[$code]['title']['#default_value'] = $node->title;
+                $form[$code]['body']['#default_value']  = $node->body;
+
+                if ($node->menu) {
+                    foreach ($node->menu as $column => $value) {
+                        if (isset($form[$code]['menu'][$column])) {
+                            $form[$code]['menu'][$column]['#default_value'] = $value;
+                        }
+                    }
+
+                    $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+                }
+
+                $form[$code]['path']['path']['#default_value'] = $node->path;
+            }
+        }
+    }
+
+    return $form;
+} // }}}
+

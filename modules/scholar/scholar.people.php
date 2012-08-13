@@ -157,7 +157,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     // przygotuj wezly, do ktorych zapisywane beda renderingi
     // strony danej osoby
     foreach ($langs as $code => $name) {
-        $status = intval((bool) $values[$code]['status']);
+        $status = intval((bool) $values['node'][$code]['status']);
 
         // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
         if (!$status && empty($nodes[$code])) {
@@ -170,7 +170,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
             $nodes[$code] = scholar_create_node();
         }
 
-        $title = trim($values[$code]['title']);
+        $title = trim($values['node'][$code]['title']);
         if (empty($title)) {
             $title = $values['first_name'] . ' ' . $values['last_name'];
         }
@@ -180,15 +180,15 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         $node->status   = $status;
         $node->language = $code;
         $node->title    = $title;
-        $node->body     = trim($values[$code]['body']);
+        $node->body     = trim($values['node'][$code]['body']);
 
         // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
-        $menu = $values[$code]['menu'];
-        list($menu['menu_name'], $menu['plid']) = explode(':', $values[$code]['menu']['parent']);
+        $menu = $values['node'][$code]['menu'];
+        list($menu['menu_name'], $menu['plid']) = explode(':', $values['node'][$code]['menu']['parent']);
 
         // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
         $node->menu = $menu;
-        $node->path = rtrim($values[$code]['path']['path'], '/');
+        $node->path = rtrim($values['node'][$code]['path']['path'], '/');
 
         scholar_save_node($node, $row['id'], 'people');
     }

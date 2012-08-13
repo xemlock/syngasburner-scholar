@@ -1,6 +1,6 @@
 name = Zend Framework
 description = Ensures that the Zend Framework 1.x is installed.
-package = Zend Framework
+package = Libraries
 core = 6.x
 php = 5.2
 version = "6.x-2.x-dev2"

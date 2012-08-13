@@ -177,6 +177,15 @@ function scholar_schema() // {{{
                 'type'      => 'char',
                 'length'    => 2,
             ),
+            'image_id' => array(
+                // REFERENCES image (id)
+                'type'      => 'int',
+            ),
+            'url' => array(
+                'description' => 'zewnętrzny URL strony czasopisma lub konferencji',
+                'type'      => 'varchar',
+                'length'    => 255,
+            ),
             'title' => array(
                 'type'      => 'varchar',
                 'length'    => 255,
@@ -184,11 +193,6 @@ function scholar_schema() // {{{
             ),
             'details' => array(
                 'description' => 'article - dodatkowa specyfikacja uzupełniająca bibliografię',
-                'type'      => 'varchar',
-                'length'    => 255,
-            ),
-            'url' => array(
-                'description' => 'zewnętrzny URL strony czasopisma lub konferencji',
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
@@ -201,7 +205,7 @@ function scholar_schema() // {{{
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
     ); // }}}
 
-    $schema['scholar_events'] = array(
+    $schema['scholar_events'] = array( // {{{
         'description' => 'Powiazania miedzy rekordami generycznymi a zdarzeniami',
         'fields' => array(
             'generic_id'  => array(
@@ -231,7 +235,7 @@ function scholar_schema() // {{{
         'unique keys' => array(
             'event' => array('event_id'), // kazdy event moze byc podpiety do co najwyzej jednego rekordu generycznego
         ),
-    );
+    ); // }}}
 
     $schema['scholar_authors'] = array( // {{{
         'description' => 'autorzy artykułów',
