@@ -221,6 +221,49 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
 } // }}}
 
 /**
+ * @param int $row_id
+ * @param string $table_name
+ * @param array $nodes
+ */
+function scholar_save_attached_nodes($row_id, $table_name, $nodes) // {{{
+{
+    foreach (scholar_languages() as $code => $name) {
+        if (empty($nodes[$code])) {
+            continue;
+        }
+
+        // sprobuj pobrac wezel powiazany z tym obiektem
+        $node = scholar_fetch_node($row_id, $table_name, $code);
+        $status = intval($nodes[$code]['status']) ? 1 : 0;
+
+        if (empty($node)) {
+            // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
+            if (!$status) {
+                continue;
+            }
+
+            // status niezerowy, utworz nowy wezel
+            $node = scholar_create_node();
+        }
+
+        $node->status   = $status;
+        $node->language = $code;
+        $node->title    = $nodes[$code]['title'];
+        $node->body     = $nodes[$code]['body'];
+
+        // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
+        $menu = $nodes[$code]['menu'];
+        list($menu['menu_name'], $menu['plid']) = explode(':', $nodes[$code]['menu']['parent']);
+
+        // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
+        $node->menu = $menu;
+        $node->path = rtrim($nodes[$code]['path']['path'], '/');
+
+        scholar_save_node($node, $row_id, $table_name);
+    }
+} // }}}
+
+/**
  * Usuwa węzły powiązane z tym obiektem.
  *
  * @param int $object_id

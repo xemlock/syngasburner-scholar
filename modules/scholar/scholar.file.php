@@ -134,10 +134,10 @@ function scholar_fetch_attachments($object_id, $table_name, $language = null) //
  * powiązania tego obiektu z załącznikami zostaną usunięte.
  * @param int $object_id
  * @param string $table_name
- * @param array $attachments Taka jak wartosć z elementu scholar_attachment_manager.
+ * @param array $attachments Taka jak wartosć z elementu scholar_attachment_manager, czyli tablica [language][file_id] => (id, label)
  * @return int liczba dodanych rekordów
  */
-function scholar_save_attachments($object_id, $table_name, $attachments) // {{{
+function scholar_save_attached_files($object_id, $table_name, $attachments) // {{{
 {
     // wez pod uwage tylko identyfikatory istniejacych plikow, w tym celu
     // dokonaj ekstrakcji identyfikatorow plikow

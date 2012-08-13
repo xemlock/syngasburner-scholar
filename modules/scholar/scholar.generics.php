@@ -24,10 +24,86 @@ function scholar_load_generic($id) // {{{
 } // }}}
 
 /**
+ * @param int $row_id
+ * @param string $table_name
+ * @return array
+ */
+function scholar_load_attached_events($row_id, $table_name)
+{
+
+}
+
+/**
+ * @return int          liczba zapisanych (utworzonych / zaktualizowanych) rekordów
+ */
+function scholar_save_attached_events($row_id, $table_name, $events)
+{
+    $count = 0;
+
+    // zapisz dowiazane wezly
+    foreach (scholar_languages() as $code => $name) {
+        if (empty($events[$code])) {
+            continue;
+        }
+
+        // sprawdz czy istnieje relacja miedzy generykiem a eventem
+        $event = false;
+        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $row_id, $code);
+
+        if ($relation = db_fetch_array($query)) {
+            $event = events_load_event($relation['event_id']);
+        }
+
+        $status = intval($nodes[$code]['status']) ? 1 : 0;
+
+        // jezeli nie bylo relacji lub jest niepoprawna utworz nowy event
+        if (empty($event)) {
+            if (!$status) {
+                // zerowy status i brak rekordu wydarzenia - nie dodawaj
+                continue;
+            }
+
+            $event = events_new_event();
+        }
+
+        // skopiuj dane do eventu...
+        foreach ($events[$code] as $key => $value) {
+            // ... pilnujac, zeby nie zmienic klucza glownego!
+            if ($key == 'id') {
+                continue;
+            }
+            $event->$key = $value;
+        }
+
+        // opis wydarzenia bedzie generowany automatycznie, ustaw zaslepke
+        $body = $event->body;
+        $event->body   = '';
+        $event->status = $status;
+
+        // zapisz event
+        if (events_save_event($event)) {
+            // usun wczesniejsze powiazania
+            db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)",
+                $row_id, $code, $event->id
+            );
+            // dodaj nowe
+            db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
+                $row_id, $event->id, $code, $body
+            );
+            ++$count;
+        }
+    }
+
+    return $count;
+}
+
+/**
  * @param object &$generic
  */
-function scholar_save_generic(&$generic)
+function scholar_save_generic(&$generic) // {{{
 {
+    $success = false;
+
     foreach (get_object_vars($generic) as $key => $value) {
         if (is_string($value)) {
             $value = trim($value);
@@ -36,50 +112,32 @@ function scholar_save_generic(&$generic)
     }
 
     if ($generic->id) {
-        scholar_db_write_record('scholar_generics', $generic, 'id');
+        if (scholar_db_write_record('scholar_generics', $generic, 'id')) {
+            $success = true;
+        }
     } else {
-        scholar_db_write_record('scholar_generics', $generic);
-    }
-
-    // TODO zapisz powiazane wezly, eventy, zalaczniki
-    if ($generic->event) {
-        // event: start_date, end_date, url, image_id, [language] => (title, body)
-        foreach (scholar_languages() as $code => $name) {
-            if (empty($generic->event[$code])) {
-                continue;
-            }
-
-            // sprawdz czy istnieje binding miedzy generykiem a eventem
-            $event = false;
-            $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $generic->id, $code);
-
-            if ($rel = db_fetch_array($query)) {
-                $event = events_load_event($rel['event_id']);
-            }
-
-            if (empty($event)) {
-                $event = events_new_event();
-            }
-
-            foreach ($generic->event[$code] as $key => $value) {
-                $event->$key = $value;
-            }
-
-            $body = $event->body;
-            $event->body = '[[ Autogen ]]';
-
-            // zapisz event
-            if (events_save_event($event)) {
-                p($event);
-                // zapisz powiazanie uprzednio usuwajac wczesniejsze powiazania
-                db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)", $generic->id, $code, $event->id);
-                db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
-                    $generic->id, $event->id, $code, $body);
-            } else p('fail');
-            p($event);
+        if (scholar_db_write_record('scholar_generics', $generic)) {
+            $success = true;
         }
     }
-}
+
+    if ($success) {
+        // zapisz dolaczone pliki
+        if ($generic->files) {
+            scholar_save_attached_files($generic->id, 'generics', $generic->files);
+        }
+
+        // zapisz wezly
+        if ($generic->node) {
+            scholar_save_attached_nodes($generic->id, 'generics', $generic->node);
+        }
+
+        // zapisz zmiany w powiazanych wydarzeniach
+        if ($generic->event) {
+            scholar_save_attached_events($generic->id, 'generics', $generic->event);
+        }
+    }
+} // }}}
 
 function scholar_generics_list($subtype) // {{{
 {
@@ -122,7 +180,7 @@ function scholar_generics_form(&$form_state, $subtype) // {{{
     drupal_set_message("Unable to retrieve form: Invalid generic subtype '$subtype'", 'error');
 } // }}}
 
-function scholar_conference_list()
+function scholar_conference_list() // {{{
 {
     global $pager_total;
 
@@ -165,7 +223,7 @@ function scholar_conference_list()
     }
 
     return $html;
-}
+} // }}}
 
 function scholar_conference_form(&$form_state, $id = null)
 {
@@ -288,7 +346,9 @@ function scholar_conference_form_submit($form, &$form_state)
     $record->event = $events;
 
     scholar_save_generic($record);
-exit;
+
+    drupal_set_message('OK!');
+    drupal_goto('scholar/conferences');
 }
 
 // vim: fdm=marker
