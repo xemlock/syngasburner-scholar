@@ -17,7 +17,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'object_id' => array(
-                // scholar_people.id OR scholar_objects.id
+                // scholar_people.id OR scholar_generics.id
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -136,7 +136,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'parent_id' => array(
-                'type'      => 'int', // references scholar_objects (id)
+                'type'      => 'int', // references scholar_generics (id)
             ),
             'refcount' => array(
                 'description' => 'liczba dzieci powiazanych z tym obiektem',
@@ -199,7 +199,7 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('id'),
         'indexes' => array(
-            'parent_id'        => array('parent_id'),
+            'parent'        => array('parent'),
             'subtype_category' => array('subtype', 'category'),
         ),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
@@ -246,7 +246,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'object_id' => array(
-                // REFERENCES scholar_objects (id)
+                // REFERENCES scholar_generics (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -325,7 +325,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'object_id' => array(
-                'description' => 'scholar_people.id albo scholar_objects.id, rozroznienie na podstawie table_name',
+                'description' => 'scholar_people.id albo scholar_generics.id, rozroznienie na podstawie table_name',
                 'type'      => 'int',
                 'not null'  => true,
             ),
