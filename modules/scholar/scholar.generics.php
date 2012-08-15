@@ -358,74 +358,157 @@ function _scholar_populate_record(&$record, $values) // {{{
     return $count;
 } // }}}
 
-function _scholar_generic_form($labels = array()) // {{{
+/**
+ * Funkcja pomocnicza
+ * @param array $field
+ * @param mixed $options
+ * @return array
+ */
+function _scholar_generic_form_field($field, $options) // {{{
 {
+    // jezeli podano string, zostanie on uzyty jako etykieta
+    if (is_string($options)) {
+        $options = array('#title' => $options);
+    }
+
+    if (is_array($options)) {
+        $field = array_merge($field, $options);
+    }
+
+    return $field;
+} // }}}
+
+/**
+ * Generator formularzy rekordów generycznych.
+ */
+function scholar_generic_form($fields = array()) // {{{
+{
+    // mozna tez podac same nazwy pol bez kluczy, wiec przejdz raz
+    // tablice i wyznacz, ktore pola nalezy dodac
+    foreach ($fields as $key => $value) {
+        if (is_int($key) && !isset($fields[$value])) {
+            $fields[$value] = true;
+        }
+    }
+
     $form['record'] = array(
         '#type' => 'fieldset',
         '#title' => t('Basic data'),
     );
-    $form['record']['title'] = array(
-        '#type'      => 'textfield',
-        '#title'     => t('Title'),
-        '#required'  => true,
-        '#description' => t('Nazwa konferencji.'),
-    );
-    $form['record']['start_date'] = array(
-        '#type'      => 'textfield',
-        '#maxlength' => 10,
-        '#required'  => true,
-        '#title'     => t('Start date'),
-        '#description' => t('Date format: YYYY-MM-DD.'),
-    );
-    $form['record']['end_date'] = array(
-        '#type'      => 'textfield',
-        '#maxlength' => 10,
-        '#title'     => t('End date'),
-        '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
+
+    // pole title jest zawsze obowiazkowe
+    $form['record']['title'] = _scholar_generic_form_field(
+        array(
+            '#type'      => 'textfield',
+            '#title'     => t('Title'),
+            '#required'  => true,
+        ),
+        isset($fields['title']) ? $fields['title'] : true
     );
 
-    $form['record']['locality'] = array(
-        '#type'      => 'textfield',
-        '#required'  => true,
-        '#title'     => t('Locality'),
-        '#description' => t('Nazwa miejscowości, gdzie konferencja będzie mieć miejsce.'),
-    );
-    $form['record']['country'] = array(
-        '#type'      => 'scholar_country',
-        '#required'  => true,
-        '#title'     => t('Country'),
-    );
-    $form['record']['category'] = array(
-        '#type'      => 'textfield',
-        '#required'  => true,
-        '#title'     => t('Category'),
-        '#description' => t('Uszczegółowienie typu konferencji.'),
-    );
-    $form['record']['url'] = array(
-        '#type'      => 'textfield',
-        '#title'     => t('URL'),
-        '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
-    );
+    if (isset($fields['details'])) {
+        $form['record']['details'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#title'     => t('Details'),
+                '#maxlength' => 255,
+            ),
+            $fields['details']
+        );
+    }
 
-    $form['files'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('File attachments'),
-    );
-    $form['files']['files'] = array(
-        '#type' => 'scholar_attachment_manager',
-    );
+    if (isset($fields['start_date'])) {
+        $form['record']['start_date'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#required'  => true,
+                '#title'     => t('Start date'),
+            ), 
+            $fields['start_date']
+        );
+    }
 
-    $form['events'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Event'),
-    );
-    $form['events']['events'] = scholar_events_form(false);
+    if (isset($fields['end_date'])) {
+        $form['record']['end_date'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#title'     => t('End date'),
+            ),
+            $fields['end_date']
+        );
+    }
 
-    $form['nodes'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Node'),
-    );
-    $form['nodes']['nodes'] = scholar_nodes_subform();
+    if (isset($fields['locality'])) {
+        $form['record']['locality'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#required'  => true,
+                '#title'     => t('Locality'),
+                '#description' => t('Nazwa miejscowości, gdzie konferencja będzie mieć miejsce.'),
+            ),
+            $fields['locality']
+        );
+    }
+
+    if (isset($fields['country'])) {
+        $form['record']['country'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'scholar_country',
+                '#required'  => true,
+                '#title'     => t('Country'),
+            ),
+            $fields['country']
+        );
+    }
+
+    // TODO kategoria opcjonalna
+    if (isset($fields['category'])) {
+        $form['record']['category'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#required'  => true,
+                '#title'     => t('Category'),
+            ),
+            $fields['category']
+        );
+    }
+
+    if (isset($fields['url'])) {
+        $form['record']['url'] = _scholar_generic_form_field(
+            array(
+                '#type'      => 'textfield',
+                '#title'     => t('URL'),
+                '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
+            ),
+            $fields['url']
+        );
+    }
+
+    if (isset($fields['files'])) {
+        $form['files'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('File attachments'),
+        );
+        $form['files']['files'] = array(
+            '#type' => 'scholar_attachment_manager',
+        );
+    }
+
+    if (isset($fields['events'])) {
+        $form['events'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Event'),
+        );
+        $form['events']['events'] = scholar_events_form(false);
+    }
+
+    if (isset($fields['nodes'])) {
+        $form['nodes'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Node'),
+        );
+        $form['nodes']['nodes'] = scholar_nodes_subform();
+    }
 
     return $form;
 } // }}}
@@ -438,7 +521,19 @@ function scholar_conference_form(&$form_state, $id = null) // {{{
         $record = scholar_load_generic($id, 'conference', 'admin/scholar/conferences');
     }
 
-    $form = _scholar_generic_form();
+    $form = scholar_generic_form(array(
+        'start_date' => array(
+            '#maxlength' => 10,
+            '#description' => t('Date format: YYYY-MM-DD.'),
+        ), 
+        'end_date' => array(
+            '#maxlength' => 10,
+            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
+        ),
+        'locality', 'country', 'url', 'category',
+        'files', 'events', 'nodes'
+    
+    ));
     $form['#record'] = $record;
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -461,7 +556,7 @@ function scholar_conference_form_submit($form, &$form_state) // {{{
     $values = $form_state['values'];
 
     // data poczatku i konca maja obcieta czesc zwiazana z czasem,
-    // trzeba ja dodac
+    // trzeba ja dodac aby byla poprawna wartoscia DATETIME
     $values['start_date'] .= ' 00:00:00';
     if (strlen($values['end_date'])) {
         $values['end_date'] .= ' 00:00:00';
@@ -500,7 +595,10 @@ function scholar_presentation_form(&$form_state, $id = null)
         $record = scholar_load_generic($id, 'presentation', 'admin/scholar/presentations');
     }
 
-    $form = _scholar_generic_form();
+    $form = scholar_generic_form(array(
+        'start_date' => t('Czas'),
+        'parent_id' => t('Konferencja'),
+    ));
     $form['#record'] = $record;
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -510,5 +608,68 @@ function scholar_presentation_form(&$form_state, $id = null)
     return $form;
 }
 
+
+function scholar_book_form(&$form_state, $id = null)
+{
+    if (null === $id) {
+        $record = null;
+    } else {
+        $record = scholar_load_generic($id, 'book', 'admin/scholar/books');
+    }
+
+    // rendering: $authors: <a href="$url">$title</a> $details
+    // <a href="http://syngasburner.eu/pl/publikacje/monografia-ekoenergetyka">"Eco-energetics - biogas and syngas"</a> (red. A. Cenian, J. Gołaszewski i T. Noch)
+    // <a href="http://www.springer.com/physics/classical+continuum+physics/book/978-3-642-03084-0">"Advances in Turbulence XII, Proceedings of the Twelfth European Turbulence Conference, September 7–10, 2009, Marburg, Germany"</a>, Springer Proceedings in Physics, Vol. 132
+    // jezeli pierwszym znakiem jest nawias otwierajacy <{[( dodaj details za " "
+    // w przeciwnym razie dodaj ", "
+    $form = scholar_generic_form(array(
+        'start_date' => array(
+            '#title'     => 'Rok wydania',
+            '#maxlength' => 4,
+            '#required'  => true,
+        ),
+        'category',
+        'people' => array(
+            '#title' => 'Autorzy',
+        ),
+        'details' => array(
+            '#title' => 'Szczegóły wydawnicze',
+            '#description' => 'Np. redaktorzy, seria wydawnicza, wydawca',
+        ),
+        'url',
+        'events', // np. info o wydaniu ksiazki
+        'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
+        'files',  // pliki
+    ));
+    array_unshift($form, array(
+        '#type' => 'fieldset',
+        '#title' => 'Pomoc',
+        array(
+            '#type' => 'markup',
+            '#value' => 'To niekoniecznie musi być książka, może to też być czasopismo (jako seria wydawnicza, a nie pojedynczy numer).',
+        ),
+    ));
+    // rok wydania - pozostaw puste, jeżeli jest to seria wydawnicza
+    $form['#record'] = $record;
+    $form['submit'] = array(
+        '#type'     => 'submit',
+        '#value'    => $record ? t('Save changes') : t('Add record'),
+    );
+
+    return $form;
+
+    // lista: rok wydania, tytuł, kategoria
+}
+
+function scholar_article_form(&$form_state, $id = null)
+{
+    if (null === $id) {
+        $record = null;
+    } else {
+        $record = scholar_load_generic($id, 'article', 'admin/scholar/articles');
+    }    
+
+
+}
 
 // vim: fdm=marker
