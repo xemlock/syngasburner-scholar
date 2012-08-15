@@ -116,7 +116,7 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
-        drupal_goto('scholar/files');
+        drupal_goto('admin/scholar/files');
         exit;
     }
 
@@ -305,8 +305,8 @@ function scholar_file_list() // {{{
         $rows[] = array(
             check_plain($row['filename']),
             format_size($row['size']),
-            l(t('edit'), "scholar/files/edit/{$row['id']}"),
-            intval($row['refcount']) ? '' : l(t('delete'), "scholar/files/delete/{$row['id']}"),
+            l(t('edit'), "admin/scholar/files/edit/{$row['id']}"),
+            intval($row['refcount']) ? '' : l(t('delete'), "admin/scholar/files/delete/{$row['id']}"),
         );
     }
 
@@ -550,12 +550,12 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         }
         
         drupal_set_message(t('File uploaded successfully'));
-        drupal_goto('scholar/files');
+        drupal_goto('admin/scholar/files');
     }
 
     // poniewaz w tym miejscu nastapi przeladowanie strony, aby przekazac
     // dalej flage 'dialog' musimy zrobic reczne przeladowanie strony
-    drupal_goto('scholar/files/upload', $dialog ? 'dialog=1' : null, $fragment);
+    drupal_goto('admin/scholar/files/upload', $dialog ? 'dialog=1' : null, $fragment);
 } // }}}
 
 /**
@@ -662,13 +662,13 @@ function scholar_file_edit_form(&$form_state, $file_id)
 
     // dodaj taby jezeli dostepny jest modul tabs
     if (function_exists('drupal_add_tab')) {
-        drupal_add_tab(l(t('List'), 'scholar/files'));
-        drupal_add_tab(l(t('Edit'), 'scholar/files/edit/' . $file->id), array('class' => 'active'));
+        drupal_add_tab(l(t('List'), 'admin/scholar/files'));
+        drupal_add_tab(l(t('Edit'), 'admin/scholar/files/edit/' . $file->id), array('class' => 'active'));
 
         // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron 
         // odwolujacych sie do tego pliku
         if (0 == $refcount) {
-            drupal_add_tab(l(t('Delete'), 'scholar/files/delete/' . $file->id));
+            drupal_add_tab(l(t('Delete'), 'admin/scholar/files/delete/' . $file->id));
         }
     }
 
@@ -695,7 +695,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
 
         if (scholar_rename_file($file, $dst, $error)) {
             drupal_set_message(t('File %from renamed successfully to %to', array('%from' => $src, '%to' => $file->filename)));
-            return drupal_goto('scholar/files/edit/' . $file->id);
+            return drupal_goto('admin/scholar/files/edit/' . $file->id);
         }
 
         form_set_error('', $error);
@@ -719,7 +719,7 @@ function scholar_file_delete_form(&$form_state, $file_id) // {{{
     $form = array('#file' => $file);
     $form = confirm_form($form,
         t('Are you sure you want to delete file (%filename)?', array('%filename' => $file->filename)),
-        'scholar/files',
+        'admin/scholar/files',
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -769,6 +769,6 @@ function scholar_file_delete_form_submit($form, &$form_state) // {{{
         drupal_set_message(t('File deleted successfully (%filename)', array('%filename' => $file->filename)));
     }
 
-    drupal_goto('scholar/files');
+    drupal_goto('admin/scholar/files');
 } // }}}
 

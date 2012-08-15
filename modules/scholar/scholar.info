@@ -1,9 +1,10 @@
 name = Scholar
 description = Scientific activity aggregator
 dependencies[] = locale
-dependencies[] = events
 dependencies[] = gallery
 dependencies[] = zend
 package = ventures
 version = 2012-08-dev
 core = 6.x
+
+; additional support for modules: languageicons, events

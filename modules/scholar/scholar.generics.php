@@ -106,17 +106,34 @@ function scholar_new_generic() // {{{
 
 /**
  * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
+ * @param int $id               identyfikator rekordu
+ * @param string $subtype       OPTIONAL wymagany podtyp rekordu
+ * @param string $redirect      OPTIONAL jeśli podany nastąpi przekierowanie do
+ *                              podanej strony w komunikatem o nieprawidłowym
+ *                              identyfikatorze rekordu
  * @return false|object
  */
-function scholar_load_generic($id) // {{{
+function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
 {
-    $query = db_query("SELECT * FROM {scholar_generics} WHERE id = %d", $id);
+    $where = array();
+    $where['id'] = $id;
+
+    if (null !== $subtype) {
+        $where['subtype'] = $subtype;    
+    }
+
+    $query = db_query("SELECT * FROM {scholar_generics} WHERE " . scholar_db_where($where));
     $record = db_fetch_object($query);
 
     if ($record) {
         $record->files = scholar_fetch_files($record->id, 'generics');
         $record->nodes = scholar_fetch_nodes($record->id, 'generics');
         $record->events = scholar_attachments_load_events($record->id, 'generics');
+
+    } else if ($redirect) {
+        drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
+        drupal_goto($redirect);
+        exit;
     }
 
     return $record;
@@ -230,8 +247,8 @@ function scholar_conference_list() // {{{
             substr($row['start_date'], 0, 10),
             check_plain($row['title']),
             check_plain($row['country_name']),
-            l(t('edit'),   "scholar/conferences/edit/{$row['id']}"), 
-            intval($row['refcount']) ? '' : l(t('delete'), "scholar/conferences/delete/{$row['id']}"),
+            l(t('edit'),   "admin/scholar/conferences/edit/{$row['id']}"), 
+            intval($row['refcount']) ? '' : l(t('delete'), "admin/scholar/conferences/delete/{$row['id']}"),
         );
     }
 
@@ -341,12 +358,8 @@ function _scholar_populate_record(&$record, $values) // {{{
     return $count;
 } // }}}
 
-function scholar_conference_form(&$form_state, $id = null)
+function _scholar_generic_form($labels = array()) // {{{
 {
-    $record = scholar_load_generic($id);
-
-    $form['#record'] = $record;
-
     $form['record'] = array(
         '#type' => 'fieldset',
         '#title' => t('Basic data'),
@@ -394,6 +407,14 @@ function scholar_conference_form(&$form_state, $id = null)
         '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
     );
 
+    $form['files'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('File attachments'),
+    );
+    $form['files']['files'] = array(
+        '#type' => 'scholar_attachment_manager',
+    );
+
     $form['events'] = array(
         '#type' => 'fieldset',
         '#title' => t('Event'),
@@ -406,17 +427,22 @@ function scholar_conference_form(&$form_state, $id = null)
     );
     $form['nodes']['nodes'] = scholar_nodes_subform();
 
-    $form['files'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('File attachments'),
-    );
-    $form['files']['files'] = array(
-        '#type' => 'scholar_attachment_manager',
-    );
+    return $form;
+} // }}}
 
+function scholar_conference_form(&$form_state, $id = null) // {{{
+{
+    if (null === $id) {
+        $record = null;
+    } else {
+        $record = scholar_load_generic($id, 'conference', 'admin/scholar/conferences');
+    }
+
+    $form = _scholar_generic_form();
+    $form['#record'] = $record;
     $form['submit'] = array(
         '#type'     => 'submit',
-        '#value'    => t('Save changes'),
+        '#value'    => $record ? t('Save changes') : t('Add record'),
     );
 
     if ($record) {
@@ -427,9 +453,9 @@ function scholar_conference_form(&$form_state, $id = null)
     }
 
     return $form;
-}
+} // }}}
 
-function scholar_conference_form_submit($form, &$form_state)
+function scholar_conference_form_submit($form, &$form_state) // {{{
 {
     $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
     $values = $form_state['values'];
@@ -463,7 +489,26 @@ function scholar_conference_form_submit($form, &$form_state)
     scholar_save_generic($record);
 
     drupal_set_message('OK!');
-    drupal_goto('scholar/conferences');
+    drupal_goto('admin/scholar/conferences');
+} // }}}
+
+function scholar_presentation_form(&$form_state, $id = null)
+{
+    if (null === $id) {
+        $record = null;
+    } else {
+        $record = scholar_load_generic($id, 'presentation', 'admin/scholar/presentations');
+    }
+
+    $form = _scholar_generic_form();
+    $form['#record'] = $record;
+    $form['submit'] = array(
+        '#type'     => 'submit',
+        '#value'    => $record ? t('Save changes') : t('Add record'),
+    );
+
+    return $form;
 }
+
 
 // vim: fdm=marker

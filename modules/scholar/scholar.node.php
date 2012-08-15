@@ -305,6 +305,7 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
  * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
  * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
  * w hooku form_alter.
+ * TODO do wywalenia chyba!!!
  */
 function scholar_node_form(&$form_state, $node)
 {
@@ -325,7 +326,7 @@ function scholar_node_form(&$form_state, $node)
 
             switch ($row['table_name']) {
                 case 'people':
-                    scholar_goto('scholar/people/edit/' . $row['object_id'], $destination);
+                    scholar_goto('admin/scholar/people/edit/' . $row['object_id'], $destination);
                     break;
             }
         } else {

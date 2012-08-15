@@ -65,134 +65,170 @@ function scholar_nodeapi($node, $op)
     }
 }
 
+function scholar_preprocess_page(&$vars)
+{
+}
+
 function scholar_menu()
 {
     $items = array();
 
-    $items['scholar'] = array(
+    $items['admin/scholar'] = array(
         'title'             => t('Scholar'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_index',
     );
 
-    $items['scholar/people'] = array(
+    $items['admin/scholar/people'] = array(
         'title'             => t('People'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_people_list',
-        'parent'            => 'scholar',
+        'parent'            => 'admin/scholar',
         'file'              => 'scholar.people.php',
     );
-    $items['scholar/people/list'] = array(
+    $items['admin/scholar/people/list'] = array(
         'type'              => MENU_DEFAULT_LOCAL_TASK,
         'title'             => t('List'),
         'weight'            => -10, // na poczatku listy
     );
-    $items['scholar/people/add'] = array(
+    $items['admin/scholar/people/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => t('Add person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form'),
-        'parent'            => 'scholar/people',
+        'parent'            => 'admin/scholar/people',
         'file'              => 'scholar.people.php',
     );
-    $items['scholar/people/edit/%'] = array(
+    $items['admin/scholar/people/edit/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('Edit person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_form', 3),
-        'parent'            => 'scholar/people',
+        'parent'            => 'admin/scholar/people',
         'file'              => 'scholar.people.php',
     );
-    $items['scholar/people/delete/%'] = array(
+    $items['admin/scholar/people/delete/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('Delete person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_people_delete_form', 3),
-        'parent'            => 'scholar/people',
+        'parent'            => 'admin/scholar/people',
         'file'              => 'scholar.people.php',
     );
 
-    $items['scholar/files'] = array(
-        'title'             => t('Files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_list',
-        'parent'            => 'scholar',
-        'file'              => 'scholar.file.php',
-    );
-    $items['scholar/files/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => t('List'),
-        'weight'            => -10,
-    );
-    $items['scholar/files/upload'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Upload'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_upload_form'),
-        'parent'            => 'scholar/files',
-        'file'              => 'scholar.file.php',
-    );
-    $items['scholar/files/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_edit_form', 3),
-        'parent'            => 'scholar/files',
-        'file'              => 'scholar.file.php',
-    );
-    $items['scholar/files/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_delete_form', 3),
-        'parent'            => 'scholar/files',
-        'file'              => 'scholar.file.php',
-    );
-    $items['scholar/files/select'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('File selection'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_select',
-        'parent'            => 'scholar/files',
-        'file'              => 'scholar.file.php',
-    );
-
-    $items['scholar/conferences'] = array(
+    $items['admin/scholar/conferences'] = array(
         'title'             => t('Conferences'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_generics_list',
         'page arguments'    => array('conference'),
-        'parent'            => 'scholar',
+        'parent'            => 'admin/scholar',
         'file'              => 'scholar.generics.php',
     );
-    $items['scholar/conferences/list'] = array(
+    $items['admin/scholar/conferences/list'] = array(
         'type'              => MENU_DEFAULT_LOCAL_TASK,
         'title'             => t('List'),
         'weight'            => -10,
     );
-    $items['scholar/conferences/add'] = array(
+    $items['admin/scholar/conferences/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => t('Add'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_generics_form', 'conference'),
-        'parent'            => 'scholar/conferences',
+        'parent'            => 'admin/scholar/conferences',
         'file'              => 'scholar.generics.php',
     );
-    $items['scholar/conferences/edit/%'] = array(
+    $items['admin/scholar/conferences/edit/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('Edit conference'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_generics_form', 'conference', 3),
-        'parent'            => 'scholar/conferences',
+        'parent'            => 'admin/scholar/conferences',
         'file'              => 'scholar.generics.php',
+    );
+
+    $items['admin/scholar/presentations'] = array(
+        'title'             => t('Presentations'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_generics_list',
+        'page arguments'    => array('presentation'),
+        'parent'            => 'admin/scholar',
+        'file'              => 'scholar.generics.php',
+    );
+    $items['admin/scholar/presentations/list'] = array(
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => t('List'),
+        'weight'            => -10,
+    );
+    $items['admin/scholar/presentations/add'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Add'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_generics_form', 'presentation'),
+        'parent'            => 'admin/scholar/presentations',
+        'file'              => 'scholar.generics.php',
+    );
+    $items['admin/scholar/presentations/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit presentation'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_generics_form', 'presentation', 3),
+        'parent'            => 'admin/scholar/presentations',
+        'file'              => 'scholar.generics.php',
+    );
+
+    $items['admin/scholar/files'] = array(
+        'title'             => t('Files'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_list',
+        'parent'            => 'admin/scholar',
+        'file'              => 'scholar.file.php',
+    );
+    $items['admin/scholar/files/list'] = array(
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => t('List'),
+        'weight'            => -10,
+    );
+    $items['admin/scholar/files/upload'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Upload'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_upload_form'),
+        'parent'            => 'admin/scholar/files',
+        'file'              => 'scholar.file.php',
+    );
+    $items['admin/scholar/files/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit file'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_edit_form', 3),
+        'parent'            => 'admin/scholar/files',
+        'file'              => 'scholar.file.php',
+    );
+    $items['admin/scholar/files/delete/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit file'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_file_delete_form', 3),
+        'parent'            => 'admin/scholar/files',
+        'file'              => 'scholar.file.php',
+    );
+    $items['admin/scholar/files/select'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('File selection'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_file_select',
+        'parent'            => 'admin/scholar/files',
+        'file'              => 'scholar.file.php',
     );
 
     return $items;
@@ -544,7 +580,7 @@ function scholar_form_alter(&$form, &$form_state, $form_id)
         if ($row) {
             switch ($row['table_name']) {
                 case 'people':
-                    $url = 'scholar/people/edit/' . $row['object_id'];
+                    $url = 'admin/scholar/people/edit/' . $row['object_id'];
                     break;
 
                 default:

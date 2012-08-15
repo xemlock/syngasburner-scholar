@@ -21,7 +21,7 @@ function scholar_people_fetch_row($id, $redirect = false) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto('scholar/people');
+        drupal_goto('admin/scholar/people');
         exit;
     }
 
@@ -161,7 +161,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         ? t('Person created successfully')
         : t('Person updated successfully')
     );
-    drupal_goto('scholar/people');
+    drupal_goto('admin/scholar/people');
 } // }}}
 
 function scholar_people_form_validate($form, &$form_state) // {{{
@@ -181,7 +181,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
                 '%last_name'  => $row['last_name'],
             )
         ),
-        'scholar/people',
+        'admin/scholar/people',
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -204,7 +204,7 @@ function scholar_people_delete_form_submit($form, &$form_state) // {{{
             )
         ));
     }
-    drupal_goto('scholar/people');
+    drupal_goto('admin/scholar/people');
 } // }}}
 
 /**
@@ -227,8 +227,8 @@ function scholar_people_list() // {{{
         $rows[] = array(
             check_plain($row['last_name']),
             check_plain($row['first_name']),
-            l(t('edit'),   "scholar/people/edit/{$row['id']}"), 
-            l(t('delete'), "scholar/people/delete/{$row['id']}"),
+            l(t('edit'),   "admin/scholar/people/edit/{$row['id']}"), 
+            l(t('delete'), "admin/scholar/people/delete/{$row['id']}"),
         );
     }
 
