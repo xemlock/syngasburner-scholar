@@ -32,7 +32,7 @@ function p($var, $label = null)
 
 function scholar_nodeapi($node, $op)
 {
-    if ($op == 'load' && $node->type = 'scholar') {
+    if ($op == 'load' && $node->type == 'scholar') {
         // trzeba wyrenderowac tresc!!!
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
         $binding = db_fetch_array($query);

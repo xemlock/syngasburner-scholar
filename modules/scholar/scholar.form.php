@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * Flagi dla attachemnts_form.
+ */
+define('SCHOLAR_FILES',  0x01);
+define('SCHOLAR_NODES',  0x02);
+define('SCHOLAR_EVENTS', 0x04);
+
+/**
  * Deklaracja dodatkowych pól formularza.
  *
  * @return array
@@ -387,15 +394,13 @@ function scholar_events_form($date = true)
  * @param string $table_name
  * @return array
  */
-function scholar_nodes_subform($row = null, $table_name = null) // {{{
+function scholar_nodes_subform() // {{{
 {
-    $languages = scholar_languages();
-    $default_lang = language_default('language');
     $form = array(
         '#tree' => true,
     );
 
-    foreach ($languages as $code => $name) {
+    foreach (scholar_languages() as $code => $name) {
         $container = array(
             '#type'     => 'scholar_checkboxed_container',
             '#title'    => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
@@ -458,34 +463,43 @@ function scholar_nodes_subform($row = null, $table_name = null) // {{{
         $form[$code] = $container;
     }
 
-    // ustaw wartosci domyslne jezeli podano id obiektu oraz tabele,
-    // do ktorej nalezy
-    if ($row && $table_name) {
-        $rowid = is_object($row) ? $row->id : $row['id'];
-        foreach ($languages as $code => $name) {
-            if ($node = scholar_fetch_node($rowid, $table_name, $code)) {
-                // ustaw wartosc checkboksa sterujacego kontenerem rowna
-                // wartosci statusu wezla
-                $form[$code]['#default_value'] = $node->status;
+    return $form;
+} // }}}
 
-                $form[$code]['title']['#default_value'] = $node->title;
-                $form[$code]['body']['#default_value']  = $node->body;
+function scholar_attachments_form($flags, &$record, $table_name)
+{
+    if ($record) {
+        $row_id = is_object($record) ? $record->id : $record['id'];
+    } else {
+        $row_id = null;
+    }
 
-                if ($node->menu) {
-                    foreach ($node->menu as $column => $value) {
-                        if (isset($form[$code]['menu'][$column])) {
-                            $form[$code]['menu'][$column]['#default_value'] = $value;
-                        }
-                    }
+    $form = array(
+        '#type' => 'fieldset',
+        '#title' => 'attachments',
+    );
 
-                    $form[$code]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
-                }
+    if ($flags & SCHOLAR_FILES) {
+        $form['attachments'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('File attachments'),
+            //        '#collapsible' => true, // collapsible psuje ukrywanie kolumny z waga
+            //        '#collapsed' => true,
+        );
+        $form['attachments']['files'] = array(
+            '#type' => 'scholar_attachment_manager',
+            '#default_value' => $row_id ? scholar_fetch_attachments($row_id, $table_name) : null
+        );
+    }
 
-                $form[$code]['path']['path']['#default_value'] = $node->path;
-            }
-        }
+    if ($flags & SCHOLAR_EVENTS) {
+        $form['event'] = scholar_events_form($flags);
+    }
+
+    if ($flags & SCHOLAR_NODES) {
+        $form['node'] = scholar_nodes_subform($record, $table_name);
     }
 
     return $form;
-} // }}}
+}
 

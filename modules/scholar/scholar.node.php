@@ -139,13 +139,7 @@ function _scholar_populate_node(&$node, $binding) // {{{
  */
 function scholar_fetch_node($object_id, $table_name, $language) // {{{
 {
-    static $_nodes = array();
-
-    if (isset($_nodes[$table_name][$object_id])) {
-        return $_nodes[$table_name][$object_id];
-    }
-
-    $result = false;
+    $node = false;
 
     if ($binding = _scholar_fetch_node_binding($object_id, $table_name, $language)) {
         // Reczne pobranie zamiast node_load() zeby nie uniknac wywolania
@@ -155,13 +149,70 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
 
         if ($node = db_fetch_object($query)) {
             _scholar_populate_node($node, $binding);
-            $result = $node;
         }
     }
 
-    $_nodes[$table_name][$obejct_id] = $result;
+    return $node;
+} // }}}
 
-    return $result;
+/**
+ * Zwraca wszystkie segmenty powiązane z tym rekordem, indeksowane 
+ * kodem języka.
+ * @return array
+ */
+function scholar_fetch_nodes($object_id, $table_name) // {{{
+{
+    $nodes = array();
+
+    foreach (_scholar_fetch_node_binding($object_id, $table_name) as $binding) {
+        $query = db_query("SELECT * FROM {node} WHERE nid = %d", $binding['node_id']);
+
+        if ($node = db_fetch_object($query)) {
+            _scholar_populate_node($node, $binding);
+            $nodes[$node->language] = $node;
+        }
+    }
+
+    return $nodes;
+} // }}}
+
+/**
+ * @param int $row_id
+ * @param string $table_name
+ * @param array $nodes
+ */
+function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
+{
+    foreach ($nodes as $language => $node_data) {
+        // sprobuj pobrac wezel powiazany z tym obiektem
+        $node = scholar_fetch_node($row_id, $table_name, $language);
+        $status = intval($node_data['status']) ? 1 : 0;
+
+        if (empty($node)) {
+            // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
+            if (!$status) {
+                continue;
+            }
+
+            // status niezerowy, utworz nowy wezel
+            $node = scholar_create_node();
+        }
+
+        $node->status   = $status;
+        $node->language = $language;
+        $node->title    = $node_data['title'];
+        $node->body     = $node_data['body'];
+
+        // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
+        $menu = $node_data['menu'];
+        list($menu['menu_name'], $menu['plid']) = explode(':', $node_data['menu']['parent']);
+
+        // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
+        $node->menu = $menu;
+        $node->path = rtrim($node_data['path']['path'], '/');
+
+        scholar_save_node($node, $row_id, $table_name);
+    }
 } // }}}
 
 /**
@@ -221,49 +272,6 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
 } // }}}
 
 /**
- * @param int $row_id
- * @param string $table_name
- * @param array $nodes
- */
-function scholar_save_attached_nodes($row_id, $table_name, $nodes) // {{{
-{
-    foreach (scholar_languages() as $code => $name) {
-        if (empty($nodes[$code])) {
-            continue;
-        }
-
-        // sprobuj pobrac wezel powiazany z tym obiektem
-        $node = scholar_fetch_node($row_id, $table_name, $code);
-        $status = intval($nodes[$code]['status']) ? 1 : 0;
-
-        if (empty($node)) {
-            // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
-            if (!$status) {
-                continue;
-            }
-
-            // status niezerowy, utworz nowy wezel
-            $node = scholar_create_node();
-        }
-
-        $node->status   = $status;
-        $node->language = $code;
-        $node->title    = $nodes[$code]['title'];
-        $node->body     = $nodes[$code]['body'];
-
-        // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
-        $menu = $nodes[$code]['menu'];
-        list($menu['menu_name'], $menu['plid']) = explode(':', $nodes[$code]['menu']['parent']);
-
-        // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
-        $node->menu = $menu;
-        $node->path = rtrim($nodes[$code]['path']['path'], '/');
-
-        scholar_save_node($node, $row_id, $table_name);
-    }
-} // }}}
-
-/**
  * Usuwa węzły powiązane z tym obiektem.
  *
  * @param int $object_id
@@ -275,10 +283,6 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
     $url_alias = db_table_exists('url_alias');
 
     foreach ($bindings as $binding) {
-        // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
-        // usuniete zostana linki menu i aliasy sciezek.
-        node_delete($binding['node_id']);
-
         // Dla absolutnej pewnosci usun powiazane linki menu i aliasy.
         // Jezeli dane sa rozspojnione, to oczywiscie zostanie usuniete 
         // wiecej niz trzeba. Spoko :)
@@ -288,7 +292,11 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
             db_query("DELETE FROM {url_alias} WHERE pid =%d", $binding['path_id']);
         }
 
-        db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
+	db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
+
+        // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
+        // usuniete zostana linki menu i aliasy sciezek.
+        node_delete($binding['node_id']);
     }
 } // }}}
 
@@ -302,6 +310,7 @@ function scholar_node_form(&$form_state, $node)
 {
     // Jezeli wezel jest podpiety do obiektow modulu scholar
     // przekieruj do strony z edycja danego obiektu.
+    p($node);
     if ($node->type == 'scholar') {
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
         $row   = db_fetch_array($query);

@@ -1,5 +1,95 @@
 <?php
 
+/**
+ * Pobiera z bazy danych wydarzenia powiązane z rekordem podanej tabeli.
+ * @param int $row_id
+ * @param string $table_name
+ * @return array
+ */
+function scholar_attachments_load_events($row_id, $table_name) // {{{
+{
+    $rows = array();
+
+    if (module_exists('events')) {
+        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
+
+        // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
+        while ($row = db_fetch_array($query)) {
+            $event = events_load_event($row['event_id']);
+            if ($event) {
+                $event->body = $row['body']; // nieprzetworzona tresc
+                $rows[$event->language] = $event;
+            }
+        }
+    }
+
+    return $rows;
+} // }}}
+
+/**
+ * @param array $events tablica nowych wartości eventów
+ * @return int          liczba zapisanych (utworzonych / zaktualizowanych) rekordów
+ */
+function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
+{
+    $count = 0;
+
+    if (module_exists('events')) {
+        // zapisz dowiazane eventy, operuj tylko na wezlach w poprawnych jezykach
+        foreach ($events as $language => $event_data) {
+            // sprawdz czy istnieje relacja miedzy generykiem a eventem
+            $event = false;
+            $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $row_id, $language);
+
+            if ($binding = db_fetch_array($query)) {
+                $event = events_load_event($binding['event_id']);
+            }
+
+            $status = intval($event_data['status']) ? 1 : 0;
+
+            // jezeli nie bylo relacji lub jest niepoprawna utworz nowy event
+            if (empty($event)) {
+                if (!$status) {
+                    // zerowy status i brak rekordu wydarzenia - nie dodawaj
+                    continue;
+                }
+
+                $event = events_new_event();
+            }
+
+            // skopiuj dane do eventu...
+            foreach ($event_data as $key => $value) {
+                // ... pilnujac, zeby nie zmienic klucza glownego!
+                if ($key == 'id') {
+                    continue;
+                }
+                $event->$key = $value;
+            }
+
+            // opis wydarzenia bedzie generowany automatycznie, ustaw zaslepke
+            $body = $event->body;
+            $event->body     = '';
+            $event->status   = $status;
+            $event->language = $language;
+
+            // zapisz event
+            if (events_save_event($event)) {
+                // usun wczesniejsze powiazania
+                db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)",
+                    $row_id, $language, $event->id
+                );
+                // dodaj nowe
+                db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
+                    $row_id, $event->id, $language, $body
+                );
+                ++$count;
+            }
+        }
+    }
+
+    return $count;
+} // }}}
+
 function scholar_new_generic() // {{{
 {
     $record = new stdClass;
@@ -15,99 +105,22 @@ function scholar_new_generic() // {{{
 } // }}}
 
 /**
+ * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
  * @return false|object
  */
 function scholar_load_generic($id) // {{{
 {
     $query = db_query("SELECT * FROM {scholar_generics} WHERE id = %d", $id);
-    return db_fetch_object($query);
+    $record = db_fetch_object($query);
+
+    if ($record) {
+        $record->files = scholar_fetch_files($record->id, 'generics');
+        $record->nodes = scholar_fetch_nodes($record->id, 'generics');
+        $record->events = scholar_attachments_load_events($record->id, 'generics');
+    }
+
+    return $record;
 } // }}}
-
-/**
- * @param int $row_id
- * @param string $table_name
- * @return array
- */
-function scholar_load_attached_events($row_id, $table_name)
-{
-    $rows  = array();
-    $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
-
-    // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
-    while ($row = db_fetch_array($query)) {
-        $event = events_load_event($row['event_id']);
-        if ($event) {
-            $rows[$event->language] = (array) $event;
-            $rows[$event->language]['body'] = $row['body']; // uzyj zrodla tresci, a nie renderingu
-        }
-    }
-
-    return $rows;
-}
-
-/**
- * @return int          liczba zapisanych (utworzonych / zaktualizowanych) rekordów
- */
-function scholar_save_attached_events($row_id, $table_name, $events)
-{
-    $count = 0;
-
-    // zapisz dowiazane wezly
-    foreach (scholar_languages() as $code => $name) {
-        if (empty($events[$code])) {
-            continue;
-        }
-
-        // sprawdz czy istnieje relacja miedzy generykiem a eventem
-        $event = false;
-        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $row_id, $code);
-
-        if ($relation = db_fetch_array($query)) {
-            $event = events_load_event($relation['event_id']);
-        }
-
-        $status = intval($events[$code]['status']) ? 1 : 0;
-
-        // jezeli nie bylo relacji lub jest niepoprawna utworz nowy event
-        if (empty($event)) {
-            if (!$status) {
-                // zerowy status i brak rekordu wydarzenia - nie dodawaj
-                continue;
-            }
-
-            $event = events_new_event();
-        }
-
-        // skopiuj dane do eventu...
-        foreach ($events[$code] as $key => $value) {
-            // ... pilnujac, zeby nie zmienic klucza glownego!
-            if ($key == 'id') {
-                continue;
-            }
-            $event->$key = $value;
-        }
-
-        // opis wydarzenia bedzie generowany automatycznie, ustaw zaslepke
-        $body = $event->body;
-        $event->body   = '';
-        $event->status = $status;
-
-        // zapisz event
-        if (events_save_event($event)) {
-            // usun wczesniejsze powiazania
-            db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)",
-                $row_id, $code, $event->id
-            );
-            // dodaj nowe
-            db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
-                $row_id, $event->id, $code, $body
-            );
-            ++$count;
-        }
-    }
-
-    return $count;
-}
 
 /**
  * @param object &$generic
@@ -136,17 +149,17 @@ function scholar_save_generic(&$generic) // {{{
     if ($success) {
         // zapisz dolaczone pliki
         if ($generic->files) {
-            scholar_save_attached_files($generic->id, 'generics', $generic->files);
+            scholar_save_files($generic->id, 'generics', $generic->files);
         }
 
         // zapisz wezly
-        if ($generic->node) {
-            scholar_save_attached_nodes($generic->id, 'generics', $generic->node);
+        if ($generic->nodes) {
+            scholar_save_nodes($generic->id, 'generics', $generic->nodes);
         }
 
         // zapisz zmiany w powiazanych wydarzeniach
-        if ($generic->event) {
-            scholar_save_attached_events($generic->id, 'generics', $generic->event);
+        if ($generic->events) {
+            scholar_attachments_save_events($generic->id, 'generics', $generic->events);
         }
     }
 } // }}}
@@ -237,79 +250,168 @@ function scholar_conference_list() // {{{
     return $html;
 } // }}}
 
+/**
+ * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
+ * należące do rekordu muszą znajdować się w kontenerze 'record'.
+ * @param array &$form
+ * @param object &$record
+ */
+function _scholar_populate_form(&$form, &$record) // {{{
+{
+    if (isset($form['record'])) {
+        $subform = &$form['record'];
+
+        foreach ($record as $key => $value) {
+            if (isset($subform[$key]) && is_scalar($value)) {
+                $subform[$key]['#default_value'] = $value;
+            }
+        }
+
+        unset($subform);
+    }
+
+    // elementy files, node i events musza znajdowac sie w kontenerach
+    // o tej samej nazwie
+    if (isset($form['files']['files']) && isset($record->files)) {
+        // to jest o tyle proste, ze element files jest attachment_managerem
+        $form['files']['files']['#default_value'] = $record->files;
+    }
+
+    // wypelnij elementy zwiazane z powiazanymi segmentami
+    if (isset($form['nodes']['nodes']) && isset($record->nodes)) {
+        $subform = &$form['nodes']['nodes'];
+
+        foreach ($record->nodes as $language => $node) {
+            // wartosc checkboksa sterujacego kontenerem
+            $subform[$language]['#default_value'] = $node->status;
+
+            $subform[$language]['title']['#default_value'] = $node->title;
+            $subform[$language]['body']['#default_value']  = $node->body;
+
+            if ($node->menu) {
+                foreach ($node->menu as $key => $value) {
+                    $subform[$language]['menu'][$key]['#default_value'] = $value;
+                }
+            }
+
+            $subform[$language]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+        }
+
+        unset($subform);
+    }
+
+    if (isset($form['events']['events']) && isset($record->events)) {
+        $subform = &$form['events']['events'];
+
+        foreach ($record->events as $language => $event) {
+            $subform[$language]['#default_value'] = $event->status;
+
+            foreach ($event as $key => $value) {
+                if (isset($subform[$language][$key])) {
+                    $subform[$language][$key]['#default_value'] = $value;
+                }
+            }
+        }
+
+        unset($subform);
+    }
+} // }}}
+
+/**
+ * Wypełnienie rekordu wartościami z odpowiednich pól formularza.
+ * @param object &$record
+ * @param array $values zwykle wartości ze stanu formularza (form_state[values])
+ * @return int  liczba ustawionych wartości
+ */
+function _scholar_populate_record(&$record, $values) // {{{
+{
+    // pomijaj nazwy wartosci zwiazane z automatycznie wygenerowanymi
+    // dodatkowymi polami formularza
+    $omit = array('op', 'submit', 'form_build_id', 'form_token', 'form_id');
+    $count = 0;
+
+    foreach ($values as $key => $value) {
+        if (in_array($key, $omit)) {
+            continue;
+        }
+        $record->$key = $value;
+        ++$count;
+    }
+
+    return $count;
+} // }}}
+
 function scholar_conference_form(&$form_state, $id = null)
 {
     $record = scholar_load_generic($id);
 
     $form['#record'] = $record;
 
-    $form['title'] = array(
+    $form['record'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Basic data'),
+    );
+    $form['record']['title'] = array(
         '#type'      => 'textfield',
         '#title'     => t('Title'),
         '#required'  => true,
         '#description' => t('Nazwa konferencji.'),
     );
-    $form['start_date'] = array(
+    $form['record']['start_date'] = array(
         '#type'      => 'textfield',
         '#maxlength' => 10,
         '#required'  => true,
         '#title'     => t('Start date'),
         '#description' => t('Date format: YYYY-MM-DD.'),
     );
-    $form['end_date'] = array(
+    $form['record']['end_date'] = array(
         '#type'      => 'textfield',
         '#maxlength' => 10,
         '#title'     => t('End date'),
         '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
     );
 
-    $form['locality'] = array(
+    $form['record']['locality'] = array(
         '#type'      => 'textfield',
         '#required'  => true,
         '#title'     => t('Locality'),
         '#description' => t('Nazwa miejscowości, gdzie konferencja będzie mieć miejsce.'),
     );
-    $form['country'] = array(
+    $form['record']['country'] = array(
         '#type'      => 'scholar_country',
         '#required'  => true,
         '#title'     => t('Country'),
     );
-    $form['category'] = array(
+    $form['record']['category'] = array(
         '#type'      => 'textfield',
         '#required'  => true,
         '#title'     => t('Category'),
         '#description' => t('Uszczegółowienie typu konferencji.'),
     );
-    $form['url'] = array(
+    $form['record']['url'] = array(
         '#type'      => 'textfield',
         '#title'     => t('URL'),
         '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
     );
 
-    $form['event'] = scholar_events_form(false);
-    if ($record) {
-        $events = scholar_load_attached_events($record->id, 'generics');
-        foreach ($events as $code => $event) {
-            foreach ($event as $key => $value) {
-                if (isset($form['event'][$code][$key])) {
-                    $form['event'][$code][$key]['#default_value'] = $value;
-                }
-            }
-            $form['event'][$code]['#default_value'] = $event['status'];
-        }
-    }
+    $form['events'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Event'),
+    );
+    $form['events']['events'] = scholar_events_form(false);
 
-    $form['node'] = scholar_nodes_subform($record, 'generics');
+    $form['nodes'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Node'),
+    );
+    $form['nodes']['nodes'] = scholar_nodes_subform();
 
-    $form['attachments'] = array(
+    $form['files'] = array(
         '#type' => 'fieldset',
         '#title' => t('File attachments'),
     );
-    $form['attachments']['files'] = array(
+    $form['files']['files'] = array(
         '#type' => 'scholar_attachment_manager',
-        '#default_value' => $record
-                            ? scholar_fetch_attachments($record->id, 'generics')
-                            : null
     );
 
     $form['submit'] = array(
@@ -318,15 +420,10 @@ function scholar_conference_form(&$form_state, $id = null)
     );
 
     if ($record) {
-        foreach (get_object_vars($record) as $key => $value) {
-            if (isset($form[$key])) {
-                $form[$key]['#default_value'] = $value;
-            }
-        }
+        $record->start_date = substr($record->start_date, 0, 10);
+        $record->end_date   = substr($record->end_date, 0, 10);
 
-        // obetnij czas z daty poczatku i konca
-        $form['start_date']['#default_value'] = substr($record->start_date, 0, 10);
-        $form['end_date']['#default_value']   = substr($record->end_date, 0, 10);
+        _scholar_populate_form($form, $record);
     }
 
     return $form;
@@ -337,38 +434,31 @@ function scholar_conference_form_submit($form, &$form_state)
     $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
     $values = $form_state['values'];
 
-    foreach (get_object_vars($record) as $field => $value) {
-        if (isset($values[$field])) {
-            $record->$field = $values[$field];
-        }
+    // data poczatku i konca maja obcieta czesc zwiazana z czasem,
+    // trzeba ja dodac
+    $values['start_date'] .= ' 00:00:00';
+    if (strlen($values['end_date'])) {
+        $values['end_date'] .= ' 00:00:00';
     }
 
-    // validate date
-    $record->subtype = 'conference';
-
-    $events = array();
-    foreach ($values['event'] as $code => $name) {
-        $title = trim($generic->event[$code]['title']);
+    // dodaj czas do eventow
+    foreach ($values['events'] as $language => &$event) {
+        $title = trim($event['title']);
         if (0 == strlen($title)) {
-            $title = $record->title;
+            $title = $values['title'];
         }
-
-        $events[$code] = array(
-            'start_date' => $record->start_date,
-            'end_date'   => $record->end_date,
-            'title'      => $values['event'][$code]['title'],
-            'body'       => $values['event'][$code]['body'],
-            'url'        => $record->url,
-            'language'   => $code,
-            'image_id'   => $record->image_id,
-            'status'     => $values['event'][$code]['status'],
-        );
+        $event['title']      = $title;
+        $event['start_date'] = $values['start_date'];
+        $event['end_date']   = $values['end_date'];
+        $event['language']   = $language;
+        $event['image_id']   = $values['image_id'];
     }
 
-    $record->event = $events;
+    // wypelnij rekord danymi z formularza
+    _scholar_populate_record($record, $values);
 
-    // node
-    // files
+    // dla pewnosci ustaw odpowiedni podtyp
+    $record->subtype = 'conference';
 
     scholar_save_generic($record);
 

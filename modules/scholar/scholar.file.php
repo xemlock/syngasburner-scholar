@@ -95,6 +95,35 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
 } // }}}
 
 /**
+ * Pobiera z bazy danych rekord pliku.
+ *
+ * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
+ *                              tablica z warunkami wyszukiwania
+ * @param bool $redirect        czy zgłosić błąd i przekierować do listy
+ *                              plików, jeżeli plik nie został znaleziony
+ * @return object
+ */
+function scholar_fetch_file($file_id, $redirect = false) // {{{
+{
+    if (is_array($file_id)) {
+        $cond = scholar_db_where($file_id);
+    } else {
+        $cond = "id = " . intval($file_id);
+    }
+
+    $query = db_query("SELECT * FROM {scholar_files} WHERE " . $cond);
+    $row   = db_fetch_object($query);
+
+    if (empty($row) && $redirect) {
+        drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
+        drupal_goto('scholar/files');
+        exit;
+    }
+
+    return $row;
+} // }}}
+
+/**
  * Pobiera listę załączników dla obiektu o podanym identyfikatorze
  * znajdujęcego się w podanej tabeli. Jeżeli podano język, zwrócone 
  * zostaną tylko załączniki dla danego języka.
@@ -102,7 +131,7 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
  * @param string $table_name
  * @return array
  */
-function scholar_fetch_attachments($object_id, $table_name, $language = null) // {{{
+function scholar_fetch_files($object_id, $table_name, $language = null) // {{{
 {
     $conds = array(
         'table_name' => $table_name,
@@ -137,7 +166,7 @@ function scholar_fetch_attachments($object_id, $table_name, $language = null) //
  * @param array $attachments Taka jak wartosć z elementu scholar_attachment_manager, czyli tablica [language][file_id] => (id, label)
  * @return int liczba dodanych rekordów
  */
-function scholar_save_attached_files($object_id, $table_name, $attachments) // {{{
+function scholar_save_files($object_id, $table_name, $attachments) // {{{
 {
     // wez pod uwage tylko identyfikatory istniejacych plikow, w tym celu
     // dokonaj ekstrakcji identyfikatorow plikow
@@ -195,34 +224,6 @@ function scholar_save_attached_files($object_id, $table_name, $attachments) // {
     return $count;
 } // }}}
 
-/**
- * Pobiera z bazy danych rekord pliku.
- *
- * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
- *                              tablica z warunkami wyszukiwania
- * @param bool $redirect        czy zgłosić błąd i przekierować do listy
- *                              plików, jeżeli plik nie został znaleziony
- * @return object
- */
-function scholar_fetch_file($file_id, $redirect = false) // {{{
-{
-    if (is_array($file_id)) {
-        $cond = scholar_db_where($file_id);
-    } else {
-        $cond = "id = " . intval($file_id);
-    }
-
-    $query = db_query("SELECT * FROM {scholar_files} WHERE " . $cond);
-    $row   = db_fetch_object($query);
-
-    if (empty($row) && $redirect) {
-        drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
-        drupal_goto('scholar/files');
-        exit;
-    }
-
-    return $row;
-} // }}}
 
 /**
  * Liczy ile jest rekordów wiążących ten plik z rekordami tabel scholar_people
@@ -231,7 +232,7 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
  * @param object &$file         obiekt reprezentujący plik
  * @return int
  */
-function scholar_file_count_attachments(&$file) // {{{
+function scholar_file_refcount(&$file) // {{{
 {
     $query = db_query("SELECT COUNT(*) AS cnt FROM {scholar_attachments} WHERE file_id = %d", $file->id);
     $row   = db_fetch_array($query);
@@ -743,7 +744,7 @@ function scholar_file_delete_form_validate($form, &$form_state) // {{{
         // sprawdzamy dokladnie faktyczna liczbe odwolan do tego pliku,
         // na wypadek gdyby refcount zawieralo niepoprawna wartosc
 
-        if (scholar_file_count_attachments($file->id)) {
+        if (scholar_file_refcount($file->id)) {
             form_set_error('', 
                 format_plural($refcount,
                     'There is one page referencing this file. File cannot be deleted.',
