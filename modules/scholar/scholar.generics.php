@@ -777,6 +777,7 @@ function scholar_category_form_submit($form, &$form_state)
     $record = $form['#record'];
 
     if ($record) {
+        $is_new = empty($record->id);
         $values = $form_state['values'];
 
         foreach (scholar_languages() as $code => $name) {
@@ -786,10 +787,10 @@ function scholar_category_form_submit($form, &$form_state)
         }
 
         scholar_save_category($record);
-        drupal_set_message('ok');
+
+        drupal_set_message($is_new ? t('Category was successfully added') : t('Category was successfully updated'));
+        drupal_goto(scholar_admin_path($record->subtype . '/category'));
     }
-    
-    drupal_goto();
 }
 
 
@@ -807,16 +808,13 @@ function scholar_category_list($table_name, $subtype)
 
     $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON c.id = n.category_id WHERE table_name = '%s' AND subtype = '%s' AND language = '%s'" . tablesort_sql($header), $table_name, $subtype, $language->language);
 
-
-    $destination = 'destination=' . $_GET['q'];
-
     $rows = array();
     while ($row = db_fetch_array($query)) {
         $rows[] = array(
             check_plain($row['name']),
             intval($row['refcount']),
-            l(t('edit'),   "#!/{$row['id']}", array('query' => $destination)), 
-            l(t('delete'), "#!/{$row['id']}", array('query' => $destination)),
+            l(t('edit'),   scholar_admin_path($subtype . '/category/edit/' . $row['id'])), 
+            l(t('delete'), scholar_admin_path($subtype . '/category/delete/' . $row['id'])), 
         );
     }
 

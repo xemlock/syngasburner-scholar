@@ -116,7 +116,7 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
-        drupal_goto('admin/scholar/files');
+        drupal_goto(scholar_admin_path('file'));
         exit;
     }
 
@@ -247,14 +247,15 @@ function scholar_file_refcount(&$file) // {{{
  * @param object &$file         obiekt reprezentujący plik
  * @param array $header         tablica kolumn tabeli w postaci opisanej
  *                              w theme_table(). Dopuszczalne nazwy kolumn:
+ *                              row_type (konkatenacja table_name.subtype),
  *                              table_name, object_id, title, label, language
  * @return array
  */
 function scholar_file_fetch_dependent_rows(&$file, $header = null) // {{{
 {
-    $sqlsort = scholar_tablesort_sql($header, array('table_name', 'object_id', 'title', 'label', 'language'));
+    $sqlsort = scholar_tablesort_sql($header, array('row_type', 'table_name', 'object_id', 'title', 'label', 'language'));
 
-    $query = db_query("SELECT table_name, object_id, CONCAT(first_name, ' ', last_name) AS title, label, language FROM {scholar_people} p JOIN {scholar_attachments} a ON a.table_name = 'people' AND a.object_id = p.id WHERE a.file_id = %d UNION ALL SELECT table_name, object_id, title, label, language FROM {scholar_objects} o JOIN {scholar_attachments} a ON a.table_name = 'objects' AND a.object_id = o.id WHERE a.file_id = %d" . $sqlsort, $file->id, $file->id);
+    $query = db_query("SELECT 'people' AS row_type, table_name, NULL AS subtype, object_id, CONCAT(first_name, ' ', last_name) AS title, label, language FROM {scholar_people} p JOIN {scholar_attachments} a ON a.table_name = 'people' AND a.object_id = p.id WHERE a.file_id = %d UNION ALL SELECT CONCAT('generics.', subtype) AS row_type, table_name, subtype, object_id, title, label, language FROM {scholar_generics} o JOIN {scholar_attachments} a ON a.table_name = 'generics' AND a.object_id = o.id WHERE a.file_id = %d" . $sqlsort, $file->id, $file->id);
 
     $rows = array();
     while ($row = db_fetch_array($query)) {
@@ -302,11 +303,13 @@ function scholar_file_list() // {{{
     $rows  = array();
 
     while ($row = db_fetch_array($query)) {
+        $refcount = intval($row['refcount']);
+
         $rows[] = array(
             check_plain($row['filename']),
             format_size($row['size']),
-            l(t('edit'), "admin/scholar/files/edit/{$row['id']}"),
-            intval($row['refcount']) ? '' : l(t('delete'), "admin/scholar/files/delete/{$row['id']}"),
+            l(t('edit'), scholar_admin_path('file/edit/' . $row['id'])),
+            $refcount ? '' : l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
         );
     }
 
@@ -467,8 +470,6 @@ function scholar_file_validate_filename(&$file) // {{{
  */
 function scholar_file_upload_form() // {{{
 {
-    drupal_set_title(t('Upload file'));
-
     $form = array();
     $form['#attributes'] = array('enctype' => "multipart/form-data");
 
@@ -550,12 +551,12 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         }
         
         drupal_set_message(t('File uploaded successfully'));
-        drupal_goto('admin/scholar/files');
+        drupal_goto(scholar_admin_path('file'));
     }
 
     // poniewaz w tym miejscu nastapi przeladowanie strony, aby przekazac
     // dalej flage 'dialog' musimy zrobic reczne przeladowanie strony
-    drupal_goto('admin/scholar/files/upload', $dialog ? 'dialog=1' : null, $fragment);
+    drupal_goto(scholar_admin_path('file/upload'), $dialog ? 'dialog=1' : null, $fragment);
 } // }}}
 
 /**
@@ -619,28 +620,32 @@ function scholar_file_edit_form(&$form_state, $file_id)
     );
 
     // wyswietl liste stron odwolujacych sie do tego pliku
-    if (true|| $refcount = intval($file->refcount)) {
-        $header = array(
-            array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
-            array('data' => t('Language'), 'field' => 'language'),
+    $refcount = intval($file->refcount);
+
+    $header = array(
+        array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
+        array('data' => t('Language'), 'field' => 'language'),
+        array('data' => t('Row type'), 'field' => 'row_type'),
+    );
+
+    $form['ref'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Dependent database records'),
+        '#attributes' => array('class' => 'scholar'),
+    );
+
+    $rows  = array();
+    $langs = scholar_languages();
+
+    foreach (scholar_file_fetch_dependent_rows($file, $header) as $row) {
+        $rows[] = array(
+            check_plain($row['title']),
+            check_plain(scholar_languages($row['language'])),
+            check_plain($row['row_type']),
         );
+    }
 
-        $form['ref'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Dependent database records'),
-            '#attributes' => array('class' => 'scholar'),
-        );
-
-        $rows  = array();
-        $langs = scholar_languages();
-
-        foreach (scholar_file_fetch_dependent_rows($file, $header) as $row) {
-            $rows[] = array(
-                'title'    => check_plain($row['title']),
-                'language' => check_plain(scholar_languages($row['language'])),
-            );
-        }
-
+    if ($rows) {
         if (count($rows) != $refcount) {
             $rows[] = array(
                 array(
@@ -649,7 +654,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
                         'Expected %refcount files, but found %count. Database corruption detected.',
                         array('%refcount' => $refcount, '%count' => count($rows))
                     ),
-                    'colspan' => 2,
+                    'colspan' => 3,
                 ),
             );
         }
@@ -662,13 +667,13 @@ function scholar_file_edit_form(&$form_state, $file_id)
 
     // dodaj taby jezeli dostepny jest modul tabs
     if (function_exists('drupal_add_tab')) {
-        drupal_add_tab(l(t('List'), 'admin/scholar/files'));
-        drupal_add_tab(l(t('Edit'), 'admin/scholar/files/edit/' . $file->id), array('class' => 'active'));
+        drupal_add_tab(t('List'), scholar_admin_path('file'));
+        drupal_add_tab(t('Edit'), scholar_admin_path('file/edit/' . $file->id), array('class' => 'active'));
 
         // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron 
         // odwolujacych sie do tego pliku
         if (0 == $refcount) {
-            drupal_add_tab(l(t('Delete'), 'admin/scholar/files/delete/' . $file->id));
+            drupal_add_tab(t('Delete'), scholar_admin_path('file/delete/' . $file->id));
         }
     }
 
@@ -695,7 +700,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
 
         if (scholar_rename_file($file, $dst, $error)) {
             drupal_set_message(t('File %from renamed successfully to %to', array('%from' => $src, '%to' => $file->filename)));
-            return drupal_goto('admin/scholar/files/edit/' . $file->id);
+            return drupal_goto(scholar_admin_path('file/edit/' . $file->id));
         }
 
         form_set_error('', $error);
@@ -719,7 +724,7 @@ function scholar_file_delete_form(&$form_state, $file_id) // {{{
     $form = array('#file' => $file);
     $form = confirm_form($form,
         t('Are you sure you want to delete file (%filename)?', array('%filename' => $file->filename)),
-        'admin/scholar/files',
+        scholar_admin_path('file'),
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -769,6 +774,6 @@ function scholar_file_delete_form_submit($form, &$form_state) // {{{
         drupal_set_message(t('File deleted successfully (%filename)', array('%filename' => $file->filename)));
     }
 
-    drupal_goto('admin/scholar/files');
+    drupal_goto(scholar_admin_path('file'));
 } // }}}
 

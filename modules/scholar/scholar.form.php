@@ -234,8 +234,8 @@ function theme_scholar_attachment_manager($element) // {{{
 
     $settings = array(
         'prefix'        => $element['#name'],
-        'urlFileSelect' => url('admin/scholar/files/select'),
-        'urlFileUpload' => url('admin/scholar/files/upload', array('query' => 'dialog=1')),
+        'urlFileSelect' => url(scholar_admin_path('file/select')),
+        'urlFileUpload' => url(scholar_admin_path('file/upload'), array('query' => 'dialog=1')),
     );
 
     $html = '<p class="help">Each file must be given label in at least one language.

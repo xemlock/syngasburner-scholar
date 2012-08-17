@@ -61,8 +61,10 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         '#required' => true,
     );
 
-    gallery_image_selector($form, 'image_id', empty($row['image_id']) ? null : $row['image_id']);
-    $form['image_id']['#title'] = t('Photo');
+    $form['image_id'] = array(
+        '#type'     => 'gallery_image_select',
+        '#title'    => t('Photo'),
+    );
 
     // link do wezlow zalezne od jezyka, ustawienia aliasu
     $languages = scholar_languages();
@@ -77,7 +79,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     $form['attachments']['files'] = array(
         '#type' => 'scholar_attachment_manager',
         '#default_value' => $row
-                            ? scholar_fetch_attachments($row['id'], 'people')
+                            ? scholar_fetch_files($row['id'], 'people')
                             : null
                         );
 
@@ -91,11 +93,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     // jezeli formularz dotyczy konkretnego rekordu ustaw domyslne wartosci pol
     if ($row) {
         foreach ($row as $column => $value) {
-            // FIXME ze wzgledu na niedoskonalosc pakietu gallery domyslna wartosc
-            // image_id musi byc ustawiona w gallery_image_selector() i nie 
-            // moze zostac nadpisana tutaj, w przeciwnym razie podglad obrazu
-            // nie zostanie wyswietlony.
-            if (isset($form[$column]) && $column != 'image_id') {
+            if (isset($form[$column])) {
                 $form[$column]['#default_value'] = $value;
             }
         }
@@ -140,7 +138,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     }
 
     // zapisz zalaczniki
-    scholar_save_attached_files($row['id'], 'people', $values['files']);
+    scholar_save_files($row['id'], 'people', $values['files']);
 
     // zapisz wezly, jezeli pusty tytul wstaw pelne imie i nazwisko
     foreach ($values['node'] as $code => $node) {
@@ -152,7 +150,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         $values['node'][$code]['body'] = trim($values['node'][$code]['body']);
     }
 
-    scholar_save_attached_nodes($row['id'], 'people', $values['node']);
+    scholar_save_nodes($row['id'], 'people', $values['node']);
 
     // zapisz czas ostatniej zmiany danych
     scholar_last_change(time());
@@ -238,9 +236,7 @@ function scholar_people_list() // {{{
         );
     }
 
-    $html = '';
-    $html .= theme('table', $header, $rows);
-    return $html;
+    return theme('table', $header, $rows);
 } // }}}
 
 // vim: fdm=marker
