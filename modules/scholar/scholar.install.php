@@ -109,24 +109,43 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 32,
             ),
+            'color' => array(
+                'description' => 'kolor do oznaczenia obiektów danej kategorii np. w kalendarzu',
+                'type'      => 'varchar',
+                'length'    => 7, // #rrggbb
+            ),
+            'refcount' => array(
+                'description' => 'liczba rekordow powiązanych z tą kategorią',
+                'type'      => 'int',
+                'not null'  => true,
+                'default'   => 0,
+            ),
+        ),
+        'primary key'  => array('id'),        
+    ); // }}}
+
+    $schema['scholar_category_names'] = array(
+        'description' => 'Nazwy kategorii',
+        'fields' => array(
+            'category_id' => array(
+                'type' => 'int',
+                'not null' => true,
+            ),
             'name' => array(
-                'description' => 'angielska nazwa kategorii, jej tłumaczenie poprzez moduł Translate',
+                'description' => 'nazwa kategorii',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'color' => array(
-                'description' => 'kolor do oznaczenia obiektów danej kategorii np. w kalendarzu',
+            'language' => array(
                 'type'      => 'varchar',
-                'length'    => 7,
+                'length'    => 12,
+                'not null'  => true,
             ),
         ),
-        'primary key'  => array('id'),
-        'unique keys'  => array(
-            'name' => array('table_name', 'subtype', 'name'),
-        ),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
-    ); // }}}
+        'primary key' => array('category_id', 'language'),
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',  
+    );
 
     $schema['scholar_generics'] = array( // {{{
         'description' => 'Generyczna tabela na obiekty: kontenery na publikacje: czasopisma, monografie lub wykłady: konferencje, seminaria, oraz ich elementy',
@@ -199,7 +218,7 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('id'),
         'indexes' => array(
-            'parent'        => array('parent'),
+            'parent'        => array('parent_id'),
             'subtype_category' => array('subtype', 'category'),
         ),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',

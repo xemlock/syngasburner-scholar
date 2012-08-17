@@ -2,6 +2,7 @@ name = Scholar
 description = Scientific activity aggregator
 dependencies[] = locale
 dependencies[] = gallery
+dependencies[] = tabs
 dependencies[] = zend
 package = ventures
 version = 2012-08-dev

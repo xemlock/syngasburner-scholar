@@ -227,12 +227,25 @@ function _scholar_menu_add_page_argument_positions(&$items) // {{{
 
 function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) // {{{
 {
+    $category_titles = array(
+        'list'   => t('Categories'),
+        'add'    => t('Add category'),
+        'edit'   => t('Edit category'),
+        'delete' => t('Delete category'),
+    );
+
+    if (isset($titles['categories'])) {
+        $category_titles = array_merge($category_titles, (array) $titles['categories']);
+    }
+
     $titles = array_merge(array(
-        'list'   => t('List'),
-        'add'    => t('Add'),
-        'edit'   => t('Edit'),
-        'delete' => t('Delete'),
+        'list'       => t('List'),
+        'add'        => t('Add'),
+        'edit'       => t('Edit'),
+        'delete'     => t('Delete'),
     ), $titles);
+
+    $titles['categories'] = $category_titles;
 
     $items[$root_path] = array(
         'title'             => $title,
@@ -272,6 +285,50 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_generics_delete_form', $subtype),
         'parent'            => $root_path,
+        'file'              => 'scholar.generics.php',
+    );
+
+    $items[$root_path . '/categories'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => $titles['categories']['list'],
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_category_list',
+        'page arguments'    => array('generics', $subtype),
+        'parent'            => $root_path,
+        'file'              => 'scholar.generics.php',
+    );
+
+    // jezeli nie ma MENU)DEFAULT_LOCAL_TASK taby (drugiego poziomu w tym wypadku) nie beda automatycznie generowane, wiec ok
+/*    $items[$root_path . '/categories/list'] = array(
+        'type'              => MENU_DEFAULT_LOCAL_TASK,
+        'title'             => $titles['list'],
+        'weight'            => -10,
+    );*/
+    $items[$root_path . '/categories/add'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => $titles['categories']['add'],
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_category_form', 'generics', $subtype),
+        'parent'            => $root_path . '/categories',
+        'file'              => 'scholar.generics.php',
+    );
+    $items[$root_path . '/categories/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => $titles['categories']['edit'],
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_category_form', 'generics', $subtype),
+        'parent'            => $root_path . '/categories',
+        'file'              => 'scholar.generics.php',
+    );
+    $items[$root_path . '/categories/delete/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => $titles['categories']['delete'],
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_category_delete_form'),
+        'parent'            => $root_path . '/categories',
         'file'              => 'scholar.generics.php',
     );
 

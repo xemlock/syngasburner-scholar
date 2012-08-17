@@ -1,6 +1,68 @@
 <?php
 
 /**
+ * @param int $id
+ * @param null|string $table_name
+ * @param null|string $subtype
+ * @return object
+ */
+function scholar_fetch_category($id, $table_name = null, $subtype = null) // {{{
+{
+    $where = array('id' => $id);
+
+    if (null !== $table_name) {
+        $where['table_name'] = $table_name;
+    }
+
+    if (null !== $subtype) {
+        $where['subtype'] = $subtype;
+    }
+
+    $query = db_query("SELECT * FROM {scholar_categories} WHERE " . scholar_db_where($where));
+    $record = db_fetch_object($query);
+
+    if ($record) {
+        $names = array();
+
+        // przygotuj miejsce dla nazw kategorii we wszystkich dostepnych jezykach
+        foreach (scholar_languages() as $code => $name) {
+            $names[$code] = null;
+        }
+
+        // pobierz dostepne nazwy kategorii
+        $query = db_query("SELECT * FROM {scholar_category_names} WHERE category_id = %d", $record->id);
+        while ($row = db_fetch_array($query)) {
+            $names[$row['language']] = $row['name'];
+        }
+
+        $record->names = $names;
+    }
+
+    return $record;
+} // }}}
+
+/**
+ * @param object &$category
+ */
+function scholar_save_category(&$category) // {{{
+{
+    if (empty($category->id)) {
+        $sql = "INSERT INTO {scholar_categories} (table_name, subtype) VALUES (" 
+             . scholar_db_quote($category->table_name) . ", "
+             . scholar_db_quote($category->subtype) . ")";
+        db_query($sql);
+        $category->id = db_last_insert_id('scholar_categories', 'id');
+    }
+
+    // zapisz nazwy
+    foreach ($category->names as $language => $name) {
+        db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d AND language = '%s'", $category->id, $language);
+        db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
+    }
+} // }}}
+
+
+/**
  * Pobiera z bazy danych wydarzenia powiązane z rekordem podanej tabeli.
  * @param int $row_id
  * @param string $table_name
@@ -663,6 +725,102 @@ function scholar_article_form(&$form_state, $id = null)
     ));
 
     return $form;
+}
+
+
+function scholar_category_form(&$form_state, $table_name, $subtype, $id = null)
+{
+    if (null === $id) {
+        $record = new stdClass;
+        $record->table_name = $table_name;
+        $record->subtype = $subtype;
+
+        drupal_add_tab(t('Add category'), $_GET['q']);
+
+    } else {
+        $record = scholar_fetch_category($id, $table_name, $subtype);
+        if (empty($record)) {
+            drupal_set_error(t('Invalid category identifier (%id)', array('%id' => $id)));
+            // TODO goto
+        }
+    }
+
+    $form = array();
+    $form['#record'] = $record;
+
+    // trzeba umiec na podstawie table_name i subtype podac sciezke do powrotu
+
+    foreach (scholar_languages() as $code => $name) {
+        $form[$code] = array(
+            '#type' => 'fieldset',
+            '#tree' => true,
+            '#title' => scholar_language_label($code, $name),
+        );
+        $form[$code]['name'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Name (@language)', array('@language' => $name)),
+            '#description' => t('Category name in language: @language', array('@language' => $name)),
+            '#required' => true,
+            '#default_value' => $record ? $record->names[$code] : null,
+        );
+    }
+
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => $record ? t('Save changes') : t('Add category'),
+    );
+    return $form;
+}
+
+function scholar_category_form_submit($form, &$form_state)
+{
+    $record = $form['#record'];
+
+    if ($record) {
+        $values = $form_state['values'];
+
+        foreach (scholar_languages() as $code => $name) {
+            if (isset($values[$code])) {
+                $record->names[$code] = $values[$code]['name'];
+            }
+        }
+
+        scholar_save_category($record);
+        drupal_set_message('ok');
+    }
+    
+    drupal_goto();
+}
+
+
+function scholar_category_list($table_name, $subtype)
+{
+    global $language;
+
+    drupal_add_tab(t('Add category'), $_GET['q'] . '/add');
+
+    $header = array(
+        array('data' => t('Name'), 'field' => 'n.name', 'sort' => 'asc'),
+        array('data' => t('Size'), 'title' => t('Number of category members')),
+        array('data' => t('Operations'), 'colspan' => 2),
+    );
+
+    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON c.id = n.category_id WHERE table_name = '%s' AND subtype = '%s' AND language = '%s'" . tablesort_sql($header), $table_name, $subtype, $language->language);
+
+
+    $destination = 'destination=' . $_GET['q'];
+
+    $rows = array();
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            check_plain($row['name']),
+            intval($row['refcount']),
+            l(t('edit'),   "#!/{$row['id']}", array('query' => $destination)), 
+            l(t('delete'), "#!/{$row['id']}", array('query' => $destination)),
+        );
+    }
+
+    return theme('table',  $header, $rows);
 }
 
 // vim: fdm=marker
