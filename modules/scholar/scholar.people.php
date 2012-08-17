@@ -21,7 +21,7 @@ function scholar_people_fetch_row($id, $redirect = false) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto('admin/scholar/people');
+        drupal_goto(scholar_admin_path('people'));
         exit;
     }
 
@@ -232,7 +232,7 @@ function scholar_people_list() // {{{
 
     if (empty($rows)) {
         $rows[] = array(
-            array('data' => t('No records found'), 'colspan' => 4)
+            array('data' => t('No records found'), 'colspan' => 4),
         );
     }
 

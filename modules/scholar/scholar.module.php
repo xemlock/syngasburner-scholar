@@ -202,13 +202,13 @@ function scholar_menu() // {{{
     return $items;
 } // }}}
 
-function scholar_admin_path($path = '')
+function scholar_admin_path($path = '') // {{{
 {
     if (strlen($path)) {
         $path = '/' . ltrim($path);
     }
     return 'admin/scholar' . $path;
-}
+} // }}}
 
 /**
  * @param array &$items
@@ -405,6 +405,40 @@ function scholar_db_quote($value) // {{{
 } // }}}
 
 /**
+ * Otacza podany łańcuch znaków znakami ograniczającymi zgodnymi
+ * z używanym rodzajem bazy danych tak, by można go było użyć jako
+ * nazwę tabeli lub kolumny.
+ * 
+ * @param string $identifier            nazwa tabeli lub kolumny
+ * @return string
+ */
+function scholar_db_quote_identifier($identifier) // {{{
+{
+    global $db_url;
+    static $db_type = null;
+
+    if (null === $db_type) {
+        $db_type = array_shift(explode(':', $db_url));
+    }
+
+    // PostgreSQL: "Quoted identifiers can contain any character, except
+    // the character with code zero."
+    // MySQL: "Permitted characters in quoted identifiers include the full
+    // Unicode Basic Multilingual Plane (BMP), except U+0000"
+    $identifier = str_replace("\x00", '', $identifier);
+
+    switch ($db_type) {
+        case 'mysql':
+        case 'mysqli':
+            return "`" . str_replace('`', '``', $identifier) . "`";
+
+        default:
+            // pgsql sqlite oci sybase mssql dblib
+            return '"' . str_replace('"', '""', $identifier) . '"';
+    }
+} // }}}
+
+/**
  * Jeżeli wartosć jest tablicą zostanie użyta klauzula WHERE IN.
  * @param array $conds          tablica z warunkami
  */
@@ -413,13 +447,21 @@ function scholar_db_where($conds) // {{{
     $where = array();
 
     foreach ($conds as $key => $value) {
+        if (false !== ($pos = strpos($key, '.'))) {
+            // alias tabeli, nie otaczaj go znakami ograniczajacymi
+            $column = substr($key, 0, $pos + 1)
+                    . scholar_db_quote_identifier(substr($key, $pos + 1));
+        } else {
+            $column = scholar_db_quote_identifier($key);
+        }
+
         if (is_array($value)) {
             $values = count($value) 
                     ? '(' . join(',', array_map('scholar_db_quote', $value)) . ')'
                     : '(NULL)';
-            $where[] = db_escape_table($key) . ' IN ' . $values;
+            $where[] = $column . ' IN ' . $values;
         } else {
-            $where[] = db_escape_table($key) . " = " . scholar_db_quote($value);
+            $where[] = $column . " = " . scholar_db_quote($value);
         }
     }
 
@@ -617,6 +659,8 @@ function scholar_last_change($time = null) // {{{
 
 function scholar_render($html, $dialog = false) // {{{
 {
+    scholar_add_css();
+
     if ($dialog || (isset($_REQUEST['dialog']) && $_REQUEST['dialog'])) {
         init_theme();
         echo "<!DOCTYPE html>\n"

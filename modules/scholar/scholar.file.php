@@ -274,6 +274,8 @@ function scholar_delete_file(&$file) // {{{
 {
     db_query("DELETE FROM {scholar_files} WHERE id = %d", $file->id);
     @unlink(scholar_file_path($file->filename));
+
+    $file->id = null;
 } // }}}
 
 /**

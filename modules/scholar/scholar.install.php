@@ -395,5 +395,6 @@ function scholar_uninstall() // {{{
     variable_del('scholar_last_change');
 } // }}}
 
-// DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
+// cleanup query
+// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
 

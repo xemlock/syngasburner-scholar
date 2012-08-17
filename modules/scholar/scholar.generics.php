@@ -6,15 +6,16 @@
  * @param null|string $subtype
  * @return object
  */
-function scholar_fetch_category($id, $table_name = null, $subtype = null) // {{{
+function scholar_fetch_category($id, $table_name = false, $subtype = false, $redirect = null) // {{{
 {
     $where = array('id' => $id);
 
-    if (null !== $table_name) {
+    if (false !== $table_name) {
         $where['table_name'] = $table_name;
     }
 
-    if (null !== $subtype) {
+    // null jest poprawna wartoscia dla podtypu, stad uzycie false
+    if (false !== $subtype) {
         $where['subtype'] = $subtype;
     }
 
@@ -36,6 +37,11 @@ function scholar_fetch_category($id, $table_name = null, $subtype = null) // {{{
         }
 
         $record->names = $names;
+
+    } elseif (strlen($redirect)) {
+        drupal_set_message(t('Invalid category identifier supplied (%id)', array('%id' => $id)), 'error');
+        drupal_goto($redirect);
+        exit;
     }
 
     return $record;
@@ -47,11 +53,16 @@ function scholar_fetch_category($id, $table_name = null, $subtype = null) // {{{
 function scholar_save_category(&$category) // {{{
 {
     if (empty($category->id)) {
+        $new = true;
         $sql = "INSERT INTO {scholar_categories} (table_name, subtype) VALUES (" 
              . scholar_db_quote($category->table_name) . ", "
              . scholar_db_quote($category->subtype) . ")";
         db_query($sql);
+
         $category->id = db_last_insert_id('scholar_categories', 'id');
+
+    } else {
+        $new = false;
     }
 
     // zapisz nazwy
@@ -59,8 +70,49 @@ function scholar_save_category(&$category) // {{{
         db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d AND language = '%s'", $category->id, $language);
         db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
     }
+
+    drupal_set_message($new ? t('Category was added successfully') : t('Category was updated successfully'));
 } // }}}
 
+/**
+ * Usuwa kategorię. Efektem ubocznym funkcji jest ustawienie komunikatu
+ * o pomyślnym usunięciu rekordu.
+ *
+ * @param object &$category
+ */
+function scholar_delete_category(&$category) // {{{
+{
+    global $language;
+
+    db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d", $category->id);
+    db_query("DELETE FROM {scholar_categories} WHERE id = %d", $category->id);
+
+    $category->id = null;
+
+    drupal_set_message(t('Category deleted successfully (%name)', array('%name' => $category->names[$language->language])));
+} // }}}
+
+/**
+ * Zwraca ścieżkę do listy kategorii powiązanych z daną tabelą i opcjonalnie
+ * rekordami danego podtypu. Reguła tworzenia ścieżki jest następująca:
+ * jeżeli podtyp jest pusty, do nazwy tabeli dołączany jest przyrostek 
+ * '/category', jeżeli podana została nazwa podtypu, zostaje ona użyta 
+ * w miejscu nazwy tabeli (nazwa tabeli - kontenera jest ignorowana).
+ * Nazwy tabel i podtypów muszą być więc unikalne.
+ *
+ * @param string $table_name OPTIONAL   nazwa tabeli
+ * @param string $subtype OPTIONAL      nazwa podtypu
+ */
+function _scholar_category_path($table_name = null, $subtype = null) // {{{
+{
+    if (null !== $table_name) {
+        $path = (null === $subtype ? $table_name : $subtype) . '/category';
+    } else {
+        $path = '/';
+    }
+
+    return scholar_admin_path($path);
+} // }}}
 
 /**
  * Pobiera z bazy danych wydarzenia powiązane z rekordem podanej tabeli.
@@ -309,8 +361,8 @@ function scholar_conference_list() // {{{
             substr($row['start_date'], 0, 10),
             check_plain($row['title']),
             check_plain($row['country_name']),
-            l(t('edit'),   "admin/scholar/conferences/edit/{$row['id']}"), 
-            intval($row['refcount']) ? '' : l(t('delete'), "admin/scholar/conferences/delete/{$row['id']}"),
+            l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
+            intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
         );
     }
 
@@ -727,10 +779,63 @@ function scholar_article_form(&$form_state, $id = null)
     return $form;
 }
 
+function scholar_category_list($table_name, $subtype = null)
+{
+    global $language;
 
-function scholar_category_form(&$form_state, $table_name, $subtype, $id = null)
+    drupal_add_tab(t('Add category'), $_GET['q'] . '/add');
+
+    $header = array(
+        array('data' => t('Name'), 'field' => 'n.name', 'sort' => 'asc'),
+        array('data' => t('Size'), 'title' => t('Number of category members')),
+        array('data' => t('Operations'), 'colspan' => 2),
+    );
+
+    // poniewaz subtype moze miec wartosc NULL uzycie placeholderow
+    // w db_query byloby niewygodne
+    $where = array(
+        'c.table_name' => $table_name,
+        'c.subtype'    => $subtype,
+        'n.language'   => $language->language,
+    );
+
+    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON c.id = n.category_id WHERE " . scholar_db_where($where) . tablesort_sql($header));
+
+    $rows = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            check_plain($row['name']),
+            intval($row['refcount']),
+            l(t('edit'),   _scholar_category_path($table_name, $subtype) . '/edit/' . $row['id']),
+            l(t('delete'), _scholar_category_path($table_name, $subtype) . '/delete/' . $row['id']),
+        );
+    }
+
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records found'), 'colspan' => 4),
+        );
+    }
+
+    return theme('table',  $header, $rows);
+}
+
+/**
+ * Strona z formularzem edycji kategorii.
+ *
+ * @param array &$form_state
+ * @param string $table_name
+ * @param string $subtype
+ * @param int $id OPTIONAL
+ */
+function scholar_category_form(&$form_state, $table_name, $subtype = null, $id = null) // {{{
 {
     if (null === $id) {
+        $is_new = true;
+
+        // pusty rekord, musi miec ustawione pola table_name i subtype,
+        // bo beda one niezbedne podczas zapisu do bazy danych
         $record = new stdClass;
         $record->table_name = $table_name;
         $record->subtype = $subtype;
@@ -738,17 +843,13 @@ function scholar_category_form(&$form_state, $table_name, $subtype, $id = null)
         drupal_add_tab(t('Add category'), $_GET['q']);
 
     } else {
-        $record = scholar_fetch_category($id, $table_name, $subtype);
-        if (empty($record)) {
-            drupal_set_error(t('Invalid category identifier (%id)', array('%id' => $id)));
-            // TODO goto
-        }
+        $is_new = false;
+        $record = scholar_fetch_category($id, $table_name, $subtype, _scholar_category_path($table_name, $subtype));
     }
 
-    $form = array();
-    $form['#record'] = $record;
-
-    // trzeba umiec na podstawie table_name i subtype podac sciezke do powrotu
+    $form = array(
+        '#record' => $record,
+    );
 
     foreach (scholar_languages() as $code => $name) {
         $form[$code] = array(
@@ -767,19 +868,27 @@ function scholar_category_form(&$form_state, $table_name, $subtype, $id = null)
 
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => $record ? t('Save changes') : t('Add category'),
+        '#value' => $is_new ? t('Add category') : t('Save changes'),
     );
-    return $form;
-}
 
-function scholar_category_form_submit($form, &$form_state)
+    return $form;
+} // }}}
+
+/**
+ * Tworzy lub aktualizuje rekord kategorii na podstawie danych
+ * przesłanych w formularzu.
+ *
+ * @param array $form
+ * @param array &$form_state
+ */
+function scholar_category_form_submit($form, &$form_state) // {{{
 {
     $record = $form['#record'];
 
     if ($record) {
-        $is_new = empty($record->id);
         $values = $form_state['values'];
 
+        // ustaw nazwy kategorii w dostepnych jezykach
         foreach (scholar_languages() as $code => $name) {
             if (isset($values[$code])) {
                 $record->names[$code] = $values[$code]['name'];
@@ -787,38 +896,51 @@ function scholar_category_form_submit($form, &$form_state)
         }
 
         scholar_save_category($record);
-
-        drupal_set_message($is_new ? t('Category was successfully added') : t('Category was successfully updated'));
-        drupal_goto(scholar_admin_path($record->subtype . '/category'));
+        drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
     }
-}
+} // }}}
 
-
-function scholar_category_list($table_name, $subtype)
+/**
+ * Strona z formularzem potwierdzającym usunięcie rekordu kategorii.
+ *
+ * @param array &$form_state
+ * @param int $id
+ */
+function scholar_category_delete_form(&$form_state, $id) // {{{
 {
     global $language;
 
-    drupal_add_tab(t('Add category'), $_GET['q'] . '/add');
+    $record = scholar_fetch_category($id, false, false, _scholar_category_path());
 
-    $header = array(
-        array('data' => t('Name'), 'field' => 'n.name', 'sort' => 'asc'),
-        array('data' => t('Size'), 'title' => t('Number of category members')),
-        array('data' => t('Operations'), 'colspan' => 2),
+    $form = array(
+        '#record' => $record,
     );
 
-    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON c.id = n.category_id WHERE table_name = '%s' AND subtype = '%s' AND language = '%s'" . tablesort_sql($header), $table_name, $subtype, $language->language);
+    $form = confirm_form($form,
+        t('Are you sure you want to delete category (%name)?', array('%name' => $record->names[$language->language])),
+        _scholar_category_path($record->table_name, $record->subtype),
+        t('This action cannot be undone.'),
+        t('Delete'),
+        t('Cancel')
+    );
 
-    $rows = array();
-    while ($row = db_fetch_array($query)) {
-        $rows[] = array(
-            check_plain($row['name']),
-            intval($row['refcount']),
-            l(t('edit'),   scholar_admin_path($subtype . '/category/edit/' . $row['id'])), 
-            l(t('delete'), scholar_admin_path($subtype . '/category/delete/' . $row['id'])), 
-        );
+    return $form;
+} // }}}
+
+/**
+ * Usuwa rekord kategorii.
+ *
+ * @param array $form
+ * @param array &$form_state
+ */
+function scholar_category_delete_form_submit($form, &$form_state) // {{{
+{
+    $record = $form['#record'];
+
+    if ($record) {
+        scholar_delete_category($record);
+        drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
     }
-
-    return theme('table',  $header, $rows);
-}
+} // }}}
 
 // vim: fdm=marker
