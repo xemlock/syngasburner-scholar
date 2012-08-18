@@ -285,14 +285,66 @@ function scholar_save_generic(&$generic) // {{{
 
 function scholar_generics_list($subtype) // {{{
 {
-    $func = 'scholar_' . $subtype . '_list';
+    $func = 'scholar_' . $subtype . '_list_item';
 
-    if ($func != __FUNCTION__ && function_exists($func)) {
-        return call_user_func($func);
+    if (function_exists($func)) {
+        return _scholar_generics_list($subtype, $func);
     }
 
     drupal_set_message("Unable to retrieve list: Invalid generic subtype '$subtype'", 'error');
 } // }}}
+
+function _scholar_generics_list($subtype, $callback)
+{
+    global $pager_total;
+
+    // funkcja ma zwracac naglowek tabeli, jezeli nie podano wiersza
+    $header = call_user_func($callback);
+
+    // sprawdz, czy potrzebna jest kolumna z nazwa kraju, jezeli tak,
+    // dodaj ja do zapytania
+    $cols = '*';
+
+    foreach ($header as $col) {
+        if (isset($col['field']) && 'country_name' == $col['field']) {
+            $cols .= ', ' . scholar_db_country_name('country', 'scholar_generics')
+                   . ' AS country_name';
+            break;
+        }
+    }
+
+    $rpp = scholar_admin_page_size();
+    $sql = "SELECT $cols FROM {scholar_generics} WHERE subtype = " . scholar_db_quote($subtype)
+         . tablesort_sql($header);
+
+    $query = pager_query($sql, $rpp, 0, null);
+    $rows  = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = call_user_func($callback, $row);
+    }
+
+    if (empty($rows)) {
+        $colspan = 0;
+
+        foreach ($header as $col) {
+            $colspan += isset($col['colspan']) ? max(1, $col['colspan']) : 1;
+        }
+
+        $rows[] = array(
+            array('data' => t('No records'), 'colspan' => $colspan)
+        );
+    }
+
+    $html = theme('table', $header, $rows);
+
+    if ($pager_total > 1) {
+        $html .= theme('pager', array(), $rpp);
+    }
+
+    return $html;
+}
+
 
 /**
  * Funkcja wywołująca formularz dla danego podtypu generycznego.
@@ -325,50 +377,6 @@ function scholar_generics_form(&$form_state, $subtype) // {{{
 } // }}}
 
 
-function scholar_conference_list() // {{{
-{
-    global $pager_total;
-
-    $header = array(
-        array('data' => t('Date'), 'field' => 'start_date', 'sort' => 'desc'),
-        array('data' => t('Title'), 'field' => 'title'),
-        array('data' => t('Country'), 'field' => 'country_name'),
-        array('data' => t('Operations'), 'colspan' => '2'),
-    );
-
-    $rpp = 25;
-    $country_name = scholar_db_country_name('country', 'scholar_generics');
-    $sql = "SELECT *, " . $country_name . " AS country_name FROM {scholar_generics} WHERE subtype = 'conference'" . tablesort_sql($header);
-
-    $query = pager_query($sql, $rpp, 0, null);
-    $rows  = array();
-
-    while ($row = db_fetch_array($query)) {
-        // kraj musi byc stringiem, bo jezeli jest nullem scholar_countries
-        // zwroci tablice wszystkich krajow
-        $rows[] = array(
-            substr($row['start_date'], 0, 10),
-            check_plain($row['title']),
-            check_plain($row['country_name']),
-            l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
-            intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
-        );
-    }
-
-    if (empty($rows)) {
-        $rows[] = array(
-            array('data' => t('No records'), 'colspan' => 5)
-        );
-    }
-
-    $html = theme('table', $header, $rows);
-
-    if ($pager_total > 1) {
-        $html .= theme('pager', array(), $rpp);
-    }
-
-    return $html;
-} // }}}
 
 /**
  * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
@@ -812,46 +820,88 @@ function scholar_article_form_submit($form, &$form_state)
     drupal_goto(scholar_admin_path('article'));
 }
 
-function scholar_article_list()
+
+/**
+ * @return array
+ */
+function scholar_article_list_item($row = null)
 {
-    global $pager_total;
+    if (null === $row) {
+        return array(
+            array('data' => t('x Year'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Authors'), 'field' => 'authors'),
+            array('data' => t('Title'), 'field' => 'title'),
+            array('data' => t('Operations'), 'colspan' => '2'),
+        );
+    }
 
-    $header = array(
-        array('data' => t('Year'), 'field' => 'start_date', 'sort' => 'desc'),
-        array('data' => t('Authors'), 'field' => 'authors'),
-        array('data' => t('Title'), 'field' => 'title'),
-        array('data' => t('Operations'), 'colspan' => '2'),
+    return array(
+        intval($row['start_date']),
+        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
+        check_plain($row['title']),
+        l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
+        l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
     );
-
-    $rpp = 25;
-    $sql = "SELECT * FROM {scholar_generics} WHERE subtype = 'article'" . tablesort_sql($header);
-
-    $query = pager_query($sql, $rpp, 0, null);
-    $rows  = array();
-
-    while ($row = db_fetch_array($query)) {
-        $rows[] = array(
-            intval($row['start_date']),
-            str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
-            check_plain($row['title']),
-            l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
-            l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
-        );
-    }
-
-    if (empty($rows)) {
-        $rows[] = array(
-            array('data' => t('No records'), 'colspan' => 5)
-        );
-    }
-
-    $html = theme('table', $header, $rows);
-
-    if ($pager_total > 1) {
-        $html .= theme('pager', array(), $rpp);
-    }
-
-    return $html;
 }
+
+function scholar_book_list_item($row = null)
+{
+    if (null === $row) {
+        return array(
+            array('data' => t('x Year'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Authors'), 'field' => 'authors'),
+            array('data' => t('Title'), 'field' => 'title'),
+            array('data' => t('Operations'), 'colspan' => '2'),
+        );
+    }
+
+    return array(
+        intval($row['start_date']),
+        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
+        check_plain($row['title']),
+        l(t('edit'),  scholar_admin_path('book/edit/' . $row['id'])),
+        l(t('delete'), scholar_admin_path('book/delete/' . $row['id'])),
+    );
+}
+
+function scholar_conference_list_item($row = null) // {{{
+{
+    if (null === $row) {
+        return array(
+            array('data' => t('x Date'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Title'), 'field' => 'title'),
+            array('data' => t('Country'), 'field' => 'country_name'),
+            array('data' => t('Operations'), 'colspan' => '2'),
+        );
+    }
+
+    return array(
+        substr($row['start_date'], 0, 10),
+        check_plain($row['title']),
+        check_plain($row['country_name']),
+        l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
+        intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
+    );
+} // }}}
+
+function scholar_presentation_list_item($row = null) // {{{
+{
+    if (null === $row) {
+        return array(
+            array('data' => t('x Date'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Title'), 'field' => 'title'),
+            array('data' => t('Country'), 'field' => 'country_name'),
+            array('data' => t('Operations'), 'colspan' => '2'),
+        );
+    }
+
+    return array(
+        substr($row['start_date'], 0, 10),
+        check_plain($row['title']),
+        check_plain($row['country_name']),
+        l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
+        intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
+    );
+} // }}}
 
 // vim: fdm=marker

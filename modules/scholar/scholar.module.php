@@ -221,6 +221,16 @@ function scholar_admin_path($path = '') // {{{
 } // }}}
 
 /**
+ * Zwraca liczbę rekordów na stronę w listach rekordów.
+ *
+ * @return int
+ */
+function scholar_admin_page_size()
+{
+    return 25;
+}
+
+/**
  * @param array &$items
  */
 function _scholar_menu_add_page_argument_positions(&$items) // {{{
