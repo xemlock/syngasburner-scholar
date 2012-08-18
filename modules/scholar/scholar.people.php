@@ -13,20 +13,31 @@
  * @param int $id               identyfikator osoby
  * @param bool $redirect        czy zgłosić błąd i przekierować do listy
  *                              osób, jeżeli osoba nie została znaleziona
+ * @return object
  */
-function scholar_people_fetch_row($id, $redirect = false) // {{{
+function scholar_load_person($id, $redirect = false) // {{{
 {
     $query = db_query('SELECT * FROM {scholar_people} WHERE id = %d', $id);
-    $row   = db_fetch_array($query);
+    $record = db_fetch_object($query);
 
-    if (empty($row) && $redirect) {
+    if ($record) {
+        // pobierz powiazane wezly i pliki
+        $record->files = scholar_fetch_files($record->id, 'people');
+        $record->nodes = scholar_fetch_nodes($record->id, 'people');
+    
+    } elseif ($redirect) {
         drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
         drupal_goto(scholar_admin_path('people'));
-        exit;
+        exit;        
     }
 
-    return $row;
+    return $record;
 } // }}}
+
+function scholar_save_person(&$person)
+{
+    
+}
 
 /**
  * Usuwa z bazy danych rekord osoby o podanym identyfikatorze.
@@ -43,47 +54,22 @@ function scholar_people_delete($id) // {{{
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $row  = $id ? scholar_people_fetch_row($id, true) : null;
-    $form = array('#row' => $row);
+    $row  = $id ? scholar_load_person($id, true) : null;
+    p($row);
 
-    // ustawienia osoby
-    $form['id'] = array(
-        '#type'     => 'hidden',
-    );
-    $form['first_name'] = array(
-        '#type'     => 'textfield',
-        '#title'    => t('First name'),
-        '#required' => true,
-    );
-    $form['last_name'] = array(
-        '#type'     => 'textfield',
-        '#title'    => t('Last name'),
-        '#required' => true,
-    );
-
-    $form['image_id'] = array(
-        '#type'     => 'gallery_image_select',
-        '#title'    => t('Photo'),
-    );
-
-    // link do wezlow zalezne od jezyka, ustawienia aliasu
-    $languages = scholar_languages();
-    $default_lang = language_default('language');
-
-    $form['attachments'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('File attachments'),
-//        '#collapsible' => true, // collapsible psuje ukrywanie kolumny z waga
-//        '#collapsed' => true,
-    );
-    $form['attachments']['files'] = array(
-        '#type' => 'scholar_attachment_manager',
-        '#default_value' => $row
-                            ? scholar_fetch_files($row['id'], 'people')
-                            : null
-                        );
-
-    $form['node'] = scholar_nodes_subform($row, 'people');
+    $form = scholar_generic_form(array(
+        'first_name' => array(
+            '#required' => true,
+        ),
+        'last_name' => array(
+            '#required' => true,
+        ),
+        'image_id' => array(
+            '#title' => t('Photo'),
+        ),
+        'files',
+        'nodes',
+    ));
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -92,11 +78,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
 
     // jezeli formularz dotyczy konkretnego rekordu ustaw domyslne wartosci pol
     if ($row) {
-        foreach ($row as $column => $value) {
-            if (isset($form[$column])) {
-                $form[$column]['#default_value'] = $value;
-            }
-        }
+        scholar_populate_form($form, $row);
     }
 
     return $form;
@@ -169,14 +151,14 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $row = scholar_people_fetch_row($id, true);
+    $row = scholar_load_person($id, true);
 
     $form = array('#row' => $row);
     $form = confirm_form($form,
         t('Are you sure you want to delete person (%first_name %last_name)?', 
             array(
-                '%first_name' => $row['first_name'],
-                '%last_name'  => $row['last_name'],
+                '%first_name' => $row->first_name,
+                '%last_name'  => $row->last_name,
             )
         ),
         'admin/scholar/people',

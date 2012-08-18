@@ -558,4 +558,224 @@ function scholar_attachments_form($flags, &$record, $table_name)
     return $form;
 }
 
+/**
+ * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
+ * należące do rekordu muszą znajdować się w kontenerze 'record'.
+ * @param array &$form
+ * @param object &$record
+ */
+function scholar_populate_form(&$form, &$record) // {{{
+{
+    if (isset($form['record'])) {
+        $subform = &$form['record'];
+
+        foreach ($record as $key => $value) {
+            if (isset($subform[$key])) {
+                $subform[$key]['#default_value'] = $value;
+            }
+        }
+
+        unset($subform);
+    }
+
+    // elementy files, node i events musza znajdowac sie w kontenerach
+    // o tej samej nazwie
+    if (isset($form['files']['files']) && isset($record->files)) {
+        // to jest o tyle proste, ze element files jest attachment_managerem
+        $form['files']['files']['#default_value'] = $record->files;
+    }
+
+    // wypelnij elementy zwiazane z powiazanymi segmentami
+    if (isset($form['nodes']['nodes']) && isset($record->nodes)) {
+        $subform = &$form['nodes']['nodes'];
+
+        foreach ($record->nodes as $language => $node) {
+            // wartosc checkboksa sterujacego kontenerem
+            $subform[$language]['#default_value'] = $node->status;
+
+            $subform[$language]['title']['#default_value'] = $node->title;
+            $subform[$language]['body']['#default_value']  = $node->body;
+
+            if ($node->menu) {
+                foreach ($node->menu as $key => $value) {
+                    $subform[$language]['menu'][$key]['#default_value'] = $value;
+                }
+            }
+
+            $subform[$language]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+        }
+
+        unset($subform);
+    }
+
+    if (isset($form['events']['events']) && isset($record->events)) {
+        $subform = &$form['events']['events'];
+
+        foreach ($record->events as $language => $event) {
+            $subform[$language]['#default_value'] = $event->status;
+
+            foreach ($event as $key => $value) {
+                if (isset($subform[$language][$key])) {
+                    $subform[$language][$key]['#default_value'] = $value;
+                }
+            }
+        }
+
+        unset($subform);
+    }
+} // }}}
+
+/**
+ * Wypełnienie rekordu wartościami z odpowiednich pól formularza.
+ * @param object &$record
+ * @param array $values zwykle wartości ze stanu formularza (form_state[values])
+ * @return int  liczba ustawionych wartości
+ */
+function scholar_populate_record(&$record, $values) // {{{
+{
+    // pomijaj nazwy wartosci zwiazane z automatycznie wygenerowanymi
+    // dodatkowymi polami formularza
+    $omit = array('op', 'submit', 'form_build_id', 'form_token', 'form_id');
+    $count = 0;
+
+    foreach ($values as $key => $value) {
+        if (in_array($key, $omit)) {
+            continue;
+        }
+        $record->$key = $value;
+        ++$count;
+    }
+
+    return $count;
+} // }}}
+
+/**
+ * Generator formularzy rekordów generycznych.
+ */
+function scholar_generic_form($fields = array()) // {{{
+{
+    $defs = array(
+        'first_name' => array(
+            '#type'     => 'textfield',
+            '#title'    => t('First name'),
+            '#required' => true,
+        ),
+        'last_name' => array(
+            '#type'     => 'textfield',
+            '#title'    => t('Last name'),
+            '#required' => true,
+        ),
+        'title' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('Title'),
+            '#required'  => true,
+            '#maxlength' => 255,
+        ),
+        'details' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('Details'),
+            '#maxlength' => 255,
+        ),
+        'start_date' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('Start date'),
+            '#maxlength' => 19, // YYYY-MM-DD HH:MM::SS
+        ),
+        'end_date' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('End date'),
+            '#maxlength' => 19,
+        ),
+        'locality' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('Locality'),
+            '#maxlength' => 128,
+        ),
+        'country' => array(
+            '#type'      => 'scholar_country',
+            '#title'     => t('Country'),
+        ),
+        'category' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('Category'),
+        ),
+        'url' => array(
+            '#type'      => 'textfield',
+            '#title'     => t('URL'),
+            '#maxlength' => 255,
+            '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
+        ),
+        'parent_id' => array(
+            '#type'     => 'textfield',
+            '#title'    => t('Parent record'),
+        ),
+        'image_id' => array(
+            '#type'     => 'gallery_image_select',
+            '#title'    => t('Image'),
+        ),
+        'authors' => array(
+            '#type'     => 'scholar_element_people',
+            '#title'    => t('Authors'),
+        ),
+    );
+
+    $form['record'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Basic data'),
+    );
+
+    foreach ($fields as $key => $value) {
+        switch ($value) {
+            case 'files':
+                $form['files'] = array(
+                    '#type' => 'fieldset',
+                    '#title' => t('File attachments'),
+                );
+                $form['files']['files'] = array(
+                    '#type' => 'scholar_attachment_manager',
+                );
+                break;
+
+            case 'nodes':
+                $form['nodes'] = array(
+                    '#type' => 'fieldset',
+                    '#title' => t('Node'),
+                );
+                $form['nodes']['nodes'] = scholar_nodes_subform();
+                break;
+
+            case 'events':
+                // TODO konfigurowalne pola eventu
+                $form['events'] = array(
+                    '#type' => 'fieldset',
+                    '#title' => t('Event'),
+                );
+                $form['events']['events'] = scholar_events_form();
+                break;
+
+            default:
+                // jezeli podano nazwe formularza jako wartosc, z numerycznym
+                // kluczem, uzyj tej nazwy do pobrania definicji pola
+                if (is_int($key)) {
+                    if (isset($defs[$value])) {
+                        $form['record'][$value] = $defs[$value];
+                    }
+                } elseif (isset($defs[$key])) {
+                    // jezeli podano string, zostanie on uzyty jako etykieta,
+                    // wartosci typow innych niz string i array zostana zignorowane
+                    if (is_string($value)) {
+                        $value = array('#title' => $value);
+                    }
+
+                    $form['record'][$key] = is_array($value) 
+                                          ? array_merge($defs[$key], $value)
+                                          : $defs[$key];
+                }
+                break;
+        }
+    }
+
+    return $form;
+} // }}}
+
 // vim: fdm=marker
