@@ -248,8 +248,8 @@ function scholar_people_list() // {{{
 function scholar_people_itempicker(&$options = null) // {{{
 {
     $options = array(
-        'filterKey'    => 'fn',
-        'template'     => '{ fn }',
+        'filterKey'    => 'full_name',
+        'template'     => '{ full_name }',
         'emptyMessage' => t('No people found'),
     );
     $rows = array();
@@ -257,8 +257,10 @@ function scholar_people_itempicker(&$options = null) // {{{
     $query = db_query("SELECT * FROM {scholar_people} ORDER BY last_name");
     while ($row = db_fetch_array($query)) {
         $rows[] = array(
-            'id' => $row['id'],
-            'fn' => $row['last_name'] . ' ' . $row['first_name'],
+            'id'         => $row['id'],
+            'full_name'  => $row['last_name'] . ' ' . $row['first_name'],
+            'first_name' => $row['first_name'],
+            'last_name'  => $row['last_name'],
         );
     }
 

@@ -273,19 +273,19 @@ function scholar_schema() // {{{
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'object_id' => array(
+            'generic_id' => array(
                 // REFERENCES scholar_generics (id)
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'author_order' => array(
+            'weight' => array(
                 'description' => 'kolejność autorów artykułu',
                 'type'      => 'int',
                 'not null'  => true,
                 'default'   => 0,
             ),
         ),
-        'primary key'  => array('person_id', 'object_id'),
+        'primary key'  => array('person_id', 'generic_id'),
     ); // }}}
 
     $schema['scholar_files'] = array( // {{{

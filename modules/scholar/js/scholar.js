@@ -1522,7 +1522,7 @@ var Scholar = {
         ]);
 
         // ustaw wartosc poczatkowa
-        if (values) {
+        if (values && values.length) {
             for (var i = 0, n = values.length; i < n; ++i) {
                 var value = values[i];
                 widget.add(value.id, value);
@@ -1531,9 +1531,9 @@ var Scholar = {
                     labels.add(value.id, value.label);
                 }
             }
-        }
 
-        widget.redraw();
+            widget.redraw();
+        }
     }, // }}}
     /**
      * @namespace
@@ -1549,9 +1549,14 @@ var Scholar = {
             var widget = new Scholar.SortableMultiselect(target, {
                 header: ['', 'Name'],
                 templates: ['', function(item) {
-                    var fn = String(item.fn).replace(/"/g, '&quot;');
-                    return '<input type="hidden" name="' + name + '[name]" value="' + fn + '" />' 
-                         + fn;
+                    var field = name + '[' + item.id + ']',
+                        first = String(item.first_name).replace(/"/g, '&quot;'),
+                        last  = String(item.last_name).replace(/"/g, '&quot;');
+
+                    return '<input type="hidden" name="' + field + '[id]" value="' + item.id + '" />'
+                         + '<input type="hidden" name="' + field + '[first_name]" value="' + first + '" />'
+                         + '<input type="hidden" name="' + field + '[last_name]" value="' + last + '" />'
+                         + first + ' ' + last;
                 }],
                 showOnInit: false,
                 weightTemplate: name + '[{ id }][weight]'
@@ -1572,11 +1577,14 @@ var Scholar = {
                 }
             ]);
 
-            if (items) {
+            if (items && items.length) {
+                console.log(items);
                 for (var i = 0, n = items.length; i < n; ++i) {
                     var item = items[i];
                     widget.add(item.id, item);
                 }
+
+                widget.redraw();
             }
         } // }}}
     }

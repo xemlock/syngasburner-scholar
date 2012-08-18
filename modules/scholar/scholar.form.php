@@ -129,11 +129,28 @@ function form_type_scholar_element_people_value($element, $post = false)
     $value = array();
 
     if (false === $post) {
-        
-    
-    } else {
-
+        if ($element['#default_value']) {
+            $post = $element['#default_value'];
+        }
     }
+
+    if ($post) {
+        p($post, __FUNCTION__);
+        foreach ((array) $post as $data) {
+            if (empty($data['id'])) {
+                continue;
+            }
+
+            $value[] = array(
+                'id'         => intval($data['id']),
+                'first_name' => isset($data['first_name']) ? strval($data['first_name']) : '',
+                'last_name'  => isset($data['last_name']) ? strval($data['last_name']) : '',
+                'weight'     => isset($data['weight']) ? intval($data['weight']) : 0,
+            );
+        }
+    }
+
+    p($value, __FUNCTION__);
 
     return $value;
 }
@@ -389,7 +406,6 @@ function scholar_events_form($date = true)
             '#type' => 'textfield',
             '#title' => t('Start date'),
             '#maxlength' => 10,
-            '#required' => true,
             '#description' => t('Date format: YYYY-MM-DD.'),
         );
         $form['end_date'] = array(

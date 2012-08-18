@@ -105,6 +105,32 @@ function scholar_new_generic() // {{{
 } // }}}
 
 /**
+ * @return array
+ */
+function scholar_fetch_authors($generic_id) // {{{
+{
+    $query = db_query("SELECT p.id, p.first_name, p.last_name FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $id);
+    $rows = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
+} // }}}
+
+/**
+ * @param int $generic_id
+ * @param array $authors
+ */
+function scholar_save_authors($generic_id, $authors)
+{
+    // pobierz identyfikatory istniejacych osob
+
+}
+
+
+/**
  * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
  * @param int $id               identyfikator rekordu
  * @param string $subtype       OPTIONAL wymagany podtyp rekordu
@@ -126,9 +152,10 @@ function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
     $record = db_fetch_object($query);
 
     if ($record) {
-        $record->files = scholar_fetch_files($record->id, 'generics');
-        $record->nodes = scholar_fetch_nodes($record->id, 'generics');
-        $record->events = scholar_attachments_load_events($record->id, 'generics');
+        $record->authors = scholar_fetch_authors($record->id);
+        $record->files   = scholar_fetch_files($record->id, 'generics');
+        $record->nodes   = scholar_fetch_nodes($record->id, 'generics');
+        $record->events  = scholar_attachments_load_events($record->id, 'generics');
 
     } else if ($redirect) {
         drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
@@ -164,6 +191,10 @@ function scholar_save_generic(&$generic) // {{{
     }
 
     if ($success) {
+        if ($generic->authors) {
+            scholar_save_authors($generic->id, $generic->authors);        
+        }
+
         // zapisz dolaczone pliki
         if ($generic->files) {
             scholar_save_files($generic->id, 'generics', $generic->files);
@@ -665,7 +696,18 @@ function scholar_article_form(&$form_state, $id = null)
         'files',  // pliki
     ));
 
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => $record ? t('Save changes') : t('Add article'),
+    );
+
     return $form;
+}
+
+function scholar_article_form_submit()
+{
+    p(func_get_args());
+    exit;
 }
 
 // vim: fdm=marker
