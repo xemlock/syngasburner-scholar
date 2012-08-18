@@ -385,6 +385,8 @@ function scholar_conference_form(&$form_state, $id = null) // {{{
         $record = null;
     } else {
         $record = scholar_load_generic($id, 'conference', 'admin/scholar/conferences');
+        $record->start_date = substr($record->start_date, 0, 10);
+        $record->end_date   = substr($record->end_date, 0, 10);
     }
 
     $form = scholar_generic_form(array(
@@ -400,19 +402,12 @@ function scholar_conference_form(&$form_state, $id = null) // {{{
         'locality', 'country', 'url', 'category',
         'files', 'events', 'nodes'
     
-    ));
-    $form['#record'] = $record;
+    ), $record);
+
     $form['submit'] = array(
         '#type'     => 'submit',
         '#value'    => $record ? t('Save changes') : t('Add record'),
     );
-
-    if ($record) {
-        $record->start_date = substr($record->start_date, 0, 10);
-        $record->end_date   = substr($record->end_date, 0, 10);
-
-        scholar_populate_form($form, $record);
-    }
 
     return $form;
 } // }}}

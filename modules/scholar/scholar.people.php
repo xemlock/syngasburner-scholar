@@ -36,7 +36,15 @@ function scholar_load_person($id, $redirect = false) // {{{
 
 function scholar_save_person(&$person)
 {
+    if ($person->id) {
+        
     
+    }
+
+    drupal_set_message($is_new
+        ? t('Person created successfully')
+        : t('Person updated successfully')
+    );
 }
 
 /**
@@ -137,10 +145,6 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     // zapisz czas ostatniej zmiany danych
     scholar_last_change(time());
 
-    drupal_set_message($is_new
-        ? t('Person created successfully')
-        : t('Person updated successfully')
-    );
     drupal_goto('admin/scholar/people');
 } // }}}
 
@@ -175,7 +179,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
 function scholar_people_delete_form_submit($form, &$form_state) // {{{
 {
     if ($row = $form['#row']) {
-        scholar_people_delete($row['id']);
+        scholar_delete_person($row);
         drupal_set_message(t(
             'Person deleted successfully (%first_name %last_name)',
             array(

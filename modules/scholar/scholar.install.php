@@ -11,13 +11,13 @@ function scholar_schema() // {{{
         'description' => 'numery węzłów zarządzanych przez obiekty scholara',
         'fields' => array(
             'table_name' => array(
-                // people OR objects
+                // people, generics, categories
                 'type'      => 'varchar',
                 'length'    => 32,
                 'not null'  => true,
             ),
             'object_id' => array(
-                // scholar_people.id OR scholar_generics.id
+                // scholar_people.id OR scholar_generics.id OR scholar_categories.id
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -109,12 +109,6 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 32,
             ),
-            'guid' => array(
-                'description' => 'unikalny identyfikator kategorii w obrębie tabeli',
-                'type'      => 'varchar',
-                'length'    => 128,
-                'not null'  => true,
-            ),
             'color' => array(
                 'description' => 'kolor do oznaczenia obiektów danej kategorii np. w kalendarzu',
                 'type'      => 'varchar',
@@ -128,9 +122,6 @@ function scholar_schema() // {{{
             ),
         ),
         'primary key'  => array('id'),
-        'unique keys' => array(
-            'guid' => array('guid'),
-        ),
     ); // }}}
 
     $schema['scholar_category_names'] = array(

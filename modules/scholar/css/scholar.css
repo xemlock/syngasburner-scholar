@@ -91,6 +91,11 @@ user-select: none;
 .scholar-sortable-multiselect .table-wrapper table {
   margin-top: 0;
 }
+
+.form-item label .language-icon {
+  border: 1px solid #ccc;
+}
+
 /* modal {{{ */
 .dialog {
   background: #f6f6f6;

@@ -652,23 +652,20 @@ function scholar_populate_record(&$record, $values) // {{{
 /**
  * Generator formularzy rekordów generycznych.
  */
-function scholar_generic_form($fields = array()) // {{{
+function scholar_generic_form($fields = array(), $record = null) // {{{
 {
     $defs = array(
         'first_name' => array(
             '#type'     => 'textfield',
             '#title'    => t('First name'),
-            '#required' => true,
         ),
         'last_name' => array(
             '#type'     => 'textfield',
             '#title'    => t('Last name'),
-            '#required' => true,
         ),
         'title' => array(
             '#type'      => 'textfield',
             '#title'     => t('Title'),
-            '#required'  => true,
             '#maxlength' => 255,
         ),
         'details' => array(
@@ -718,6 +715,8 @@ function scholar_generic_form($fields = array()) // {{{
             '#title'    => t('Authors'),
         ),
     );
+
+    $form['#record'] = $record;
 
     $form['record'] = array(
         '#type' => 'fieldset',
@@ -773,6 +772,10 @@ function scholar_generic_form($fields = array()) // {{{
                 }
                 break;
         }
+    }
+
+    if ($record) {
+        scholar_populate_form($form, $record);
     }
 
     return $form;

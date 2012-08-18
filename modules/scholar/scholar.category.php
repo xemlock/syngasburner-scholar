@@ -38,6 +38,9 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
 
         $record->names = $names;
 
+        $record->files = scholar_fetch_files($record->id, 'categories');
+        $record->nodes = scholar_fetch_nodes($record->id, 'categories');
+
     } elseif (strlen($redirect)) {
         drupal_set_message(t('Invalid category identifier supplied (%id)', array('%id' => $id)), 'error');
         drupal_goto($redirect);
@@ -65,10 +68,19 @@ function scholar_save_category(&$category) // {{{
         $new = false;
     }
 
-    // zapisz nazwy
+    // zapisz nazwy kategorii
     foreach ($category->names as $language => $name) {
         db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d AND language = '%s'", $category->id, $language);
         db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
+    }
+    unset($name);
+
+    if ($category->files) {
+        scholar_save_files($category->id, 'categories', $category->files);
+    }
+
+    if ($category->nodes) {
+        scholar_save_nodes($category->id, 'categories', $category->nodes);
     }
 
     drupal_set_message($new ? t('Category was added successfully') : t('Category was updated successfully'));
@@ -173,8 +185,6 @@ function scholar_category_list($table_name, $subtype = null) // {{{
 function scholar_category_form(&$form_state, $table_name, $subtype = null, $id = null) // {{{
 {
     if (null === $id) {
-        $is_new = true;
-
         // pusty rekord, musi miec ustawione pola table_name i subtype,
         // bo beda one niezbedne podczas zapisu do bazy danych
         $record = new stdClass;
@@ -184,31 +194,22 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         drupal_add_tab(t('Add category'), $_GET['q']);
 
     } else {
-        $is_new = false;
         $record = scholar_fetch_category($id, $table_name, $subtype, _scholar_category_path($table_name, $subtype));
     }
 
-    $form = array(
-        '#record' => $record,
-    );
+    $form = scholar_generic_form(array(
+        'files',
+        'nodes',
+    ), $record);
 
-    $form['guid'] = array(
-        '#type'      => 'textfield',
-        '#maxlength' => 128,
-        '#required'  => true,
-        '#title'     => t('Unique identifier'),
-        '#description' => t('Each category must be given a unique identifier.'),
+    $form['record']['names'] = array(
+        '#tree' => true,
     );
 
     foreach (scholar_languages() as $code => $name) {
-        $form[$code] = array(
-            '#type' => 'fieldset',
-            '#tree' => true,
-            '#title' => scholar_language_label($code, $name),
-        );
-        $form[$code]['name'] = array(
+        $form['record']['names'][$code] = array(
             '#type' => 'textfield',
-            '#title' => t('Name (@language)', array('@language' => $name)),
+            '#title' => scholar_language_label($code, t('Name')),
             '#description' => t('Category name in language: @language', array('@language' => $name)),
             '#required' => true,
             '#default_value' => $record ? $record->names[$code] : null,
@@ -217,7 +218,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
 
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => $is_new ? t('Add category') : t('Save changes'),
+        '#value' => empty($record->id) ? t('Add category') : t('Save changes'),
     );
 
     return $form;
@@ -236,14 +237,26 @@ function scholar_category_form_submit($form, &$form_state) // {{{
 
     if ($record) {
         $values = $form_state['values'];
+        scholar_populate_record($record, $values);
 
         // ustaw nazwy kategorii w dostepnych jezykach
         foreach (scholar_languages() as $code => $name) {
-            if (isset($values[$code])) {
-                $record->names[$code] = $values[$code]['name'];
+            if (isset($values['names'][$code])) {
+                $record->names[$code] = $values['names'][$code];
             }
         }
 
+        // jezeli nie podano tytulow wezla (segmentu) uzyj nazwy kategorii
+        foreach ($record->nodes as $language => &$node) {
+            $title = trim($node['title']);
+            if (0 == strlen($title)) {
+                $title = strval($record->names[$language]);
+            }
+            $node['title'] = $title;
+        }
+        unset($node);
+
+        // zapisz kategorie
         scholar_save_category($record);
         drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
     }
