@@ -239,4 +239,30 @@ function scholar_people_list() // {{{
     return theme('table', $header, $rows);
 } // }}}
 
+/**
+ * Dostarcza rekordy osób do wybieralnej listy.
+ *
+ * @param array &$options OPTIONAL
+ * @return array
+ */
+function scholar_people_itempicker(&$options = null) // {{{
+{
+    $options = array(
+        'filterKey'    => 'fn',
+        'template'     => '{ fn }',
+        'emptyMessage' => t('No people found'),
+    );
+    $rows = array();
+
+    $query = db_query("SELECT * FROM {scholar_people} ORDER BY last_name");
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            'id' => $row['id'],
+            'fn' => $row['last_name'] . ' ' . $row['first_name'],
+        );
+    }
+
+    return $rows;
+} // }}}
+
 // vim: fdm=marker

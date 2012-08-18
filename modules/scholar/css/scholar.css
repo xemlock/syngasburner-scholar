@@ -67,9 +67,30 @@ fieldset.scholar legend .language-icon {
   zoom: 1;
 }
 
+#items li.selected {
+  font-weight: bold;
+}
+#items li {
+  cursor:pointer;
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+}
+#items li:hover {
+  background: yellow;
+}
 
+.form-item .scholar-sortable-multiselect {
+  border: 1px solid #999;
+  padding: .5em;
+}
 
-
+.scholar-sortable-multiselect .table-wrapper table {
+  margin-top: 0;
+}
 /* modal {{{ */
 .dialog {
   background: #f6f6f6;

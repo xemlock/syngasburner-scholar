@@ -109,6 +109,12 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 32,
             ),
+            'guid' => array(
+                'description' => 'unikalny identyfikator kategorii w obrębie tabeli',
+                'type'      => 'varchar',
+                'length'    => 128,
+                'not null'  => true,
+            ),
             'color' => array(
                 'description' => 'kolor do oznaczenia obiektów danej kategorii np. w kalendarzu',
                 'type'      => 'varchar',
@@ -121,7 +127,10 @@ function scholar_schema() // {{{
                 'default'   => 0,
             ),
         ),
-        'primary key'  => array('id'),        
+        'primary key'  => array('id'),
+        'unique keys' => array(
+            'guid' => array('guid'),
+        ),
     ); // }}}
 
     $schema['scholar_category_names'] = array(

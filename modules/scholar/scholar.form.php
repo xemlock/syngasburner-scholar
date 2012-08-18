@@ -28,13 +28,15 @@ function scholar_elements() // {{{
         '#maxlength'        => 10,
         '#yearonly'         => false,
     );
+    $elements['scholar_element_people'] = array(
+        '#input'            => true,
+    );
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
     );
     $elements['scholar_attachment_manager'] = array(
         '#input'            => true,
-        '#files'            => array(),
         '#element_validate' => array('form_type_scholar_attachment_manager_validate'),
     );
 
@@ -115,7 +117,45 @@ function scholar_elements_theme() // {{{
         'arguments' => array('element' => null),
     );
 
+    $theme['scholar_element_people'] = array(
+        'arguments' => array('element' => null),
+    );
+
     return $theme;
+} // }}}
+
+function form_type_scholar_element_people_value($element, $post = false)
+{
+    $value = array();
+
+    if (false === $post) {
+        
+    
+    } else {
+
+    }
+
+    return $value;
+}
+
+/**
+ * @return string
+ */
+function theme_scholar_element_people($element) // {{{
+{
+    $params = array(
+        '#' . $element['#id'],
+        $element['#name'],
+        scholar_admin_path('people/itempicker'),
+        $element['#value'],
+    );
+    $params = implode(',', array_map('drupal_to_js', $params));
+
+    drupal_add_js('misc/tabledrag.js', 'core');
+    drupal_add_js('misc/tableheader.js', 'core');
+    drupal_add_js("\$(function(){Scholar.formElements.people($params)})", 'inline');
+
+    return theme_form_element($element, '<div id="' . $element['#id'] .'"><noscript><div class="error">' . t('JavaScript is required.') . '</div></noscript></div>');
 } // }}}
 
 /**
@@ -224,17 +264,14 @@ function theme_scholar_textarea($element) // {{{
  */
 function theme_scholar_attachment_manager($element) // {{{
 {
-    scholar_add_css();
     drupal_add_js('misc/tabledrag.js', 'core');
     drupal_add_js('misc/tableheader.js', 'core');
-
-    scholar_add_js();
 
     $langicons = module_exists('languageicons');
 
     $settings = array(
         'prefix'        => $element['#name'],
-        'urlFileSelect' => url(scholar_admin_path('file/select')),
+        'urlFileSelect' => url(scholar_admin_path('file/itempicker')),
         'urlFileUpload' => url(scholar_admin_path('file/upload'), array('query' => 'dialog=1')),
     );
 
@@ -503,3 +540,4 @@ function scholar_attachments_form($flags, &$record, $table_name)
     return $form;
 }
 
+// vim: fdm=marker

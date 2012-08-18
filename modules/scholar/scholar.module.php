@@ -124,6 +124,15 @@ function scholar_menu() // {{{
         'parent'            => $root . '/people',
         'file'              => 'scholar.people.php',
     );
+    $items[$root . '/people/itempicker'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Select people'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_itempicker',
+        'page arguments'    => array('scholar_people_itempicker'),
+        'parent'            => $root . '/people',
+        'file'              => 'scholar.people.php',
+    );
 
     $items += _scholar_generic_menu(
         'conference', 
@@ -188,11 +197,12 @@ function scholar_menu() // {{{
         'parent'            => $root . '/file',
         'file'              => 'scholar.file.php',
     );
-    $items[$root . '/file/select'] = array(
+    $items[$root . '/file/itempicker'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => t('File selection'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_select',
+        'page callback'     => 'scholar_render_itempicker',
+        'page arguments'    => array('scholar_file_itempicker'),
         'parent'            => $root . '/file',
         'file'              => 'scholar.file.php',
     );
@@ -306,7 +316,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page callback'     => 'scholar_category_list',
         'page arguments'    => array('generics', $subtype),
         'parent'            => $root_path,
-        'file'              => 'scholar.generics.php',
+        'file'              => 'scholar.category.php',
     );
 
     // jezeli nie ma MENU)DEFAULT_LOCAL_TASK taby (drugiego poziomu w tym wypadku) nie beda automatycznie generowane, wiec ok
@@ -322,7 +332,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_form', 'generics', $subtype),
         'parent'            => $root_path . '/category',
-        'file'              => 'scholar.generics.php',
+        'file'              => 'scholar.category.php',
     );
     $items[$root_path . '/category/edit/%'] = array(
         'type'              => MENU_CALLBACK,
@@ -331,7 +341,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_form', 'generics', $subtype),
         'parent'            => $root_path . '/category',
-        'file'              => 'scholar.generics.php',
+        'file'              => 'scholar.category.php',
     );
     $items[$root_path . '/category/delete/%'] = array(
         'type'              => MENU_CALLBACK,
@@ -340,7 +350,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_delete_form'),
         'parent'            => $root_path . '/category',
-        'file'              => 'scholar.generics.php',
+        'file'              => 'scholar.category.php',
     );
 
     return $items;
@@ -408,7 +418,7 @@ function scholar_db_quote($value) // {{{
  * Otacza podany łańcuch znaków znakami ograniczającymi zgodnymi
  * z używanym rodzajem bazy danych tak, by można go było użyć jako
  * nazwę tabeli lub kolumny.
- * 
+ *
  * @param string $identifier            nazwa tabeli lub kolumny
  * @return string
  */
@@ -659,6 +669,7 @@ function scholar_last_change($time = null) // {{{
 
 function scholar_render($html, $dialog = false) // {{{
 {
+    scholar_add_js();
     scholar_add_css();
 
     if ($dialog || (isset($_REQUEST['dialog']) && $_REQUEST['dialog'])) {
@@ -677,6 +688,28 @@ function scholar_render($html, $dialog = false) // {{{
     }
     return $html;
 } // }}}
+
+function scholar_render_itempicker($callback)
+{
+    $items = $callback($options);
+
+    $options = array_merge((array) $options, array(
+        'filterSelector' => '#name-filter',
+        'filterReset'    => '#reset-filter',
+        'showOnInit'     => false,
+    ));
+
+    ob_start();
+?><script type="text/javascript">$(function() {
+  new Scholar.ItemPicker('#items', <?php echo drupal_to_js($items) ?>, <?php echo drupal_to_js($options) ?>);
+});</script>
+Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
+Dwukrotne kliknięcie zaznacza element
+<hr/>
+<div id="items"></div>
+<?php
+    return scholar_render(ob_get_clean(), true);
+}
 
 /**
  * Wykorzystuje locale_language_list().

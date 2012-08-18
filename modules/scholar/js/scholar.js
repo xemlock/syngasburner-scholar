@@ -344,43 +344,47 @@ var Scholar = {
      * @constructor
      * @param {string|jQuery|element} selector
      *     element dokumentu, w którym ma zostać utworzony widget listy
-     * @param {string} template
-     *     szablon określający jak przedstawiać elementy wybieralne, patrz 
-     *     {@link Scholar.render}
      * @param {Array} items
      *     lista elementów wybieralnych
      * @param {object} [options]
      *     zbiór par klucz/wartość konfigurujących obiekt
      * @param {string} [options.idKey='id']
      *     właściwość elementu wybieralnego przechowująca jego identyfikator
+     * @param {string} [options.template='{ label }']
+     *     szablon określający jak przedstawiać elementy wybieralne, patrz 
+     *     {@link Scholar.render}
      * @param {string} [options.filterSelector] 
      *     selektor elementu dokumentu (pola tekstowego), z ktorego bedzie
      *     brana wartosc do filtrowania listy elementów wybieralnych
      * @param {string} [options.filterReset]
      *     selektor elementu dokumentu (przycisku), do którego zostanie 
      *     podpięta obsługa zdarzenia click czyszcząca filtr
-     * @param {string} [options.filterKey]
+     * @param {string} [options.filterKey='label']
      *     nazwa właściwości elementu wybieralnego, po której lista będzie
-     *     filtrowana. Musi zostać podany, jeżeli podano filterSelector
+     *     filtrowana
      * @param {boolean} [options.showOnInit=true]
      * @param {string} [options.emptyMessage]
      */
-    ItemPicker: function(selector, template, items, options) { // {{{
-        var $ = window.jQuery,
+    ItemPicker: function(selector, items, options) { // {{{
+        var $ = window.jQuery;
 
-        options = $.extend({}, {idKey: 'id'}, options);
+        options = $.extend({}, {
+            idKey:     'id',
+            filterKey: 'label',
+            template:  '{ label }'
+        }, options);
 
         var _domain,   // zbior przechowujacy wszystkie elementy
             _selected, // zbior przechowujacy elementy zaznaczone przez uzytkownika
             _elements; // zbior tagow LI odpowiadajacych elementom listy
 
-        function _initDomain(items, idKey) {
+        function _initDomain() {
             _domain = new Scholar.IdSet;
 
             // wypelnij zbior wszystkich elementow
             for (var i = 0, n = items.length; i < n; ++i) {
                 var item = items[i];
-                _domain.add(item[idKey], item);
+                _domain.add(item[options.idKey], item);
             }
         }
 
@@ -412,23 +416,23 @@ var Scholar = {
          * elementom listy i umieszcza go jako jedyne dziecko selektora
          * podanego w konstruktorze.
          */
-        function _initElements(idKey) {
+        function _initElements() {
             _elements = new Scholar.IdSet;
 
             var ul = $('<ul class="scholar-item-picker" />'),
-                createElement = function(item, ul) {
+                createElement = function(id, item, ul) {
                     return $('<li/>')
-                        .html(Scholar.render(template, item))
-                        .attr('data-id', item[idKey])
+                        .html(Scholar.render(options.template, item))
+                        .attr('data-id', id)
                         .click(function() {
                             $(this).removeClass('initial');
-                            _selected[_selected.has(item[idKey]) ? 'del' : 'add'](item[idKey], item);
+                            _selected[_selected.has(id) ? 'del' : 'add'](id, item);
                         })
                         .appendTo(ul);
                 }
 
             _domain.each(function(id, item) {
-                _elements.add(id, createElement(item, ul));
+                _elements.add(id, createElement(id, item, ul));
             });
 
             // jezeli podano komunikat dla pustej listy, dodaj go na koniec
@@ -552,9 +556,9 @@ var Scholar = {
             return this;
         }
 
-        _initDomain(items, options.idKey);
+        _initDomain();
         _initSelected();
-        _initElements(options.idKey);
+        _initElements();
 
         // jezeli podano selektor elementu, na podstawie wartosci ktorego
         // beda filtrowane elementy, podepnij filtrowanie po kazdym
@@ -997,7 +1001,7 @@ var Scholar = {
 
             // inicjalizacja markupu
             _element
-                .addClass('scholar-attachment-manager')
+                .addClass('scholar-sortable-multiselect')
                 .html('<div class="table-wrapper"></div><div class="buttons-wrapper"></div>')
                 .data('sortableMultiselect', self);
 
@@ -1469,7 +1473,7 @@ var Scholar = {
                         .change(function() {
                             labels.add(item.id, this.value);
                         }),
-                    '<div class="description">' + String(item.filename).replace(/</, '&lt;') + '</div>'
+                    '<div class="description">' + String(item.filename).replace(/</g, '&lt;') + '</div>'
                 ];
             },
             function(item) {
@@ -1530,7 +1534,52 @@ var Scholar = {
         }
 
         widget.redraw();
-    } // }}}
+    }, // }}}
+    /**
+     * @namespace
+     */
+    formElements: {
+        /**
+         * @param target selector
+         * @param name prefiks do nazywania pól formulrza
+         * @param url  adres URL strony z itemPickerem do wyboru osób
+         * @param {Array} [items] wartość początkowa
+         */
+        people: function(target, name, url, items) { // {{{
+            var widget = new Scholar.SortableMultiselect(target, {
+                header: ['', 'Name'],
+                templates: ['', function(item) {
+                    var fn = String(item.fn).replace(/"/g, '&quot;');
+                    return '<input type="hidden" name="' + name + '[name]" value="' + fn + '" />' 
+                         + fn;
+                }],
+                showOnInit: false,
+                weightTemplate: name + '[{ id }][weight]'
+            });
+
+            widget.setButtons([
+                {
+                    label: widget.translate('Select people'),
+                    click: function() {
+                        Scholar.mixins.openItemPicker(widget, {
+                            url: url,
+                            width: 480,
+                            height: 240,
+                            title: $(this).html()
+                        });
+                        return false;
+                    }
+                }
+            ]);
+
+            if (items) {
+                for (var i = 0, n = items.length; i < n; ++i) {
+                    var item = items[i];
+                    widget.add(item.id, item);
+                }
+            }
+        } // }}}
+    }
 }
 
 Scholar.modal = new Scholar.Dialog;

@@ -278,109 +278,6 @@ function scholar_delete_file(&$file) // {{{
     $file->id = null;
 } // }}}
 
-/**
- * Analizuje zawartość katalogu z plikami i dodaje pliki, których nie
- * ma w bazie danych. Duplikaty plików istniejących w bazie są ignorowane.
- */
-function scholar_file_import()
-{
-    
-
-}
-
-/**
- * Lista plików.
- *
- * @return string
- */
-function scholar_file_list() // {{{
-{
-    $header = array(
-        array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
-        array('data' => t('Size'),      'field' => 'size'),
-        array('data' => t('Operations'), 'colspan' => '2')
-    );
-
-    $query = db_query("SELECT * FROM {scholar_files}" . tablesort_sql($header));
-    $rows  = array();
-
-    while ($row = db_fetch_array($query)) {
-        $refcount = intval($row['refcount']);
-
-        $rows[] = array(
-            check_plain($row['filename']),
-            format_size($row['size']),
-            l(t('edit'), scholar_admin_path('file/edit/' . $row['id'])),
-            $refcount ? '' : l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
-        );
-    }
-
-    if (empty($rows)) {
-        $rows[] = array(
-            array('data' => t('No records found'), 'colspan' => 4)
-        );
-    }
-
-    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files referenced by other records in the database cannot be removed.</p>');
-
-    return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
-} // }}}
-
-/*
- * Lista plików z możliwością wyboru. Przeznaczona tylko dla okienek i ramek. 
- * Bezposredni dostęp jest niewskazany.
- *
- * @return string
- */
-function scholar_file_select() // {{{
-{
-    scholar_add_js();
-    scholar_add_css();
-
-    $files = array();
-
-    $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
-    while ($row = db_fetch_array($query)) {
-        $files[] = $row;
-    }
-
-    ob_start();
-?>
-<script type="text/javascript">$(function() {
-new Scholar.ItemPicker('#items', '{ filename }', <?php echo drupal_to_js($files) ?>, {
-    filterSelector: '#name-filter',
-    filterKey: 'filename',
-    filterReset: '#reset-filter',
-    showOnInit: false,
-    emptyMessage: 'No files found'
-});
-});
-</script>
-<style type="text/css">
-#items li.selected {
-  font-weight: bold;
-}
-#items li {
-  cursor:pointer;
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-user-select: none;
-}
-#items li:hover {
-  background: yellow;
-}
-</style>
-    Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
-Dwukrotne kliknięcie zaznacza element
-<hr/>
-<div id="items"></div>
-<?php
-
-    return scholar_render(ob_get_clean(), true);
-} // }}}
 
 /**
  * Zwraca listę rozszerzeń plików, które mogą zostać przesłane.
@@ -465,6 +362,83 @@ function scholar_file_validate_filename(&$file) // {{{
     return $errors;
 } // }}}
 
+
+/**
+ * Analizuje zawartość katalogu z plikami i dodaje pliki, których nie
+ * ma w bazie danych. Duplikaty plików istniejących w bazie są ignorowane.
+ */
+function scholar_file_import()
+{
+    
+
+}
+
+/**
+ * Lista plików.
+ *
+ * @return string
+ */
+function scholar_file_list() // {{{
+{
+    $header = array(
+        array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
+        array('data' => t('Size'),      'field' => 'size'),
+        array('data' => t('Operations'), 'colspan' => '2')
+    );
+
+    $query = db_query("SELECT * FROM {scholar_files}" . tablesort_sql($header));
+    $rows  = array();
+
+    while ($row = db_fetch_array($query)) {
+        $refcount = intval($row['refcount']);
+
+        $rows[] = array(
+            check_plain($row['filename']),
+            format_size($row['size']),
+            l(t('edit'), scholar_admin_path('file/edit/' . $row['id'])),
+            $refcount ? '' : l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
+        );
+    }
+
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records found'), 'colspan' => 4)
+        );
+    }
+
+    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files referenced by other records in the database cannot be removed.</p>');
+
+    return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
+} // }}}
+
+/**
+ * Dostarcza rekordy plików do wybieralnej listy.
+ *
+ * @param array &$options OPTIONAL
+ * @return array
+ */
+function scholar_file_itempicker(&$options = null) // {{{
+{
+    $options = array(
+        'filterKey'    => 'filename',
+        'template'     => '{ filename }',
+        'emptyMessage' => t('No files found')
+    );
+    $files = array();
+
+    $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
+    while ($row = db_fetch_array($query)) {
+        $files[] = array(
+            'id'       => $row['id'],
+            'filename' => $row['filename'],
+            'size'     => $row['size'],
+        );
+    }
+
+    return $files;
+} // }}}
+
+
 /**
  * Formularz do wgrywania plików.
  *
@@ -546,7 +520,6 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
             // pliki, ktorych upload zostal zainicjowany za pomoca
             // attachmentManagera zostaja automatycznie dodane do
             // wybranych plikow
-            scholar_add_js();
             drupal_add_js('(new Scholar.Data).set(' . drupal_to_js($fragment) . ',' . drupal_to_js($file) . ')', 'inline');
 
             return scholar_render(t('File uploaded successfully'), true);
@@ -577,8 +550,6 @@ function scholar_file_edit_form(&$form_state, $file_id)
     $pos       = strrpos($file->filename, '.');
     $filename  = substr($file->filename, 0, $pos);
     $extension = substr($file->filename, $pos);
-
-    scholar_add_css();
 
     $uploader = user_load(intval($file->user_id));
 
@@ -674,7 +645,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
 
         // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron 
         // odwolujacych sie do tego pliku
-        if (0 == $refcount) {
+        if (empty($rows)) {
             drupal_add_tab(t('Delete'), scholar_admin_path('file/delete/' . $file->id));
         }
     }
@@ -732,8 +703,6 @@ function scholar_file_delete_form(&$form_state, $file_id) // {{{
         t('Cancel')
     );
 
-    scholar_add_css();
-
     return $form;
 } // }}}
 
@@ -779,3 +748,4 @@ function scholar_file_delete_form_submit($form, &$form_state) // {{{
     drupal_goto(scholar_admin_path('file'));
 } // }}}
 
+// vim: fdm=marker
