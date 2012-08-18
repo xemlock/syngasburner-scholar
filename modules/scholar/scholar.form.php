@@ -30,6 +30,7 @@ function scholar_elements() // {{{
     );
     $elements['scholar_element_people'] = array(
         '#input'            => true,
+        '#element_validate' => array('form_typ_scholar_element_people_validate'),
     );
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
@@ -135,7 +136,6 @@ function form_type_scholar_element_people_value($element, $post = false)
     }
 
     if ($post) {
-        p($post, __FUNCTION__);
         foreach ((array) $post as $data) {
             if (empty($data['id'])) {
                 continue;
@@ -150,10 +150,12 @@ function form_type_scholar_element_people_value($element, $post = false)
         }
     }
 
-    p($value, __FUNCTION__);
-
     return $value;
 }
+
+function form_typ_scholar_element_people_validate()
+{}
+
 
 /**
  * @return string

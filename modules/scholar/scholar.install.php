@@ -224,6 +224,11 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
+            'authors' => array(
+                'description' => 'tekstowa reprezentacja autorów artykułu do umieszczenia w treści, zawierająca max trzy nazwiska',
+                'type'      => 'varchar',
+                'length'    => 128,
+            ),
         ),
         'primary key' => array('id'),
         'indexes' => array(

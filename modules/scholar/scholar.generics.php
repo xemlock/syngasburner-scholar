@@ -109,7 +109,7 @@ function scholar_new_generic() // {{{
  */
 function scholar_fetch_authors($generic_id) // {{{
 {
-    $query = db_query("SELECT p.id, p.first_name, p.last_name FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $id);
+    $query = db_query("SELECT p.id, p.first_name, p.last_name FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $generic_id);
     $rows = array();
 
     while ($row = db_fetch_array($query)) {
@@ -123,12 +123,83 @@ function scholar_fetch_authors($generic_id) // {{{
  * @param int $generic_id
  * @param array $authors
  */
-function scholar_save_authors($generic_id, $authors)
+function scholar_save_authors($generic_id, $authors) // {{{
 {
-    // pobierz identyfikatory istniejacych osob
+    // dla wszystkich identyfikatorow osob (rekordow w tabeli people)
+    // w podanej tablicy sprawdz czy sa one poprawne
 
-}
+    $ids = array();
+    foreach ($authors as $person) {
+        $ids[$person['id']] = false;
+    }
 
+    $where = array('id' => array_keys($ids));
+    $query = db_query("SELECT id, last_name FROM {scholar_people} WHERE " . scholar_db_where($where));
+
+    while ($row = db_fetch_array($query)) {
+        $ids[$row['id']] = $row;
+    }
+
+    // dodaj tylko te rekordy, ktore sa poprawne
+    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic_id);
+
+    $names = array();
+
+    foreach ($authors as $person) {
+        $person_id = $person['id'];
+
+        if (false === $ids[$person_id]) {
+            continue;
+        }
+
+        db_query("INSERT INTO {scholar_authors} (generic_id, person_id, weight) VALUES (%d, %d, %d)", $generic_id, $person_id, $person['weight']);
+
+        if (count($names) < 4) {
+            $names[] = $ids[$person_id]['last_name'];
+        }
+    }
+
+    $bib = scholar_bib_authors($names);
+
+    db_query("UPDATE {scholar_generics} SET authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
+} // }}}
+
+/**
+    // pobieramy co najwyzej czterech autorow, jezeli jest dwoch
+    // uzyj ampersandu, jezeli trzech uzyj przecinka i ampersandu,
+    // jezeli czterech i wiecej uzyj et al.
+ * @return string
+ */
+function scholar_bib_authors($names) // {{{
+{
+    if (count($names) > 4) {
+        $names = array_slice($names, 0, 4);
+    }
+
+    switch (count($names)) {
+        case 4:
+            $bib = $names[0] . ' et al.';
+            break;
+
+        case 3:
+            $bib = $names[0] . ', ' . $names[1] . ' & ' . $names[2];
+            break;
+
+        case 2:
+            $bib = $names[0] . ' & ' . $names[1];
+            break;
+
+        case 1:
+            $bib = $names[0];
+            break;
+
+        default:
+            $bib = null;
+            break;
+    }
+
+    return $bib;
+} // }}}
 
 /**
  * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
@@ -253,6 +324,7 @@ function scholar_generics_form(&$form_state, $subtype) // {{{
     drupal_set_message("Unable to retrieve form: Invalid generic subtype '$subtype'", 'error');
 } // }}}
 
+
 function scholar_conference_list() // {{{
 {
     global $pager_total;
@@ -310,7 +382,7 @@ function _scholar_populate_form(&$form, &$record) // {{{
         $subform = &$form['record'];
 
         foreach ($record as $key => $value) {
-            if (isset($subform[$key]) && is_scalar($value)) {
+            if (isset($subform[$key])) {
                 $subform[$key]['#default_value'] = $value;
             }
         }
@@ -665,13 +737,16 @@ function scholar_book_form(&$form_state, $id = null)
     // lista: rok wydania, tytuł, kategoria
 }
 
+
+
+
 function scholar_article_form(&$form_state, $id = null)
 {
     if (null === $id) {
         $record = null;
     } else {
-        $record = scholar_load_generic($id, 'article', 'admin/scholar/articles');
-    }    
+        $record = scholar_load_generic($id, 'article', scholar_admin_path('article'));
+    }
 
     $form = scholar_generic_form(array(
         'title',
@@ -679,6 +754,7 @@ function scholar_article_form(&$form_state, $id = null)
             '#title'     => t('Year'),
             '#maxlength' => 4,
             '#required'  => true,
+            '#default_value' => date('Y'),
         ),
         'category',
         'authors' => array(
@@ -696,6 +772,16 @@ function scholar_article_form(&$form_state, $id = null)
         'files',  // pliki
     ));
 
+    if ($record) {
+        // intval konczy na pierwszym niepoprawnym znaku, wiec dostaniemy
+        // poprawna wartosc roku
+        $record->start_date = intval($record->start_date);
+
+        _scholar_populate_form($form, $record);
+    }
+
+    $form['#record'] = $record;
+
     $form['submit'] = array(
         '#type' => 'submit',
         '#value' => $record ? t('Save changes') : t('Add article'),
@@ -704,10 +790,68 @@ function scholar_article_form(&$form_state, $id = null)
     return $form;
 }
 
-function scholar_article_form_submit()
+function scholar_article_form_submit($form, &$form_state)
 {
-    p(func_get_args());
-    exit;
+    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
+    $values = $form_state['values'];
+
+    // poniewaz jako date artykulu zapisuje sie tylko rok, trzeba
+    // dodac do niego brakujace znaki, aby byl poprawna wartoscia DATETIME
+    $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
+    $values['end_date']   = null;
+
+    // wypelnij rekord danymi z formularza
+    _scholar_populate_record($record, $values);
+
+    // dla pewnosci ustaw odpowiedni podtyp
+    $record->subtype = 'article';
+
+    scholar_save_generic($record);
+
+    drupal_set_message('OK!');
+    drupal_goto(scholar_admin_path('article'));
+}
+
+function scholar_article_list()
+{
+    global $pager_total;
+
+    $header = array(
+        array('data' => t('Year'), 'field' => 'start_date', 'sort' => 'desc'),
+        array('data' => t('Authors'), 'field' => 'authors'),
+        array('data' => t('Title'), 'field' => 'title'),
+        array('data' => t('Operations'), 'colspan' => '2'),
+    );
+
+    $rpp = 25;
+    $sql = "SELECT * FROM {scholar_generics} WHERE subtype = 'article'" . tablesort_sql($header);
+
+    $query = pager_query($sql, $rpp, 0, null);
+    $rows  = array();
+
+    while ($row = db_fetch_array($query)) {
+        $rows[] = array(
+            intval($row['start_date']),
+            str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
+            check_plain($row['title']),
+            l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
+            l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
+        );
+    }
+
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records'), 'colspan' => 5)
+        );
+    }
+
+    $html = theme('table', $header, $rows);
+
+    if ($pager_total > 1) {
+        $html .= theme('pager', array(), $rpp);
+    }
+
+    return $html;
 }
 
 // vim: fdm=marker
