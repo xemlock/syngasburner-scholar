@@ -161,7 +161,7 @@ function scholar_save_authors($generic_id, $authors) // {{{
 
     $bib = scholar_bib_authors($names);
 
-    db_query("UPDATE {scholar_generics} SET authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
+    db_query("UPDATE {scholar_generics} SET bib_authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
 } // }}}
 
 /**
@@ -275,8 +275,10 @@ function scholar_save_generic(&$generic) // {{{
         // zapisz zmiany w powiazanych wydarzeniach
         scholar_attachments_save_events($generic->id, 'generics', $generic->events);
 
-        // TODO message
-        drupal_set_message($is_new ? 'Insert OK!' : 'Update OK!');
+        drupal_set_message($is_new
+            ? t('Record created successfully (%title)', array('%title' => $generic->title))
+            : t('Record updated successfully (%title)', array('%title' => $generic->title))
+        );
     }
 } // }}}
 
@@ -291,7 +293,10 @@ function scholar_generics_list($subtype) // {{{
     drupal_set_message("Unable to retrieve list: Invalid generic subtype '$subtype'", 'error');
 } // }}}
 
-function _scholar_generics_list($subtype, $callback)
+/**
+ * Silnik do tworzenia list.
+ */
+function _scholar_generics_list($subtype, $callback) // {{{
 {
     global $pager_total;
 
@@ -340,7 +345,7 @@ function _scholar_generics_list($subtype, $callback)
     }
 
     return $html;
-}
+} // }}}
 
 
 /**
@@ -609,8 +614,8 @@ function scholar_article_list_item($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('x Year'), 'field' => 'start_date', 'sort' => 'desc'),
-            array('data' => t('Authors'), 'field' => 'authors'),
+            array('data' => t('Year'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Authors'), 'field' => 'bib_authors'),
             array('data' => t('Title'), 'field' => 'title'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
@@ -618,7 +623,7 @@ function scholar_article_list_item($row = null) // {{{
 
     return array(
         intval($row['start_date']),
-        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
+        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
         l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
         l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
@@ -629,8 +634,8 @@ function scholar_book_list_item($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('x Year'), 'field' => 'start_date', 'sort' => 'desc'),
-            array('data' => t('Authors'), 'field' => 'authors'),
+            array('data' => t('Year'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Authors'), 'field' => 'bib_authors'),
             array('data' => t('Title'), 'field' => 'title'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
@@ -638,7 +643,7 @@ function scholar_book_list_item($row = null) // {{{
 
     return array(
         intval($row['start_date']),
-        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['authors'])),
+        str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
         l(t('edit'),  scholar_admin_path('book/edit/' . $row['id'])),
         l(t('delete'), scholar_admin_path('book/delete/' . $row['id'])),
@@ -649,7 +654,7 @@ function scholar_conference_list_item($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('x Date'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Date'), 'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'), 'field' => 'title'),
             array('data' => t('Country'), 'field' => 'country_name'),
             array('data' => t('Operations'), 'colspan' => '2'),
@@ -669,7 +674,7 @@ function scholar_presentation_list_item($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('x Date'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Date'), 'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'), 'field' => 'title'),
             array('data' => t('Country'), 'field' => 'country_name'),
             array('data' => t('Operations'), 'colspan' => '2'),

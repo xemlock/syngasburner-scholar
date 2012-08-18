@@ -215,7 +215,7 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
-            'authors' => array(
+            'bib_authors' => array(
                 'description' => 'tekstowa reprezentacja autorów artykułu do umieszczenia w treści, zawierająca max trzy nazwiska',
                 'type'      => 'varchar',
                 'length'    => 128,
