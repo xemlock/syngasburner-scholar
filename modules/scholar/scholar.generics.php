@@ -252,34 +252,31 @@ function scholar_save_generic(&$generic) // {{{
     }
 
     if ($generic->id) {
+        $is_new = false;
         if (scholar_db_write_record('scholar_generics', $generic, 'id')) {
             $success = true;
         }
     } else {
+        $is_new = true;
         if (scholar_db_write_record('scholar_generics', $generic)) {
             $success = true;
         }
     }
 
     if ($success) {
-        if ($generic->authors) {
-            scholar_save_authors($generic->id, $generic->authors);        
-        }
+        scholar_save_authors($generic->id, $generic->authors);
 
         // zapisz dolaczone pliki
-        if ($generic->files) {
-            scholar_save_files($generic->id, 'generics', $generic->files);
-        }
+        scholar_save_files($generic->id, 'generics', $generic->files);
 
         // zapisz wezly
-        if ($generic->nodes) {
-            scholar_save_nodes($generic->id, 'generics', $generic->nodes);
-        }
+        scholar_save_nodes($generic->id, 'generics', $generic->nodes);
 
         // zapisz zmiany w powiazanych wydarzeniach
-        if ($generic->events) {
-            scholar_attachments_save_events($generic->id, 'generics', $generic->events);
-        }
+        scholar_attachments_save_events($generic->id, 'generics', $generic->events);
+
+        // TODO message
+        drupal_set_message($is_new ? 'Insert OK!' : 'Update OK!');
     }
 } // }}}
 
@@ -445,7 +442,6 @@ function scholar_conference_form_submit($form, &$form_state) // {{{
 
     scholar_save_generic($record);
 
-    drupal_set_message('OK!');
     drupal_goto('admin/scholar/conferences');
 } // }}}
 
@@ -602,7 +598,6 @@ function scholar_article_form_submit($form, &$form_state)
 
     scholar_save_generic($record);
 
-    drupal_set_message('OK!');
     drupal_goto(scholar_admin_path('article'));
 }
 

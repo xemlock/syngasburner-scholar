@@ -4,7 +4,7 @@
  * Narzędzia do manipulowania rekordami osób
  *
  * @author xemlock
- * @version 2012-08-02
+ * @version 2012-08-19
  */
 
 /**
@@ -26,7 +26,7 @@ function scholar_load_person($id, $redirect = false) // {{{
         $record->nodes = scholar_fetch_nodes($record->id, 'people');
     
     } elseif ($redirect) {
-        drupal_set_message(t('Invalid person id supplied (%id)', array('%id' => $id)), 'error');
+        drupal_set_message(t('Invalid person identifier supplied (%id)', array('%id' => $id)), 'error');
         drupal_goto(scholar_admin_path('people'));
         exit;        
     }
@@ -34,36 +34,56 @@ function scholar_load_person($id, $redirect = false) // {{{
     return $record;
 } // }}}
 
-function scholar_save_person(&$person)
+/**
+ * @param object &$person
+ * @return bool
+ */
+function scholar_save_person(&$person) // {{{
 {
-    if ($person->id) {
-        
-    
+    if (empty($person->id)) {
+        $is_new = true;
+        $success = scholar_db_write_record('scholar_people', $person);
+    } else {
+        $is_new = false;
+        $success = scholar_db_write_record('scholar_people', $person, 'id');
     }
 
-    drupal_set_message($is_new
-        ? t('Person created successfully')
-        : t('Person updated successfully')
-    );
-}
+    if ($success) {
+        scholar_save_files($person->id, 'people', $person->files);
+        scholar_save_nodes($person->id, 'people', $person->nodes);
+
+        $name = $person->first_name . ' ' . $person->last_name;
+        drupal_set_message($is_new
+            ? t('Person %name created successfully', array('%name' => $name))
+            : t('Person %name updated successfully', array('%name' => $name))
+        );
+    }
+
+    return $success;
+} // }}}
 
 /**
  * Usuwa z bazy danych rekord osoby o podanym identyfikatorze.
  *
- * @param int $id
+ * @param object &$person
  */
-function scholar_people_delete($id) // {{{
+function scholar_delete_person(&$person) // {{{
 {
-    scholar_delete_nodes($id, 'people');
-    db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $id);
-    db_query("DELETE FROM {scholar_people} WHERE id = %d", $id);
+    scholar_delete_nodes($person->id, 'people');
+    db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $person->id);
+    db_query("DELETE FROM {scholar_people} WHERE id = %d", $person->id);
+
+    $person->id = null;
+
+    $name = $person->first_name . ' ' . $person->last_name;
+    drupal_set_message(t('Person deleted successfully (%name)', array('%name' => $name)));
+
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $row  = $id ? scholar_load_person($id, true) : null;
-    p($row);
+    $record = $id ? scholar_load_person($id, true) : null;
 
     $form = scholar_generic_form(array(
         'first_name' => array(
@@ -77,17 +97,16 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         ),
         'files',
         'nodes',
-    ));
+    ), $record);
 
     $form['submit'] = array(
         '#type'     => 'submit',
         '#value'    => t('Save changes'),
     );
-
-    // jezeli formularz dotyczy konkretnego rekordu ustaw domyslne wartosci pol
-    if ($row) {
-        scholar_populate_form($form, $row);
-    }
+    $form['cancel'] = array(
+        '#type'     => 'scholar_element_cancel',
+        '#value'    => scholar_admin_path('people'),
+    );
 
     return $form;
 } // }}}
@@ -101,49 +120,21 @@ function scholar_people_form(&$form_state, $id = null) // {{{
  */
 function scholar_people_form_submit($form, &$form_state) // {{{
 {
-    $row    = isset($form['#row']) ? $form['#row'] : null;
-    $is_new = empty($row);
     $values = $form_state['values'];
-    $nodes  = array();
-    $langs  = scholar_languages();
+    $record = empty($form['#record']) ? new stdClass : $form['#record'];
 
-    if ($row) {
-        db_query(
-            "UPDATE {scholar_people} SET first_name = '%s', last_name = '%s', image_id = '%s' WHERE id = %d",
-            $values['first_name'],
-            $values['last_name'],
-            $values['image_id'],
-            $row['id']
-        );
-
-    } else {
-        db_query(
-            "INSERT INTO {scholar_people} (first_name, last_name, image_id) VALUES ('%s', '%s', %d)",
-            $values['first_name'],
-            $values['last_name'],
-            $values['image_id']
-        );
-        $row = $values;
-        $row['id'] = db_last_insert_id('scholar_people', 'id');
-    }
-
-    // zapisz zalaczniki
-    scholar_save_files($row['id'], 'people', $values['files']);
-
-    // zapisz wezly, jezeli pusty tytul wstaw pelne imie i nazwisko
-    foreach ($values['node'] as $code => $node) {
+    // jezeli wezly maja pusty tytul wstaw pelne imie i nazwisko
+    foreach ($values['nodes'] as $language => &$node) {
         $title = trim($node['title']);
         if (empty($title)) {
             $title = $values['first_name'] . ' ' . $values['last_name'];
         }
-        $values['node'][$code]['title'] = $title;
-        $values['node'][$code]['body'] = trim($values['node'][$code]['body']);
+        $node['title'] = $title;
     }
+    unset($node);
 
-    scholar_save_nodes($row['id'], 'people', $values['node']);
-
-    // zapisz czas ostatniej zmiany danych
-    scholar_last_change(time());
+    scholar_populate_record($record, $values);
+    scholar_save_person($record);
 
     drupal_goto('admin/scholar/people');
 } // }}}
@@ -155,39 +146,31 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $row = scholar_load_person($id, true);
+    $record = scholar_load_person($id, true);
 
-    $form = array('#row' => $row);
+    $form = array('#record' => $record);
     $form = confirm_form($form,
         t('Are you sure you want to delete person (%first_name %last_name)?', 
             array(
-                '%first_name' => $row->first_name,
-                '%last_name'  => $row->last_name,
+                '%first_name' => $record->first_name,
+                '%last_name'  => $record->last_name,
             )
         ),
-        'admin/scholar/people',
+        scholar_admin_path('people'),
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
     );
-
-    scholar_add_css();
 
     return $form;
 } // }}}
 
 function scholar_people_delete_form_submit($form, &$form_state) // {{{
 {
-    if ($row = $form['#row']) {
-        scholar_delete_person($row);
-        drupal_set_message(t(
-            'Person deleted successfully (%first_name %last_name)',
-            array(
-                '%first_name' => $row['first_name'],
-                '%last_name'  => $row['last_name'],
-            )
-        ));
+    if ($record = $form['#record']) {
+        scholar_delete_person($record);
     }
+
     drupal_goto('admin/scholar/people');
 } // }}}
 

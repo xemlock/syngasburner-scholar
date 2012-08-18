@@ -32,6 +32,10 @@ function scholar_elements() // {{{
         '#input'            => true,
         '#element_validate' => array('form_typ_scholar_element_people_validate'),
     );
+    $elements['scholar_element_cancel'] = array(
+        '#input'            => false,
+        '#title'            => t('Cancel'),
+    );
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
@@ -122,6 +126,10 @@ function scholar_elements_theme() // {{{
         'arguments' => array('element' => null),
     );
 
+    $theme['scholar_element_cancel'] = array(
+        'arguments' => array('element' => null),
+    );
+
     return $theme;
 } // }}}
 
@@ -154,28 +162,11 @@ function form_type_scholar_element_people_value($element, $post = false)
 }
 
 function form_typ_scholar_element_people_validate()
-{}
-
-
-/**
- * @return string
- */
-function theme_scholar_element_people($element) // {{{
 {
-    $params = array(
-        '#' . $element['#id'],
-        $element['#name'],
-        scholar_admin_path('people/itempicker'),
-        $element['#value'],
-    );
-    $params = implode(',', array_map('drupal_to_js', $params));
+    // TODO required ?
+}
 
-    drupal_add_js('misc/tabledrag.js', 'core');
-    drupal_add_js('misc/tableheader.js', 'core');
-    drupal_add_js("\$(function(){Scholar.formElements.people($params)})", 'inline');
 
-    return theme_form_element($element, '<div id="' . $element['#id'] .'"><noscript><div class="error">' . t('JavaScript is required.') . '</div></noscript></div>');
-} // }}}
 
 /**
  * @return string|null
@@ -275,6 +266,31 @@ function theme_scholar_textarea($element) // {{{
 
     $textarea = theme_textarea($element);
     return $textarea;
+} // }}}
+
+/**
+ * @return string
+ */
+function theme_scholar_element_people($element) // {{{
+{
+    $params = array(
+        '#' . $element['#id'],
+        $element['#name'],
+        scholar_admin_path('people/itempicker'),
+        $element['#value'],
+    );
+    $params = implode(',', array_map('drupal_to_js', $params));
+
+    drupal_add_js('misc/tabledrag.js', 'core');
+    drupal_add_js('misc/tableheader.js', 'core');
+    drupal_add_js("\$(function(){Scholar.formElements.people($params)})", 'inline');
+
+    return theme_form_element($element, '<div id="' . $element['#id'] .'"><noscript><div class="error">' . t('JavaScript is required.') . '</div></noscript></div>');
+} // }}}
+
+function theme_scholar_element_cancel($element) // {{{
+{
+    return l($element['#title'], $element['#value'], array('attributes' => array('class' => 'scholar-cancel')));
 } // }}}
 
 /**

@@ -253,7 +253,7 @@ function scholar_create_node($values = array()) // {{{
  */
 function scholar_save_node(&$node, $object_id, $table_name) // {{{
 {
-    $body = $node->body;
+    $body = trim($node->body);
 
     $node->type = 'scholar';
     $node->body = ''; // puste body, bo tresc do przetworzenia zostanie

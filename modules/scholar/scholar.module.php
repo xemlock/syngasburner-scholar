@@ -125,7 +125,7 @@ function scholar_menu() // {{{
         'file'              => 'scholar.people.php',
     );
     $items[$root . '/people/itempicker'] = array(
-        'type'              => MENU_LOCAL_TASK,
+        'type'              => MENU_CALLBACK,
         'title'             => t('Select people'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_itempicker',

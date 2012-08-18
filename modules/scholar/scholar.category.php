@@ -75,13 +75,8 @@ function scholar_save_category(&$category) // {{{
     }
     unset($name);
 
-    if ($category->files) {
-        scholar_save_files($category->id, 'categories', $category->files);
-    }
-
-    if ($category->nodes) {
-        scholar_save_nodes($category->id, 'categories', $category->nodes);
-    }
+    scholar_save_files($category->id, 'categories', $category->files);
+    scholar_save_nodes($category->id, 'categories', $category->nodes);
 
     drupal_set_message($new ? t('Category was added successfully') : t('Category was updated successfully'));
 } // }}}
@@ -219,6 +214,10 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     $form['submit'] = array(
         '#type' => 'submit',
         '#value' => empty($record->id) ? t('Add category') : t('Save changes'),
+    );
+    $form['cancel'] = array(
+        '#type' => 'scholar_element_cancel',
+        '#value' => _scholar_category_path($table_name, $subtype),
     );
 
     return $form;
