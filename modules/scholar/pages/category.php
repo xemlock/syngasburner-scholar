@@ -11,10 +11,10 @@
  * @param string $table_name OPTIONAL   nazwa tabeli
  * @param string $subtype OPTIONAL      nazwa podtypu
  */
-function _scholar_category_path($table_name = null, $subtype = null) // {{{
+function _scholar_category_path($table_name = null, $subtype = null, $page = 'list') // {{{
 {
     if (null !== $table_name) {
-        $path = (null === $subtype ? $table_name : $subtype) . '/category';
+        $path = (null === $subtype ? $table_name : $subtype) . '/category/' . ltrim($page, '/');
     } else {
         $path = '/';
     }
@@ -31,8 +31,6 @@ function _scholar_category_path($table_name = null, $subtype = null) // {{{
 function scholar_category_list($table_name, $subtype = null) // {{{
 {
     global $language;
-
-    drupal_add_tab(t('Add category'), $_GET['q'] . '/add');
 
     $header = array(
         array('data' => t('Name'), 'field' => 'n.name', 'sort' => 'asc'),
@@ -56,8 +54,8 @@ function scholar_category_list($table_name, $subtype = null) // {{{
         $rows[] = array(
             check_plain($row['name']),
             intval($row['refcount']),
-            l(t('edit'),   _scholar_category_path($table_name, $subtype) . '/edit/' . $row['id']),
-            l(t('delete'), _scholar_category_path($table_name, $subtype) . '/delete/' . $row['id']),
+            l(t('edit'),   _scholar_category_path($table_name, $subtype, '/edit/' . $row['id'])),
+            l(t('delete'), _scholar_category_path($table_name, $subtype, '/delete/' . $row['id'])),
         );
     }
 
@@ -86,8 +84,6 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         $record = new stdClass;
         $record->table_name = $table_name;
         $record->subtype = $subtype;
-
-        drupal_add_tab(t('Add category'), $_GET['q']);
 
     } else {
         $record = scholar_fetch_category($id, $table_name, $subtype, _scholar_category_path($table_name, $subtype));

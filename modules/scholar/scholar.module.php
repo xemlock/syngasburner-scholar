@@ -299,6 +299,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page arguments'    => array('scholar_generics_form', $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
+        'weight'            => 0,
     );
     $items[$root_path . '/edit/%'] = array(
         'type'              => MENU_CALLBACK,
@@ -319,7 +320,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'file'              => 'pages/generic.php',
     );
 
-    $items[$root_path . '/category'] = array(
+    $items[$root_path . '/category/list'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => $titles['categories']['list'],
         'access arguments'  => array('administer scholar'),
@@ -327,14 +328,8 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page arguments'    => array('generics', $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
+        'weight'            => 5,
     );
-
-    // jezeli nie ma MENU)DEFAULT_LOCAL_TASK taby (drugiego poziomu w tym wypadku) nie beda automatycznie generowane, wiec ok
-/*    $items[$root_path . '/category/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => $titles['list'],
-        'weight'            => -10,
-    );*/
     $items[$root_path . '/category/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => $titles['categories']['add'],
@@ -343,6 +338,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'page arguments'    => array('scholar_category_form', 'generics', $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
+        'weight'            => 10,
     );
     $items[$root_path . '/category/edit/%'] = array(
         'type'              => MENU_CALLBACK,
