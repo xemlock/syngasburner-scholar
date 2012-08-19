@@ -140,20 +140,31 @@ function scholar_db_where($conds) // {{{
 /**
  * Zwraca wyrażenie SQL, które przekształca kod kraju w jego nazwę
  * w bieżącym języku.
- * @param string $column        nazwa kolumny przechowującej dwuliterowy kod kraju
+ * @param string $column        nazwa kolumny przechowującej dwuliterowy kod kraju,
+ *                              jeżeli w nazwie kolumnny występuje kropka zostanie
+ *                              ona potraktowana jako alias
  * @param string $table         nazwa tabeli
  * @return string               wyrażenie CASE przekształcające kod kraju w jego nazwę
  */
 function scholar_db_country_name($column, $table) // {{{
 {
-    $column = scholar_db_quote_identifier($column);
-    $table  = scholar_db_quote_identifier($table);
+    if (false !== ($pos = strpos($column, '.'))) {
+        $alias  = substr($column, 0, $pos);
+        $alias  = preg_replace('/[^_a-z0-9]/i', '', $alias);
+        $column = scholar_db_quote_identifier(substr($column, $pos + 1));
+    } else {
+        $alias  = '';
+        $column = scholar_db_quote_identifier($column);
+    }
+
+    $table = scholar_db_quote_identifier($table);
 
     if (empty($column) || empty($table)) {
         return 'NULL';
     }
 
-    // pobierz liste wystepujacych w tabeli krajow
+    // pobierz liste wystepujacych w tabeli krajow, tutaj alias
+    // nie jest potrzebny
     $query = db_query("SELECT DISTINCT $column FROM {$table} WHERE $column IS NOT NULL");
     $codes = array();
 
@@ -169,11 +180,17 @@ function scholar_db_country_name($column, $table) // {{{
 
     $countries = scholar_countries();
 
-    $sql = "CASE $column";
+    if (strlen($alias)) {
+        $sql = "CASE $alias.$column";
+    } else {
+        $sql = "CASE $column";
+    }
+
     foreach ($codes as $code) {
         $country = isset($countries[$code]) ? $countries[$code] : null;
         $sql .= " WHEN " . scholar_db_quote($code) . " THEN " . scholar_db_quote($country);
     }
+
     $sql .= " ELSE NULL END";
 
     return $sql;
