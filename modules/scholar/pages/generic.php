@@ -116,15 +116,26 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     $subtype = $form['#subtype'];
     $process = '_scholar_' . $subtype . '_form_process_values';
 
+    $values = $form_state['values'];
+
+    // zamien na null wartosci parent_id i category_id jezeli sa
+    // puste lub zerami
+    foreach (array('parent_id', 'category_id') as $key) {
+        if (isset($values[$key])) {
+            $value = intval($values[$key]);
+            $values[$key] = $value ? $value : null;
+        }
+    }
+
     if (function_exists($process)) {
-        $args = array(&$form_state['values']);
+        $args = array(&$values);
         call_user_func_array($process, $args);
     }
     
     $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
 
     // wypelnij rekord danymi z formularza
-    scholar_populate_record($record, $form_state['values']);
+    scholar_populate_record($record, $values);
 
     // dla pewnosci ustaw odpowiedni podtyp
     $record->subtype = $subtype;

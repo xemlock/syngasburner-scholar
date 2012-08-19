@@ -178,13 +178,17 @@ function scholar_schema() // {{{
                 // REFERENCES scholar_categories (id)
                 // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
                 'type'      => 'int',
-                'not null'  => true,
             ),
             'start_date' => array(
                 'type'      => 'datetime',
             ),
             'end_date' => array(
                 'type'      => 'datetime',
+            ),
+            'title' => array(
+                'type'      => 'varchar',
+                'length'    => 255,
+                'not null'  => true,
             ),
             'locality' => array(
                 'description' => 'nazwa miejscowosci / miasta',
@@ -204,11 +208,6 @@ function scholar_schema() // {{{
                 'description' => 'zewnętrzny URL strony czasopisma lub konferencji',
                 'type'      => 'varchar',
                 'length'    => 255,
-            ),
-            'title' => array(
-                'type'      => 'varchar',
-                'length'    => 255,
-                'not null'  => true,
             ),
             'details' => array(
                 'description' => 'article - dodatkowa specyfikacja uzupełniająca bibliografię',
