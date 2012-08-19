@@ -1,7 +1,7 @@
 <?php
 
 function scholar_perm() {
-  return array('administer scholar', 'manage Scholar contents');
+  return array('administer scholar');
 }
 
 function p($var, $label = null)
@@ -32,7 +32,7 @@ function p($var, $label = null)
 
 function scholar_nodeapi($node, $op)
 {
-    if ($op == 'load' && $node->type == 'scholar') {
+    if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
         // trzeba wyrenderowac tresc!!!
         $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
         $binding = db_fetch_array($query);
@@ -229,6 +229,30 @@ function scholar_admin_page_size()
 {
     return 25;
 }
+
+/**
+ * Ustawia albo zwraca wartość sterującą renderingiem węzłów (segmentów).
+ * Jeżeli nie podano żadnego argumentu zwrócona zostanie aktualna
+ * wartość. Jeżeli podano nową, zostanie ona ustawiona, przy czym zwrócona
+ * zostanie poprzednia wartość.
+ *
+ * @param bool $enabled OPTIONAL        true żeby włączyć renderowanie,
+ *                                      false aby wyłączyć
+ * @return bool
+ */
+function _scholar_rendering_enabled($enabled = null) // {{{
+{
+    static $_enabled = true;
+
+    if (null !== $enabled) {
+        $previous = $_enabled;
+        $_enabled = (bool) $enabled;
+
+        return $previous;
+    }
+
+    return $_enabled;
+} // }}}
 
 /**
  * @param array &$items

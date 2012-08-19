@@ -113,11 +113,14 @@ function _scholar_populate_node(&$node, $binding) // {{{
     $node->body = $binding['body']; // nieprzetworzona tresc wezla
 
     // Dociagamy menu link i url alias zgodne z danymi w binding
+    // a nie tymi dostarczonymi przez nodeapi
     if ($binding['menu_link_id']) {
         $query = db_query("SELECT * FROM {menu_links} WHERE mlid = %d", $binding['menu_link_id']);
 
         if ($row = db_fetch_array($query)) {
             $node->menu = $row;
+        } else {
+            $node->menu = null;
         }
     }
 
@@ -130,6 +133,9 @@ function _scholar_populate_node(&$node, $binding) // {{{
             // path_nodeapi()
             $node->pid  = $row['pid'];
             $node->path = $row['dst'];
+        } else {
+            $node->pid  = null;
+            $node->path = null;
         }
     }
 } // }}}
@@ -151,33 +157,36 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
         // Reczne pobranie zamiast node_load() zeby nie uniknac wywolania
         // hooka nodeapi, poniewaz dostep do tego wezla ma byc jedynie 
         // dla modulu scholar.
-        $query = db_query("SELECT * FROM {node} WHERE nid = %d", $binding['node_id']);
+        $rendering = _scholar_rendering_enabled(false);
 
-        if ($node = db_fetch_object($query)) {
+        if ($node = node_load($binding['node_id'])) {
             _scholar_populate_node($node, $binding);
         }
+
+        _scholar_rendering_enabled($rendering);
     }
 
     return $node;
 } // }}}
 
 /**
- * Zwraca wszystkie segmenty powiązane z tym rekordem, indeksowane 
- * kodem języka.
+ * Zwraca wszystkie wezly (segmenty) powiązane z tym rekordem,
+ * indeksowane kodem języka.
  * @return array
  */
 function scholar_fetch_nodes($object_id, $table_name) // {{{
 {
     $nodes = array();
+    $rendering = _scholar_rendering_enabled(false);
 
     foreach (_scholar_fetch_node_binding($object_id, $table_name) as $binding) {
-        $query = db_query("SELECT * FROM {node} WHERE nid = %d", $binding['node_id']);
-
-        if ($node = db_fetch_object($query)) {
+        if ($node = node_load($binding['node_id'])) {
             _scholar_populate_node($node, $binding);
             $nodes[$node->language] = $node;
         }
     }
+
+    _scholar_rendering_enabled($rendering);
 
     return $nodes;
 } // }}}
@@ -185,7 +194,7 @@ function scholar_fetch_nodes($object_id, $table_name) // {{{
 /**
  * @param int $row_id
  * @param string $table_name
- * @param array $nodes
+ * @param array $nodes          wartość w postaci zwracanej przez podformularz węzłów
  */
 function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
 {
@@ -209,13 +218,25 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
         $node->title    = $node_data['title'];
         $node->body     = $node_data['body'];
 
-        // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
-        $menu = $node_data['menu'];
-        list($menu['menu_name'], $menu['plid']) = explode(':', $node_data['menu']['parent']);
+        if (isset($node_data['menu'])) {
+            // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
+            $menu = $node_data['menu'];
+            list($menu['menu_name'], $menu['plid']) = explode(':', $node_data['menu']['parent']);
 
-        // menu jest zapisywane za pomoca hookow: menu_nodeapi, path_nodeapi
-        $node->menu = $menu;
-        $node->path = rtrim($node_data['path']['path'], '/');
+            // menu jest zapisywane za pomoca hooku menu_nodeapi
+            $node->menu = $menu;
+        }
+
+        // alias zapisywany za pomoca path_nodeapi
+        if (isset($node_data['path'])) {
+            $node->path = rtrim($node_data['path']['path'], '/');
+        }
+
+        // podobnie galeria, za pomoca gallery_nodeapi
+        if (isset($node_data['gallery'])) {
+            $node->gallery_id = $node_data['gallery']['gallery_id'];
+            $node->gallery_layout = $node_data['gallery']['gallery_layout'];
+        }
 
         scholar_save_node($node, $row_id, $table_name);
     }
@@ -268,7 +289,7 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
     $node->revision = null; // nigdy nie tworz nowych rewizji, poniewaz
                             // tresc jest generowana automatycznie
 
-    // jezeli podano pousta nazwe linku w menu, a jest podany jego mlid
+    // jezeli podano pusta nazwe linku w menu, a jest podany jego mlid
     // usun ten link. Trzeba to zrobic tutaj, bo menu_nodeapi tego nie
     // zrobi.
     if (isset($node->menu)) {
