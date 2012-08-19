@@ -1,13 +1,6 @@
 <?php
 
 /**
- * Flagi dla attachemnts_form.
- */
-define('SCHOLAR_FILES',  0x01);
-define('SCHOLAR_NODES',  0x02);
-define('SCHOLAR_EVENTS', 0x04);
-
-/**
  * Deklaracja dodatkowych pól formularza.
  *
  * @return array
@@ -89,7 +82,10 @@ function scholar_elements_theme() // {{{
     return $theme;
 } // }}}
 
-function form_type_scholar_element_people_value($element, $post = false)
+/**
+ * @return array
+ */
+function form_type_scholar_element_people_value($element, $post = false) // {{{
 {
     $value = array();
 
@@ -115,7 +111,7 @@ function form_type_scholar_element_people_value($element, $post = false)
     }
 
     return $value;
-}
+} // }}}
 
 function form_typ_scholar_element_people_validate()
 {
@@ -493,43 +489,6 @@ function scholar_nodes_subform() // {{{
 
     return $form;
 } // }}}
-
-function scholar_attachments_form($flags, &$record, $table_name)
-{
-    if ($record) {
-        $row_id = is_object($record) ? $record->id : $record['id'];
-    } else {
-        $row_id = null;
-    }
-
-    $form = array(
-        '#type' => 'fieldset',
-        '#title' => 'attachments',
-    );
-
-    if ($flags & SCHOLAR_FILES) {
-        $form['attachments'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('File attachments'),
-            //        '#collapsible' => true, // collapsible psuje ukrywanie kolumny z waga
-            //        '#collapsed' => true,
-        );
-        $form['attachments']['files'] = array(
-            '#type' => 'scholar_attachment_manager',
-            '#default_value' => $row_id ? scholar_fetch_attachments($row_id, $table_name) : null
-        );
-    }
-
-    if ($flags & SCHOLAR_EVENTS) {
-        $form['event'] = scholar_events_form($flags);
-    }
-
-    if ($flags & SCHOLAR_NODES) {
-        $form['node'] = scholar_nodes_subform($record, $table_name);
-    }
-
-    return $form;
-}
 
 /**
  * Funkcja definiująca strukturę formularza dla powiązanych węzłów,

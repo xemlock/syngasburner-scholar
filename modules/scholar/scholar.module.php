@@ -341,7 +341,7 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_form', 'generics', $subtype),
-        'parent'            => $root_path . '/category',
+        'parent'            => $root_path,
         'file'              => 'pages/category.php',
     );
     $items[$root_path . '/category/edit/%'] = array(
@@ -350,7 +350,6 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_form', 'generics', $subtype),
-        'parent'            => $root_path . '/category',
         'file'              => 'pages/category.php',
     );
     $items[$root_path . '/category/delete/%'] = array(
@@ -359,7 +358,6 @@ function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_category_delete_form'),
-        'parent'            => $root_path . '/category',
         'file'              => 'pages/category.php',
     );
 

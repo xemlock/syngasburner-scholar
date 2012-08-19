@@ -255,23 +255,23 @@ function scholar_file_edit_form(&$form_state, $file_id)
         );
     }
 
-    if ($rows) {
+    if ($rows || $refcount) {
         if (count($rows) != $refcount) {
-            $rows[] = array(
-                array(
-                    'data' => format_plural($refcount,
-                        'Expected %refcount file, but found %count. Database corruption detected.',
-                        'Expected %refcount files, but found %count. Database corruption detected.',
-                        array('%refcount' => $refcount, '%count' => count($rows))
-                    ),
-                    'colspan' => 3,
-                ),
-            );
+            $text = '<div class="error">' .
+                format_plural($refcount,
+                    'Expected %refcount file, but found %count. Database corruption detected.',
+                    'Expected %refcount files, but found %count. Database corruption detected.',
+                    array('%refcount' => $refcount, '%count' => count($rows))
+                ) .
+                '</div>';
+
+        } else {
+            $text = '';
         }
 
         $form['ref'][] = array(
             '#type' => 'markup',
-            '#value' => theme('table', $header, $rows),
+            '#value' => theme('table', $header, $rows) . $text,
         );
     }
 

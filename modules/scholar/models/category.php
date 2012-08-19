@@ -133,4 +133,18 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
     return $options;
 } // }}}
 
+function scholar_category_acquire($id) // {{{
+{
+    db_query("UPDATE {scholar_categories} SET refcount = refcount + 1 WHERE id = %d", $id);
+} // }}}
+
+function scholar_category_release($id) // {{{
+{
+    db_query("UPDATE {scholar_categories} SET refcount = refcount - 1 WHERE id = %d AND refcount > 0", $id);
+} // }}}
+
+
+
+
+
 // vim: fdm=marker

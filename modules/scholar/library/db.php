@@ -270,7 +270,7 @@ function scholar_db_write_record($table, &$record, $update = array()) // {{{
             }
 
         } else {
-            $sql = 'INSERT INTO {' . $table . '} (' 
+            $sql = 'INSERT INTO {' . $table . '} ('
                  . implode(', ', array_keys($values)) . ') VALUES ('
                  . implode(', ', array_map('scholar_db_quote', $values))
                  . ')';

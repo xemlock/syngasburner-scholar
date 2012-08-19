@@ -1,26 +1,28 @@
 <?php
 
-
-function scholar_generics_list($subtype) // {{{
-{
-    $func = 'scholar_' . $subtype . '_list_item';
-
-    if (function_exists($func)) {
-        return _scholar_generics_list($subtype, $func);
-    }
-
-    drupal_set_message("Unable to retrieve list: Invalid generic subtype '$subtype'", 'error');
-} // }}}
-
 /**
- * Silnik do tworzenia list.
+ * Funkcja generująca listę rekordów danego podtypu. Warunkiem jej działania
+ * jest istnienie funkcji o nazwie _scholar_{subtype}_list_spec, która jeżeli
+ * nie dostanie żadnego argumentu zwróci tablicę definiującą nagłówek tabeli, 
+ * a gdy dostanie jako argument tablicę, na jej podstawie zwróci tablicę
+ * wartości do umieszczenia w wierszu tabeli.
+ *
+ * @param string $subtype
+ * @return string
  */
-function _scholar_generics_list($subtype, $callback) // {{{
+function scholar_generics_list($subtype) // {{{
 {
     global $language, $pager_total;
 
+    $func = '_scholar_' . $subtype . '_list_spec';
+
+    if (!function_exists($func)) {
+        drupal_set_message("Unable to retrieve list: Invalid generic subtype '$subtype'", 'error');
+        return;
+    }
+
     // funkcja ma zwracac naglowek tabeli, jezeli nie podano wiersza
-    $header = call_user_func($callback);
+    $header = call_user_func($func);
 
     // sprawdz, czy potrzebna jest kolumna z nazwa kraju, jezeli tak,
     // dodaj ja do zapytania
@@ -48,7 +50,7 @@ function _scholar_generics_list($subtype, $callback) // {{{
     $rows  = array();
 
     while ($row = db_fetch_array($query)) {
-        $rows[] = call_user_func($callback, $row);
+        $rows[] = call_user_func($func, $row);
     }
 
     if (empty($rows)) {
@@ -72,11 +74,12 @@ function _scholar_generics_list($subtype, $callback) // {{{
     return $html;
 } // }}}
 
-
 /**
  * Funkcja wywołująca formularz dla danego podtypu generycznego.
+ *
  * @param array &$form_state
  * @param string $subtype
+ * @return array
  */
 function scholar_generics_form(&$form_state, $subtype) // {{{
 {
@@ -92,16 +95,81 @@ function scholar_generics_form(&$form_state, $subtype) // {{{
         // pobierz strukture formularza
         $form = call_user_func_array($func, $args);
 
-        // podepnij do niej funkcje obslugujace submit
-        if (function_exists($func . '_submit')) {
-            $form['#submit'][] = $func . '_submit';
-        }
+        $form['#subtype'] = $subtype;
+        $form['#submit']  = array('_scholar_generics_form_submit');
 
         return $form;
     }
 
     drupal_set_message("Unable to retrieve form: Invalid generic subtype '$subtype'", 'error');
 } // }}}
+
+/**
+ * Jeżeli isnieje funkcja _scholar_podtyp_form_process_values
+ * zostanie ona uruchomiona (jako arguyment dostanie referencję
+ * do tablicy z wartościami pól formularza.
+ */
+function _scholar_generics_form_submit($form, &$form_state) // {{{
+{
+    // jezeli istnieje funkcja do zmodyfikowania danych formularza
+    // przed zapisem, uruchom ja
+    $subtype = $form['#subtype'];
+    $process = '_scholar_' . $subtype . '_form_process_values';
+
+    if (function_exists($process)) {
+        $args = array(&$form_state['values']);
+        call_user_func_array($process, $args);
+    }
+    
+    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
+
+    // wypelnij rekord danymi z formularza
+    scholar_populate_record($record, $form_state['values']);
+
+    // dla pewnosci ustaw odpowiedni podtyp
+    $record->subtype = $subtype;
+
+    scholar_save_generic($record);
+    drupal_goto(scholar_admin_path($subtype));
+} // }}}
+
+function scholar_generics_delete_form(&$form_state, $subtype, $id) // {{{
+{
+    $record = scholar_load_generic($id, $subtype, scholar_admin_path($subtype));
+
+    $form = array(
+        '#record' => $record,
+    );
+
+    $form = confirm_form($form,
+        t('Are you sure you want to delete %title?', array('%title' => $record->title)),
+        scholar_admin_path($subtype),
+        t('All related node and event records will be removed. This action cannot be undone.'),
+        t('Delete'),
+        t('Cancel')
+    );
+
+    return $form;
+} // }}}
+
+function scholar_generics_delete_form_submit($form, &$form_state) // {{{
+{
+    $record = $form['#record'];
+
+    if ($record) {
+        scholar_delete_generic($record);
+        drupal_goto(scholar_admin_path($record->subtype));
+    }
+} // }}}
+
+
+
+
+
+
+
+
+
 
 function scholar_conference_form(&$form_state, $id = null) // {{{
 {
@@ -136,11 +204,8 @@ function scholar_conference_form(&$form_state, $id = null) // {{{
     return $form;
 } // }}}
 
-function scholar_conference_form_submit($form, &$form_state) // {{{
+function _scholar_conference_form_process_values(&$values) // {{{
 {
-    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
-    $values = $form_state['values'];
-
     // data poczatku i konca maja obcieta czesc zwiazana z czasem,
     // trzeba ja dodac aby byla poprawna wartoscia DATETIME
     $values['start_date'] .= ' 00:00:00';
@@ -160,16 +225,6 @@ function scholar_conference_form_submit($form, &$form_state) // {{{
         $event['language']   = $language;
         $event['image_id']   = $values['image_id'];
     }
-
-    // wypelnij rekord danymi z formularza
-    scholar_populate_record($record, $values);
-
-    // dla pewnosci ustaw odpowiedni podtyp
-    $record->subtype = 'conference';
-
-    scholar_save_generic($record);
-
-    drupal_goto('admin/scholar/conferences');
 } // }}}
 
 function scholar_presentation_form(&$form_state, $id = null)
@@ -265,22 +320,10 @@ function scholar_book_form(&$form_state, $id = null) // {{{
     return $form;
 } // }}}
 
-function scholar_book_form_submit($form, &$form_state) // {{{
+function _scholar_book_form_process_values(&$values) // {{{
 {
-    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
-    $values = $form_state['values'];
-
     $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
     $values['end_date']   = null;
-
-    // wypelnij rekord danymi z formularza
-    scholar_populate_record($record, $values);
-
-    // dla pewnosci ustaw odpowiedni podtyp
-    $record->subtype = 'book';
-
-    scholar_save_generic($record);
-    drupal_goto(scholar_admin_path('book'));    
 } // }}}
 
 function scholar_article_form(&$form_state, $id = null) // {{{
@@ -341,31 +384,19 @@ function scholar_article_form(&$form_state, $id = null) // {{{
     return $form;
 } // }}}
 
-function scholar_article_form_submit($form, &$form_state) // {{{
+function _scholar_article_form_process_values(&$values) // {{{
 {
-    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
-    $values = $form_state['values'];
-
     // poniewaz jako date artykulu zapisuje sie tylko rok, trzeba
     // dodac do niego brakujace znaki, aby byl poprawna wartoscia DATETIME
     $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
     $values['end_date']   = null;
-
-    // wypelnij rekord danymi z formularza
-    scholar_populate_record($record, $values);
-
-    // dla pewnosci ustaw odpowiedni podtyp
-    $record->subtype = 'article';
-
-    scholar_save_generic($record);
-    drupal_goto(scholar_admin_path('article'));
 } // }}}
 
 
 /**
  * @return array
  */
-function scholar_article_list_item($row = null) // {{{
+function _scholar_article_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -387,7 +418,7 @@ function scholar_article_list_item($row = null) // {{{
     );
 } // }}}
 
-function scholar_book_list_item($row = null) // {{{
+function _scholar_book_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -409,7 +440,7 @@ function scholar_book_list_item($row = null) // {{{
     );
 } // }}}
 
-function scholar_conference_list_item($row = null) // {{{
+function _scholar_conference_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -431,7 +462,7 @@ function scholar_conference_list_item($row = null) // {{{
     );
 } // }}}
 
-function scholar_presentation_list_item($row = null) // {{{
+function _scholar_presentation_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(

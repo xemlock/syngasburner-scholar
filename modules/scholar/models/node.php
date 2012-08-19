@@ -279,6 +279,11 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
  */
 function scholar_delete_nodes($object_id, $table_name) // {{{
 {
+    // po pierwsze zapamietaj wszystkie komunikaty, usuwanie wezla
+    // bedzie utawialo wlasne, ktorych nie chcemy pokazywac -
+    // dla kazdego usunietego wezla "Page has been deleted".
+    $messages = drupal_get_messages();
+
     $bindings  = _scholar_fetch_node_binding($object_id, $table_name);
     $url_alias = db_table_exists('url_alias');
 
@@ -296,7 +301,26 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
 
         // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
         // usuniete zostana linki menu i aliasy sciezek.
+        // Poniewaz node_delete wywoluje nodeapi z parametrem load, musimy
+        // zmienic typ wezla na ignorowany podczas ladowania.
+        db_query("UPDATE {node} SET type = 'page' WHERE nid = %d", $binding['node_id']);
+
+        // usuwamy binding
+        db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
+
+        // teraz spokojnie mozemy usunac wezel, jako ze przestal on
+        // nalezec do scholara
         node_delete($binding['node_id']);
+    }
+
+    // usun komunikaty ustawione podczas usuwania wezla
+    drupal_get_messages();
+
+    // przywroc komunikaty sprzed usuniecia wezlow
+    foreach ($messages as $type => $type_messages) {
+        foreach ($type_messages as $message) {
+            drupal_set_message($message, $type);
+        }
     }
 } // }}}
 

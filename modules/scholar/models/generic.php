@@ -90,6 +90,11 @@ function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
     return $count;
 } // }}}
 
+function scholar_delete_events($row_id, $table_name)
+{
+}
+
+
 function scholar_new_generic() // {{{
 {
     $record = new stdClass;
@@ -244,18 +249,32 @@ function scholar_save_generic(&$generic) // {{{
 {
     $success = false;
 
-    foreach (get_object_vars($generic) as $key => $value) {
-        if (is_string($value)) {
-            $value = trim($value);
-            $generic->$key = strlen($value) ? $value : null;
-        }
-    }
-
     if ($generic->id) {
+        // zapamietaj oryginalne wartosci parent_id i category_id,
+        // zeby pozniej wymusic przeliczenie liczby odwolan do nich
+        $query = db_query("SELECT parent_id, category_id FROM {scholar_generics} WHERE id = %d", $generic->id);
+        if ($row = db_fetch_array($query)) {
+            $parent_id = $row['parent_id'];
+            $category_id = $row['category_id'];
+        } else {
+            $parent_id = $category_id = null;
+        }
+
         $is_new = false;
         if (scholar_db_write_record('scholar_generics', $generic, 'id')) {
+            // zaktualizuj liczniki odwolan kategorii, bez znaczenia czy stary
+            // i nowy identyfikator sa rozne czy takie same. Najwyzej zostanie
+            // wykonana dekremantacja i inkrementacja na tej samej wartosci.
+            scholar_category_release($category_id);
+            scholar_category_acquire($generic->category_id);
+
+            // to samo tyczy sie licznika odwolan u rekordu-rodzica
+            scholar_generic_release($parent_id);
+            scholar_generic_acquire($generic->parent_id);
+
             $success = true;
         }
+
     } else {
         $is_new = true;
         if (scholar_db_write_record('scholar_generics', $generic)) {
@@ -284,10 +303,58 @@ function scholar_save_generic(&$generic) // {{{
         }
 
         drupal_set_message($is_new
-            ? t('Record created successfully (%title)', array('%title' => $generic->title))
-            : t('Record updated successfully (%title)', array('%title' => $generic->title))
+            ? t('%title created successfully.', array('%title' => $generic->title))
+            : t('%title updated successfully.', array('%title' => $generic->title))
         );
     }
+} // }}}
+
+/**
+ * Usuwa rekord generyczny z tabeli. Wraz z nim usunięte zostają
+ * wszystkie posiadane przez niego powiązania z osobami, powiązania
+ * z plikami, węzły (segmenty) i wydarzenia.
+ *
+ * @param object &$generic
+ */
+function scholar_delete_generic(&$generic) // {{{
+{
+    scholar_category_release($generic->category_id);
+    scholar_generic_release($generic->parent_id);
+
+    // usuniecie autorow
+    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic->id);
+
+    // usuniecie powiazan z plikami
+    db_query("DELETE FROM {scholar_attachments} WHERE table_name = 'generics' AND object_id = %d", $generic->id);
+
+    // usuniecie wezlow
+    scholar_delete_nodes($generic->id, 'generics');
+
+    // usuniecie wydarzen
+    scholar_delete_events($generic->id, 'generics');
+
+    // usuniecie rekordu generycznego
+    db_query("DELETE FROM {scholar_generics} WHERE id = %d", $generic->id);
+
+    $generic->id = null;
+
+    drupal_set_message(t('%title deleted successfully.', array('%title' => $generic->title)));
+} // }}}
+
+/**
+ * Zwiększa o 1 licznik referencji.
+ */
+function scholar_generic_acquire($id) // {{{
+{
+    db_query("UPDATE {scholar_generics} SET refcount = refcount + 1 WHERE id = %d", $id);
+} // }}}
+
+/**
+ * Zmniejsza o 1 licznik referencji.
+ */
+function scholar_generic_release($id) // {{{
+{
+    db_query("UPDATE {scholar_generics} SET refcount = refcount - 1 WHERE id = %d AND refcount > 0", $id);    
 } // }}}
 
 /**
