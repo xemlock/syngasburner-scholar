@@ -4,7 +4,7 @@
  * Narzędzia do manipulacji węzłami
  * 
  * @author xemlock
- * @version 2012-07-31
+ * @version 2012-08-19
  */
 
 /**
@@ -300,72 +300,4 @@ function scholar_delete_nodes($object_id, $table_name) // {{{
     }
 } // }}}
 
-/**
- * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
- * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
- * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
- * w hooku form_alter.
- * TODO do wywalenia chyba!!!
- */
-function scholar_node_form(&$form_state, $node)
-{
-    // Jezeli wezel jest podpiety do obiektow modulu scholar
-    // przekieruj do strony z edycja danego obiektu.
-    p($node);
-    if ($node->type == 'scholar') {
-        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
-        $row   = db_fetch_array($query);
-
-        if ($row) {
-            $referer = scholar_referer();
-            if ($referer) {
-                $destination = 'destination=' . urlencode($referer);
-            } else {
-                $destination = null;
-            }
-
-            switch ($row['table_name']) {
-                case 'people':
-                    scholar_goto('admin/scholar/people/edit/' . $row['object_id'], $destination);
-                    break;
-            }
-        } else {
-            drupal_set_message(t('No binding found for node (%nid)', array('%nid' => $node->nid)));
-        }
-    }
-}
-
-/*function scholar_node_edit_form(&$form_state, $node_id)
-{
-    // Edycja ustawien wezla niedostepnych przy edycji obiektu scholara.
-    // Tutaj musimy wykorzystac hook_nodeapi aby kazdy z modulow mogl
-    // odpowiednio zmodyfikowac formularz.
-
-    module_load_include('inc', 'node', 'node.pages');
-    $node = node_load(intval($node_id));
-
-    if (empty($node)) {
-        drupal_set_message(t('Invalid node id (%nid)', array('%nid' => $node->nid)));
-        return;
-    }
-
-    if ($node->type != 'scholar') {
-        drupal_set_message(t('Invalid node type (%type)', array('%type' => $node->type)));
-        return;
-    }
-
-    // spraw zeby moduly myslaly, ze modyfikuja standardowy formularz
-    // edycji wezla-strony
-    $form = array();
-    $form['type'] = array(
-        '#type'         => 'textfield',
-        '#value'        => $node->type,
-    );
-    $form['#node'] = $node;
-
-    taxonomy_form_alter(&$form, $form_state, 'scholar_node_form');
-    gallery_form_alter(&$form, $form_state, 'scholar_node_form');
-p($form);
-    return $form;
-}*/
-
+// vim: fdm=marker

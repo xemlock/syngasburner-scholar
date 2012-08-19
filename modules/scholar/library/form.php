@@ -28,14 +28,17 @@ function scholar_elements() // {{{
         '#maxlength'        => 10,
         '#yearonly'         => false,
     );
+
+    $elements['scholar_element_cancel'] = array(
+        '#input'            => false,
+        '#title'            => t('Cancel'),
+        '#value'            => '',
+    );
     $elements['scholar_element_people'] = array(
         '#input'            => true,
         '#element_validate' => array('form_typ_scholar_element_people_validate'),
     );
-    $elements['scholar_element_cancel'] = array(
-        '#input'            => false,
-        '#title'            => t('Cancel'),
-    );
+
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
@@ -46,53 +49,6 @@ function scholar_elements() // {{{
     );
 
     return $elements;
-} // }}}
-
-/**
- * Zwraca listę wszystkich krajów.
- */
-function scholar_countries($code = null) // {{{
-{
-    global $language;
-    static $countries;
-
-    if (null === $countries) {
-        $key = 'scholar_countries_' . $language->language;
-
-        if (!($data = cache_get($key))) {
-            $locale = new Zend_Locale($language->language);
-            $zflang = $locale->getLanguage();
-
-            $countries = Zend_Locale::getTranslationList('Territory', $zflang, 2);
-            // filter out unknown region (ZZ)
-            unset($countries['ZZ']);
-
-            switch ($zflang) {
-                case 'pl':
-                    // remove SAR part from China administered country names, as
-                    // it is not obligatory, see: 
-                    // http://en.wikipedia.org/wiki/Hong_Kong#cite_note-1
-                    foreach ($countries as $key => $value) {
-                        $countries[$key] = str_ireplace(', Specjalny Region Administracyjny Chin', '', $value);
-                    }
-                    break;
-            }
-
-            // this of course won't work on Windows, see:
-            // https://bugs.php.net/bug.php?id=46165
-            asort($countries, SORT_LOCALE_STRING);
-
-            cache_set($key, $countries);
-        } else {
-            $countries = (array) $data->data;
-        }
-    }
-
-    if (null === $code) {
-        return $countries;
-    }
-
-    return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
 
 /**
@@ -122,11 +78,11 @@ function scholar_elements_theme() // {{{
         'arguments' => array('element' => null),
     );
 
-    $theme['scholar_element_people'] = array(
+    $theme['scholar_element_cancel'] = array(
         'arguments' => array('element' => null),
     );
 
-    $theme['scholar_element_cancel'] = array(
+    $theme['scholar_element_people'] = array(
         'arguments' => array('element' => null),
     );
 
@@ -391,7 +347,7 @@ function form_type_scholar_checkboxed_container_value($element, $post = false) /
     );
 } // }}}
 
-function scholar_language_label($language, $name = null) // {{{
+function scholar_language_label($language, $label = null) // {{{
 {
     static $have_languageicons = null;
 
@@ -399,18 +355,16 @@ function scholar_language_label($language, $name = null) // {{{
         $have_languageicons = module_exists('languageicons');
     }
 
-    if (null === $name) {
-        $name = scholar_languages($language);
-    }
+    $name = scholar_languages($language);
 
     if ($have_languageicons) {
         $dummy = new stdClass;
         $dummy->language = $language;
 
-        return theme('languageicons_icon', $dummy, $name) . ' ' . $name;
+        return theme('languageicons_icon', $dummy, $name) . ' ' . $label;
     }
-    
-    return $name;
+
+    return '[' . $name . '] ' . $label;
 } // }}}
 
 function scholar_events_form($date = true)
@@ -471,6 +425,9 @@ function scholar_nodes_subform() // {{{
         '#tree' => true,
     );
 
+    $menus = module_invoke('menu', 'get_menus');
+    $menu_parents = (array) module_invoke('menu', 'parent_options', $menus, null);
+
     foreach (scholar_languages() as $code => $name) {
         $container = array(
             '#type'     => 'scholar_checkboxed_container',
@@ -508,7 +465,7 @@ function scholar_nodes_subform() // {{{
         $container['menu']['parent'] = array(
             '#type'     => 'select',
             '#title'    => t('Parent item'),
-            '#options'  => menu_parent_options(menu_get_menus(), null),
+            '#options'  => $menu_parents,
             '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
         );
         $container['menu']['weight'] = array(
@@ -573,6 +530,76 @@ function scholar_attachments_form($flags, &$record, $table_name)
 
     return $form;
 }
+
+/**
+ * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
+ * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
+ * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
+ * w hooku form_alter.
+ * TODO do wywalenia chyba!!!
+ */
+function scholar_node_form(&$form_state, $node)
+{
+    // Jezeli wezel jest podpiety do obiektow modulu scholar
+    // przekieruj do strony z edycja danego obiektu.
+    p($node);
+    if ($node->type == 'scholar') {
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
+        $row   = db_fetch_array($query);
+
+        if ($row) {
+            $referer = scholar_referer();
+            if ($referer) {
+                $destination = 'destination=' . urlencode($referer);
+            } else {
+                $destination = null;
+            }
+
+            switch ($row['table_name']) {
+                case 'people':
+                    scholar_goto('admin/scholar/people/edit/' . $row['object_id'], $destination);
+                    break;
+            }
+        } else {
+            drupal_set_message(t('No binding found for node (%nid)', array('%nid' => $node->nid)));
+        }
+    }
+}
+
+/*function scholar_node_edit_form(&$form_state, $node_id)
+{
+    // Edycja ustawien wezla niedostepnych przy edycji obiektu scholara.
+    // Tutaj musimy wykorzystac hook_nodeapi aby kazdy z modulow mogl
+    // odpowiednio zmodyfikowac formularz.
+
+    module_load_include('inc', 'node', 'node.pages');
+    $node = node_load(intval($node_id));
+
+    if (empty($node)) {
+        drupal_set_message(t('Invalid node id (%nid)', array('%nid' => $node->nid)));
+        return;
+    }
+
+    if ($node->type != 'scholar') {
+        drupal_set_message(t('Invalid node type (%type)', array('%type' => $node->type)));
+        return;
+    }
+
+    // spraw zeby moduly myslaly, ze modyfikuja standardowy formularz
+    // edycji wezla-strony
+    $form = array();
+    $form['type'] = array(
+        '#type'         => 'textfield',
+        '#value'        => $node->type,
+    );
+    $form['#node'] = $node;
+
+    taxonomy_form_alter(&$form, $form_state, 'scholar_node_form');
+    gallery_form_alter(&$form, $form_state, 'scholar_node_form');
+p($form);
+    return $form;
+}*/
+
 
 /**
  * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
@@ -708,9 +735,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#type'      => 'scholar_country',
             '#title'     => t('Country'),
         ),
-        'category' => array(
-            '#type'      => 'textfield',
+        'category_id' => array(
+            '#type'      => 'select',
             '#title'     => t('Category'),
+            '#options'   => array(),
         ),
         'url' => array(
             '#type'      => 'textfield',
@@ -719,8 +747,9 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
         ),
         'parent_id' => array(
-            '#type'     => 'textfield',
+            '#type'     => 'select',
             '#title'    => t('Parent record'),
+            '#options'  => array(),
         ),
         'image_id' => array(
             '#type'     => 'gallery_image_select',
@@ -776,6 +805,12 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                         $form['record'][$value] = $defs[$value];
                     }
                 } elseif (isset($defs[$key])) {
+                    // jezeli podano false zamiast specyfikacji elementu,
+                    // zignoruj ten element
+                    if (false === $value) {
+                        continue;
+                    }
+
                     // jezeli podano string, zostanie on uzyty jako etykieta,
                     // wartosci typow innych niz string i array zostana zignorowane
                     if (is_string($value)) {

@@ -174,7 +174,7 @@ function scholar_schema() // {{{
                 'length'    => 32,
                 'not null'  => true,
             ), 
-            'category' => array(
+            'category_id' => array(
                 // REFERENCES scholar_categories (id)
                 // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
                 'type'      => 'int',
@@ -224,7 +224,7 @@ function scholar_schema() // {{{
         'primary key' => array('id'),
         'indexes' => array(
             'parent'        => array('parent_id'),
-            'subtype_category' => array('subtype', 'category'),
+            'subtype_category' => array('subtype', 'category_id'),
         ),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
     ); // }}}
@@ -385,7 +385,7 @@ function scholar_schema() // {{{
 
 function scholar_install() // {{{
 {
-    require_once dirname(__FILE__) . '/scholar.file.php';
+    require_once dirname(__FILE__) . '/models/file.php';
 
     $dir = scholar_file_path();
     if (!is_dir($dir) && !mkdir($dir, 0777)) {
