@@ -90,6 +90,8 @@ function scholar_db_quote_identifier($identifier) // {{{
 
 /**
  * Jeżeli wartosć jest tablicą zostanie użyta klauzula WHERE IN.
+ * Jeżeli nazwa kolumny rozpoczyna się od ? dopuszczona zostanie
+ * wartość NULL
  * @param array $conds          tablica z warunkami
  */
 function scholar_db_where($conds) // {{{
@@ -97,6 +99,13 @@ function scholar_db_where($conds) // {{{
     $where = array();
 
     foreach ($conds as $key => $value) {
+        if ('?' == substr($key, 0, 1)) {
+            $null = true;
+            $key  = substr($key, 1);
+        } else {
+            $null = false;
+        }
+
         if (false !== ($pos = strpos($key, '.'))) {
             // alias tabeli, nie otaczaj go znakami ograniczajacymi
             $column = substr($key, 0, $pos + 1)
@@ -109,14 +118,20 @@ function scholar_db_where($conds) // {{{
             $values = count($value) 
                     ? '(' . join(',', array_map('scholar_db_quote', $value)) . ')'
                     : '(NULL)';
-            $where[] = $column . ' IN ' . $values;
+            $expr = $column . ' IN ' . $values;
 
         } elseif (null === $value) {
-            $where[] = $column . ' IS NULL';
+            $expr = $column . ' IS NULL';
 
         } else {
-            $where[] = $column . " = " . scholar_db_quote($value);
+            $expr = $column . " = " . scholar_db_quote($value);
         }
+
+        if ($null) {
+            $expr = '(' . $expr . ' OR ' . $column . ' IS NULL)';
+        }
+
+        $where[] = $expr;
     }
 
     return implode(' AND ', $where);
@@ -131,8 +146,8 @@ function scholar_db_where($conds) // {{{
  */
 function scholar_db_country_name($column, $table) // {{{
 {
-    $column = db_escape_table($column);
-    $table  = db_escape_table($table);
+    $column = scholar_db_quote_identifier($column);
+    $table  = scholar_db_quote_identifier($table);
 
     if (empty($column) || empty($table)) {
         return 'NULL';
@@ -165,12 +180,122 @@ function scholar_db_country_name($column, $table) // {{{
 } // }}}
 
 // drupal_write_record dziala dobrze, jezeli zadna z wartosci obiektu nie
-// jest nullem, co jest ok, gdy operujemy na tabelach gdzie wszystkie kolumny
-// maja wlasciwosc NOT NULL. Dla tabeli z generykami to oczywiscie nie jest
-// prawdziwe i funkcja drupalowa po prostu nie dziala.
-function scholar_db_write_record($table, &$record, $update = array())
+// jest nullem i gdy operuje na tabeli gdzie wszystkie kolumny sa NOT NULL.
+function scholar_db_write_record($table, &$record, $update = array()) // {{{
 {
-    return drupal_write_record($table, $record, $update);
-}
+    $schema = drupal_get_schema($table);
+
+    if (empty($schema)) {
+        drupal_set_message(t('Unable to retrieve schema for table %table.', array('%table' => $table)), 'error');
+        return false;    
+    }
+
+    // upwenij sie, ze podczas edycji wymagane kolumny sa ustawione
+    $update = (array) $update;
+
+    foreach ($update as $column) {
+        if (empty($record->$column)) {
+            drupal_set_message(t('Empty value of property %property required for update.', array('%property' => $column)), 'error');
+            return false;
+        }
+    }
+
+    // odfiltruj tylko te wartosci, ktorych klucze odpowiadaja kolumnom
+    // podanej tabeli. Utworz przy okazji liste kolumn sekwencyjnych,
+    // ktorych wartosci nalezy pobrac po dodaniu nowego rekordu do bazy.
+    $serials = array();
+    $values = array();
+
+    foreach ($schema['fields'] as $name => $spec) {
+        if (property_exists($record, $name)) {
+            $not_null = isset($spec['not null']) && $spec['not null'];
+            $value    = $record->$name;
+
+            if ('serial' == $spec['type']) {
+                // zignoruj wartosci dla kolumn sekwencyjnych
+                $serials[] = $name;
+                continue;
+            }
+
+            if (is_string($value)) {
+                // przytnij wszystkie stringi
+                $value = trim($value);
+                if (0 == strlen($value)) {
+                    $value = null;
+                }
+            }
+
+            // jezeli kolumna nie zezwala na NULL zastap go zerowa
+            // wartoscia dla danego typu
+            if (null === $value && $not_null) {
+                switch ($spec['type']) {
+                    case 'int': case 'float': case 'numeric':
+                        $value = 0;
+                        break;
+
+                    case 'char': case 'varchar': case 'text':
+                        $value = '';
+                        break;
+
+                    case 'datetime':
+                        $value = date('Y-m-d H:i:s', 0);
+                        break;
+                }
+            }
+
+            $values[$name] = $value;
+        }
+    }
+
+    $success = false;
+
+    if ($values) {
+        if ($update) {
+            $assigns = array();
+
+            foreach ($values as $column => $value) {
+                $assigns[] = scholar_db_quote_identifier($column) . ' = ' . scholar_db_quote($value);
+            }
+
+            $where = array();
+
+            foreach ($update as $column) {
+                $where[$column] = $record->$column;
+            }
+
+            $sql = 'UPDATE {' . $table . '} SET ' . implode(', ', $assigns) . ' WHERE ' . scholar_db_where($where);
+
+            if (db_query($sql)) {
+                $success = true;
+            }
+
+        } else {
+            $sql = 'INSERT INTO {' . $table . '} (' 
+                 . implode(', ', array_keys($values)) . ') VALUES ('
+                 . implode(', ', array_map('scholar_db_quote', $values))
+                 . ')';
+
+            if (db_query($sql)) {
+                // zaktualizuj kolumny sekwencyjne
+                foreach ($serials as $column) {
+                    $values[$column] = db_last_insert_id($table, $column);
+                }
+
+                $success = true;
+            }
+        }
+
+        // wypelnij obiekt wartosciami zapisanymi do bazy. Nie ma sensu odswiezac
+        // rekordu danymi z bazy, bo zwykle po zapisie i tak nastepuje przekierowanie
+        // na inna strone.
+        if ($success) {
+            foreach ($values as $key => $value) {
+                $record->$key = $value;
+            }
+        }
+    }
+
+    return $success;
+} // }}}
 
 // vim: fdm=marker

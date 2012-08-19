@@ -110,7 +110,7 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
 {
     global $language;
 
-    $where = array('language' => $language->language);
+    $where = array('?language' => $language->language);
 
     if ($table_name) {
         $where['table_name'] = $table_name;

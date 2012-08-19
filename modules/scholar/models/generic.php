@@ -295,13 +295,17 @@ function scholar_save_generic(&$generic) // {{{
  */
 function scholar_generic_parent_options($subtype = null) // {{{
 {
+    global $language;
+
+    $where = array(
+        '?n.language' => $language->language,
+    );
+
     if ($subtype) {
-        $where = 'WHERE g.subtype = ' . scholar_db_quote($subtype);
-    } else {
-        $where = '';
+        $where['g.subtype'] = $subtype;
     }
 
-    $query = db_query("SELECT g.id, g.title, n.name AS category_name FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON g.category_id = n.category_id $where ORDER BY n.name, g.title");
+    $query = db_query("SELECT g.id, g.title, n.name AS category_name FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON g.category_id = n.category_id WHERE " . scholar_db_where($where) . " ORDER BY n.name, g.title");
 
     $options = array(
         0 => '', // pusty rodzic
