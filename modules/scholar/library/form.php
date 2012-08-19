@@ -417,12 +417,18 @@ function scholar_events_form($date = true)
  */
 function scholar_nodes_subform() // {{{
 {
+    $have_menu    = module_exists('menu');
+    $have_path    = module_exists('path');
+    $have_gallery = module_exists('gallery');
+
+    if ($have_menu) {
+        $menus = module_invoke('menu', 'get_menus');
+        $menu_parents = (array) module_invoke('menu', 'parent_options', $menus, null);
+    }
+
     $form = array(
         '#tree' => true,
     );
-
-    $menus = module_invoke('menu', 'get_menus');
-    $menu_parents = (array) module_invoke('menu', 'parent_options', $menus, null);
 
     foreach (scholar_languages() as $code => $name) {
         $container = array(
@@ -443,46 +449,69 @@ function scholar_nodes_subform() // {{{
             '#title'    => t('Body'),
         );
 
-        $container['menu'] = array(
-            '#type'     => 'fieldset',
-            '#title'    => t('Menu settings'),
-            '#collapsible' => true,
-            '#collapsed' => true,
-            '#tree'     => true,
-        );
-        $container['menu']['mlid'] = array(
-            '#type'     => 'hidden',
-        );
-        $container['menu']['link_title'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('Menu link title'),
-            '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
-        );
-        $container['menu']['parent'] = array(
-            '#type'     => 'select',
-            '#title'    => t('Parent item'),
-            '#options'  => $menu_parents,
-            '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
-        );
-        $container['menu']['weight'] = array(
-            '#type'     => 'weight',
-            '#title'    => t('Weight'),
-            '#delta'    => 50,
-            '#default_value' => 0,
-            '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
-        );
+        if ($have_menu) {
+            $container['menu'] = array(
+                '#type'     => 'fieldset',
+                '#title'    => t('Menu settings'),
+                '#collapsible' => true,
+                '#collapsed' => true,
+                '#tree'     => true,
+            );
+            $container['menu']['mlid'] = array(
+                '#type'     => 'hidden',
+            );
+            $container['menu']['link_title'] = array(
+                '#type'     => 'textfield',
+                '#title'    => t('Menu link title'),
+                '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
+            );
+            $container['menu']['parent'] = array(
+                '#type'     => 'select',
+                '#title'    => t('Parent item'),
+                '#options'  => $menu_parents,
+                '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
+            );
+            $container['menu']['weight'] = array(
+                '#type'     => 'weight',
+                '#title'    => t('Weight'),
+                '#delta'    => 50,
+                '#default_value' => 0,
+                '#description' => t('Optional. In the menu, the heavier items will sink and the lighter items will be positioned nearer the top.'),
+            );
+        }
 
-        $container['path'] = array(
-            '#type'     => 'fieldset',
-            '#title'    => t('URL path settings'),
-            '#collapsible' => true,
-            '#collapsed' => true,
-        );
-        $container['path']['path'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('URL path alias'),
-            '#description' => t('Optionally specify an alternative URL by which this node can be accessed. For example, type "about" when writing an about page. Use a relative path and don\'t add a trailing slash or the URL alias won\'t work.'),
-        );
+        if ($have_path) {
+            $container['path'] = array(
+                '#type'     => 'fieldset',
+                '#title'    => t('URL path settings'),
+                '#collapsible' => true,
+                '#collapsed' => true,
+            );
+            $container['path']['path'] = array(
+                '#type'     => 'textfield',
+                '#title'    => t('URL path alias'),
+                '#description' => t('Optionally specify an alternative URL by which this node can be accessed.'),
+            );
+        }
+
+        if ($have_gallery) {
+            $container['gallery'] = array(
+                '#type'         => 'fieldset',
+                '#title'        => t('Gallery settings'),
+                '#collapsible'  => true,
+                '#collapsed'    => true,
+            );
+            $container['gallery']['gallery_id'] = array(
+                '#type'         => 'select',
+                '#title'        => t('Gallery'),
+                '#description'  => t('Select gallery attached to this node.'),
+                '#options'      => (array) module_invoke('gallery', 'galleries_options'),
+            );
+            $container['gallery']['gallery_layout'] = array(
+                '#type'         => 'hidden',
+                '#default_value' => 'horizontal', // poziomy uklad galerii
+            );
+        }
 
         $form[$code] = $container;
     }
@@ -598,13 +627,24 @@ function scholar_populate_form(&$form, &$record) // {{{
             $subform[$language]['title']['#default_value'] = $node->title;
             $subform[$language]['body']['#default_value']  = $node->body;
 
-            if ($node->menu) {
+            // wartosci powiazanego elementu menu
+            if (isset($node->menu)) {
                 foreach ($node->menu as $key => $value) {
                     $subform[$language]['menu'][$key]['#default_value'] = $value;
                 }
+
+                $subform[$language]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
             }
 
-            $subform[$language]['menu']['parent']['#default_value'] = $node->menu['menu_name'] . ':' . $node->menu['plid'];
+            // wartosci dla aliasu sciezki
+            if (isset($node->path)) {
+                $subform[$language]['path']['path']['#default_value'] = $node->path;
+            }
+
+            // wartosci dla galerii
+            if (isset($node->gallery_id)) {
+                $subform[$language]['gallery']['gallery_id']['#default_value'] = $node->gallery_id;
+            }
         }
 
         unset($subform);

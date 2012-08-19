@@ -55,10 +55,12 @@ function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
         return false;
     }
 
-    // przygotuj identyfikator powiazanego linka w menu
     $mlid = isset($node->menu['mlid']) ? intval($node->menu['mlid']) : null;
     if (empty($mlid)) {
         $mlid = 'NULL';
+
+        // nie usuwamy aliasu gdy jest pusty link w menu, poniewaz alias
+        // nalezy do wezla (segmentu) a nie do linku
     }
 
     // usuń obecne dowiązanie dla tego wezla i utwórz nowe
@@ -66,7 +68,7 @@ function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
         "DELETE FROM {scholar_nodes} WHERE node_id = %d OR (table_name = '%s' AND object_id = %d AND language = '%s')", 
         $node->nid, $table_name, $object_id, $node->language
     );
-    
+
     db_query(
         "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, status, menu_link_id, path_id, last_rendered, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s')",
         $table_name, $object_id, $node->nid, $node->language, $node->status, $mlid, $body
@@ -75,18 +77,22 @@ function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
     // obejscie problemu z aliasami i wielojezykowoscia, poprzez wymuszenie
     // neutralnosci jezykowej aliasu, patrz http://drupal.org/node/347265
     // (URL aliases not working for content not in default language)
-    $path = null;
 
     if (module_exists('path') && isset($node->path)) {
-        // wyeliminuj duplikaty urla aby nie sprawialy problemu
-        db_query("DELETE FROM {url_alias} WHERE dst = '%s'", $node->path);
-        path_set_alias('node/'. $node->nid, $node->path, NULL, '');
+        $path = trim($node->path);
 
-        // path_set_alias nie zwraca identyfikatora utworzonej sciezki,
-        // wiem musimy wyznaczyc go sami
-        $query = db_query("SELECT * FROM {url_alias} WHERE dst = '%s'", $node->path);
-        if ($path = db_fetch_array($query)) {
-            db_query("UPDATE {scholar_nodes} SET path_id = %d WHERE node_id = %d", $path['pid'], $node->nid);
+        // wyeliminuj aktualne aliasy dla tej sciezki
+        db_query("DELETE FROM {url_alias} WHERE dst = '%s' OR src = 'node/%d'", $path, $node->nid);
+
+        if (strlen($path)) {
+            path_set_alias('node/'. $node->nid, $path, null, '');
+
+            // path_set_alias nie zwraca identyfikatora utworzonej sciezki,
+            // wiec musimy wyznaczyc go sami
+            $query = db_query("SELECT * FROM {url_alias} WHERE dst = '%s'", $path);
+            if ($url_alias = db_fetch_array($query)) {
+                db_query("UPDATE {scholar_nodes} SET path_id = %d WHERE node_id = %d", $url_alias['pid'], $node->nid);
+            }
         }
     }
 
@@ -261,6 +267,18 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
 
     $node->revision = null; // nigdy nie tworz nowych rewizji, poniewaz
                             // tresc jest generowana automatycznie
+
+    // jezeli podano pousta nazwe linku w menu, a jest podany jego mlid
+    // usun ten link. Trzeba to zrobic tutaj, bo menu_nodeapi tego nie
+    // zrobi.
+    if (isset($node->menu)) {
+        $link_title = trim($node->menu['link_title']);
+
+        if (0 == strlen($link_title)) {
+            menu_link_delete(intval($node->menu['mlid']));
+            unset($node->menu);
+        }
+    }
 
     node_save($node);
 

@@ -302,9 +302,9 @@ function scholar_db_write_record($table, &$record, $update = array()) // {{{
             }
         }
 
-        // wypelnij obiekt wartosciami zapisanymi do bazy. Nie ma sensu odswiezac
-        // rekordu danymi z bazy, bo zwykle po zapisie i tak nastepuje przekierowanie
-        // na inna strone.
+        // wypelnij obiekt wartosciami zapisanymi do bazy. Nie ma sensu
+        // odswiezac rekordu danymi z bazy, bo zwykle po zapisie i tak
+        // nastepuje przekierowanie na inna strone.
         if ($success) {
             foreach ($values as $key => $value) {
                 $record->$key = $value;
