@@ -130,6 +130,7 @@ function scholar_fetch_file($file_id, $redirect = null) // {{{
  * Pobiera listę załączników dla obiektu o podanym identyfikatorze
  * znajdujęcego się w podanej tabeli. Jeżeli podano język, zwrócone 
  * zostaną tylko załączniki dla danego języka.
+ *
  * @param int $row_id
  * @param string $table_name
  * @return array
@@ -164,6 +165,7 @@ function scholar_fetch_files($row_id, $table_name, $language = null) // {{{
 /**
  * Ustawia załączniki dla obiektu z podanej tabeli, wszystkie poprzednie
  * powiązania tego obiektu z załącznikami zostaną usunięte.
+ *
  * @param int $row_id
  * @param string $table_name
  * @param array $attachments
@@ -242,10 +244,10 @@ function scholar_delete_files($row_id, $table_name) // {{{
 } // }}}
 
 /**
- * Liczy ile jest rekordów wiążących ten plik z rekordami tabel scholar_people
- * i scholar_objects.
+ * Liczy ile jest rekordów powiązanych z tym plikiem.
  *
- * @param object &$file         obiekt reprezentujący plik
+ * @param object &$file
+ *     obiekt reprezentujący plik
  * @return int
  */
 function scholar_file_refcount(&$file) // {{{
@@ -257,14 +259,14 @@ function scholar_file_refcount(&$file) // {{{
 } // }}}
 
 /**
- * Pobiera z bazy danych listę rekordów z tabel scholar_people 
- * i scholar_objects odwołujących się do tego pliku.
+ * Pobiera z bazy danych listę rekordów odwołujących się do tego pliku.
  *
- * @param object &$file         obiekt reprezentujący plik
- * @param array $header         tablica kolumn tabeli w postaci opisanej
- *                              w theme_table(). Dopuszczalne nazwy kolumn:
- *                              row_type (konkatenacja table_name.subtype),
- *                              table_name, row_id, title, label, language
+ * @param object &$file
+ *     obiekt reprezentujący plik
+ * @param array $header
+ *     tablica kolumn tabeli w postaci opisanej w theme_table(). Dopuszczalne
+ *     nazwy kolumn: row_type (konkatenacja table_name.subtype), table_name,
+ *     row_id, title, label, language
  * @return array
  */
 function scholar_file_fetch_dependent_rows(&$file, $header = null) // {{{
@@ -282,12 +284,14 @@ function scholar_file_fetch_dependent_rows(&$file, $header = null) // {{{
 } // }}}
 
 /**
- * Usuwa plik z bazy danych i dysku.
+ * Usuwa plik wraz z powiązaniami z bazy danych oraz z dysku.
  *
- * @param object &$file         obiekt reprezentujący plik
+ * @param object &$file
+ *     obiekt reprezentujący plik
  */
 function scholar_delete_file(&$file) // {{{
 {
+    db_query("DELETE FROM {scholar_attachments} WHERE file_id = %d", $file->id);
     db_query("DELETE FROM {scholar_files} WHERE id = %d", $file->id);
     @unlink(scholar_file_path($file->filename));
 
@@ -297,7 +301,8 @@ function scholar_delete_file(&$file) // {{{
 /**
  * Zwraca listę rozszerzeń plików, które mogą zostać przesłane.
  *
- * @return string               rozszerzenia plików oddzielone spacjami
+ * @return string
+ *     rozszerzenia plików oddzielone spacjami
  */
 function scholar_file_allowed_extensions() // {{{
 {
@@ -309,8 +314,10 @@ function scholar_file_allowed_extensions() // {{{
  * Jeżeli nie ma do obiektu reprezentującego plik zostanie zapisana
  * obliczona suma MD5.
  *
- * @param object &$file         obiekt reprezentujący plik
- * @return array                lista błędów walidacji
+ * @param object &$file
+ *     obiekt reprezentujący plik
+ * @return array
+ *     lista błędów walidacji
  */
 function scholar_file_validate_md5sum(&$file) // {{{
 {
@@ -332,8 +339,10 @@ function scholar_file_validate_md5sum(&$file) // {{{
 /**
  * Sprawdza poprawność rozszerzenia pliku.
  *
- * @param object &$file         obiekt reprezentujący plik
- * @return array                lista błędów walidacji
+ * @param object &$file
+ *     obiekt reprezentujący plik
+ * @return array
+ *     lista błędów walidacji
  */
 function scholar_file_validate_extension(&$file) // {{{
 {
@@ -358,8 +367,10 @@ function scholar_file_validate_extension(&$file) // {{{
  * znaki podkreśleniami. Po wykonaniu tej operacji zmienione zostają
  * wartości pól 'filename' i 'destination' obiektu.
  *
- * @param object &$file         obiekt reprezentujący plik
- * @return array                lista błędów walidacji
+ * @param object &$file
+ *     obiekt reprezentujący plik
+ * @return array
+ *     lista błędów walidacji
  */
 function scholar_file_validate_filename(&$file) // {{{
 {
