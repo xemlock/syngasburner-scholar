@@ -27,13 +27,11 @@ function scholar_file_list() // {{{
     $rows  = array();
 
     while ($row = db_fetch_array($query)) {
-        $refcount = intval($row['refcount']);
-
         $rows[] = array(
             check_plain($row['filename']),
             format_size($row['size']),
             l(t('edit'), scholar_admin_path('file/edit/' . $row['id'])),
-            $refcount ? '' : l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
+            l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
         );
     }
 
@@ -43,7 +41,7 @@ function scholar_file_list() // {{{
         );
     }
 
-    $help = t('<p>Below is a list of files managed exclusively by the Scholar module. Files referenced by other records in the database cannot be removed.</p>');
+    $help = t('<p>Below is a list of files managed exclusively by the Scholar module.</p>');
 
     return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
 } // }}}
@@ -122,11 +120,9 @@ function scholar_file_upload_form() // {{{
     return $form;
 } // }}}
 
-/**
- * Obsługa walidacji i zapisania pliku przesłanego za pomocą formularza 
- * {@link scholar_file_upload_form()}.
- */
-function scholar_file_upload_form_submit($form, &$form_state) // {{{
+// file_save_upload nie radzi sobie gdy plik o takiej samej nazwie
+// istnieje.
+function scholar_save_upload($source) // {{{
 {
     $validators = array(
         'scholar_file_validate_md5sum'    => array(),
@@ -134,28 +130,54 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         'scholar_file_validate_extension' => array(),
     );
 
-    $dialog = intval($form_state['values']['dialog']);
-    $fragment = strval($form_state['values']['fragment']);
+    if ($file = file_save_upload($source, $validators)) {
+        $success = false;
 
-    if ($file = file_save_upload('file', $validators, scholar_file_path())) {
-        // Przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
-        // filename po walidacji zawiera bazowa sciezke (ASCII) do wgranego 
-        // pliku, czyli dokladnie to co jest potrzebne.
-        $file->id       = null;
-        $file->mimetype = $file->filemime;
-        $file->size     = $file->filesize;
-        $file->refcount = 0;
-        $file->user_id  = $file->uid;
-        $file->upload_time = date('Y-m-d H:i:s', $file->timestamp);
+        // przenies plik z katalogu tymczasowego do katalogu scholara,
+        // pamietajac o zmianie nazwy, gdy plik o takiej nazwie jak
+        // przeslany juz istnieje
+        $filepath = file_destination(scholar_file_path($file->filename), FILE_EXISTS_RENAME);
 
-        drupal_write_record('scholar_files', $file);
+        if (@rename($file->filepath, $filepath)) {
+            // przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
+            // filename po walidacji zawiera bazowa sciezke (ASCII) do wgranego
+            // pliku, czyli dokladnie to co jest potrzebne.
+            $file->filepath = $filepath;
+            $file->filename = basename($filepath); // to musi byc unikalne
+            $file->id       = null;
+            $file->mimetype = $file->filemime;
+            $file->size     = $file->filesize;
+            $file->user_id  = $file->uid;
+            $file->upload_time = date('Y-m-d H:i:s', $file->timestamp);
+
+            $success = scholar_db_write_record('scholar_files', $file);
+        }
 
         // trzeba usunac plik z tabeli files
         db_query("DELETE FROM {files} WHERE fid = '%d'", $file->fid);
 
+        // jezeli pomyslnie zapisano plik, zwroc reprezentujacy go obiekt
+        if ($success) {
+            return $file;
+        }
+    }
+
+    return false;
+} // }}}
+
+/**
+ * Obsługa walidacji i zapisania pliku przesłanego za pomocą formularza
+ * {@link scholar_file_upload_form()}.
+ */
+function scholar_file_upload_form_submit($form, &$form_state) // {{{
+{
+    $dialog = intval($form_state['values']['dialog']);
+    $fragment = strval($form_state['values']['fragment']);
+
+    if ($file = scholar_save_upload('file')) {
         if ($dialog) {
             // pliki, ktorych upload zostal zainicjowany za pomoca
-            // attachmentManagera zostaja automatycznie dodane do
+            // formElements.files zostaja automatycznie dodane do
             // wybranych plikow
             drupal_add_js('(new Scholar.Data).set(' . drupal_to_js($fragment) . ',' . drupal_to_js($file) . ')', 'inline');
 
@@ -180,7 +202,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
  */
 function scholar_file_edit_form(&$form_state, $file_id)
 {
-    $file = scholar_fetch_file($file_id, true);
+    $file = scholar_fetch_file($file_id, scholar_admin_path('file'));
 
     // Zakladamy, ze w file->filename jest nazwa pliku w czystym ASCII,
     // stad uzycie standardowych funkcji do operowania na stringach.
@@ -230,18 +252,10 @@ function scholar_file_edit_form(&$form_state, $file_id)
     );
 
     // wyswietl liste stron odwolujacych sie do tego pliku
-    $refcount = intval($file->refcount);
-
     $header = array(
         array('data' => t('Title'),    'field' => 'title', 'sort' => 'asc'),
         array('data' => t('Language'), 'field' => 'language'),
         array('data' => t('Row type'), 'field' => 'row_type'),
-    );
-
-    $form['ref'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Dependent database records'),
-        '#attributes' => array('class' => 'scholar'),
     );
 
     $rows  = array();
@@ -255,23 +269,16 @@ function scholar_file_edit_form(&$form_state, $file_id)
         );
     }
 
-    if ($rows || $refcount) {
-        if (count($rows) != $refcount) {
-            $text = '<div class="error">' .
-                format_plural($refcount,
-                    'Expected %refcount file, but found %count. Database corruption detected.',
-                    'Expected %refcount files, but found %count. Database corruption detected.',
-                    array('%refcount' => $refcount, '%count' => count($rows))
-                ) .
-                '</div>';
-
-        } else {
-            $text = '';
-        }
+    if ($rows) {
+        $form['ref'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Dependent database records'),
+            '#attributes' => array('class' => 'scholar'),
+        );
 
         $form['ref'][] = array(
             '#type' => 'markup',
-            '#value' => theme('table', $header, $rows) . $text,
+            '#value' => theme('table', $header, $rows),
         );
     }
 
@@ -329,44 +336,23 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
  */
 function scholar_file_delete_form(&$form_state, $file_id) // {{{
 {
-    $file = scholar_fetch_file($file_id, true);
+    $file = scholar_fetch_file($file_id, scholar_admin_path('file'));
+    $refcount = scholar_file_refcount($file->id);
 
     $form = array('#file' => $file);
     $form = confirm_form($form,
-        t('Are you sure you want to delete file (%filename)?', array('%filename' => $file->filename)),
+        t('Are you sure you want to delete file %filename?', array('%filename' => $file->filename)),
         scholar_admin_path('file'),
-        t('This action cannot be undone.'),
+        format_plural($refcount,
+            'There is one page referencing this file. This action cannot be undone.',
+            'There are %refcount pages referencing this file. This action cannot be undone.',
+            array('%refcount' => $refcount)
+        ),
         t('Delete'),
         t('Cancel')
     );
 
     return $form;
-} // }}}
-
-/**
- * Sprawdza, czy plik podany w formularzu może zostać usunięty.
- *
- * @param array $form
- * @param array &$form_state
- */
-function scholar_file_delete_form_validate($form, &$form_state) // {{{
-{
-    $file = $form['#file'];
-
-    if ($file) {
-        // sprawdzamy dokladnie faktyczna liczbe odwolan do tego pliku,
-        // na wypadek gdyby refcount zawieralo niepoprawna wartosc
-
-        if (scholar_file_refcount($file->id)) {
-            form_set_error('', 
-                format_plural($refcount,
-                    'There is one page referencing this file. File cannot be deleted.',
-                    'There are %refcount pages referencing this file. File cannot be deleted.',
-                    array('%refcount' => $refcount)
-                )
-            );
-        }
-    }
 } // }}}
 
 /**

@@ -10,18 +10,18 @@
 /**
  * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
  *
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  * @param string $language OPTIONAL     jeżeli nie podany zostaną pobrane
  *                                      wiązania dla wszystkich języków
  * @return false|array                  false jeżeli podano język, pusta
  *                                      tablica jeżeli go nie podano
  */
-function _scholar_fetch_node_binding($object_id, $table_name, $language = null) // {{{
+function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // {{{
 {
     $sql = sprintf(
-        "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND object_id = %d",
-        db_escape_string($table_name), $object_id
+        "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND row_id = %d",
+        db_escape_string($table_name), $row_id
     );
 
     if (null === $language) {
@@ -45,11 +45,11 @@ function _scholar_fetch_node_binding($object_id, $table_name, $language = null) 
  * Tworzy powiązanie między rekordem z podanej tabeli a istniejącym węzłem.
  *
  * @param object &$node
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  * @param string $body OPTIONAL
  */
-function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
+function _scholar_bind_node(&$node, $row_id, $table_name, $body = '') // {{{
 {
     if (empty($node->nid)) {
         return false;
@@ -65,13 +65,13 @@ function _scholar_bind_node(&$node, $object_id, $table_name, $body = '') // {{{
 
     // usuń obecne dowiązanie dla tego wezla i utwórz nowe
     db_query(
-        "DELETE FROM {scholar_nodes} WHERE node_id = %d OR (table_name = '%s' AND object_id = %d AND language = '%s')", 
-        $node->nid, $table_name, $object_id, $node->language
+        "DELETE FROM {scholar_nodes} WHERE node_id = %d OR (table_name = '%s' AND row_id = %d AND language = '%s')", 
+        $node->nid, $table_name, $row_id, $node->language
     );
 
     db_query(
-        "INSERT INTO {scholar_nodes} (table_name, object_id, node_id, language, status, menu_link_id, path_id, last_rendered, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s')",
-        $table_name, $object_id, $node->nid, $node->language, $node->status, $mlid, $body
+        "INSERT INTO {scholar_nodes} (table_name, row_id, node_id, language, status, menu_link_id, path_id, last_rendered, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s')",
+        $table_name, $row_id, $node->nid, $node->language, $node->status, $mlid, $body
     );
 
     // obejscie problemu z aliasami i wielojezykowoscia, poprzez wymuszenie
@@ -144,16 +144,16 @@ function _scholar_populate_node(&$node, $binding) // {{{
  * Pobiera z bazy rekord węzła przypisany do rekordu z danej tabeli,
  * z nieprzetworzoną treścią, z wypełnionymi polami menu i path.
  *
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  * @param string $language
  * @return false|object
  */
-function scholar_fetch_node($object_id, $table_name, $language) // {{{
+function scholar_fetch_node($row_id, $table_name, $language) // {{{
 {
     $node = false;
 
-    if ($binding = _scholar_fetch_node_binding($object_id, $table_name, $language)) {
+    if ($binding = _scholar_fetch_node_binding($row_id, $table_name, $language)) {
         // Reczne pobranie zamiast node_load() zeby nie uniknac wywolania
         // hooka nodeapi, poniewaz dostep do tego wezla ma byc jedynie 
         // dla modulu scholar.
@@ -174,12 +174,12 @@ function scholar_fetch_node($object_id, $table_name, $language) // {{{
  * indeksowane kodem języka.
  * @return array
  */
-function scholar_fetch_nodes($object_id, $table_name) // {{{
+function scholar_fetch_nodes($row_id, $table_name) // {{{
 {
     $nodes = array();
     $rendering = _scholar_rendering_enabled(false);
 
-    foreach (_scholar_fetch_node_binding($object_id, $table_name) as $binding) {
+    foreach (_scholar_fetch_node_binding($row_id, $table_name) as $binding) {
         if ($node = node_load($binding['node_id'])) {
             _scholar_populate_node($node, $binding);
             $nodes[$node->language] = $node;
@@ -275,10 +275,10 @@ function scholar_create_node($values = array()) // {{{
  * Zapisuje węzeł i podpina go do obiektu z podanej tabeli.
  *
  * @param object &$node
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  */
-function scholar_save_node(&$node, $object_id, $table_name) // {{{
+function scholar_save_node(&$node, $row_id, $table_name) // {{{
 {
     $body = trim($node->body);
 
@@ -304,7 +304,7 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
     node_save($node);
 
     // dodaj węzeł do indeksu powiązanych węzłów
-    _scholar_bind_node($node, $object_id, $table_name, $body);
+    _scholar_bind_node($node, $row_id, $table_name, $body);
 
     // przywroc body do wartosci sprzed zapisu
     $node->body = $body;
@@ -313,17 +313,17 @@ function scholar_save_node(&$node, $object_id, $table_name) // {{{
 /**
  * Usuwa węzły powiązane z tym obiektem.
  *
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  */
-function scholar_delete_nodes($object_id, $table_name) // {{{
+function scholar_delete_nodes($row_id, $table_name) // {{{
 {
     // po pierwsze zapamietaj wszystkie komunikaty, usuwanie wezla
     // bedzie utawialo wlasne, ktorych nie chcemy pokazywac -
     // dla kazdego usunietego wezla "Page has been deleted".
     $messages = drupal_get_messages();
 
-    $bindings  = _scholar_fetch_node_binding($object_id, $table_name);
+    $bindings  = _scholar_fetch_node_binding($row_id, $table_name);
     $url_alias = db_table_exists('url_alias');
 
     foreach ($bindings as $binding) {

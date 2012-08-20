@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-10
+ * @version 2012-08-20
  */
 
 /**
@@ -1443,102 +1443,101 @@ var Scholar = {
         } // }}}
     },
     /**
-     * Umieszcza w podanym selektorze widget zarządzający załącznikami.
-     * @param {string|jQuery|element} target
-     *     element dokumentu, do którego zostanie podpięty widget
-     * @param {string} name
-     *     przedrostek używany w nazwie we wszystkich polach formularza
-     *     generowanych przez ten widget
-     * @param {Array} [values]
-     */
-    attachmentManager: function(target, name, settings, values) { // {{{
-        var labels = new Scholar.IdSet,
-            language = settings.language;
-
-        settings.header = ['', 'File name <span class="form-required">*</span>', 'Size'];
-        settings.templates = [
-            '',
-            function(item) {
-                var label = labels.get(item.id);
-                if (typeof label === 'undefined') {
-                    label = item.filename;
-                    labels.add(item.id, label);
-                }
-                var fieldname = name + '[' + item.id + ']';
-
-                return [
-                    '<input type="hidden" name="' + fieldname + '[id]" value="' + item.id + '"/>',
-                    $('<input type="text" name="' + fieldname + '[label]" class="form-text" />')
-                        .val(label ? label : '')
-                        .change(function() {
-                            labels.add(item.id, this.value);
-                        }),
-                    '<div class="description">' + String(item.filename).replace(/</g, '&lt;') + '</div>'
-                ];
-            },
-            function(item) {
-                // poza rozmiarem pliku dodaj jeszcze ukryte pola przechowujace
-                // nazwe i rozmiar pliku
-                var fieldname = name + '[' + item.id + ']';
-                return Scholar.str.filesize(item.size) 
-                     + '<input type="hidden" name="' + fieldname + '[filename]" value="' + item.filename + '" />'
-                     + '<input type="hidden" name="' + fieldname + '[size]" value="' + item.size + '" />';
-            }
-        ];
-        settings.showOnInit = false;
-        settings.weightTemplate = name + '[{ id }][weight]';
-        settings.translate = function (text) {
-            return Scholar.i18n.tr(text);
-        }
-
-        var widget = new Scholar.SortableMultiselect(target, settings);
-
-        widget.setButtons([
-            {
-                label: widget.translate('Select file'),
-                click: function() {
-                    Scholar.mixins.openItemPicker(widget, {
-                        url: settings.urlFileSelect,
-                        width: 480,
-                        height: 240,
-                        title: $(this).html() + ' (' + language.name + ')'
-                    });
-                    return false;
-                }
-            },
-            {
-                label: widget.translate('Upload file'),
-                click: function() {
-                    Scholar.mixins.openFileUploader(widget, {
-                        url: settings.urlFileUpload,
-                        width: 480,
-                        height: 240,
-                        title: $(this).html()
-                    });
-                    return false;
-                }
-            }
-        
-        ]);
-
-        // ustaw wartosc poczatkowa
-        if (values && values.length) {
-            for (var i = 0, n = values.length; i < n; ++i) {
-                var value = values[i];
-                widget.add(value.id, value);
-                // dodaj etykiete
-                if (value.label) {
-                    labels.add(value.id, value.label);
-                }
-            }
-
-            widget.redraw();
-        }
-    }, // }}}
-    /**
      * @namespace
      */
     formElements: {
+        /**
+         * Umieszcza w podanym selektorze widget zarządzający załącznikami.
+         * @param {string|jQuery|element} target
+         *     element dokumentu, do którego zostanie podpięty widget
+         * @param {string} name
+         *     przedrostek używany w nazwie we wszystkich polach formularza
+         *     generowanych przez ten widget
+         * @param {Array} [values]
+         */
+        files: function(target, name, settings, values) { // {{{
+            var labels = new Scholar.IdSet,
+                language = settings.language;
+
+            settings.header = ['', 'File name <span class="form-required">*</span>', 'Size'];
+            settings.templates = [
+                '',
+                function(item) {
+                    var label = labels.get(item.id);
+                    if (typeof label === 'undefined') {
+                        label = item.filename;
+                        labels.add(item.id, label);
+                    }
+                    var fieldname = name + '[' + item.id + ']';
+
+                    return [
+                        '<input type="hidden" name="' + fieldname + '[id]" value="' + item.id + '"/>',
+                        $('<input type="text" name="' + fieldname + '[label]" class="form-text" />')
+                            .val(label ? label : '')
+                            .change(function() {
+                                labels.add(item.id, this.value);
+                            }),
+                        '<div class="description">' + String(item.filename).replace(/</g, '&lt;') + '</div>'
+                    ];
+                },
+                function(item) {
+                    // poza rozmiarem pliku dodaj jeszcze ukryte pola przechowujace
+                    // nazwe i rozmiar pliku
+                    var fieldname = name + '[' + item.id + ']';
+                    return Scholar.str.filesize(item.size)
+                         + '<input type="hidden" name="' + fieldname + '[filename]" value="' + item.filename + '" />'
+                         + '<input type="hidden" name="' + fieldname + '[size]" value="' + item.size + '" />';
+                }
+            ];
+            settings.showOnInit = false;
+            settings.weightTemplate = name + '[{ id }][weight]';
+            settings.translate = function (text) {
+                return Scholar.i18n.tr(text);
+            }
+
+            var widget = new Scholar.SortableMultiselect(target, settings);
+
+            widget.setButtons([
+                {
+                    label: widget.translate('Select file'),
+                    click: function() {
+                        Scholar.mixins.openItemPicker(widget, {
+                            url: settings.urlFileSelect,
+                            width: 480,
+                            height: 240,
+                            title: $(this).html() + ' (' + language.name + ')'
+                        });
+                        return false;
+                    }
+                },
+                {
+                    label: widget.translate('Upload file'),
+                    click: function() {
+                        Scholar.mixins.openFileUploader(widget, {
+                            url: settings.urlFileUpload,
+                            width: 480,
+                            height: 240,
+                            title: $(this).html()
+                        });
+                        return false;
+                    }
+                }
+            ]);
+
+            // ustaw wartosc poczatkowa
+            if (values && values.length) {
+                for (var i = 0, n = values.length; i < n; ++i) {
+                    var value = values[i];
+                    widget.add(value.id, value);
+                    // dodaj etykiete
+                    if (value.label) {
+                        labels.add(value.id, value.label);
+                    }
+                }
+
+                widget.redraw();
+            }
+        }, // }}}
         /**
          * @param target selector
          * @param name prefiks do nazywania pól formulrza

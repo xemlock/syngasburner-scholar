@@ -27,6 +27,12 @@ function scholar_elements() // {{{
         '#title'            => t('Cancel'),
         '#value'            => '',
     );
+
+    $elements['scholar_element_files'] = array(
+        '#input'            => true,
+        '#element_validate' => array('form_type_scholar_element_files_validate'),
+    );
+
     $elements['scholar_element_people'] = array(
         '#input'            => true,
         '#element_validate' => array('form_typ_scholar_element_people_validate'),
@@ -35,10 +41,6 @@ function scholar_elements() // {{{
     $elements['scholar_checkboxed_container'] = array(
         '#input'            => true,
         '#checkbox_name'    => 'status',
-    );
-    $elements['scholar_attachment_manager'] = array(
-        '#input'            => true,
-        '#element_validate' => array('form_type_scholar_attachment_manager_validate'),
     );
 
     return $elements;
@@ -67,11 +69,11 @@ function scholar_elements_theme() // {{{
         'arguments' => array('element' => null),
     );
 
-    $theme['scholar_attachment_manager'] = array(
+    $theme['scholar_element_cancel'] = array(
         'arguments' => array('element' => null),
     );
 
-    $theme['scholar_element_cancel'] = array(
+    $theme['scholar_element_files'] = array(
         'arguments' => array('element' => null),
     );
 
@@ -141,7 +143,7 @@ function form_type_scholar_textarea_value($element, $post = false) // {{{
  * @param array $element
  * @param array &$form_state
  */
-function form_type_scholar_attachment_manager_validate($element, &$form_state) // {{{
+function form_type_scholar_element_files_validate($element, &$form_state) // {{{
 {
     // jezeli podane sa pliki, to kazdy z nich musi miec niepusta etykiete
     // unikalną dla tego języka
@@ -166,7 +168,7 @@ function form_type_scholar_attachment_manager_validate($element, &$form_state) /
  * @param array $element
  * @param mixed $post
  */
-function form_type_scholar_attachment_manager_value($element, $post = false) // {{{
+function form_type_scholar_element_files_value($element, $post = false) // {{{
 {
     $value = array();
 
@@ -249,7 +251,7 @@ function theme_scholar_element_cancel($element) // {{{
  * @param array $element
  * @return string
  */
-function theme_scholar_attachment_manager($element) // {{{
+function theme_scholar_element_files($element) // {{{
 {
     drupal_add_js('misc/tabledrag.js', 'core');
     drupal_add_js('misc/tableheader.js', 'core');
@@ -279,7 +281,7 @@ function theme_scholar_attachment_manager($element) // {{{
         $settings['language'] = $language;
         $html .= '<fieldset class="scholar"><legend>' . $legend . '</legend>' .
         '<div id="' . htmlspecialchars($id) . '" class="form-item"></div>' .
-        '<script type="text/javascript">new Scholar.attachmentManager(' . drupal_to_js('#' . $id) . ',' . drupal_to_js("{$element['#name']}[{$code}]") . ' ,' . drupal_to_js($settings) . ',' . drupal_to_js($values) . ')</script>'.
+        '<script type="text/javascript">new Scholar.formElements.files(' . drupal_to_js('#' . $id) . ',' . drupal_to_js("{$element['#name']}[{$code}]") . ' ,' . drupal_to_js($settings) . ',' . drupal_to_js($values) . ')</script>'.
         '</fieldset>';
     }
 
@@ -653,7 +655,6 @@ function scholar_populate_form(&$form, &$record) // {{{
     // elementy files, node i events musza znajdowac sie w kontenerach
     // o tej samej nazwie
     if (isset($form['files']['files']) && isset($record->files)) {
-        // to jest o tyle proste, ze element files jest attachment_managerem
         $form['files']['files']['#default_value'] = $record->files;
     }
 
@@ -833,7 +834,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                     '#title' => t('File attachments'),
                 );
                 $form['files']['files'] = array(
-                    '#type' => 'scholar_attachment_manager',
+                    '#type' => 'scholar_element_files',
                 );
                 break;
 

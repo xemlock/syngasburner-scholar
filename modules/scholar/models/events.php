@@ -18,7 +18,7 @@ function scholar_attachments_load_events($row_id, $table_name) // {{{
     $rows = array();
 
     if (module_exists('events')) {
-        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
+        $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s'", $row_id, $table_name);
 
         // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
         while ($row = db_fetch_array($query)) {
@@ -58,7 +58,7 @@ function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
         foreach (scholar_languages() as $language => $event_data) {
             // sprawdz czy istnieje relacja miedzy generykiem a eventem
             $event = false;
-            $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $row_id, $language);
+            $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s' AND language = '%s'", $row_id, $table_name, $language);
 
             if ($binding = db_fetch_array($query)) {
                 $event = events_load_event($binding['event_id']);
@@ -108,12 +108,12 @@ function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
             // zapisz event
             if (events_save_event($event)) {
                 // usun wczesniejsze powiazania...
-                db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)",
+                db_query("DELETE FROM {scholar_events} WHERE (row_id = %d AND language = '%s') OR (event_id = %d)",
                     $row_id, $language, $event->id
                 );
 
                 // ... i dodaj nowe
-                db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
+                db_query("INSERT INTO {scholar_events} (row_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
                     $row_id, $event->id, $language, $body
                 );
 
@@ -137,14 +137,14 @@ function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
 function scholar_delete_events($row_id, $table_name) // {{{
 {
     if (module_exists('events')) {
-        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
+        $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s'", $row_id, $table_name);
 
         while ($row = db_fetch_array($query)) {
             $event = events_load_event($row['event_id']);
             events_delete_event(&$event);
         }
 
-        db_query("DELETE FROM {scholar_events} WHERE generic_id = %d", $row_id);
+        db_query("DELETE FROM {scholar_events} WHERE row_id = %d AND table_name = '%s'", $row_id, $table_name);
     }
 } // }}}
 

@@ -74,6 +74,11 @@ function scholar_save_authors($generic_id, $authors) // {{{
     db_query("UPDATE {scholar_generics} SET bib_authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
 } // }}}
 
+function scholar_delete_authors($generic_id) // {{{
+{
+    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic_id);
+} // }}}
+
 /**
     // pobieramy co najwyzej czterech autorow, jezeli jest dwoch
     // uzyj ampersandu, jezeli trzech uzyj przecinka i ampersandu,
@@ -230,10 +235,10 @@ function scholar_delete_generic(&$generic) // {{{
     scholar_category_dec_refcount($generic->category_id);
 
     // usuniecie autorow
-    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic->id);
+    scholar_delete_authors($generic->id);
 
     // usuniecie powiazan z plikami
-    db_query("DELETE FROM {scholar_attachments} WHERE table_name = 'generics' AND object_id = %d", $generic->id);
+    scholar_delete_files($generid->id, 'generics');
 
     // usuniecie wezlow
     scholar_delete_nodes($generic->id, 'generics');

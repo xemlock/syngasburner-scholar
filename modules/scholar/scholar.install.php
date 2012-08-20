@@ -16,7 +16,7 @@ function scholar_schema() // {{{
                 'length'    => 32,
                 'not null'  => true,
             ),
-            'object_id' => array(
+            'row_id' => array(
                 // scholar_people.id OR scholar_generics.id OR scholar_categories.id
                 'type'      => 'int',
                 'not null'  => true,
@@ -59,7 +59,7 @@ function scholar_schema() // {{{
                 'size'      => 'big',
             ),
         ),
-        'primary key' => array('table_name', 'object_id', 'language'),
+        'primary key' => array('table_name', 'row_id', 'language'),
         'unique keys' => array(
             'node'  => array('node_id'),
         ),
@@ -225,8 +225,12 @@ function scholar_schema() // {{{
     $schema['scholar_events'] = array( // {{{
         'description' => 'Powiazania miedzy rekordami generycznymi a zdarzeniami',
         'fields' => array(
-            'generic_id'  => array(
-                // REFERENCES scholar_generics (id)
+            'table_name' => array(
+                'type'      => 'varchar',
+                'length'    => 32,
+                'not null'  => true,
+            ),
+            'row_id' => array(
                 'type'      => 'int',
                 'not null'  => true,
             ),
@@ -248,7 +252,7 @@ function scholar_schema() // {{{
                 'size'      => 'medium',
             ),
         ),
-        'primary key' => array('generic_id', 'language'),
+        'primary key' => array('table_name', 'row_id', 'language'),
         'unique keys' => array(
             'event' => array('event_id'), // kazdy event moze byc podpiety do co najwyzej jednego rekordu generycznego
         ),
@@ -316,13 +320,6 @@ function scholar_schema() // {{{
                 'type'      => 'datetime',
                 'not null'  => true,
             ),
-            'refcount' => array(
-                'description' => 'Liczba obiektow odwolujacych sie do tego pliku',
-                'type'      => 'int',
-                'unsigned'  => true,
-                'not null'  => true,
-                'default'   => 0,
-            )
         ),
         'primary key' => array('id'),
         'unique keys' => array(
@@ -341,7 +338,7 @@ function scholar_schema() // {{{
                 'length'    => 32,
                 'not null'  => true,
             ),
-            'object_id' => array(
+            'row_id' => array(
                 'description' => 'scholar_people.id albo scholar_generics.id, rozroznienie na podstawie table_name',
                 'type'      => 'int',
                 'not null'  => true,
@@ -370,7 +367,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
         ),
-        'primary key' => array('table_name', 'object_id', 'file_id', 'language'),
+        'primary key' => array('table_name', 'row_id', 'file_id', 'language'),
     ); // }}}
 
   return $schema;
@@ -396,3 +393,4 @@ function scholar_uninstall() // {{{
 // cleanup query
 // DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
 
+// vim: fdm=marker

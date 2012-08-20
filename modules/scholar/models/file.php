@@ -18,8 +18,9 @@ function scholar_file_path($filename = null) // {{{
  * Przekształca podaną nazwę pliku na czysty ASCII, wykonuje walidację nazwy
  * pliku oraz rozszerzenia oraz usuwaja potencjalnie problematyczne znaki.
  *
- * @return false|string         false jeżeli podana nazwa pliku nie może
- *                              zostać przekształcona do bezpiecznej postaci
+ * @return false|string
+ *     false jeżeli podana nazwa pliku nie może zostać przekształcona do
+ *     bezpiecznej postaci
  */
 function scholar_sanitize_filename($filename) // {{{
 {
@@ -63,9 +64,9 @@ function scholar_sanitize_filename($filename) // {{{
  * @param object &$file         obiekt reprezentujący plik
  * @param string $filename      nowa nazwa pliku
  * @param string &$errmsg       OPTIONAL komunikat o błędzie
- * @return bool                 false jeżeli zmiana nazwy pliku nie powiodła
- *                              się, $errmsg zawiera ewentualny komunikat 
- *                              o błędzie
+ * @return bool
+ *    false jeżeli zmiana nazwy pliku nie powiodła się, $errmsg zawiera
+ *    ewentualny komunikat o błędzie
  */
 function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
 {
@@ -97,13 +98,15 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
 /**
  * Pobiera z bazy danych rekord pliku.
  *
- * @param int|array $file_id    albo numeryczny identyfikator pliku, albo
- *                              tablica z warunkami wyszukiwania
- * @param bool $redirect        czy zgłosić błąd i przekierować do listy
- *                              plików, jeżeli plik nie został znaleziony
+ * @param int|array $file_id
+ *     albo numeryczny identyfikator pliku, albo tablica z warunkami
+ *     wyszukiwania
+ * @param string $redirect
+ *     jeżeli podano, ścieżka do której nastąpi przekierowanie, jeżeli plik
+ *     nie został znaleziony
  * @return object
  */
-function scholar_fetch_file($file_id, $redirect = false) // {{{
+function scholar_fetch_file($file_id, $redirect = null) // {{{
 {
     if (is_array($file_id)) {
         $cond = scholar_db_where($file_id);
@@ -116,7 +119,7 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
-        drupal_goto(scholar_admin_path('file'));
+        drupal_goto($redirect);
         exit;
     }
 
@@ -127,15 +130,15 @@ function scholar_fetch_file($file_id, $redirect = false) // {{{
  * Pobiera listę załączników dla obiektu o podanym identyfikatorze
  * znajdujęcego się w podanej tabeli. Jeżeli podano język, zwrócone 
  * zostaną tylko załączniki dla danego języka.
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
  * @return array
  */
-function scholar_fetch_files($object_id, $table_name, $language = null) // {{{
+function scholar_fetch_files($row_id, $table_name, $language = null) // {{{
 {
     $conds = array(
         'table_name' => $table_name,
-        'object_id'  => $object_id,
+        'row_id'     => $row_id,
     );
 
     if (null !== $language) {
@@ -161,12 +164,14 @@ function scholar_fetch_files($object_id, $table_name, $language = null) // {{{
 /**
  * Ustawia załączniki dla obiektu z podanej tabeli, wszystkie poprzednie
  * powiązania tego obiektu z załącznikami zostaną usunięte.
- * @param int $object_id
+ * @param int $row_id
  * @param string $table_name
- * @param array $attachments Taka jak wartosć z elementu scholar_attachment_manager, czyli tablica [language][file_id] => (id, label)
+ * @param array $attachments
+ *     taka jak wartosć z {@see scholar_element_files}, czyli tablica 
+ *     [language][file_id] => (id, label)
  * @return int liczba dodanych rekordów
  */
-function scholar_save_files($object_id, $table_name, $attachments) // {{{
+function scholar_save_files($row_id, $table_name, $attachments) // {{{
 {
     // wez pod uwage tylko identyfikatory istniejacych plikow, w tym celu
     // dokonaj ekstrakcji identyfikatorow plikow
@@ -187,7 +192,7 @@ function scholar_save_files($object_id, $table_name, $attachments) // {{{
     }
 
     // usun aktualne dowiazania, zeby nie kolidowaly z nowo wstawionymi
-    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND object_id = %d", $table_name, $object_id);
+    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
 
     // przechowuje aktualny rekord do przekazania funkcji drupal_write_record
     $record = new stdClass;
@@ -208,7 +213,7 @@ function scholar_save_files($object_id, $table_name, $attachments) // {{{
 
             $record->file_id    = $file_id;
             $record->table_name = $table_name;
-            $record->object_id  = $object_id;
+            $record->row_id  = $row_id;
             $record->label      = $file['label'];
             $record->language   = $language;
             $record->weight     = $file['weight'];
@@ -224,6 +229,17 @@ function scholar_save_files($object_id, $table_name, $attachments) // {{{
     return $count;
 } // }}}
 
+/**
+ * Usuwa powiązania plików z rekordem wybranej tabeli. Funkcja usuwa jedynie
+ * powiązania, nie usuwa plików.
+ *
+ * @param int $row_id
+ * @param string $table_name
+ */
+function scholar_delete_files($row_id, $table_name) // {{{
+{
+    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
+} // }}}
 
 /**
  * Liczy ile jest rekordów wiążących ten plik z rekordami tabel scholar_people
@@ -248,14 +264,14 @@ function scholar_file_refcount(&$file) // {{{
  * @param array $header         tablica kolumn tabeli w postaci opisanej
  *                              w theme_table(). Dopuszczalne nazwy kolumn:
  *                              row_type (konkatenacja table_name.subtype),
- *                              table_name, object_id, title, label, language
+ *                              table_name, row_id, title, label, language
  * @return array
  */
 function scholar_file_fetch_dependent_rows(&$file, $header = null) // {{{
 {
-    $sqlsort = scholar_tablesort_sql($header, array('row_type', 'table_name', 'object_id', 'title', 'label', 'language'));
+    $sqlsort = scholar_tablesort_sql($header, array('row_type', 'table_name', 'row_id', 'title', 'label', 'language'));
 
-    $query = db_query("SELECT 'people' AS row_type, table_name, NULL AS subtype, object_id, CONCAT(first_name, ' ', last_name) AS title, label, language FROM {scholar_people} p JOIN {scholar_attachments} a ON a.table_name = 'people' AND a.object_id = p.id WHERE a.file_id = %d UNION ALL SELECT CONCAT('generics.', subtype) AS row_type, table_name, subtype, object_id, title, label, language FROM {scholar_generics} o JOIN {scholar_attachments} a ON a.table_name = 'generics' AND a.object_id = o.id WHERE a.file_id = %d" . $sqlsort, $file->id, $file->id);
+    $query = db_query("SELECT 'people' AS row_type, table_name, NULL AS subtype, row_id, CONCAT(first_name, ' ', last_name) AS title, label, language FROM {scholar_people} p JOIN {scholar_attachments} a ON a.table_name = 'people' AND a.row_id = p.id WHERE a.file_id = %d UNION ALL SELECT CONCAT('generics.', subtype) AS row_type, table_name, subtype, row_id, title, label, language FROM {scholar_generics} o JOIN {scholar_attachments} a ON a.table_name = 'generics' AND a.row_id = o.id WHERE a.file_id = %d" . $sqlsort, $file->id, $file->id);
 
     $rows = array();
     while ($row = db_fetch_array($query)) {
@@ -277,7 +293,6 @@ function scholar_delete_file(&$file) // {{{
 
     $file->id = null;
 } // }}}
-
 
 /**
  * Zwraca listę rozszerzeń plików, które mogą zostać przesłane.
