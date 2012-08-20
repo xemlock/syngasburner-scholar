@@ -124,7 +124,7 @@ function scholar_schema() // {{{
         'primary key'  => array('id'),
     ); // }}}
 
-    $schema['scholar_category_names'] = array(
+    $schema['scholar_category_names'] = array( // {{{
         'description' => 'Nazwy kategorii',
         'fields' => array(
             'category_id' => array(
@@ -145,7 +145,7 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('category_id', 'language'),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',  
-    );
+    ); // }}}
 
     $schema['scholar_generics'] = array( // {{{
         'description' => 'Generyczna tabela na obiekty: kontenery na publikacje: czasopisma, monografie lub wykłady: konferencje, seminaria, oraz ich elementy',
@@ -156,12 +156,6 @@ function scholar_schema() // {{{
             ),
             'parent_id' => array(
                 'type'      => 'int', // references scholar_generics (id)
-            ),
-            'refcount' => array(
-                'description' => 'liczba dzieci powiazanych z tym obiektem',
-                'type'      => 'int',
-                'not null'  => true,
-                'default'   => 0,
             ),
             'subtype' => array(
                 // predefiniowane:  

@@ -81,16 +81,19 @@ function scholar_generics_list($subtype) // {{{
  * @param string $subtype
  * @return array
  */
-function scholar_generics_form(&$form_state, $subtype) // {{{
+function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
 {
     $func = 'scholar_' . $subtype . '_form';
 
     if ($func != __FUNCTION__ && function_exists($func)) {
-        // pobierz argumenty, usun pierwszy, zastap subtype
-        // referencja do form_state
-        $args = func_get_args();
-        array_shift($args);
-        $args[0] = &$form_state;
+        if (null === $id) {
+            $record = null;
+        } else {
+            $record = scholar_load_generic($id, $subtype, scholar_admin_path($subtype));
+        }
+
+        // przygotuj argumenty do wygenerowania formularza
+        $args = array(&$form_state, &$record);
 
         // pobierz strukture formularza
         $form = call_user_func_array($func, $args);
@@ -127,11 +130,41 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
     }
 
+    $values['title'] = isset($values['title']) ? trim($values['title']) : '';
+
+    // jezeli nie podano tytulu wezla, uzyj tytulu rekordu
+    if (isset($values['nodes'])) {
+        foreach ($values['nodes'] as $language => &$node) {
+            $title = trim($node['title']);
+
+            if (0 == strlen($title)) {
+                $title = $values['title'];
+            }
+
+            $node['title'] = $title;
+        }
+        unset($node);
+    }
+
+    // to samo tyczy sie tytulu dla eventow
+    if (isset($values['events'])) {
+        foreach ($values['events'] as $language => &$event) {
+            $title = trim($event['title']);
+
+            if (0 == strlen($title)) {
+                $title = $values['title'];
+            }
+
+            $event['title'] = $title;
+        }
+        unset($event);
+    }
+
     if (function_exists($process)) {
         $args = array(&$values);
         call_user_func_array($process, $args);
     }
-    
+
     $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
 
     // wypelnij rekord danymi z formularza
@@ -174,20 +207,13 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
 } // }}}
 
 
-
-
-
-
-
-
-
-
-function scholar_conference_form(&$form_state, $id = null) // {{{
+/**
+ * @param array &$form_state
+ * @param object &$record
+ */
+function scholar_conference_form(&$form_state, &$record = null) // {{{
 {
-    if (null === $id) {
-        $record = null;
-    } else {
-        $record = scholar_load_generic($id, 'conference', 'admin/scholar/conferences');
+    if ($record) {
         $record->start_date = substr($record->start_date, 0, 10);
         $record->end_date   = substr($record->end_date, 0, 10);
     }
@@ -202,14 +228,22 @@ function scholar_conference_form(&$form_state, $id = null) // {{{
             '#maxlength' => 10,
             '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
-        'locality', 'country', 'url', 'category_id',
-        'files', 'events', 'nodes'
-    
+        'locality',
+        'country',
+        'url', 
+        'category_id',
+        'files',
+        'events',
+        'nodes',
     ), $record);
 
     $form['submit'] = array(
         '#type'     => 'submit',
-        '#value'    => $record ? t('Save changes') : t('Add record'),
+        '#value'    => $record ? t('Save changes') : t('Add conference'),
+    );
+    $form['cancel'] = array(
+        '#type'  => 'scholar_element_cancel',
+        '#value' => scholar_admin_path('presentation'),
     );
 
     return $form;
@@ -238,40 +272,36 @@ function _scholar_conference_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function scholar_presentation_form(&$form_state, $id = null)
+function scholar_presentation_form(&$form_state, &$record = null) // {{{
 {
-    if (null === $id) {
-        $record = null;
-    } else {
-        $record = scholar_load_generic($id, 'presentation', 'admin/scholar/presentations');
-    }
-
     $form = scholar_generic_form(array(
         'title',
         'start_date' => t('Data i czas'),
-        'parent_id' => t('Konferencja'),
+        'parent_id'  => t('Konferencja'),
+        'authors' => t('Prowadzący'),
         'files',
         'nodes',
-        'events',
-        'authors' => t('Prowadzący'),
-        'cancel',
-    ));
-    $form['#record'] = $record;
+        'events' => array(
+            // prezentacje odbywaja sie jednego dnia
+            'end_date' => false,
+        ),
+    ), $record);
+
     $form['submit'] = array(
-        '#type'     => 'submit',
-        '#value'    => $record ? t('Save changes') : t('Add record'),
+        '#type'  => 'submit',
+        '#value' => $record ? t('Save changes') : t('Add presentation'),
+    );
+    $form['cancel'] = array(
+        '#type'  => 'scholar_element_cancel',
+        '#value' => scholar_admin_path('presentation'),
     );
 
     return $form;
-}
+} // }}}
 
-
-function scholar_book_form(&$form_state, $id = null) // {{{
+function scholar_book_form(&$form_state, &$record = null) // {{{
 {
-    if (null === $id) {
-        $record = null;
-    } else {
-        $record = scholar_load_generic($id, 'book', scholar_admin_path('book'));
+    if ($record) {
         $record->start_date = intval($record->start_date);
     }
 
@@ -285,17 +315,17 @@ function scholar_book_form(&$form_state, $id = null) // {{{
 
     $form = scholar_generic_form(array(
         'title' => array(
-            '#required' => true,
+            '#required'    => true,
         ),
         'start_date' => array(
-            '#title'     => t('Year'),
-            '#maxlength' => 4,
+            '#title'       => t('Year'),
+            '#maxlength'   => 4,
             '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza (czasopismo).',
         ),
         'category_id' => empty($categories) ? false : array(
-            '#options'   => $categories,
+            '#options'     => $categories,
         ),
-        'people' => array(
+        'authors' => array(
             '#title' => t('Authors'),
             '#description' => 'Wypełnij jeżeli książka. Informacje o redakcji umieść w polu \'szczegóły\'.',
         ),
@@ -305,7 +335,9 @@ function scholar_book_form(&$form_state, $id = null) // {{{
         ),
         'image_id',
         'url',
-        'events', // np. info o wydaniu ksiazki
+        'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
+            'end_date'     => false,
+        ),
         'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
         'files',  // pliki
     ), $record);
@@ -337,13 +369,9 @@ function _scholar_book_form_process_values(&$values) // {{{
     $values['end_date']   = null;
 } // }}}
 
-function scholar_article_form(&$form_state, $id = null) // {{{
+function scholar_article_form(&$form_state, &$record = null) // {{{
 {
-    if (null === $id) {
-        $record = null;
-    } else {
-        $record = scholar_load_generic($id, 'article', scholar_admin_path('article'));
-
+    if ($record) {
         // intval konczy na pierwszym niepoprawnym znaku, wiec dostaniemy
         // poprawna wartosc roku
         $record->start_date = intval($record->start_date);
@@ -355,16 +383,15 @@ function scholar_article_form(&$form_state, $id = null) // {{{
 
     $form = scholar_generic_form(array(
         'title' => array(
-            '#required' => true,
+            '#required'    => true,
         ),
         'start_date' => array(
             '#title'       => t('Year'),
             '#maxlength'   => 4,
             '#required'    => true,
-            '#default_value' => date('Y'),
         ),
         'category_id' => empty($categories) ? false : array(
-            '#options' => $categories,
+            '#options'     => $categories,
         ),
         'authors' => array(
             '#description' => 'Pamiętaj o ustawieniu odpowiedniej kolejności autorów.',
@@ -378,8 +405,10 @@ function scholar_article_form(&$form_state, $id = null) // {{{
         ),
         'image_id',
         'url',
-        'events', // np. info o wydaniu ksiazki
-        'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
+        'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
+            'end_date'     => false,
+        ),
+        'nodes',  // dodatkowa wewnetrzna strona poswiecona wydawnictwu
         'files',  // pliki
     ), $record);
 
@@ -402,7 +431,6 @@ function _scholar_article_form_process_values(&$values) // {{{
     $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
     $values['end_date']   = null;
 } // }}}
-
 
 /**
  * @return array

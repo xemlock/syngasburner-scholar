@@ -324,8 +324,10 @@ function theme_scholar_checkboxed_container($element) // {{{
 
 /**
  * @param array $element
- * @param mixed $post           Podtablica z wartościami dla tego elementu
- * @return array                Wartość checkboksa kontrolujacego ten kontener
+ * @param mixed $post
+ *     podtablica z wartościami dla tego elementu
+ * @return array
+ *     wartość checkboksa kontrolujacego ten kontener
  */
 function form_type_scholar_checkboxed_container_value($element, $post = false) // {{{
 {
@@ -363,53 +365,115 @@ function scholar_language_label($language, $label = null) // {{{
     return '[' . $name . '] ' . $label;
 } // }}}
 
-function scholar_events_form($date = true)
+/**
+ * Tworzy tablicę definiującą formularz edycji wydarzenia.
+ *
+ * @param array $options
+ *     opcjonalna tablica z dodatkową specyfikacją pól formularza, w której
+ *     kluczami są nazwy predefiniowanych pól. 
+ *     Podając jako wartość false pole o nazwie równej kluczowi nie zostanie
+ *     dodane do wynikowego formularza. Jeżeli podano tablicę, zostanie ona
+ *     scalona z predefiniowaną tablicą definiującą pole. Jeżeli podano wartość
+ *     typu string zostanie ona ustawiona jako tytuł pola. Wartości innych
+ *     typów nie będą miały wpływu na kształt formularza.
+ * @return array
+ *     tablica definiująca formularz edycji wydarzenia
+ */
+function scholar_events_form($options = array()) // {{{
 {
+    // predefiniowane pola formularza edycji eventow, podajac w tablicy
+    // $fields wartosc false pole nie zostanie dodane do formularza
+    $fields = array(
+        'start_date' => array(
+            '#type'        => 'textfield',
+            '#title'       => t('Start date'),
+            '#maxlength'   => 10,
+            '#description' => t('Date format: YYYY-MM-DD.'),
+        ),
+        'end_date' => array(
+            '#type'        => 'textfield',
+            '#title'       => t('End date'),
+            '#maxlength'   => 10,
+            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
+        ),
+        'title' => array(
+            '#type'        => 'textfield',
+            '#title'       => t('Title'),
+            '#maxlength'   => 255,
+            '#description' => t('If not given title of referenced record will be used.'),
+        ),
+        'body' => array(
+            '#type'        => 'scholar_textarea',
+            '#title'       => t('Description'),
+            '#description' => t('Detailed description about this event.'),
+        ),
+    );
+
+    foreach ((array) $options as $key => $value) {
+        if (!isset($fields[$key])) {
+            continue;
+        }
+
+        // jezeli podano false jako wartosc pola, nie dodawaj tego pola
+        if (false === $value) {
+            $fields[$key] = false;
+
+        } else if (is_array($value)) {
+            $fields[$key] = array_merge($fields[$key], $value);
+
+        } else if (is_string($value)) {
+            $fields[$key]['#title'] = $value;
+        }
+    }
+
     $form = array(
         '#tree' => true,
     );
 
-    if ($date) {
-        $form['start_date'] = array(
-            '#type' => 'textfield',
-            '#title' => t('Start date'),
-            '#maxlength' => 10,
-            '#description' => t('Date format: YYYY-MM-DD.'),
-        );
-        $form['end_date'] = array(
-            '#type' => 'textfield',
-            '#title' => t('End date'),
-            '#maxlength' => 10,
-            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
-        );
+    // aby nie dodawac wybranego pola nalezy podac jego nazwe w kluczu, zas
+    // jako wartosc podac false. Jezeli podano jako wartosc tablice, zostanie
+    // ona scalona z predefiowana tablica opisujaca pole. Jezeli podano
+    // wartosc typu string, zostanie ona ustawiona jako tytul pola. Wartosci
+    // innych typow zostana zignorowane podczas dodawania pola.
+
+    if (false !== $fields['start_date']) {
+        $form['start_date'] = $fields['start_date'];
     }
 
-    foreach (scholar_languages() as $code => $name) {
-        $form[$code] = array(
-            '#type'          => 'scholar_checkboxed_container',
-            '#checkbox_name' => 'status',
-            '#title'         => 'Add event in language: ' . scholar_language_label($code, $name),
-            '#tree'          => true,
-        );
+    if (false !== $fields['end_date']) {
+        $form['end_date'] = $fields['end_date'];
+    }
 
-        $form[$code]['title'] = array(
-            '#type'        => 'textfield',
-            '#title'       => t('Title'),
-            '#description' => t('If not given title of referenced record will be used.'),
-        );
-        
-        $form[$code]['body'] = array(
-            '#type'        => 'scholar_textarea',
-            '#title'       => t('Description'),
-            '#description' => t('Detailed description about this event'),
-        );
+    // dodaj kontener z polami na tytul lub tresc, jezeli pozwolono na dodanie
+    // przynajmniej jednego z tych pol
+
+    $add_title = false !== $fields['title'];
+    $add_body  = false !== $fields['body'];
+
+    if ($add_title || $add_body) {
+        foreach (scholar_languages() as $code => $name) {
+            $form[$code] = array(
+                '#type'          => 'scholar_checkboxed_container',
+                '#checkbox_name' => 'status',
+                '#title'         => 'Add event in language: ' . scholar_language_label($code, $name),
+                '#tree'          => true,
+            );
+
+            if ($add_title) {
+                $form[$code]['title'] = $fields['title'];
+            }
+
+            if ($add_body) {
+                $form[$code]['body'] = $fields['body'];
+            }
+        }
     }
 
     return $form;
-}
+} // }}}
 
 /**
- * Generuje pola formularza do tworzenia / edycji powiązanych węzłów.
+ * Pola formularza do tworzenia / edycji powiązanych węzłów.
  *
  * @param array $row
  * @param string $table_name
@@ -428,7 +492,7 @@ function scholar_nodes_subform() // {{{
 
     if ($have_gallery) {
         $gallery_options = (array) module_invoke('gallery', 'gallery_options');
-        
+
         // gallery_options zawiera co najmniej jeden element, odpowiadajacy
         // pustej galerii. Jezeli tylko on jest dostepny, nie ma sensu dodawac
         // elementow zwiazanych z wyborem galerii.
@@ -516,7 +580,7 @@ function scholar_nodes_subform() // {{{
             $container['gallery']['gallery_id'] = array(
                 '#type'         => 'select',
                 '#title'        => t('Gallery'),
-                '#description'  => t('Select gallery attached to this node.'),
+                '#description'  => t('Select a gallery attached to this node.'),
                 '#options'      => $gallery_options,
             );
             $container['gallery']['gallery_layout'] = array(
@@ -645,10 +709,15 @@ function scholar_populate_form(&$form, &$record) // {{{
 } // }}}
 
 /**
- * Wypełnienie rekordu wartościami z odpowiednich pól formularza.
+ * Wypełnia podany obiekt wartościami z podanej tablicy. Wartości odpowiadające
+ * polom tworzonym automatycznie dla każdego formularza (op, submit,
+ * form_build_id, form_token, form_id) zostaną zignorowane.
+ *
  * @param object &$record
- * @param array $values zwykle wartości ze stanu formularza (form_state[values])
- * @return int  liczba ustawionych wartości
+ * @param array $values
+ *     zwykle wartości ze stanu formularza (form_state[values])
+ * @return int
+ *     liczba ustawionych wartości
  */
 function scholar_populate_record(&$record, $values) // {{{
 {
@@ -673,7 +742,8 @@ function scholar_populate_record(&$record, $values) // {{{
  */
 function scholar_generic_form($fields = array(), $record = null) // {{{
 {
-    $defs = array(
+    // predefiniowane pola sekcji record formularza
+    $record_fields = array(
         'first_name' => array(
             '#type'     => 'textfield',
             '#title'    => t('First name'),
@@ -776,30 +846,37 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                 break;
 
             case 'events':
-                $form['events'] = array(
-                    '#type' => 'fieldset',
-                    '#title' => t('Event'),
-                );
-                $form['events']['events'] = scholar_events_form($value);
+                // dodaj formularz edycji wydarzen jedynie wtedy, gdy dostepny
+                // jest modul events, aby nie modyfikowac istniejacych wartosci
+                // eventow
+                if (module_exists('events')) {
+                    $form['events'] = array(
+                        '#type' => 'fieldset',
+                        '#title' => t('Event'),
+                    );
+                    $form['events']['events'] = scholar_events_form($value);
+                }
                 break;
 
             default:
-                if (isset($defs[$key])) {
+                if (isset($record_fields[$key])) {
                     // jezeli podano false zamiast specyfikacji elementu,
-                    // zignoruj ten element
+                    // nie dodawaj tego pola do formularza
                     if (false === $value) {
                         continue;
                     }
 
                     // jezeli podano string, zostanie on uzyty jako etykieta,
-                    // wartosci typow innych niz string i array zostana zignorowane
+                    // wartosci typow innych niz string i array zostana 
+                    // zignorowane podczas tworzenia pola
                     if (is_string($value)) {
                         $value = array('#title' => $value);
                     }
 
                     $form['record'][$key] = is_array($value) 
-                                          ? array_merge($defs[$key], $value)
-                                          : $defs[$key];
+                        ? array_merge($record_fields[$key], $value)
+                        : $record_fields[$key];
+
                 } elseif (is_array($value)) {
                     // niestandardowe pole formularza, dodaj je do sekcji record
                     $form['record'][$key] = $value;

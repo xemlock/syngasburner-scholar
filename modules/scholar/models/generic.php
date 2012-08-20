@@ -1,102 +1,5 @@
 <?php
 
-/**
- * Pobiera z bazy danych wydarzenia powiązane z rekordem podanej tabeli.
- * @param int $row_id
- * @param string $table_name
- * @return array
- */
-function scholar_attachments_load_events($row_id, $table_name) // {{{
-{
-    $rows = array();
-
-    if (module_exists('events')) {
-        $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d", $row_id);
-
-        // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
-        while ($row = db_fetch_array($query)) {
-            $event = events_load_event($row['event_id']);
-            if ($event) {
-                $event->body = $row['body']; // nieprzetworzona tresc
-                $rows[$event->language] = $event;
-            }
-        }
-    }
-
-    return $rows;
-} // }}}
-
-/**
- * @param array $events
- *     tablica nowych wartości eventów
- * @return int
- *     liczba zapisanych (utworzonych / zaktualizowanych) rekordów
- */
-function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
-{
-    $count = 0;
-
-    if (module_exists('events')) {
-        // zapisz dowiazane eventy, operuj tylko na wezlach w poprawnych jezykach
-        foreach ($events as $language => $event_data) {
-            // sprawdz czy istnieje relacja miedzy generykiem a eventem
-            $event = false;
-            $query = db_query("SELECT * FROM {scholar_events} WHERE generic_id = %d AND language = '%s'", $row_id, $language);
-
-            if ($binding = db_fetch_array($query)) {
-                $event = events_load_event($binding['event_id']);
-            }
-
-            $status = intval($event_data['status']) ? 1 : 0;
-
-            // jezeli nie bylo relacji lub jest niepoprawna utworz nowy event
-            if (empty($event)) {
-                if (!$status) {
-                    // zerowy status i brak rekordu wydarzenia - nie dodawaj
-                    continue;
-                }
-
-                $event = events_new_event();
-            }
-
-            // skopiuj dane do eventu...
-            foreach ($event_data as $key => $value) {
-                // ... pilnujac, zeby nie zmienic klucza glownego!
-                if ($key == 'id') {
-                    continue;
-                }
-                $event->$key = $value;
-            }
-
-            // opis wydarzenia bedzie generowany automatycznie, ustaw zaslepke
-            $body = $event->body;
-            $event->body     = '';
-            $event->status   = $status;
-            $event->language = $language;
-
-            // zapisz event
-            if (events_save_event($event)) {
-                // usun wczesniejsze powiazania
-                db_query("DELETE FROM {scholar_events} WHERE (generic_id = %d AND language = '%s') OR (event_id = %d)",
-                    $row_id, $language, $event->id
-                );
-                // dodaj nowe
-                db_query("INSERT INTO {scholar_events} (generic_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
-                    $row_id, $event->id, $language, $body
-                );
-                ++$count;
-            }
-        }
-    }
-
-    return $count;
-} // }}}
-
-function scholar_delete_events($row_id, $table_name)
-{
-}
-
-
 function scholar_new_generic() // {{{
 {
     $record = new stdClass;
@@ -276,13 +179,6 @@ function scholar_save_generic(&$generic) // {{{
             scholar_category_dec_refcount($category_id);
             scholar_category_inc_refcount($generic->category_id);
 
-            // uaktualnij licznik odwolan u rekordu rodzica, poprzedniego
-            // i aktualnego (jezeli jest rozny od poprzedniego)
-            scholar_generic_refresh_refcount($parent_id);
-            if ($generic->parent_id != $parent_id) {
-                scholar_generic_refresh_refcount($generic->parent_id);
-            }
-
             $success = true;
         }
 
@@ -331,8 +227,7 @@ function scholar_save_generic(&$generic) // {{{
  */
 function scholar_delete_generic(&$generic) // {{{
 {
-    scholar_category_release($generic->category_id);
-    scholar_generic_release($generic->parent_id);
+    scholar_category_dec_refcount($generic->category_id);
 
     // usuniecie autorow
     db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic->id);
@@ -355,21 +250,9 @@ function scholar_delete_generic(&$generic) // {{{
 } // }}}
 
 /**
- * Aktualizuje wartość licznika odwołań rekordu o podanym identyfikatorze.
- * Wartość jest liczbą rekordów w tabeli scholar_generics, których wartość
- * w kolumnie parent_id jest taka sama jak podany identyfikator.
- *
- * @param int $id
- */
-function scholar_generic_refresh_refcount($id) // {{{
-{
-    db_query("UPDATE {scholar_generics} g SET refcount = (SELECT COUNT(*) FROM {scholar_generics} WHERE parent_id = g.id) WHERE id = %d", $id);
-} // }}}
-
-/**
  * Lista dostępnych rekordów rodzica podzielonych na kategorie, do użycia jako
  * opcje elementu SELECT formularza. Jeżeli nie istnieje żaden potencjalny
- * rodzic, zwrócona zostanie pusta lista. W przeciwnym razie na pierwszym 
+ * rodzic, zwrócona zostanie pusta lista. W przeciwnym razie na pierwszym
  * miejscu w zwróconej liście znajdować się będzie zerowa wartość bez etykiety,
  * odpowiadajaca pustemu (niewybranemu) rekordowi rodzica.
  *
