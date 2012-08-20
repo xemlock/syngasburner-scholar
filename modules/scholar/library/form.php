@@ -423,7 +423,19 @@ function scholar_nodes_subform() // {{{
 
     if ($have_menu) {
         $menus = module_invoke('menu', 'get_menus');
-        $menu_parents = (array) module_invoke('menu', 'parent_options', $menus, null);
+        $parent_options = (array) module_invoke('menu', 'parent_options', $menus, null);
+    }
+
+    if ($have_gallery) {
+        $gallery_options = (array) module_invoke('gallery', 'gallery_options');
+        
+        // gallery_options zawiera co najmniej jeden element, odpowiadajacy
+        // pustej galerii. Jezeli tylko on jest dostepny, nie ma sensu dodawac
+        // elementow zwiazanych z wyborem galerii.
+
+        if (count($gallery_options) <= 1) {
+            $gallery_options = null;
+        }
     }
 
     $form = array(
@@ -468,7 +480,7 @@ function scholar_nodes_subform() // {{{
             $container['menu']['parent'] = array(
                 '#type'     => 'select',
                 '#title'    => t('Parent item'),
-                '#options'  => $menu_parents,
+                '#options'  => $parent_options,
                 '#description' => t('The maximum depth for an item and all its children is fixed at 9. Some menu items may not be available as parents if selecting them would exceed this limit.'),
             );
             $container['menu']['weight'] = array(
@@ -494,7 +506,7 @@ function scholar_nodes_subform() // {{{
             );
         }
 
-        if ($have_gallery) {
+        if ($have_gallery && $gallery_options) {
             $container['gallery'] = array(
                 '#type'         => 'fieldset',
                 '#title'        => t('Gallery settings'),
@@ -505,7 +517,7 @@ function scholar_nodes_subform() // {{{
                 '#type'         => 'select',
                 '#title'        => t('Gallery'),
                 '#description'  => t('Select gallery attached to this node.'),
-                '#options'      => (array) module_invoke('gallery', 'galleries_options'),
+                '#options'      => $gallery_options,
             );
             $container['gallery']['gallery_layout'] = array(
                 '#type'         => 'hidden',
@@ -553,41 +565,6 @@ function scholar_node_form(&$form_state, $node)
         }
     }
 }
-
-/*function scholar_node_edit_form(&$form_state, $node_id)
-{
-    // Edycja ustawien wezla niedostepnych przy edycji obiektu scholara.
-    // Tutaj musimy wykorzystac hook_nodeapi aby kazdy z modulow mogl
-    // odpowiednio zmodyfikowac formularz.
-
-    module_load_include('inc', 'node', 'node.pages');
-    $node = node_load(intval($node_id));
-
-    if (empty($node)) {
-        drupal_set_message(t('Invalid node id (%nid)', array('%nid' => $node->nid)));
-        return;
-    }
-
-    if ($node->type != 'scholar') {
-        drupal_set_message(t('Invalid node type (%type)', array('%type' => $node->type)));
-        return;
-    }
-
-    // spraw zeby moduly myslaly, ze modyfikuja standardowy formularz
-    // edycji wezla-strony
-    $form = array();
-    $form['type'] = array(
-        '#type'         => 'textfield',
-        '#value'        => $node->type,
-    );
-    $form['#node'] = $node;
-
-    taxonomy_form_alter(&$form, $form_state, 'scholar_node_form');
-    gallery_form_alter(&$form, $form_state, 'scholar_node_form');
-p($form);
-    return $form;
-}*/
-
 
 /**
  * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
@@ -751,6 +728,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#options'  => array(),
         ),
         'image_id' => array(
+            // jezeli modul gallery jest niedostepny, ten element nie zostanie
+            // wyswietlony, ponadto jego wartosc nie wystapi wsrod wartosci
+            // przeslanych w formularzu (dzieki temu np. stara wartosc image_id
+            // w rekordzie nie zostanie nadpisana).
             '#type'     => 'gallery_image_select',
             '#title'    => t('Image'),
         ),
@@ -768,7 +749,14 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     );
 
     foreach ($fields as $key => $value) {
-        switch ($value) {
+        // jezeli podano nazwe formularza jako wartosc, z numerycznym
+        // kluczem, uzyj tej nazwy do pobrania definicji pola
+        if (is_int($key)) {
+            $key = strval($value);
+            $value = true;
+        }
+
+        switch ($key) {
             case 'files':
                 $form['files'] = array(
                     '#type' => 'fieldset',
@@ -784,26 +772,19 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                     '#type' => 'fieldset',
                     '#title' => t('Node'),
                 );
-                $form['nodes']['nodes'] = scholar_nodes_subform();
+                $form['nodes']['nodes'] = scholar_nodes_subform($value);
                 break;
 
             case 'events':
-                // TODO konfigurowalne pola eventu
                 $form['events'] = array(
                     '#type' => 'fieldset',
                     '#title' => t('Event'),
                 );
-                $form['events']['events'] = scholar_events_form();
+                $form['events']['events'] = scholar_events_form($value);
                 break;
 
             default:
-                // jezeli podano nazwe formularza jako wartosc, z numerycznym
-                // kluczem, uzyj tej nazwy do pobrania definicji pola
-                if (is_int($key)) {
-                    if (isset($defs[$value])) {
-                        $form['record'][$value] = $defs[$value];
-                    }
-                } elseif (isset($defs[$key])) {
+                if (isset($defs[$key])) {
                     // jezeli podano false zamiast specyfikacji elementu,
                     // zignoruj ten element
                     if (false === $value) {
@@ -819,8 +800,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                     $form['record'][$key] = is_array($value) 
                                           ? array_merge($defs[$key], $value)
                                           : $defs[$key];
+                } elseif (is_array($value)) {
+                    // niestandardowe pole formularza, dodaj je do sekcji record
+                    $form['record'][$key] = $value;
                 }
-                break;
         }
     }
 

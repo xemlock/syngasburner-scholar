@@ -27,8 +27,10 @@ function scholar_attachments_load_events($row_id, $table_name) // {{{
 } // }}}
 
 /**
- * @param array $events tablica nowych wartości eventów
- * @return int          liczba zapisanych (utworzonych / zaktualizowanych) rekordów
+ * @param array $events
+ *     tablica nowych wartości eventów
+ * @return int
+ *     liczba zapisanych (utworzonych / zaktualizowanych) rekordów
  */
 function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
 {
@@ -208,11 +210,14 @@ function scholar_bib_authors($names) // {{{
 
 /**
  * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
- * @param int $id               identyfikator rekordu
- * @param string $subtype       OPTIONAL wymagany podtyp rekordu
- * @param string $redirect      OPTIONAL jeśli podany nastąpi przekierowanie do
- *                              podanej strony w komunikatem o nieprawidłowym
- *                              identyfikatorze rekordu
+ *
+ * @param int $id
+ *     identyfikator rekordu
+ * @param string $subtype
+ *     OPTIONAL wymagany podtyp rekordu
+ * @param string $redirect
+ *     OPTIONAL jeśli podany nastąpi przekierowanie do podanej strony
+ *     w komunikatem o nieprawidłowym identyfikatorze rekordu
  * @return false|object
  */
 function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
@@ -243,7 +248,10 @@ function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
 } // }}}
 
 /**
+ * Zapisuje nowy lub istniejący rekord generyczny do tabeli w bazie danych.
+ *
  * @param object &$generic
+ * @return bool
  */
 function scholar_save_generic(&$generic) // {{{
 {
@@ -265,12 +273,15 @@ function scholar_save_generic(&$generic) // {{{
             // zaktualizuj liczniki odwolan kategorii, bez znaczenia czy stary
             // i nowy identyfikator sa rozne czy takie same. Najwyzej zostanie
             // wykonana dekremantacja i inkrementacja na tej samej wartosci.
-            scholar_category_release($category_id);
-            scholar_category_acquire($generic->category_id);
+            scholar_category_dec_refcount($category_id);
+            scholar_category_inc_refcount($generic->category_id);
 
-            // to samo tyczy sie licznika odwolan u rekordu-rodzica
-            scholar_generic_release($parent_id);
-            scholar_generic_acquire($generic->parent_id);
+            // uaktualnij licznik odwolan u rekordu rodzica, poprzedniego
+            // i aktualnego (jezeli jest rozny od poprzedniego)
+            scholar_generic_refresh_refcount($parent_id);
+            if ($generic->parent_id != $parent_id) {
+                scholar_generic_refresh_refcount($generic->parent_id);
+            }
 
             $success = true;
         }
@@ -307,6 +318,8 @@ function scholar_save_generic(&$generic) // {{{
             : t('%title updated successfully.', array('%title' => $generic->title))
         );
     }
+
+    return $success;
 } // }}}
 
 /**
@@ -342,23 +355,26 @@ function scholar_delete_generic(&$generic) // {{{
 } // }}}
 
 /**
- * Zwiększa o 1 licznik referencji.
+ * Aktualizuje wartość licznika odwołań rekordu o podanym identyfikatorze.
+ * Wartość jest liczbą rekordów w tabeli scholar_generics, których wartość
+ * w kolumnie parent_id jest taka sama jak podany identyfikator.
+ *
+ * @param int $id
  */
-function scholar_generic_acquire($id) // {{{
+function scholar_generic_refresh_refcount($id) // {{{
 {
-    db_query("UPDATE {scholar_generics} SET refcount = refcount + 1 WHERE id = %d", $id);
+    db_query("UPDATE {scholar_generics} g SET refcount = (SELECT COUNT(*) FROM {scholar_generics} WHERE parent_id = g.id) WHERE id = %d", $id);
 } // }}}
 
 /**
- * Zmniejsza o 1 licznik referencji.
- */
-function scholar_generic_release($id) // {{{
-{
-    db_query("UPDATE {scholar_generics} SET refcount = refcount - 1 WHERE id = %d AND refcount > 0", $id);    
-} // }}}
-
-/**
- * Lista dostępnych rekordów rodzica, w podziale na kategorie.
+ * Lista dostępnych rekordów rodzica podzielonych na kategorie, do użycia jako
+ * opcje elementu SELECT formularza. Jeżeli nie istnieje żaden potencjalny
+ * rodzic, zwrócona zostanie pusta lista. W przeciwnym razie na pierwszym 
+ * miejscu w zwróconej liście znajdować się będzie zerowa wartość bez etykiety,
+ * odpowiadajaca pustemu (niewybranemu) rekordowi rodzica.
+ *
+ * @param string $subtype OPTIONAL
+ * @return array
  */
 function scholar_generic_parent_options($subtype = null) // {{{
 {
@@ -388,7 +404,7 @@ function scholar_generic_parent_options($subtype = null) // {{{
         $options[$category_name][$row['id']] = $row['title'];
     }
 
-    return $options;
+    return count($options) > 1 ? $options : array();
 } // }}}
 
 // vim: fdm=marker

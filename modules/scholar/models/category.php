@@ -99,8 +99,27 @@ function scholar_delete_category(&$category) // {{{
     drupal_set_message(t('Category deleted successfully (%name)', array('%name' => $category->names[$language->language])));
 } // }}}
 
+
 /**
- * Lista kategorii do użycia w elemencie SELECT formularza.
+ * Ponieważ liczenie rekordów odwołujących się do danej kategorii nie jest
+ * proste (odwołania mogą pochodzić z różnych tabel), operacje na liczniku
+ * ograniczone są do inkrementacji i dekrementacji.
+ */
+function scholar_category_inc_refcount($id) // {{{
+{
+    db_query("UPDATE {scholar_categories} SET refcount = refcount + 1 WHERE id = %d", $id);
+} // }}}
+
+function scholar_category_dec_refcount($id) // {{{
+{
+    db_query("UPDATE {scholar_categories} SET refcount = refcount - 1 WHERE id = %d AND refcount > 0", $id);
+} // }}}
+
+/**
+ * Lista kategorii do użycia w elemencie SELECT formularza. Jeżeli nie ma
+ * żadnej kategorii zdefiniowanej, zwrócona zostanie pusta lista. W przeciwnym
+ * razie na pierwszym miejscu w zwróconej liście znajdować się będzie zerowa
+ * wartość bez etykiety, odpowiadajaca pustej (niewybranej) kategorii.
  *
  * @param string $table_name OPTIONAL
  * @param string $subtype OPTIONAL
@@ -130,21 +149,7 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
         $options[$row['id']] = $row['name'];
     }
 
-    return $options;
+    return count($options) > 1 ? $options : array();
 } // }}}
-
-function scholar_category_acquire($id) // {{{
-{
-    db_query("UPDATE {scholar_categories} SET refcount = refcount + 1 WHERE id = %d", $id);
-} // }}}
-
-function scholar_category_release($id) // {{{
-{
-    db_query("UPDATE {scholar_categories} SET refcount = refcount - 1 WHERE id = %d AND refcount > 0", $id);
-} // }}}
-
-
-
-
 
 // vim: fdm=marker

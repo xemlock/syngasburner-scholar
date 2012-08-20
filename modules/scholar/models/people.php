@@ -70,13 +70,14 @@ function scholar_save_person(&$person) // {{{
 function scholar_delete_person(&$person) // {{{
 {
     scholar_delete_nodes($person->id, 'people');
+
     db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $person->id);
     db_query("DELETE FROM {scholar_people} WHERE id = %d", $person->id);
 
     $person->id = null;
 
     $name = $person->first_name . ' ' . $person->last_name;
-    drupal_set_message(t('Person deleted successfully (%name)', array('%name' => $name)));
+    drupal_set_message(t('%name deleted successfully.', array('%name' => $name)));
 
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
