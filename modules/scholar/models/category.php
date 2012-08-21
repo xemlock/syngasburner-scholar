@@ -38,8 +38,8 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
 
         $record->names = $names;
 
-        $record->files = scholar_fetch_files($record->id, 'categories');
-        $record->nodes = scholar_fetch_nodes($record->id, 'categories');
+        $record->files = scholar_load_files($record->id, 'categories');
+        $record->nodes = scholar_load_nodes($record->id, 'categories');
 
     } elseif (strlen($redirect)) {
         drupal_set_message(t('Invalid category identifier supplied (%id)', array('%id' => $id)), 'error');

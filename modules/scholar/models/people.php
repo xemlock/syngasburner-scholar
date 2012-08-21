@@ -22,8 +22,8 @@ function scholar_load_person($id, $redirect = false) // {{{
 
     if ($record) {
         // pobierz powiazane wezly i pliki
-        $record->files = scholar_fetch_files($record->id, 'people');
-        $record->nodes = scholar_fetch_nodes($record->id, 'people');
+        $record->files = scholar_load_files($record->id, 'people');
+        $record->nodes = scholar_load_nodes($record->id, 'people');
     
     } elseif ($redirect) {
         drupal_set_message(t('Invalid person identifier supplied (%id)', array('%id' => $id)), 'error');

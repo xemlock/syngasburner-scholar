@@ -135,7 +135,7 @@ function scholar_fetch_file($file_id, $redirect = null) // {{{
  * @param string $table_name
  * @return array
  */
-function scholar_fetch_files($row_id, $table_name, $language = null) // {{{
+function scholar_load_files($row_id, $table_name, $language = null) // {{{
 {
     $conds = array(
         'table_name' => $table_name,
@@ -193,15 +193,17 @@ function scholar_save_files($row_id, $table_name, $attachments) // {{{
         $ids[$row['id']] = true;
     }
 
-    // usun aktualne dowiazania, zeby nie kolidowaly z nowo wstawionymi
-    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
-
-    // przechowuje aktualny rekord do przekazania funkcji drupal_write_record
+    // przechowuje aktualny rekord do przekazania funkcji zapisujacej rekord
+    // do bazy danych
     $record = new stdClass;
     $count = 0;
 
     foreach ($attachments as $language => $files) {
         $saved = array();
+
+        // usun aktualne dowiazania dla tego jezyka, zeby nie kolidowaly
+        // z nowymi dowiazaniami
+        db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d AND language = '%s'", $table_name, $row_id, $language);
 
         foreach ($files as $file) {
             $file_id = intval($file['id']);
@@ -215,12 +217,12 @@ function scholar_save_files($row_id, $table_name, $attachments) // {{{
 
             $record->file_id    = $file_id;
             $record->table_name = $table_name;
-            $record->row_id  = $row_id;
+            $record->row_id     = $row_id;
             $record->label      = $file['label'];
             $record->language   = $language;
             $record->weight     = $file['weight'];
 
-            if (drupal_write_record('scholar_attachments', $record)) {
+            if (scholar_db_write_record('scholar_attachments', $record)) {
                 $saved[$file_id] = true;
             }
         }

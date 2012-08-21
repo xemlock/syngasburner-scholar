@@ -120,6 +120,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     $process = '_scholar_' . $subtype . '_form_process_values';
 
     $values = $form_state['values'];
+    p($values, __FUNCTION__);
 
     // zamien na null wartosci parent_id i category_id jezeli sa
     // puste lub zerami

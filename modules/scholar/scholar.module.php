@@ -10,7 +10,7 @@ function p($var, $label = null)
     $colors = array('brown', 'red', 'orange', 'green', 'blue', 'navy', 'violet', 'magenta', 'purple');
 
     if ($label) {
-        $label .= ': ';
+        $label = '<strong>' . $label . '</strong>: ';
     }
 
     ob_start();

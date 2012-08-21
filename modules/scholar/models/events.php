@@ -13,7 +13,7 @@
  *     każdego z rekordów. Niepowtarzalność kodów języka jest gwarantowana
  *     przez definicję tabeli przechowującej powiązania z rekordami wydarzeń.
  */
-function scholar_attachments_load_events($row_id, $table_name) // {{{
+function scholar_load_events($row_id, $table_name) // {{{
 {
     $rows = array();
 
@@ -48,14 +48,13 @@ function scholar_attachments_load_events($row_id, $table_name) // {{{
  * @return int
  *     liczba zapisanych (utworzonych lub zaktualizowanych) rekordów
  */
-function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
+function scholar_save_events($row_id, $table_name, $events) // {{{
 {
     $count = 0;
 
     if (module_exists('events')) {
-        // zapisz dowiazane eventy, operuj tylko na wezlach w aktualnie
-        // dostepnych jezykach
-        foreach (scholar_languages() as $language => $event_data) {
+        p($events, __FUNCTION__);exit;
+        foreach ($events as $language => $event_data) {
             // sprawdz czy istnieje relacja miedzy generykiem a eventem
             $event = false;
             $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s' AND language = '%s'", $row_id, $table_name, $language);
@@ -76,18 +75,10 @@ function scholar_attachments_save_events($row_id, $table_name, $events) // {{{
                 $event = events_new_event();
             }
 
-            // jezeli dane pochodza z formularza scholar_events_form, wartosci
-            // dat zapisane sa pod kluczami bezposrednio w tablicy $events,
-            // a nie dla kazdego eventu z osobna. Jezeli nie podano wymaganej
-            // daty poczatku zdarzenia uzyj czasu epoki Uniksa.
+            // jezeli nie podano wymaganej daty poczatku zdarzenia uzyj czasu 
+            // epoki Uniksa
             if (empty($event_data['start_date'])) {
-                $event_data['start_date'] = isset($events['start_date'])
-                    ? $events['start_date']
-                    : date('Y-m-d H:i:s', 0);
-            }
-
-            if (empty($event_data['end_date']) && isset($events['end_date'])) {
-                $event_data['end_date'] = $events['end_date'];
+                $event_data['start_date'] = date('Y-m-d H:i:s', 0);
             }
 
             // skopiuj dane do eventu...

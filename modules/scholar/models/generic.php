@@ -17,7 +17,7 @@ function scholar_new_generic() // {{{
 /**
  * @return array
  */
-function scholar_fetch_authors($generic_id) // {{{
+function scholar_load_authors($generic_id) // {{{
 {
     $query = db_query("SELECT p.id, p.first_name, p.last_name FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $generic_id);
     $rows = array();
@@ -141,10 +141,10 @@ function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
     $record = db_fetch_object($query);
 
     if ($record) {
-        $record->authors = scholar_fetch_authors($record->id);
-        $record->files   = scholar_fetch_files($record->id, 'generics');
-        $record->nodes   = scholar_fetch_nodes($record->id, 'generics');
-        $record->events  = scholar_attachments_load_events($record->id, 'generics');
+        $record->authors = scholar_load_authors($record->id);
+        $record->files   = scholar_load_files($record->id, 'generics');
+        $record->nodes   = scholar_load_nodes($record->id, 'generics');
+        $record->events  = scholar_load_events($record->id, 'generics');
 
     } else if ($redirect) {
         drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
@@ -211,7 +211,7 @@ function scholar_save_generic(&$generic) // {{{
 
         // zapisz zmiany w powiazanych wydarzeniach
         if (isset($generic->events)) {
-            scholar_attachments_save_events($generic->id, 'generics', $generic->events);
+            scholar_save_events($generic->id, 'generics', $generic->events);
         }
 
         drupal_set_message($is_new

@@ -174,7 +174,7 @@ function scholar_fetch_node($row_id, $table_name, $language) // {{{
  * indeksowane kodem języka.
  * @return array
  */
-function scholar_fetch_nodes($row_id, $table_name) // {{{
+function scholar_load_nodes($row_id, $table_name) // {{{
 {
     $nodes = array();
     $rendering = _scholar_rendering_enabled(false);
