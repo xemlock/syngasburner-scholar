@@ -85,6 +85,12 @@ user-select: none;
 
 .form-item .scholar-sortable-multiselect {
   border: 1px solid #999;
+}
+
+.form-item .scholar-sortable-multiselect .table-wrapper {
+  padding: 0 .5em 0;
+}
+.form-item .scholar-sortable-multiselect .buttons-wrapper {
   padding: .5em;
 }
 
@@ -94,6 +100,50 @@ user-select: none;
 
 .form-item label .language-icon {
   border: 1px solid #ccc;
+}
+
+.scholar-vtable {
+  background: #fff;
+  border-collapse: collapse;
+  border: 1px solid #e2eef6;
+}
+
+.scholar-vtable tbody {
+  border: none;
+}
+.scholar-vtable > tbody > tr > td {
+  vertical-align: top;
+  padding: 1em;
+  border: 1px solid #e2eef6;
+}
+.scholar-vtable > tbody > tr > td .form-item:first-child {
+  margin-top: 0;
+}
+
+.scholar-vtable > tbody > tr td:first-child {
+  background: #f1f7fb;
+  color: #558fcd;
+  font-size: 110%;
+  font-weight: bold;
+}
+
+.scholar-vtable .form-text,
+.scholar-vtable .form-textarea
+.scholar-vtable .resizable-textarea,
+.scholar-vtable .scholar-sortable-multiselect {
+  width: 95%;
+}
+
+.scholar-vtable .resizable-textarea textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+html.js .resizable-textarea textarea {
+  resize: none;
+  -moz-resize: none;
+  -webkit-resize: none;
 }
 
 /* modal {{{ */

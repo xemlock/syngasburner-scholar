@@ -159,7 +159,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
         unset($event);
     }
-
+p($values);
     if (function_exists($process)) {
         $args = array(&$values);
         call_user_func_array($process, $args);

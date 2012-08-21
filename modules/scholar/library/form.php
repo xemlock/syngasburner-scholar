@@ -51,6 +51,16 @@ function scholar_elements() // {{{
         '#checkbox_name'    => 'status',
     );
 
+    $elements['scholar_element_vtable'] = array(
+        '#input'            => false,
+    );
+
+    $elements['scholar_element_vtable_row'] = array(
+        '#input'            => false,
+        '#title'            => '',
+        '#description'      => '',
+    );
+
     return $elements;
 } // }}}
 
@@ -61,16 +71,20 @@ function scholar_elements() // {{{
  */
 function scholar_elements_theme() // {{{
 {
+    $theme_arguments = array('arguments' => array('element' => null));
+
     $theme = array();
 
-    $theme['scholar_country']        = array('arguments' => array('element' => null));
-    $theme['scholar_date']           = array('arguments' => array('element' => null));
-    $theme['scholar_textarea']       = array('arguments' => array('element' => null));
-    $theme['scholar_checkboxed_container'] = array('arguments' => array('element' => null));
-    $theme['scholar_element_cancel'] = array('arguments' => array('element' => null));
-    $theme['scholar_element_events'] = array('arguments' => array('element' => null));
-    $theme['scholar_element_files']  = array('arguments' => array('element' => null));
-    $theme['scholar_element_people'] = array('arguments' => array('element' => null));
+    $theme['scholar_country']              = $theme_arguments;
+    $theme['scholar_date']                 = $theme_arguments;
+    $theme['scholar_textarea']             = $theme_arguments;
+    $theme['scholar_checkboxed_container'] = $theme_arguments;
+    $theme['scholar_element_cancel']       = $theme_arguments;
+    $theme['scholar_element_events']       = $theme_arguments;
+    $theme['scholar_element_files']        = $theme_arguments;
+    $theme['scholar_element_people']       = $theme_arguments;
+    $theme['scholar_element_vtable']       = $theme_arguments;
+    $theme['scholar_element_vtable_row']   = $theme_arguments;
 
     return $theme;
 } // }}}
@@ -746,8 +760,10 @@ function scholar_node_form(&$form_state, $node)
  */
 function scholar_populate_form(&$form, &$record) // {{{
 {
-    if (isset($form['record'])) {
-        $subform = &$form['record'];
+    $form_ptr = &$form['vtable'];
+
+    if (isset($form_ptr['record'])) {
+        $subform = &$form_ptr['record'];
 
         foreach ($record as $key => $value) {
             if (isset($subform[$key])) {
@@ -760,13 +776,13 @@ function scholar_populate_form(&$form, &$record) // {{{
 
     // elementy files, node i events musza znajdowac sie w kontenerach
     // o tej samej nazwie
-    if (isset($form['files']['files']) && isset($record->files)) {
-        $form['files']['files']['#default_value'] = $record->files;
+    if (isset($form_ptr['files']) && isset($record->files)) {
+        $form_ptr['files']['files']['#default_value'] = $record->files;
     }
 
     // wypelnij elementy zwiazane z powiazanymi segmentami
-    if (isset($form['nodes']['nodes']) && isset($record->nodes)) {
-        $subform = &$form['nodes']['nodes'];
+    if (isset($form_ptr['nodes']) && isset($record->nodes)) {
+        $subform = &$form_ptr['nodes']['nodes'];
 
         foreach ($record->nodes as $language => $node) {
             // wartosc checkboksa sterujacego kontenerem
@@ -798,8 +814,8 @@ function scholar_populate_form(&$form, &$record) // {{{
         unset($subform);
     }
 
-    if (isset($form['events']['events']) && isset($record->events)) {
-        $form['events']['events']['#default_value'] = $record->events;
+    if (isset($form_ptr['events']) && isset($record->events)) {
+        $form_ptr['events']['events']['#default_value'] = $record->events;
     }
 } // }}}
 
@@ -906,11 +922,15 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         ),
     );
 
-    $form['#record'] = $record;
+    $vtable = array(
+        '#type' => 'scholar_element_vtable',
+        '#tree' => false,
+    );
 
-    $form['record'] = array(
-        '#type' => 'fieldset',
+    $vtable['record'] = array(
+        '#type' => 'scholar_element_vtable_row',
         '#title' => t('Basic data'),
+        '#description' => t('Enter the basic information'),
     );
 
     foreach ($fields as $key => $value) {
@@ -923,21 +943,23 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 
         switch ($key) {
             case 'files':
-                $form['files'] = array(
-                    '#type' => 'fieldset',
+                $vtable['files'] = array(
+                    '#type' => 'scholar_element_vtable_row',
                     '#title' => t('File attachments'),
+                    '#description' => t('Edit attached files'),
                 );
-                $form['files']['files'] = array(
+                $vtable['files']['files'] = array(
                     '#type' => 'scholar_element_files',
                 );
                 break;
 
             case 'nodes':
-                $form['nodes'] = array(
-                    '#type' => 'fieldset',
+                $vtable['nodes'] = array(
+                    '#type' => 'scholar_element_vtable_row',
                     '#title' => t('Node'),
+                    '#description' => t('Edit related pages'),
                 );
-                $form['nodes']['nodes'] = scholar_nodes_subform($value);
+                $vtable['nodes']['nodes'] = scholar_nodes_subform($value);
                 break;
 
             case 'events':
@@ -945,13 +967,15 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                 // jest modul events, aby nie modyfikowac istniejacych wartosci
                 // eventow
                 if (module_exists('events')) {
-                    $form['events'] = array(
-                        '#type' => 'fieldset',
+                    $vtable['events'] = array(
+                        '#type' => 'scholar_element_vtable_row',
                         '#title' => t('Event'),
+                        '#description' => t('Edit related events'),
                     );
-                    $form['events']['events'] = array(
-                        '#type' => 'scholar_element_events',
-                    ); //scholar_events_form($value);
+                    $vtable['events']['events'] = array(
+                        '#type'   => 'scholar_element_events',
+                        '#fields' => $value,
+                    );
                 }
                 break;
 
@@ -970,16 +994,19 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                         $value = array('#title' => $value);
                     }
 
-                    $form['record'][$key] = is_array($value) 
+                    $vtable['record'][$key] = is_array($value) 
                         ? array_merge($record_fields[$key], $value)
                         : $record_fields[$key];
 
                 } elseif (is_array($value)) {
                     // niestandardowe pole formularza, dodaj je do sekcji record
-                    $form['record'][$key] = $value;
+                    $vtable['record'][$key] = $value;
                 }
         }
     }
+
+    $form['#record'] = $record;
+    $form['vtable'] = $vtable;
 
     if ($record) {
         scholar_populate_form($form, $record);
@@ -987,5 +1014,18 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 
     return $form;
 } // }}}
+
+function theme_scholar_element_vtable($element)
+{
+    return '<table class="scholar-vtable"><tbody>' . $element['#children'] . '</tbody></table>';
+}
+
+function theme_scholar_element_vtable_row($element)
+{
+    if (is_array($element['#description'])) {
+        $element['#description'] = implode('', $element['#description']);
+    }
+    return '<tr><td>' . $element['#title'] . '<br/>' . $element['#description'] . '</td><td> ' . $element['#children'] . '</td></tr>';
+}
 
 // vim: fdm=marker
