@@ -44,7 +44,6 @@ function scholar_elements() // {{{
 
     $elements['scholar_element_people'] = array(
         '#input'            => true,
-        '#element_validate' => array('form_typ_scholar_element_people_validate'),
     );
 
     $elements['scholar_checkboxed_container'] = array(
@@ -64,73 +63,16 @@ function scholar_elements_theme() // {{{
 {
     $theme = array();
 
-    $theme['scholar_country'] = 
-    $theme['scholar_date'] =
-    $theme['scholar_textarea'] = 
-    $theme['scholar_checkboxed_container'] =
-    $theme['scholar_element_cancel'] =
-    $theme['scholar_element_events'] =
-    $theme['scholar_element_files']  =
-    $theme['scholar_element_people'] =
-        array(
-            'arguments' => array('element' => null),
-        );
+    $theme['scholar_country']        = array('arguments' => array('element' => null));
+    $theme['scholar_date']           = array('arguments' => array('element' => null));
+    $theme['scholar_textarea']       = array('arguments' => array('element' => null));
+    $theme['scholar_checkboxed_container'] = array('arguments' => array('element' => null));
+    $theme['scholar_element_cancel'] = array('arguments' => array('element' => null));
+    $theme['scholar_element_events'] = array('arguments' => array('element' => null));
+    $theme['scholar_element_files']  = array('arguments' => array('element' => null));
+    $theme['scholar_element_people'] = array('arguments' => array('element' => null));
 
     return $theme;
-} // }}}
-
-/**
- * @return array
- */
-function form_type_scholar_element_people_value($element, $post = false) // {{{
-{
-    $value = array();
-
-    if (false === $post) {
-        if ($element['#default_value']) {
-            $post = $element['#default_value'];
-        }
-    }
-
-    if ($post) {
-        foreach ((array) $post as $data) {
-            if (empty($data['id'])) {
-                continue;
-            }
-
-            $value[] = array(
-                'id'         => intval($data['id']),
-                'first_name' => isset($data['first_name']) ? strval($data['first_name']) : '',
-                'last_name'  => isset($data['last_name']) ? strval($data['last_name']) : '',
-                'weight'     => isset($data['weight']) ? intval($data['weight']) : 0,
-            );
-        }
-    }
-
-    return $value;
-} // }}}
-
-function form_typ_scholar_element_people_validate()
-{
-    // TODO required ?
-}
-
-
-
-/**
- * @return string|null
- */
-function form_type_scholar_textarea_value($element, $post = false) // {{{
-{
-    if (false === $post) {
-        $value = isset($element['#default_value']) ? $element['#default_value'] : null;
-    } else {
-        $value = $post;
-    }
-
-    $value = trim(strval($value));
-
-    return strlen($value) ? $value : null;
 } // }}}
 
 /**
@@ -254,23 +196,33 @@ function form_type_scholar_element_events_value($element, $post = false) // {{{
     $value = array();
 
     if (false === $post) {
-        $post = $element['#default_value'];
+        if ($element['#default_value']) {
+            $post = $element['#default_value'];
+        }
+    } else {
+        // ze wzgledu na strukture formularza trzeba do kazdej tablicy
+        // reprezentujacej pojedyncze wydarzenie trzeba wpisac daty,
+        // znajdujace sie na najwyzszym poziomie przeslanej tablicy
+        $start_date = isset($post['start_date']) ? $post['start_date'] : null;
+        $end_date   = isset($post['end_date'])   ? $post['end_date']   : null;
+
+        foreach (scholar_languages() as $language => $name) {
+            $post[$language]['start_date'] = $start_date;
+            $post[$language]['end_date']   = $end_date;
+        }
     }
 
     if ($post) {
-        // pola start_date i end_date poniewaz sa wspolne dla wszystkich
-        // wersji jezykowych znajduja sie na innym poziomie tablicy
-        $start_date = isset($post['start_date']) ? $post['start_date'] : null;
-        $end_date   = isset($post['end_date']) ? $post['end_date'] : null;
-
+        $keys = array('status', 'start_date', 'end_date', 'title', 'body');
         foreach (scholar_languages() as $language => $name) {
             if (isset($post[$language])) {
-                $value[$language] = array(
-                    'start_date' => $start_date,
-                    'end_date'   => $end_date,
-                    'title'      => isset($post[$language]['title']) ? $post[$language]['title'] : null,
-                    'body'       => isset($post[$language]['body']) ? $post[$language]['body'] : null,
-                );
+                $value[$language] = array();
+
+                foreach ($keys as $key) {
+                    $value[$language][$key] = isset($post[$language][$key])
+                                            ? $post[$language][$key]
+                                            : null;
+                }
             }
         }
     }
@@ -278,36 +230,73 @@ function form_type_scholar_element_events_value($element, $post = false) // {{{
     return $value;
 } // }}}
 
-function form_type_scholar_element_events_validate($element, &$form_state)
-{
-    // 
-
-}
-
-
 /**
+ * Sprawdza, czy gdy wybrano utworzenie rekordu wydarzenia (w przynajmniej
+ * jedym języku), podano również datę jego początku.
+ *
  * @param array $element
  * @param array &$form_state
  */
-function form_type_scholar_element_files_validate($element, &$form_state) // {{{
+function form_type_scholar_element_events_validate($element, &$form_state) // {{{
 {
-    // jezeli podane sa pliki, to kazdy z nich musi miec niepusta etykiete
-    // unikalną dla tego języka
-    // jezeli dodano element musi byc podana
-    foreach ($element['#value'] as $language => $files) {
-        $labels = array();
+    // Jezeli w formularzu znajduje sie pole daty poczatku wydarzenia,
+    // i gdy ma zostac utworzony rekord wydarzenia dla przynajmniej
+    // jednego jezyka, wymagaj podania daty poczatku.
+    if ($element['#value']) {
+        foreach ($element['#value'] as $language => $event) {
+            if ($event['status'] && 0 == strlen($event['start_date'])) {
+                // zgodnie z dokumentacja dla form_set_error nazwy
+                // elementow zagniezdzonych przechowywane sa jako
+                // zlepek wartosci w #parents sklejonych znakami ][
+                $parents = $element['#parents'];
+                $parents[] = 'start_date';
 
-        foreach ($files as $file) {
-            $label = strtolower($file['label']);
-            if (0 == strlen($file['label']) || isset($labels[$label])) {
-                // Każdy załączony plik musi mieć nadaną etykietę
-                form_error($element, t('Each attached file must be given a unique (case insensitive) label.'));
+                // form_set_error operuje na statycznej tablicy, wspolnej
+                // dla wszystkich formularzy na stronie
+                form_set_error(implode('][', $parents), t('Event start date is required.'));
                 break;
             }
-
-            $labels[$label] = true;
         }
     }
+} // }}}
+
+/**
+ * Generuje HTML reprezentujący ten element.
+ *
+ * @param array $element
+ * @return string
+ */
+function theme_scholar_element_events($element) // {{{
+{
+    // przygotuj elementy tak, aby zawieraly wszystkie niezbedne
+    // wlasciwosci i mogly zostac bezpiecznie wyrenderowane
+    $fields = $element['#fields'];
+
+    $fields['#tree'] = true;
+    $fields['#name'] = $element['#name'];
+    $fields['#parents'] = $element['#parents'];
+    $fields['#post'] = $element['#post'];
+
+    // ponadto trzeba przekazac wartosci elementom
+    foreach ($element['#value'] as $language => $event) {
+        $fields['start_date']['#value'] = $event['start_date'];
+        $fields['end_date']['#value']   = $event['end_date'];
+
+        $fields[$language]['#default_value']  = $event['status'];
+        $fields[$language]['title']['#value'] = $event['title'];
+        $fields[$language]['body']['#value']  = $event['body'];
+    }
+
+    $form_state = array();
+    $fields = form_builder(__FUNCTION__, $fields, $form_state);
+
+    // trzeba recznie wyrenderowac pola. Gdyby chciec skorzystac
+    // z automatycznego renderingu, po prostu dodajac dodatkowe
+    // pola jako dzieci elementu (np. w za pomoca funkcji #process),
+    // podczas pobierania wartosci elementu zostalaby ona
+    // nadpisywana przez wartosci dzieci.
+
+    return drupal_render($fields);
 } // }}}
 
 /**
@@ -318,11 +307,9 @@ function form_type_scholar_element_files_value($element, $post = false) // {{{
 {
     $value = array();
 
-    if (false === $post) {
+    if (false === $post && $element['#default_value']) {
         // formularz nie zostal przeslany, uzyj domyslnej wartosci
-        if ($element['#default_value']) {
-            $post = $element['#default_value'];
-        }
+        $post = $element['#default_value'];
     }
 
     if ($post) {
@@ -352,48 +339,28 @@ function form_type_scholar_element_files_value($element, $post = false) // {{{
 } // }}}
 
 /**
- * Przekierowuje do theme_select.
+ * @param array $element
+ * @param array &$form_state
  */
-function theme_scholar_country($element) { // {{{
-    return theme_select($element);
-} // }}}
-
-function theme_scholar_textarea($element) // {{{
+function form_type_scholar_element_files_validate($element, &$form_state) // {{{
 {
-    if (is_array($element['#description'])) {
-        $element['#description'] = implode('', $element['#description']);
+    // jezeli podane sa pliki, to kazdy z nich musi miec niepusta etykiete
+    // unikalną dla tego języka
+    // jezeli dodano element musi byc podana
+    foreach ($element['#value'] as $language => $files) {
+        $labels = array();
+
+        foreach ($files as $file) {
+            $label = strtolower($file['label']);
+            if (0 == strlen($file['label']) || isset($labels[$label])) {
+                // Każdy załączony plik musi mieć nadaną etykietę
+                form_error($element, t('Each attached file must be given a unique (case insensitive) label.'));
+                break;
+            }
+
+            $labels[$label] = true;
+        }
     }
-
-    $textarea = theme_textarea($element);
-    return $textarea;
-} // }}}
-
-function theme_scholar_element_cancel($element) // {{{
-{
-    return l($element['#title'], $element['#value'], array('attributes' => array('class' => 'scholar-cancel')));
-} // }}}
-
-function theme_scholar_element_events($element) // {{{
-{
-    // przygotuj elementy tak, aby zawieraly wszystkie niezbedne
-    // wlasciwosci i mogly zostac bezpiecznie wyrenderowane
-    $fields = $element['#fields'];
-
-    $fields['#tree'] = true;
-    $fields['#name'] = $element['#name'];
-    $fields['#parents'] = $element['#parents'];
-    $fields['#post'] = $element['#post'];
-
-    $form_state = array();
-    $fields = form_builder(__FUNCTION__, $fields, $form_state);
-
-    // trzeba recznie wyrenderowac pola. Gdyby chciec skorzystac
-    // z automatycznego renderingu, po prostu dodajac dodatkowe
-    // pola jako dzieci elementu (np. w za pomoca funkcji #process),
-    // podczas pobierania wartosci elementu zostalaby ona
-    // nadpisywana przez wartosci dzieci.
-
-    return drupal_render($fields);
 } // }}}
 
 /**
@@ -438,6 +405,35 @@ function theme_scholar_element_files($element) // {{{
 } // }}}
 
 /**
+ * @return array
+ */
+function form_type_scholar_element_people_value($element, $post = false) // {{{
+{
+    $value = array();
+
+    if (false === $post && $element['#default_value']) {
+        $post = $element['#default_value'];
+    }
+
+    if ($post) {
+        foreach ((array) $post as $data) {
+            if (empty($data['id'])) {
+                continue;
+            }
+
+            $value[] = array(
+                'id'         => intval($data['id']),
+                'first_name' => isset($data['first_name']) ? strval($data['first_name']) : '',
+                'last_name'  => isset($data['last_name']) ? strval($data['last_name']) : '',
+                'weight'     => isset($data['weight']) ? intval($data['weight']) : 0,
+            );
+        }
+    }
+
+    return $value;
+} // }}}
+
+/**
  * @return string
  */
 function theme_scholar_element_people($element) // {{{
@@ -457,6 +453,43 @@ function theme_scholar_element_people($element) // {{{
     return theme_form_element($element, '<div id="' . $element['#id'] .'"><noscript><div class="error">' . t('JavaScript is required.') . '</div></noscript></div>');
 } // }}}
 
+/**
+ * @return string|null
+ */
+function form_type_scholar_textarea_value($element, $post = false) // {{{
+{
+    if (false === $post) {
+        $value = isset($element['#default_value']) ? $element['#default_value'] : null;
+    } else {
+        $value = $post;
+    }
+
+    $value = trim(strval($value));
+
+    return strlen($value) ? $value : null;
+} // }}}
+
+/**
+ * Przekierowuje do theme_select.
+ */
+function theme_scholar_country($element) { // {{{
+    return theme_select($element);
+} // }}}
+
+function theme_scholar_textarea($element) // {{{
+{
+    if (is_array($element['#description'])) {
+        $element['#description'] = implode('', $element['#description']);
+    }
+
+    $textarea = theme_textarea($element);
+    return $textarea;
+} // }}}
+
+function theme_scholar_element_cancel($element) // {{{
+{
+    return l($element['#title'], $element['#value'], array('attributes' => array('class' => 'scholar-cancel')));
+} // }}}
 
 /**
  * Funkcja renderująca kontener.
@@ -466,7 +499,11 @@ function theme_scholar_element_people($element) // {{{
  */
 function theme_scholar_checkboxed_container($element) // {{{
 {
+    // nazwa klucza odpowiadajacego wartosci zaznaczenia checkboksa
     $checkbox_name = $element['#checkbox_name'];
+
+    // ustaw stan zaznaczenia checkboksa na podstawie wartosci znajdujacej
+    // sie pod kluczem podanym w #checkbox_name
     $checked = isset($element['#value'][$checkbox_name]) && $element['#value'][$checkbox_name];
 
     $parents = $element['#parents'];
@@ -503,15 +540,21 @@ function theme_scholar_checkboxed_container($element) // {{{
  */
 function form_type_scholar_checkboxed_container_value($element, $post = false) // {{{
 {
+    // nazwa pola w tablicy $post przechowujacej status zaznaczenia
+    // checkboksa kontrolujacego ten kontener
     $checkbox_name = $element['#checkbox_name'];
 
+    // stan zaznaczenia checkboksa gdy przeslano formularza jest pobrany
+    // z wartosci klucza o nazwie podanej w #checkbox_name, albo pochodzi
+    // z #default_value
     if ($post) {
         $value = isset($post[$checkbox_name]) && $post[$checkbox_name];
     } else {
         $value = isset($element['#default_value']) ? (bool) $element['#default_value'] : false;
     }
 
-    // musi zwrocic tablice, zeby dzieci kontenera mogly wpisac swoje wartosci
+    // funkcja musi zwrocic tablice, zeby dzieci kontenera mogly wpisac
+    // do niej swoje wartosci
     return array(
         $checkbox_name => intval($value)
     );
@@ -535,140 +578,6 @@ function scholar_language_label($language, $label = null) // {{{
     }
 
     return '[' . $name . '] ' . $label;
-} // }}}
-
-
-function scholar_events_form($options = array()) // {{{
-{
-    // predefiniowane pola formularza edycji eventow, podajac w tablicy
-    // $fields wartosc false pole nie zostanie dodane do formularza
-    $fields = array(
-        'start_date' => array(
-            '#type'        => 'textfield',
-            '#title'       => t('Start date'),
-            '#maxlength'   => 10,
-            '#description' => t('Date format: YYYY-MM-DD.'),
-        ),
-        'end_date' => array(
-            '#type'        => 'textfield',
-            '#title'       => t('End date'),
-            '#maxlength'   => 10,
-            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
-        ),
-        'title' => array(
-            '#type'        => 'textfield',
-            '#title'       => t('Title'),
-            '#maxlength'   => 255,
-            '#description' => t('If not given title of referenced record will be used.'),
-        ),
-        'body' => array(
-            '#type'        => 'scholar_textarea',
-            '#title'       => t('Description'),
-            '#description' => t('Detailed description about this event.'),
-        ),
-    );
-
-    foreach ((array) $options as $key => $value) {
-        if (!isset($fields[$key])) {
-            continue;
-        }
-
-        // jezeli podano false jako wartosc pola, nie dodawaj tego pola
-        if (false === $value) {
-            $fields[$key] = false;
-
-        } else if (is_array($value)) {
-            $fields[$key] = array_merge($fields[$key], $value);
-
-        } else if (is_string($value)) {
-            $fields[$key]['#title'] = $value;
-        }
-    }
-
-    $form = array(
-        '#tree' => true,
-        '#input' => true,
-        '#element_validate' => array('scholar_events_form_validate'),
-    );
-
-    // aby nie dodawac wybranego pola nalezy podac jego nazwe w kluczu, zas
-    // jako wartosc podac false. Jezeli podano jako wartosc tablice, zostanie
-    // ona scalona z predefiowana tablica opisujaca pole. Jezeli podano
-    // wartosc typu string, zostanie ona ustawiona jako tytul pola. Wartosci
-    // innych typow zostana zignorowane podczas dodawania pola.
-
-    if (false !== $fields['start_date']) {
-        $form['start_date'] = $fields['start_date'];
-    }
-
-    if (false !== $fields['end_date']) {
-        $form['end_date'] = $fields['end_date'];
-    }
-
-    // dodaj kontener z polami na tytul lub tresc, jezeli pozwolono na dodanie
-    // przynajmniej jednego z tych pol
-
-    $add_title = false !== $fields['title'];
-    $add_body  = false !== $fields['body'];
-
-    if ($add_title || $add_body) {
-        foreach (scholar_languages() as $code => $name) {
-            $form[$code] = array(
-                '#type'          => 'scholar_checkboxed_container',
-                '#checkbox_name' => 'status',
-                '#title'         => 'Add event in language: ' . scholar_language_label($code, $name),
-                '#tree'          => true,
-            );
-
-            if ($add_title) {
-                $form[$code]['title'] = $fields['title'];
-            }
-
-            if ($add_body) {
-                $form[$code]['body'] = $fields['body'];
-            }
-        }
-    }
-
-    return $form;
-} // }}}
-
-/**
- * Sprawdza, czy gdy wybrano utworzenie rekordu wydarzenia (w przynajmniej
- * jedym języku), podano również datę jego początku.
- *
- * @param array $form
- * @param array &$form_state
- */
-function scholar_events_form_validate($form, &$form_state)
-{
-    // Jezeli w formularzu znajduje sie pole daty poczatku wydarzenia,
-    // i gdy ma zostac utworzony rekord wydarzenia dla przynajmniej
-    // jednego jezyka, wymagaj podania daty poczatku.
-
-    p($form['#value']);
-
-    if (isset($form['start_date'])) {
-        foreach (scholar_languages() as $language => $name) {
-            p($form['#value'][$language]['status']);
-            if ($form['#value'][$language]['status']) {
-                echo 1;
-                scholar_require_element_value($form['start_date']);
-            } else echo 2;
-        }
-    }
-    exit;
-}
-
-/**
- * @param array $element
- */
-function scholar_require_element_value($element) // {{{
-{
-    if (!isset($element['#value']) || !count($element['#value']) || (is_string($element['#value']) && 0 == strlen(trim($elements['#value'])))) {
-        p("ERROR");
-        form_error($element, $t('!name field is required.', array('!name' => $element['#title'])));
-    }
 } // }}}
 
 /**
@@ -911,7 +820,7 @@ function scholar_populate_record(&$record, $values) // {{{
     // dodatkowymi polami formularza
     $omit = array('op', 'submit', 'form_build_id', 'form_token', 'form_id');
     $count = 0;
-p($values, __FUNCTION__);
+
     foreach ($values as $key => $value) {
         if (in_array($key, $omit)) {
             continue;

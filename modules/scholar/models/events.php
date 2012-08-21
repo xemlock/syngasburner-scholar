@@ -23,9 +23,12 @@ function scholar_load_events($row_id, $table_name) // {{{
         // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
         while ($row = db_fetch_array($query)) {
             $event = events_load_event($row['event_id']);
+
             if ($event) {
-                $event->body = $row['body']; // nieprzetworzona tresc
-                $rows[$event->language] = $event;
+                $event = (array) $event;
+                $event['body'] = $row['body']; // nieprzetworzona tresc
+
+                $rows[$event['language']] = $event;
             }
         }
     }
@@ -53,11 +56,10 @@ function scholar_save_events($row_id, $table_name, $events) // {{{
     $count = 0;
 
     if (module_exists('events')) {
-        p($events, __FUNCTION__);exit;
         foreach ($events as $language => $event_data) {
             // sprawdz czy istnieje relacja miedzy generykiem a eventem
             $event = false;
-            $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s' AND language = '%s'", $row_id, $table_name, $language);
+            $query = db_query("SELECT * FROM {scholar_events} WHERE table_name = '%s' AND row_id = %d AND language = '%s'", $table_name, $row_id, $language);
 
             if ($binding = db_fetch_array($query)) {
                 $event = events_load_event($binding['event_id']);
@@ -99,13 +101,13 @@ function scholar_save_events($row_id, $table_name, $events) // {{{
             // zapisz event
             if (events_save_event($event)) {
                 // usun wczesniejsze powiazania...
-                db_query("DELETE FROM {scholar_events} WHERE (row_id = %d AND language = '%s') OR (event_id = %d)",
-                    $row_id, $language, $event->id
+                db_query("DELETE FROM {scholar_events} WHERE (table_name = '%s' AND row_id = %d AND language = '%s') OR (event_id = %d)",
+                    $table_name, $row_id, $language, $event->id
                 );
 
                 // ... i dodaj nowe
-                db_query("INSERT INTO {scholar_events} (row_id, event_id, language, body) VALUES (%d, %d, '%s', '%s')",
-                    $row_id, $event->id, $language, $body
+                db_query("INSERT INTO {scholar_events} (table_name, row_id, event_id, language, body) VALUES ('%s', %d, %d, '%s', '%s')",
+                    $table_name, $row_id, $event->id, $language, $body
                 );
 
                 ++$count;
