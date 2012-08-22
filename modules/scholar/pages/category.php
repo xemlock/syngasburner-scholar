@@ -89,17 +89,12 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         $record = scholar_fetch_category($id, $table_name, $subtype, _scholar_category_path($table_name, $subtype));
     }
 
-    $form = scholar_generic_form(array(
-        'files',
-        'nodes',
-    ), $record);
-
-    $form['record']['names'] = array(
+    $names = array(
         '#tree' => true,
     );
 
     foreach (scholar_languages() as $code => $name) {
-        $form['record']['names'][$code] = array(
+        $names[$code] = array(
             '#type' => 'textfield',
             '#title' => scholar_language_label($code, t('Name')),
             '#description' => t('Category name in language: @language', array('@language' => $name)),
@@ -107,6 +102,12 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
             '#default_value' => $record ? $record->names[$code] : null,
         );
     }
+
+    $form = scholar_generic_form(array(
+        'names' => $names,
+        'files',
+        'nodes',
+    ), $record);
 
     $form['submit'] = array(
         '#type' => 'submit',
@@ -136,9 +137,9 @@ function scholar_category_form_submit($form, &$form_state) // {{{
         scholar_populate_record($record, $values);
 
         // ustaw nazwy kategorii w dostepnych jezykach
-        foreach (scholar_languages() as $code => $name) {
-            if (isset($values['names'][$code])) {
-                $record->names[$code] = $values['names'][$code];
+        foreach (scholar_languages() as $language => $name) {
+            if (isset($values['names'][$language])) {
+                $record->names[$language] = $values['names'][$language];
             }
         }
 

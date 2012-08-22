@@ -30,6 +30,9 @@ function scholar_load_authors($generic_id) // {{{
 } // }}}
 
 /**
+ * Funkcja ustawia nowych autorów dla tego rekordu generycznego.
+ * Poprzedni autorzy zostają usunięci.
+ *
  * @param int $generic_id
  * @param array $authors
  */

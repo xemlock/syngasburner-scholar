@@ -52,13 +52,17 @@ function scholar_elements() // {{{
     );
 
     $elements['scholar_element_vtable'] = array(
+        // #input ustawione na true powoduje, ze atrybuty #name i #id ustawiane
+        // sa automatycznie. Efektem ubocznym jest dodatkowa wartosc vtable
+        // w tablicy form_state[values]
         '#input'            => false,
     );
 
     $elements['scholar_element_vtable_row'] = array(
         '#input'            => false,
-        '#title'            => '',
-        '#description'      => '',
+        '#title'            => null,
+        '#description'      => null, // jezeli bedzie pusty string #description
+                                     // stanie sie tablica
     );
 
     return $elements;
@@ -410,7 +414,7 @@ function theme_scholar_element_files($element) // {{{
 
         $settings['language'] = $language;
         $html .= '<fieldset class="scholar"><legend>' . $legend . '</legend>' .
-        '<div id="' . htmlspecialchars($id) . '" class="form-item"></div>' .
+        '<div id="' . htmlspecialchars($id) . '" class="form-item"><noscript><div class="error">' . t('JavaScript is required.') . '</div></noscript></div>' .
         '<script type="text/javascript">new Scholar.formElements.files(' . drupal_to_js('#' . $id) . ',' . drupal_to_js("{$element['#name']}[{$code}]") . ' ,' . drupal_to_js($settings) . ',' . drupal_to_js($values) . ')</script>'.
         '</fieldset>';
     }
@@ -1005,8 +1009,9 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         }
     }
 
+    $form = array();
     $form['#record'] = $record;
-    $form['vtable'] = $vtable;
+    $form['vtable']  = $vtable;
 
     if ($record) {
         scholar_populate_form($form, $record);
@@ -1015,17 +1020,21 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     return $form;
 } // }}}
 
-function theme_scholar_element_vtable($element)
+function theme_scholar_element_vtable($element) // {{{
 {
-    return '<table class="scholar-vtable"><tbody>' . $element['#children'] . '</tbody></table>';
-}
+    static $vtable_counter = 0;
+
+    $id  = empty($element['#id']) ? ('vtable-' . $vtable_counter++) : $element['#id'];
+    $arg = drupal_to_js('#' . $id);
+
+    drupal_add_js("\$(function(){Scholar.formElements.vtable($arg)});", 'inline');
+
+    return '<table id="' . $id . '" class="scholar-vtable"><tbody>' . $element['#children'] . '</tbody></table>';
+} // }}}
 
 function theme_scholar_element_vtable_row($element)
 {
-    if (is_array($element['#description'])) {
-        $element['#description'] = implode('', $element['#description']);
-    }
-    return '<tr><td>' . $element['#title'] . '<br/>' . $element['#description'] . '</td><td> ' . $element['#children'] . '</td></tr>';
+    return '<tr><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
 }
 
 // vim: fdm=marker

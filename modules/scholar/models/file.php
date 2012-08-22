@@ -163,7 +163,7 @@ function scholar_load_files($row_id, $table_name, $language = null) // {{{
 } // }}}
 
 /**
- * Ustawia załączniki dla obiektu z podanej tabeli, wszystkie poprzednie
+ * Ustawia załączniki dla obiektu z podanej tabeli. Wszystkie poprzednie
  * powiązania tego obiektu z załącznikami zostaną usunięte.
  *
  * @param int $row_id
@@ -198,12 +198,11 @@ function scholar_save_files($row_id, $table_name, $attachments) // {{{
     $record = new stdClass;
     $count = 0;
 
+    // usun poprzednie dowiazania
+    db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
+
     foreach ($attachments as $language => $files) {
         $saved = array();
-
-        // usun aktualne dowiazania dla tego jezyka, zeby nie kolidowaly
-        // z nowymi dowiazaniami
-        db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d AND language = '%s'", $table_name, $row_id, $language);
 
         foreach ($files as $file) {
             $file_id = intval($file['id']);

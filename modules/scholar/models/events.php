@@ -38,6 +38,8 @@ function scholar_load_events($row_id, $table_name) // {{{
 
 /**
  * Zapisuje rekordy wydarzeń i wiąże je z rekordem wybranej tabeli.
+ * Funkcja ta nie usuwa powiązań, tylko dopisuje lub nadpisuje rekordy
+ * wiążące eventy z rekordami tego modułu.
  *
  * @param int $row_id
  *     identyfikator rekordu

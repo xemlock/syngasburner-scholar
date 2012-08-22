@@ -219,16 +219,23 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
     }
 
     $form = scholar_generic_form(array(
-        'title' => t('Conference name'),
+        'title' => array(
+            '#tit;e' => t('Conference name'),
+            '#required' => true
+        ),
         'start_date' => array(
             '#maxlength' => 10,
+            '#required' => true,
             '#description' => t('Date format: YYYY-MM-DD.'),
         ), 
         'end_date' => array(
             '#maxlength' => 10,
+            '#required' => true,
             '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
-        'locality',
+        'locality' => array(
+            '#required' => true,
+        ),
         'country',
         'url', 
         'category_id',

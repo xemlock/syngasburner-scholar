@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-20
+ * @version 2012-08-22
  */
 
 /**
@@ -1539,7 +1539,7 @@ var Scholar = {
             }
         }, // }}}
         /**
-         * @param target selector
+         * @param target selektor
          * @param name prefiks do nazywania pól formulrza
          * @param url  adres URL strony z itemPickerem do wyboru osób
          * @param {Array} [items] wartość początkowa
@@ -1585,6 +1585,62 @@ var Scholar = {
 
                 widget.redraw();
             }
+        }, // }}}
+        /**
+         * Przekształca tablicę, tak by komórki z pierwszej kolumny stały
+         * się zakładkami pionowymi, po kliknięciu których wuswietlona
+         * zostaje zawartość komórki z drugiej kolumny tego samego wiersza
+         * znajdującego się w oryginalnej tabeli.
+         * Zawartość pojedynczej komórki z pierwszej kolumny jest owinięta w
+         * DIV.scholar-vtable-vtab, a drugiej w DIV.scholar-vtable-pane.
+         *
+         * @param {string|jQuery|element} target
+         *     element TABLE dokumentu, która ma zostać przetworzona
+         */
+        vtable: function(target) { // {{{
+            $(target).filter('table:not(.vtable-processed)').each(function() {
+                $(this).children('tbody').each(function() {
+                    var tbody = $(this),
+                        trows = $(this).children('tr'),
+                        tr    = $('<tr/>'),
+                        vtabs = $('<td class="vtable-vtabs" rowspan=' + trows.size() + '/>').appendTo(tr),
+                        panes = $('<td class="vtable-panes"/>').appendTo(tr),
+                        active;
+
+                    trows.each(function() {
+                        var tds  = $(this).children('td'),
+                            vtab = $('<div class="vtable-vtab"/>'),
+                            pane = $('<div class="vtable-pane"/>');
+
+                        $(tds.get(0)).contents().appendTo(vtab);
+                        $(tds.get(1)).contents().appendTo(pane);
+
+                        if (!active) {
+                            active = vtab;
+                            vtab.addClass('active');
+                            pane.css('display', 'block');
+                        } else {
+                            pane.css('display', 'none');    
+                        }
+
+                        vtab.click(function() {
+                            if (active) {
+                                active.removeClass('active');
+                            }
+
+                            panes.children().css('display', 'none');
+                            pane.css('display', 'block');
+
+                            active = vtab.addClass('active');
+                        });
+
+                        vtab.appendTo(vtabs);
+                        pane.appendTo(panes);
+                    });
+
+                    tbody.empty().append(tr);
+                });
+            }).addClass('vtable vtable-processed');
         } // }}}
     }
 }
