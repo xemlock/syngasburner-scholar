@@ -211,4 +211,13 @@ function scholar_category_delete_form_submit($form, &$form_state) // {{{
     }
 } // }}}
 
+/**
+ * Przekierowuje do odpowiedniego formularza edycji
+ */
+function scholar_category_edit($id) // {{{
+{
+    $category = scholar_fetch_category($id, false, false, scholar_admin_path());
+    scholar_goto(_scholar_category_path($category->table_name, $category->subtype, 'edit/' . $category->id));
+} // }}}
+
 // vim: fdm=marker

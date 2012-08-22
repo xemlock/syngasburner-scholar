@@ -43,8 +43,7 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
 
     } elseif (strlen($redirect)) {
         drupal_set_message(t('Invalid category identifier supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto($redirect);
-        exit;
+        return scholar_goto($redirect);
     }
 
     return $record;
@@ -74,6 +73,8 @@ function scholar_save_category(&$category) // {{{
 
     scholar_save_files($category->id, 'categories', $category->files);
     scholar_save_nodes($category->id, 'categories', $category->nodes);
+
+    scholar_invalidate_rendering();
 } // }}}
 
 /**
@@ -87,7 +88,9 @@ function scholar_delete_category(&$category) // {{{
     db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d", $category->id);
     db_query("DELETE FROM {scholar_categories} WHERE id = %d", $category->id);
 
-    $category->id = null; 
+    $category->id = null;
+
+    scholar_invalidate_rendering();
 } // }}}
 
 

@@ -158,6 +158,24 @@ function scholar_menu() // {{{
         array('edit' => t('Edit book'))
     );
 
+    // dwie specjalne strony przekierowujace do edycji rekordow,
+    // niewymagajace podawania subtype
+    $items[$root . '/generic/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_generics_edit',
+        'parent'            => $root,
+        'file'              => 'pages/generic.php',
+    );
+    $items[$root . '/category/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_category_edit',
+        'parent'            => $root,
+        'file'              => 'pages/category.php',
+    );
+
+
     $items[$root . '/file'] = array(
         'title'             => t('Files'),
         'access arguments'  => array('administer scholar'),
@@ -225,10 +243,10 @@ function scholar_admin_path($path = '') // {{{
  *
  * @return int
  */
-function scholar_admin_page_size()
+function scholar_admin_page_size() // {{{
 {
     return 25;
-}
+} // }}}
 
 /**
  * Ustawia albo zwraca wartość sterującą renderingiem węzłów (segmentów).
@@ -252,6 +270,16 @@ function _scholar_rendering_enabled($enabled = null) // {{{
     }
 
     return $_enabled;
+} // }}}
+
+/**
+ * Funkcja wywoływana po pomyślnym zapisie lub usunięciu rekordów
+ * osób, kategorii i rekordów generycznych oraz przy usuwaniu / zmianie nazwy plików.
+ * Zmiana lub usunięcie wydarzeń i węzłów nie wpływa na rendering. 
+ */
+function scholar_invalidate_rendering() // {{{
+{
+    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
 
 /**
@@ -544,7 +572,7 @@ function scholar_render($html, $dialog = false) // {{{
     return $html;
 } // }}}
 
-function scholar_render_itempicker($callback)
+function scholar_render_itempicker($callback) // {{{
 {
     $items = $callback($options);
 
@@ -564,7 +592,7 @@ Dwukrotne kliknięcie zaznacza element
 <div id="items"></div>
 <?php
     return scholar_render(ob_get_clean(), true);
-}
+} // }}}
 
 /**
  * Wykorzystuje locale_language_list().
@@ -583,62 +611,6 @@ function scholar_languages($language = null, $default = null) // {{{
 
     return isset($languages[$language]) ? $languages[$language] : '';
 } // }}}
-
-/**
- * Do formularzy o identyfikatorze rozpoczynającym się od scholar_
- * ustawia odpowiednie callbacki oraz atrybut class.
- *
- * @param array &$form
- * @param array &$form_state
- * @param string $form_id
- */
-function scholar_form_alter(&$form, &$form_state, $form_id)
-{
-    if (0 === strncmp($form_id, 'scholar_', 8)) {
-        // callback #submit o nazwie takiej jak nazwa formularza
-        // z przyrostkiem _submit jest automaycznie dodawany przez
-        // drupal_prepare_form() wywolywana przez drupal_get_form().
-
-        $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
-        $validate_callback = $form_id . '_validate';
-        if (function_exists($validate_callback)) {
-            $form['#submit'][] = $validate_callback;
-        }
-
-        $form['#attributes'] = isset($form['#attributes']) ? (array) $form['#attributes'] : array();
-        if (!isset($form['#attributes']['class'])) {
-            $form['#attributes']['class'] = 'scholar';
-        } else {
-            $form['#attributes']['class'] .= ' scholar';
-        }
-
-        return;
-    }
-
-    // Nie dopuszczaj do bezposredniej modyfikacji wezlow aktualizowanych
-    // automatycznie przez modul scholar. Podobnie z wykorzystawymi eventami.
-    // echo '<code>', $form_id, '</code>';
-    if ('page_node_form' == $form_id  && $form['#node']) {
-        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $form['#node']->nid);
-        $row = db_fetch_array($query);
-        if ($row) {
-            switch ($row['table_name']) {
-                case 'people':
-                    $url = 'admin/scholar/people/edit/' . $row['object_id'];
-                    break;
-
-                default:
-                    $url = null;
-                    break;
-            }
-            echo '<h1 style="color:red">Direct modification of scholar-referenced nodes is not allowed!</h1>';
-            if ($url) {
-                echo '<p>You can edit scholar object <a href="' . url($url) . '">here</a>.</p>';
-            }
-            // exit;
-        }
-    }
-}
 
 /**
  * Zwraca listę wszystkich krajów.
@@ -686,7 +658,6 @@ function scholar_countries($code = null) // {{{
 
     return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
-
 
 function scholar_render_form()
 {

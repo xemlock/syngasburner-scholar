@@ -228,15 +228,20 @@ function scholar_db_write_record($table, &$record, $update = array()) // {{{
     $values = array();
 
     foreach ($schema['fields'] as $name => $spec) {
+        // dodaj nazwe kolumny do listy kolumn sekwencyjnych, jezeli
+        // jej typ to 'serial'
+        if ('serial' == $spec['type']) {
+            $serials[] = $name;
+
+            // wartosci kolumn sekwencyjnych nie podlegaja edycji, wiec
+            // mozna je zignorowac podczas budowania tablicy z wartosciami
+            // do zapisu
+            continue;
+        }
+
         if (property_exists($record, $name)) {
             $not_null = isset($spec['not null']) && $spec['not null'];
             $value    = $record->$name;
-
-            if ('serial' == $spec['type']) {
-                // zignoruj wartosci dla kolumn sekwencyjnych
-                $serials[] = $name;
-                continue;
-            }
 
             if (is_string($value)) {
                 // przytnij wszystkie stringi

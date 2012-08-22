@@ -88,6 +88,11 @@ function scholar_rename_file(&$file, $filename, &$errmsg = null) // {{{
     if (@rename(scholar_file_path($file->filename), $filepath)) {
         $file->filename = $filename;
         db_query("UPDATE {scholar_files} SET filename = '%s' WHERE id = %d", $filename, $file->id);
+
+        // wymuszamy uniewaznie renderingu, poniewaz wraz ze zmiana nazwy
+        // automatycznie wygenerowane linki do tego pliku moga stac sie martwe
+        scholar_invalidate_rendering();
+
         return true;
     }
 
@@ -119,8 +124,7 @@ function scholar_fetch_file($file_id, $redirect = null) // {{{
 
     if (empty($row) && $redirect) {
         drupal_set_message(t('Invalid file id supplied (%id)', array('%id' => $file_id)), 'error');
-        drupal_goto($redirect);
-        exit;
+        return scholar_goto($redirect);
     }
 
     return $row;
@@ -297,6 +301,7 @@ function scholar_delete_file(&$file) // {{{
     @unlink(scholar_file_path($file->filename));
 
     $file->id = null;
+    scholar_invalidate_rendering();
 } // }}}
 
 /**

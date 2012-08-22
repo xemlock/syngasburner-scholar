@@ -27,8 +27,7 @@ function scholar_load_person($id, $redirect = null) // {{{
     
     } else if ($redirect) {
         drupal_set_message(t('Invalid person identifier supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto($redirect);
-        exit;        
+        return scholar_goto($redirect);
     }
 
     return $record;
@@ -53,6 +52,8 @@ function scholar_save_person(&$person) // {{{
         scholar_save_nodes($person->id, 'people', $person->nodes);
     }
 
+    scholar_invalidate_rendering();
+
     return $success;
 } // }}}
 
@@ -69,8 +70,7 @@ function scholar_delete_person(&$person) // {{{
     db_query("DELETE FROM {scholar_people} WHERE id = %d", $person->id);
 
     $person->id = null;
-
-    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
+    scholar_invalidate_rendering();
 } // }}}
 
 // vim: fdm=marker

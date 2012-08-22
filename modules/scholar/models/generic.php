@@ -151,8 +151,7 @@ function scholar_load_generic($id, $subtype = null, $redirect = null) // {{{
 
     } else if ($redirect) {
         drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto($redirect);
-        exit;
+        return scholar_goto($redirect);
     }
 
     return $record;
@@ -179,7 +178,6 @@ function scholar_save_generic(&$generic) // {{{
             $parent_id = $category_id = null;
         }
 
-        $is_new = false;
         if (scholar_db_write_record('scholar_generics', $generic, 'id')) {
             // zaktualizuj liczniki odwolan kategorii, bez znaczenia czy stary
             // i nowy identyfikator sa rozne czy takie same. Najwyzej zostanie
@@ -191,7 +189,6 @@ function scholar_save_generic(&$generic) // {{{
         }
 
     } else {
-        $is_new = true;
         if (scholar_db_write_record('scholar_generics', $generic)) {
             $success = true;
         }
@@ -216,6 +213,9 @@ function scholar_save_generic(&$generic) // {{{
         if (isset($generic->events)) {
             scholar_save_events($generic->id, 'generics', $generic->events);
         }
+
+        // wymus wygenerowanie na nowo tresci wezlow (segmentow)
+        scholar_invalidate_rendering();
     }
 
     return $success;
@@ -247,7 +247,9 @@ function scholar_delete_generic(&$generic) // {{{
     // usuniecie rekordu generycznego
     db_query("DELETE FROM {scholar_generics} WHERE id = %d", $generic->id);
 
-    $generic->id = null; 
+    $generic->id = null;
+
+    scholar_invalidate_rendering();
 } // }}}
 
 /**

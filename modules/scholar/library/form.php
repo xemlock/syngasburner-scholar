@@ -1,6 +1,36 @@
 <?php
 
 /**
+ * Do formularzy o identyfikatorze rozpoczynającym się od scholar_
+ * ustawia odpowiednie callbacki oraz atrybut class.
+ *
+ * @param array &$form
+ * @param array &$form_state
+ * @param string $form_id
+ */
+function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
+{
+    if (0 === strncmp($form_id, 'scholar_', 8)) {
+        // callback #submit o nazwie takiej jak nazwa formularza
+        // z przyrostkiem _submit jest automaycznie dodawany przez
+        // drupal_prepare_form() wywolywana przez drupal_get_form().
+
+        $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
+        $validate_callback = $form_id . '_validate';
+        if (function_exists($validate_callback)) {
+            $form['#validate'][] = $validate_callback;
+        }
+
+        $form['#attributes'] = isset($form['#attributes']) ? (array) $form['#attributes'] : array();
+        if (!isset($form['#attributes']['class'])) {
+            $form['#attributes']['class'] = 'scholar';
+        } else {
+            $form['#attributes']['class'] .= ' scholar';
+        }
+    }
+} // }}}
+
+/**
  * Deklaracja dodatkowych pól formularza.
  *
  * @return array
@@ -722,6 +752,7 @@ function scholar_nodes_subform() // {{{
 } // }}}
 
 /**
+ * Formularz wywoływany automatycznie dla węzłów typu scholar.
  * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
  * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
  * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
@@ -732,27 +763,23 @@ function scholar_node_form(&$form_state, $node)
 {
     // Jezeli wezel jest podpiety do obiektow modulu scholar
     // przekieruj do strony z edycja danego obiektu.
-    p($node);
-    if ($node->type == 'scholar') {
-        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
-        $row   = db_fetch_array($query);
+    $query   = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
+    $binding = db_fetch_array($query);
 
-        if ($row) {
-            $referer = scholar_referer();
-            if ($referer) {
-                $destination = 'destination=' . urlencode($referer);
-            } else {
-                $destination = null;
-            }
+    if ($binding) {
+	switch ($binding['table_name']) {
+	    case 'people':
+		return scholar_goto(scholar_admin_path('people/edit/' . $binding['row_id']));
 
-            switch ($row['table_name']) {
-                case 'people':
-                    scholar_goto('admin/scholar/people/edit/' . $row['object_id'], $destination);
-                    break;
-            }
-        } else {
-            drupal_set_message(t('No binding found for node (%nid)', array('%nid' => $node->nid)));
-        }
+	    case 'generics':
+		return scholar_goto(scholar_admin_path('generic/edit/' . $binding['row_id']));
+
+	    case 'categories':
+		return scholar_goto(scholar_admin_path('category/edit/' . $binding['row_id']));
+	}
+
+    } else {
+	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
     }
 }
 
