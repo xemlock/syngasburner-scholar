@@ -30,40 +30,7 @@ function p($var, $label = null)
     $last = ($last + 1) % count($colors);
 }
 
-function scholar_nodeapi($node, $op)
-{
-    if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
-        // trzeba wyrenderowac tresc!!!
-        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
-        $binding = db_fetch_array($query);
-      //  p($binding);
 
-        if (empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
-       //     p('RENDERING');
-            // trzeba wygenerowac body
-            switch ($binding['table_name']) {
-                case 'people':
-                    $timestamp = time();
-                    $markup = $binding['body']
-                            . "\n"
-                            . "[PUBLIKACJE]\n"
-                            . "[SZKOLENIA]\n";
-                    db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
-                    $node->body = $markup;
-                    $node->created = $node->changed = $timestamp;
-                    db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
-
-                    db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
-                    break;
-            
-            
-            }
-        }
-       // else p('VALID');
-
-
-    }
-}
 
 function scholar_preprocess_page(&$vars)
 {
@@ -157,24 +124,6 @@ function scholar_menu() // {{{
         t('Books'),
         array('edit' => t('Edit book'))
     );
-
-    // dwie specjalne strony przekierowujace do edycji rekordow,
-    // niewymagajace podawania subtype
-    $items[$root . '/generic/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_generics_edit',
-        'parent'            => $root,
-        'file'              => 'pages/generic.php',
-    );
-    $items[$root . '/category/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_category_edit',
-        'parent'            => $root,
-        'file'              => 'pages/category.php',
-    );
-
 
     $items[$root . '/file'] = array(
         'title'             => t('Files'),
@@ -521,6 +470,71 @@ function scholar_goto($path, $query = null) // {{{
     exit;
 } // }}}
 
+/**
+ * Wbrew pozorom to nie tyle jest formularz, co funkcja wywoływana
+ * podczas edycji węzła. Formularz wywoływany automatycznie dla węzłów typu scholar.
+ * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
+ * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
+ * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów
+ * w hooku form_alter, albo w nodeapi.
+ */
+function scholar_node_form(&$form_state, $node) // {{{
+{
+    // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
+    // strony z formularzem edycji tegoz rekordu
+    if ($info = scholar_node_owner_info($node->nid)) {
+	switch ($info['table_name']) {
+	    case 'people':
+		return scholar_goto(scholar_admin_path('people/edit/' . $info['row_id']));
+
+	    case 'generics':
+		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
+	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id));
+
+	    case 'categories':
+		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
+		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id));
+	}
+
+    } else {
+	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
+    }
+} // }}}
+
+function scholar_nodeapi($node, $op)
+{
+    if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
+        $info = scholar_node_owner_info($node->nid);
+
+        if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
+p('RENDERING');
+            /*
+       //     p('RENDERING');
+            // trzeba wygenerowac body
+            switch ($binding['table_name']) {
+                case 'people':
+                    $timestamp = time();
+                    $markup = $binding['body']
+                            . "\n"
+                            . "[PUBLIKACJE]\n"
+                            . "[SZKOLENIA]\n";
+                    db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
+                    $node->body = $markup;
+                    $node->created = $node->changed = $timestamp;
+                    db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
+
+                    db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
+                    break;
+            
+            
+            }
+        }
+       // else p('VALID');
+             */
+
+        }
+    }
+}
 
 function scholar_index()
 {

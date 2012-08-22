@@ -363,4 +363,18 @@ function scholar_delete_nodes($row_id, $table_name) // {{{
     }
 } // }}}
 
+/**
+ * Zwraca informacje o rekordzie będącym właścicielem węzła
+ * (segmentu) o podanym identyfikatorze.
+ *
+ * @param int $node_id
+ * @return false|array
+ */
+function scholar_node_owner_info($node_id) // {{{
+{
+    $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node_id);
+    return db_fetch_array($query);
+} // }}}
+
+
 // vim: fdm=marker

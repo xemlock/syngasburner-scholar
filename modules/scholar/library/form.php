@@ -752,38 +752,6 @@ function scholar_nodes_subform() // {{{
 } // }}}
 
 /**
- * Formularz wywoływany automatycznie dla węzłów typu scholar.
- * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
- * uruchamiana podczas standardowej edycji węzła o typie 'scholar'.
- * Dzięki tej funkcji nie trzeba wykrywać powiązanych węzłów 
- * w hooku form_alter.
- * TODO do wywalenia chyba!!!
- */
-function scholar_node_form(&$form_state, $node)
-{
-    // Jezeli wezel jest podpiety do obiektow modulu scholar
-    // przekieruj do strony z edycja danego obiektu.
-    $query   = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node->nid);
-    $binding = db_fetch_array($query);
-
-    if ($binding) {
-	switch ($binding['table_name']) {
-	    case 'people':
-		return scholar_goto(scholar_admin_path('people/edit/' . $binding['row_id']));
-
-	    case 'generics':
-		return scholar_goto(scholar_admin_path('generic/edit/' . $binding['row_id']));
-
-	    case 'categories':
-		return scholar_goto(scholar_admin_path('category/edit/' . $binding['row_id']));
-	}
-
-    } else {
-	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
-    }
-}
-
-/**
  * Wypełnia pola formularza odpowiadające rekordowi. Pola bezpośrednio
  * należące do rekordu muszą znajdować się w kontenerze 'record'.
  * @param array &$form

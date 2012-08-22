@@ -11,7 +11,7 @@
  * @param string $table_name OPTIONAL   nazwa tabeli
  * @param string $subtype OPTIONAL      nazwa podtypu
  */
-function _scholar_category_path($table_name = null, $subtype = null, $page = 'list') // {{{
+function scholar_category_path($table_name = null, $subtype = null, $page = 'list') // {{{
 {
     if (null !== $table_name) {
         $path = (null === $subtype ? $table_name : $subtype) . '/category/' . ltrim($page, '/');
@@ -54,8 +54,8 @@ function scholar_category_list($table_name, $subtype = null) // {{{
         $rows[] = array(
             check_plain($row['name']),
             intval($row['refcount']),
-            l(t('edit'),   _scholar_category_path($table_name, $subtype, '/edit/' . $row['id'])),
-            l(t('delete'), _scholar_category_path($table_name, $subtype, '/delete/' . $row['id'])),
+            l(t('edit'),   scholar_category_path($table_name, $subtype, '/edit/' . $row['id'])),
+            l(t('delete'), scholar_category_path($table_name, $subtype, '/delete/' . $row['id'])),
         );
     }
 
@@ -86,7 +86,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         $record->subtype = $subtype;
 
     } else {
-        $record = scholar_fetch_category($id, $table_name, $subtype, _scholar_category_path($table_name, $subtype));
+        $record = scholar_fetch_category($id, $table_name, $subtype, scholar_category_path($table_name, $subtype));
     }
 
     $names = array(
@@ -115,7 +115,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     );
     $form['cancel'] = array(
         '#type' => 'scholar_element_cancel',
-        '#value' => _scholar_category_path($table_name, $subtype),
+        '#value' => scholar_category_path($table_name, $subtype),
     );
 
     return $form;
@@ -161,7 +161,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
             ? t('Category was added successfully')
             : t('Category was updated successfully')
         );
-        drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
+        drupal_goto(scholar_category_path($record->table_name, $record->subtype));
     }
 } // }}}
 
@@ -175,7 +175,7 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
 {
     global $language;
 
-    $record = scholar_fetch_category($id, false, false, _scholar_category_path());
+    $record = scholar_fetch_category($id, false, false, scholar_category_path());
 
     $form = array(
         '#record' => $record,
@@ -183,7 +183,7 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
 
     $form = confirm_form($form,
         t('Are you sure you want to delete category (%name)?', array('%name' => $record->names[$language->language])),
-        _scholar_category_path($record->table_name, $record->subtype),
+        scholar_category_path($record->table_name, $record->subtype),
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -207,17 +207,8 @@ function scholar_category_delete_form_submit($form, &$form_state) // {{{
     if ($record) {
         scholar_delete_category($record);
         drupal_set_message(t('Category %name deleted successfully', array('%name' => $record->names[$language->language])));
-        drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
+        drupal_goto(scholar_category_path($record->table_name, $record->subtype));
     }
-} // }}}
-
-/**
- * Przekierowuje do odpowiedniego formularza edycji
- */
-function scholar_category_edit($id) // {{{
-{
-    $category = scholar_fetch_category($id, false, false, scholar_admin_path());
-    scholar_goto(_scholar_category_path($category->table_name, $category->subtype, 'edit/' . $category->id));
 } // }}}
 
 // vim: fdm=marker

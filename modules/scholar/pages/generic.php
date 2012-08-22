@@ -75,16 +75,6 @@ function scholar_generics_list($subtype) // {{{
 } // }}}
 
 /**
- * Funkcja przekierowująca do formularza edycji odpowiedniego
- * typu na podstawie identyfikatoa rekordu
- */
-function scholar_generics_edit($id)
-{
-    $record = scholar_load_generic($id, null, scholar_admin_path());
-    scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id));
-}
-
-/**
  * Funkcja wywołująca formularz dla danego podtypu generycznego.
  *
  * @param array &$form_state
