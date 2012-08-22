@@ -216,11 +216,6 @@ function scholar_save_generic(&$generic) // {{{
         if (isset($generic->events)) {
             scholar_save_events($generic->id, 'generics', $generic->events);
         }
-
-        drupal_set_message($is_new
-            ? t('%title created successfully.', array('%title' => $generic->title))
-            : t('%title updated successfully.', array('%title' => $generic->title))
-        );
     }
 
     return $success;
@@ -252,9 +247,7 @@ function scholar_delete_generic(&$generic) // {{{
     // usuniecie rekordu generycznego
     db_query("DELETE FROM {scholar_generics} WHERE id = %d", $generic->id);
 
-    $generic->id = null;
-
-    drupal_set_message(t('%title deleted successfully.', array('%title' => $generic->title)));
+    $generic->id = null; 
 } // }}}
 
 /**

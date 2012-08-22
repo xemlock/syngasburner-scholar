@@ -133,6 +133,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
     $record = $form['#record'];
 
     if ($record) {
+        $is_new = empty($record->id);
         $values = $form_state['values'];
         scholar_populate_record($record, $values);
 
@@ -155,6 +156,11 @@ function scholar_category_form_submit($form, &$form_state) // {{{
 
         // zapisz kategorie
         scholar_save_category($record);
+
+        drupal_set_message($is_new
+            ? t('Category was added successfully')
+            : t('Category was updated successfully')
+        );
         drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
     }
 } // }}}
@@ -194,10 +200,13 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
  */
 function scholar_category_delete_form_submit($form, &$form_state) // {{{
 {
+    global $language;
+
     $record = $form['#record'];
 
     if ($record) {
         scholar_delete_category($record);
+        drupal_set_message(t('Category %name deleted successfully', array('%name' => $record->names[$language->language])));
         drupal_goto(_scholar_category_path($record->table_name, $record->subtype));
     }
 } // }}}

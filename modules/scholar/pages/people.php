@@ -2,7 +2,7 @@
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $record = $id ? scholar_load_person($id, true) : null;
+    $record = $id ? scholar_load_person($id, scholar_admin_path('people')) : null;
 
     $form = scholar_generic_form(array(
         'first_name' => array(
@@ -40,7 +40,8 @@ function scholar_people_form(&$form_state, $id = null) // {{{
 function scholar_people_form_submit($form, &$form_state) // {{{
 {
     $values = $form_state['values'];
-    $record = empty($form['#record']) ? new stdClass : $form['#record'];
+    $is_new = empty($form['#record']);
+    $record = $is_new ? new stdClass : $form['#record'];
 
     // jezeli wezly maja pusty tytul wstaw pelne imie i nazwisko
     foreach ($values['nodes'] as $language => &$node) {
@@ -53,7 +54,14 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     unset($node);
 
     scholar_populate_record($record, $values);
-    scholar_save_person($record);
+
+    if (scholar_save_person($record)) {
+        $name = $record->first_name . ' ' . $record->last_name;
+        drupal_set_message($is_new
+            ? t('Person %name created successfully', array('%name' => $name))
+            : t('Person %name updated successfully', array('%name' => $name))
+        );
+    }
 
     drupal_goto('admin/scholar/people');
 } // }}}
@@ -65,7 +73,7 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $record = scholar_load_person($id, true);
+    $record = scholar_load_person($id, scholar_admin_path('people'));
 
     $form = array('#record' => $record);
     $form = confirm_form($form,
@@ -88,6 +96,9 @@ function scholar_people_delete_form_submit($form, &$form_state) // {{{
 {
     if ($record = $form['#record']) {
         scholar_delete_person($record);
+
+        $name = $record->first_name . ' ' . $record->last_name;
+        drupal_set_message(t('%name deleted successfully.', array('%name' => $name)));
     }
 
     drupal_goto('admin/scholar/people');

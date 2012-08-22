@@ -15,7 +15,7 @@
  *                              osób, jeżeli osoba nie została znaleziona
  * @return object
  */
-function scholar_load_person($id, $redirect = false) // {{{
+function scholar_load_person($id, $redirect = null) // {{{
 {
     $query = db_query('SELECT * FROM {scholar_people} WHERE id = %d', $id);
     $record = db_fetch_object($query);
@@ -25,9 +25,9 @@ function scholar_load_person($id, $redirect = false) // {{{
         $record->files = scholar_load_files($record->id, 'people');
         $record->nodes = scholar_load_nodes($record->id, 'people');
     
-    } elseif ($redirect) {
+    } else if ($redirect) {
         drupal_set_message(t('Invalid person identifier supplied (%id)', array('%id' => $id)), 'error');
-        drupal_goto(scholar_admin_path('people'));
+        drupal_goto($redirect);
         exit;        
     }
 
@@ -51,12 +51,6 @@ function scholar_save_person(&$person) // {{{
     if ($success) {
         scholar_save_files($person->id, 'people', $person->files);
         scholar_save_nodes($person->id, 'people', $person->nodes);
-
-        $name = $person->first_name . ' ' . $person->last_name;
-        drupal_set_message($is_new
-            ? t('Person %name created successfully', array('%name' => $name))
-            : t('Person %name updated successfully', array('%name' => $name))
-        );
     }
 
     return $success;
@@ -75,9 +69,6 @@ function scholar_delete_person(&$person) // {{{
     db_query("DELETE FROM {scholar_people} WHERE id = %d", $person->id);
 
     $person->id = null;
-
-    $name = $person->first_name . ' ' . $person->last_name;
-    drupal_set_message(t('%name deleted successfully.', array('%name' => $name)));
 
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}

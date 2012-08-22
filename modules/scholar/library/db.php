@@ -151,25 +151,29 @@ function scholar_db_country_name($column, $table) // {{{
     if (false !== ($pos = strpos($column, '.'))) {
         $alias  = substr($column, 0, $pos);
         $alias  = preg_replace('/[^_a-z0-9]/i', '', $alias);
-        $column = scholar_db_quote_identifier(substr($column, $pos + 1));
+        $column = substr($column, $pos + 1);
     } else {
         $alias  = '';
-        $column = scholar_db_quote_identifier($column);
     }
 
-    $table = scholar_db_quote_identifier($table);
+    // korzystamy z udostepnianej funkcji do escape'owania nazw tabel, ze wzgledu
+    // na dodawanie prefiksu do nazw tabel w db_query, ktore moze nie byc odporne
+    // na nazwy tabel otoczone znakami ograniczajacymi
+    $table  = db_escape_table($table);
 
     if (empty($column) || empty($table)) {
         return 'NULL';
     }
 
+    $column = scholar_db_quote_identifier($column);
+
     // pobierz liste wystepujacych w tabeli krajow, tutaj alias
     // nie jest potrzebny
-    $query = db_query("SELECT DISTINCT $column FROM {$table} WHERE $column IS NOT NULL");
+    $query = db_query("SELECT DISTINCT $column AS country FROM {$table} WHERE country IS NOT NULL");
     $codes = array();
 
     while ($row = db_fetch_array($query)) {
-        $codes[] = $row[$column];
+        $codes[] = $row['country'];
     }
 
     // jezeli przeszukiwania w podanej kolumnie nie daly zadnych wynikow

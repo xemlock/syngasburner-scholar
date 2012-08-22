@@ -159,13 +159,14 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
         unset($event);
     }
-p($values);
+
     if (function_exists($process)) {
         $args = array(&$values);
         call_user_func_array($process, $args);
     }
 
-    $record = empty($form['#record']) ? scholar_new_generic() : $form['#record'];
+    $is_new = empty($form['#record']);
+    $record = $is_empty ? scholar_new_generic() : $form['#record'];
 
     // wypelnij rekord danymi z formularza
     scholar_populate_record($record, $values);
@@ -173,8 +174,13 @@ p($values);
     // dla pewnosci ustaw odpowiedni podtyp
     $record->subtype = $subtype;
 
-    scholar_save_generic($record);
-    drupal_goto(scholar_admin_path($subtype));
+    if (scholar_save_generic($record)) {
+        drupal_set_message($is_new
+            ? t('%title created successfully.', array('%title' => $record->title))
+            : t('%title updated successfully.', array('%title' => $record->title))
+        );
+        drupal_goto(scholar_admin_path($subtype));
+    }
 } // }}}
 
 function scholar_generics_delete_form(&$form_state, $subtype, $id) // {{{
@@ -202,6 +208,7 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
 
     if ($record) {
         scholar_delete_generic($record);
+        drupal_set_message(t('%title deleted successfully.', array('%title' => $record->title)));
         drupal_goto(scholar_admin_path($record->subtype));
     }
 } // }}}
@@ -217,6 +224,8 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         $record->start_date = substr($record->start_date, 0, 10);
         $record->end_date   = substr($record->end_date, 0, 10);
     }
+
+    $categories = scholar_category_options('generics', 'conference');
 
     $form = scholar_generic_form(array(
         'title' => array(
@@ -238,7 +247,9 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         ),
         'country',
         'url', 
-        'category_id',
+        'category_id' => empty($categories) ? false : array(
+            '#options' => $categories,
+        ),
         'files',
         'events',
         'nodes',

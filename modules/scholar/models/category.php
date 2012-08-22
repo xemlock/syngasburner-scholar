@@ -56,7 +56,6 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
 function scholar_save_category(&$category) // {{{
 {
     if (empty($category->id)) {
-        $new = true;
         $sql = "INSERT INTO {scholar_categories} (table_name, subtype) VALUES (" 
              . scholar_db_quote($category->table_name) . ", "
              . scholar_db_quote($category->subtype) . ")";
@@ -64,8 +63,6 @@ function scholar_save_category(&$category) // {{{
 
         $category->id = db_last_insert_id('scholar_categories', 'id');
 
-    } else {
-        $new = false;
     }
 
     // zapisz nazwy kategorii
@@ -77,8 +74,6 @@ function scholar_save_category(&$category) // {{{
 
     scholar_save_files($category->id, 'categories', $category->files);
     scholar_save_nodes($category->id, 'categories', $category->nodes);
-
-    drupal_set_message($new ? t('Category was added successfully') : t('Category was updated successfully'));
 } // }}}
 
 /**
@@ -89,14 +84,10 @@ function scholar_save_category(&$category) // {{{
  */
 function scholar_delete_category(&$category) // {{{
 {
-    global $language;
-
     db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d", $category->id);
     db_query("DELETE FROM {scholar_categories} WHERE id = %d", $category->id);
 
-    $category->id = null;
-
-    drupal_set_message(t('Category deleted successfully (%name)', array('%name' => $category->names[$language->language])));
+    $category->id = null; 
 } // }}}
 
 
