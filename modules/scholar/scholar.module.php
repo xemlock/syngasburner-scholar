@@ -1,9 +1,5 @@
 <?php
 
-function scholar_perm() {
-  return array('administer scholar');
-}
-
 function p($var, $label = null)
 {
     static $last = 0;
@@ -30,10 +26,29 @@ function p($var, $label = null)
     $last = ($last + 1) % count($colors);
 }
 
+function scholar_init() // {{{
+{
+    $dir = dirname(__FILE__);
+    $sub = array('include', 'models');
 
+    foreach ($sub as $subdir) {
+        if ($dh = @opendir($dir . '/' . $subdir)) {
+            while ($entry = readdir($dh)) {
+                if ('.php' === substr($entry, -4)) {
+                    require_once $dir . '/' . $subdir . '/' . $entry;
+                }
+            }
+        }
+    }
+} // }}}
 
 function scholar_preprocess_page(&$vars)
 {
+}
+
+
+function scholar_perm() {
+  return array('administer scholar');
 }
 
 /**
@@ -507,7 +522,18 @@ function scholar_nodeapi($node, $op)
         $info = scholar_node_owner_info($node->nid);
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
-p('RENDERING');
+
+            $parser = new scholar_parser;
+            $parser->addTag('chapter', array('single' => true))
+                   ->addTag('section', array('single' => true));
+
+            $renderer = new scholar_renderer;
+
+            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
+    $tree = $parser->parse($bbcode);
+            echo($renderer->render($tree));
+            exit;
+	
             /*
        //     p('RENDERING');
             // trzeba wygenerowac body
@@ -685,22 +711,6 @@ function scholar_theme() // {{{
     return scholar_elements_theme();
 } // }}}
 
-function __scholar_init()
-{
-    $dir = dirname(__FILE__);
-    $sub = array('library', 'models');
 
-    foreach ($sub as $subdir) {
-        if ($dh = @opendir($dir . '/' . $subdir)) {
-            while ($entry = readdir($dh)) {
-                if ('.php' === substr($entry, -4)) {
-                    require_once $dir . '/' . $subdir . '/' . $entry;
-                }
-            }
-        }
-    }
-}
-
-__scholar_init();
 
 // vim: fdm=marker

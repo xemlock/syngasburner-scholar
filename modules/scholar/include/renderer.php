@@ -2,7 +2,8 @@
 
 class scholar_renderer
 {
-    protected $_converters = array();
+    protected $_converters = array( // {{{
+    ); // }}}
 
     protected $_markup = array( // {{{
         's' => array(
@@ -69,7 +70,7 @@ class scholar_renderer
                 if (isset($this->_converters[$tagName])) {
                     $result[] = $this->_converters[$tagName]->convert($token, $contents);
 
-                } elseif (is_callable($this, $method = 'render' . $tagName)) {
+                } elseif (is_callable(array($this, $method = 'render' . $tagName))) {
                     $result[] = $this->$method($token, $contents);
 
                 } else {
@@ -105,9 +106,11 @@ class scholar_renderer
                 }
 
             } else if (Zend_Markup_Token::TYPE_NONE == $type) {
-                // text content of an element is stored in _tag property of a token
-                $result[] = htmlspecialchars($token->getTag());
-                break;
+                // text content of an element is stored in _tag property of a token,
+                // handle properly root token
+                $result[] = $token->hasChildren() // Zend_Markup_Root 
+                          ? $this->_render($token->getChildren(), $verbatim) 
+                          : htmlspecialchars($token->getTag());
             }
         }
 
@@ -227,7 +230,7 @@ class scholar_renderer
             'white', 'whitesmoke', 'yellow', 'yellowgreen',
         );
 
-        if (isset($colors[$color])) {
+        if (in_array($color, $colors)) {
             return $color;
         }
 
@@ -352,10 +355,10 @@ class scholar_renderer
         return $contents;
     } // }}}
 
-    public function renderImg(Zend_Markup_Token $token, $contents)
+    public function renderImg(Zend_Markup_Token $token, $contents) // {{{
     {
-        // 
-    }
+        return '<img src="' . htmlspecialchars($contents) . '" alt="" />';
+    } // }}}
 
     public function renderList(Zend_Markup_Token $token, $contents) // {{{
     {
@@ -394,12 +397,27 @@ class scholar_renderer
     } // }}}
 
 
-    public function renderSection()
-    {}
+    function renderSection($token, $contents) {
+        return '<h2>' . $this->getTokenAttribute($token) . '</h2>';
+    }
 
-    public function renderBlock()
-    {}
+    function renderChapter($token, $contents) {
+        return '<h1>' . $this->getTokenAttribute($token) . '</h1>';
+    }
 
+    function renderEntry($token, $contents) {
+        $date = $this->getTokenAttribute($token);
+        $result = '';
+        if ($date) {
+            $result .= '<div class="tm">' . $date . '</div>';
+        }
+        $result .= '<div class="details">' . trim($contents) . '</div>';
+        return '<div class="entry">' . $result . '</div>';
+    }
+
+    function renderDiv($token, $contents) {
+        return '<div>' . $contents . '</div>';
+    }
 }
 
 // vim: fdm=marker
