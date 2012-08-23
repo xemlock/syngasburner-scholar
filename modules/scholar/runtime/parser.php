@@ -1,7 +1,5 @@
 <?php
 
-require_once 'Zend/Markup/Parser/Bbcode.php';
-
 /**
  * A BBCode markup parser with added support for escaped square brackets.
  */
