@@ -507,8 +507,6 @@ function scholar_nodeapi($node, $op)
         $info = scholar_node_owner_info($node->nid);
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
-            $parser = new Markup_Parser_Bbcode;
-
 p('RENDERING');
             /*
        //     p('RENDERING');
