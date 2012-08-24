@@ -26,187 +26,38 @@ function p($var, $label = null)
     $last = ($last + 1) % count($colors);
 }
 
-function _scholar_include_dir($directory) // {{{
+function _scholar_include($names) // {{{
 {
     $__dir__ = dirname(__FILE__);
 
-    foreach ((array) $directory as $dir) {
-        $dirpath = $__dir__ . '/' . ltrim($dir, '/');
-        if ($dh = @opendir($dirpath)) {
-            while ($entry = readdir($dh)) {
-                $filepath = $dirpath . '/' . $entry;
-                if (is_file($filepath) && '.php' === substr($entry, -4)) {
-                    require_once $filepath;
+    foreach ((array) $names as $name) {
+        $path = $__dir__ . '/' . ltrim($name, '/');
+
+        if (is_file($path)) {
+            require_once $path;
+
+        } elseif (is_dir($path)) {
+            if ($dh = @opendir($path)) {
+                while ($entry = readdir($dh)) {
+                    $filepath = $path . '/' . $entry;
+                    if (is_file($filepath) && '.php' === substr($entry, -4)) {
+                        require_once $filepath;
+                    }
                 }
+                closedir($dh);
             }
         }
     }
-} // }}}
-
-function scholar_init() // {{{
-{
-    _scholar_include_dir(array('include', 'models'));
 } // }}}
 
 function scholar_preprocess_page(&$vars)
 {
 }
 
-
 function scholar_perm() {
   return array('administer scholar');
 }
 
-/**
- * Definicja menu wywoływana i zapamiętywana podczas instalacji modułu.
- * @return array
- */
-function scholar_menu() // {{{
-{
-    $root = scholar_admin_path();
-
-    $items = array();
-
-    $items[$root] = array(
-        'title'             => t('Scholar'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_index',
-    );
-
-    $items[$root . '/people'] = array(
-        'title'             => t('People'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_people_list',
-        'parent'            => $root,
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => t('List'),
-        'weight'            => -10, // na poczatku listy
-    );
-    $items[$root . '/people/add'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Add person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Delete person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_delete_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/itempicker'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Select people'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_people_itempicker'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-
-    $items += _scholar_generic_menu(
-        'conference', 
-        t('Conferences'), 
-        array('edit' => t('Edit conference'))
-    );
-    $items += _scholar_generic_menu(
-        'presentation',
-        t('Presentations'), 
-        array('edit' => t('Edit presentation'))
-    );
-    $items += _scholar_generic_menu(
-        'article',
-        t('Articles'),
-        array(
-            'add'  => t('Add article'),
-            'edit' => t('Edit article'),
-        )
-    );
-    $items += _scholar_generic_menu(
-        'book',
-        t('Books'),
-        array('edit' => t('Edit book'))
-    );
-
-    $items[$root . '/file'] = array(
-        'title'             => t('Files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_list',
-        'parent'            => $root,
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => t('List'),
-        'weight'            => -10,
-    );
-    $items[$root . '/file/upload'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Upload file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_upload_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_edit_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Delete file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_delete_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/itempicker'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('File selection'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_file_itempicker'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-
-    _scholar_menu_add_page_argument_positions($items);
-
-    return $items;
-} // }}}
-
-function scholar_admin_path($path = '') // {{{
-{
-    if (strlen($path)) {
-        $path = '/' . ltrim($path);
-    }
-    return 'admin/scholar' . $path;
-} // }}}
 
 /**
  * Zwraca liczbę rekordów na stronę w listach rekordów.
@@ -250,136 +101,6 @@ function _scholar_rendering_enabled($enabled = null) // {{{
 function scholar_invalidate_rendering() // {{{
 {
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
-} // }}}
-
-/**
- * @param array &$items
- */
-function _scholar_menu_add_page_argument_positions(&$items) // {{{
-{
-    foreach ($items as $path => &$item) {
-        if (false === strpos($path, '%')) {
-            continue;
-        }
-
-        if (!isset($item['page arguments'])) {
-            $item['page arguments'] = array();
-        }
-
-        $parts = explode('/', $path);
-        for ($i = 0, $n = count($parts); $i < $n; ++$i) {
-            if (strpos($parts[$i], '%') !== false) {
-                $item['page arguments'][] = $i;
-            }
-        }
-    }
-    unset($item);
-} // }}}
-
-function _scholar_generic_menu($subtype, $title, $titles = array()) // {{{
-{
-    $category_titles = array(
-        'list'   => t('Categories'),
-        'add'    => t('Add category'),
-        'edit'   => t('Edit category'),
-        'delete' => t('Delete category'),
-    );
-
-    if (isset($titles['categories'])) {
-        $category_titles = array_merge($category_titles, (array) $titles['categories']);
-    }
-
-    $titles = array_merge(array(
-        'list'       => t('List'),
-        'add'        => t('Add'),
-        'edit'       => t('Edit'),
-        'delete'     => t('Delete'),
-    ), $titles);
-
-    $titles['categories'] = $category_titles;
-
-    $root_path = scholar_admin_path($subtype);
-
-    $items[$root_path] = array(
-        'title'             => $title,
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_generics_list',
-        'page arguments'    => array($subtype),
-        'parent'            => dirname($root_path),
-        'file'              => 'pages/generic.php',
-    );
-    $items[$root_path . '/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => $titles['list'],
-        'weight'            => -10,
-    );
-    $items[$root_path . '/add'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => $titles['add'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_generics_form', $subtype),
-        'parent'            => $root_path,
-        'file'              => 'pages/generic.php',
-        'weight'            => 0,
-    );
-    $items[$root_path . '/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => $titles['edit'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_generics_form', $subtype),
-        'parent'            => $root_path,
-        'file'              => 'pages/generic.php',
-    );
-    $items[$root_path . '/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => $titles['delete'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_generics_delete_form', $subtype),
-        'parent'            => $root_path,
-        'file'              => 'pages/generic.php',
-    );
-
-    $items[$root_path . '/category/list'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => $titles['categories']['list'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_category_list',
-        'page arguments'    => array('generics', $subtype),
-        'parent'            => $root_path,
-        'file'              => 'pages/category.php',
-        'weight'            => 5,
-    );
-    $items[$root_path . '/category/add'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => $titles['categories']['add'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_form', 'generics', $subtype),
-        'parent'            => $root_path,
-        'file'              => 'pages/category.php',
-        'weight'            => 10,
-    );
-    $items[$root_path . '/category/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => $titles['categories']['edit'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_form', 'generics', $subtype),
-        'file'              => 'pages/category.php',
-    );
-    $items[$root_path . '/category/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => $titles['categories']['delete'],
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_delete_form'),
-        'file'              => 'pages/category.php',
-    );
-
-    return $items;
 } // }}}
 
 /**
@@ -528,7 +249,7 @@ function scholar_nodeapi($node, $op)
         $info = scholar_node_owner_info($node->nid);
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
-            _scholar_include_dir('classes');
+            _scholar_include('classes');
 
             $parser = new scholar_parser;
             $parser->addTag('chapter')
@@ -717,18 +438,34 @@ function scholar_countries($code = null) // {{{
     return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
 
-function scholar_render_form()
+function scholar_render_form() // {{{
 {
     $args = func_get_args();
     $html = call_user_func_array('drupal_get_form', $args);
     return scholar_render($html);
-}
+} // }}}
+
+function __scholar_init() // {{{
+{
+    _scholar_include(array('include', 'models'));
+} // }}}
+
+function scholar_init() // {{{
+{
+    __scholar_init();
+} // }}}
 
 function scholar_theme() // {{{
 {
+    // hook_theme jest wywolywany raz, podczas instalacji modulu. Wtedy
+    // modul nie jest jeszcze aktywny, wiec hook_init nie jest wywolywany.
+    // Wersja deweloperska wymaga do poprawnego dzialania uruchomienia
+    // __scholar_init, ladujacego sa niezbedne pliki. Stad koniecznosc
+    // jawnego wywolania tej funkcji.
+
+    __scholar_init();
+
     return scholar_elements_theme();
 } // }}}
-
-
 
 // vim: fdm=marker

@@ -397,7 +397,6 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
 
     // artykuly moga nalezec do ksiazki (wydawnictwa zwartego)
     $parents    = scholar_generic_parent_options('book');
-    $categories = scholar_category_options('generics', 'article');
 
     $form = scholar_generic_form(array(
         'title' => array(
@@ -407,9 +406,6 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
             '#title'       => t('Year'),
             '#maxlength'   => 4,
             '#required'    => true,
-        ),
-        'category_id' => empty($categories) ? false : array(
-            '#options'     => $categories,
         ),
         'authors' => array(
             '#description' => 'Pamiętaj o ustawieniu odpowiedniej kolejności autorów.',
@@ -460,7 +456,6 @@ function _scholar_article_list_spec($row = null) // {{{
             array('data' => t('Year'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),    'field' => 'bib_authors'),
             array('data' => t('Title'),      'field' => 'title'),
-            array('data' => t('Category'),   'field' => 'category_name'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
     }
@@ -469,7 +464,6 @@ function _scholar_article_list_spec($row = null) // {{{
         intval($row['start_date']),
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
-        check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
         l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
     );
