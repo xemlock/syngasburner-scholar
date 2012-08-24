@@ -249,15 +249,27 @@ function scholar_nodeapi($node, $op)
 {
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
         $info = scholar_node_owner_info($node->nid);
+        if (empty($info)) {
+            $node->body = '';
+            return;
+        }
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
+            $func = 'render_' . $info['table_name'] . '_node';
+            $body = '';
+
+            if (function_exists($func)) {
+                $body = $func($info['row_id']);
+            }
+
+            // TODO najpierw sprawdz czy ZF jest dostepny
             _scholar_include('classes');
 
             $parser = new scholar_parser;
             $parser->addTag('chapter')
                    ->addTag('section');
 
-            $renderer = new scholar_renderer;
+            $renderer = new scholar_renderer(array('brInCode' => true));
             $renderer->addConverter('preface', new scholar_converter_preface)
                      ->addConverter('chapter', new scholar_converter_chapter)
                      ->addConverter('section', new scholar_converter_section)
@@ -265,40 +277,30 @@ function scholar_nodeapi($node, $op)
                      ->addConverter('box',     new scholar_converter_box)
                      ->addConverter('res',     new scholar_converter_res);
 
-            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
-            $tree = $parser->parse($bbcode);
-            $rendering = $renderer->render($tree);
-            $preface   = $renderer->getConverter('preface')->render();
-            if ($preface) {
-                $rendering = $preface . $rendering;
-            }
-            echo $rendering;
-            exit;
-	
-            /*
-       //     p('RENDERING');
-            // trzeba wygenerowac body
-            switch ($binding['table_name']) {
-                case 'people':
-                    $timestamp = time();
-                    $markup = $binding['body']
-                            . "\n"
-                            . "[PUBLIKACJE]\n"
-                            . "[SZKOLENIA]\n";
-                    db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
-                    $node->body = $markup;
-                    $node->created = $node->changed = $timestamp;
-                    db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
+            $bbcode = $body . $info['body'];
+            //            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
+            $rendering = '';
+            try {
+                $tree = $parser->parse($bbcode);
+                $rendering = $renderer->render($tree);
+                $preface   = $renderer->getConverter('preface')->render();
+                if ($preface) {
+                    $rendering = $preface . $rendering;
+                }
 
-                    db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
-                    break;
-            
-            
-            }
-        }
-       // else p('VALID');
-             */
-
+                // poniewaz w formacie Full HTML (2) znaki nowego wiersza sa automatycznie
+                // przeksztalcane na znaczniki BR, zamien je na spacje. Znaki nowego wiersza
+                // wewnatrz PRE sa zamienione na BR przez renderer.
+                $rendering = str_replace(array("\r\n", "\n", "\r"), ' ', $rendering);
+p($rendering);exit;
+            } catch (Exception $e) {}
+//echo $rendering; exit;
+            $node->body = $rendering;
+            // $node->body = $markup;
+            // $node->created = $node->changed = $timestamp;
+            // db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
+            // db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
+            // db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
         }
     }
 }

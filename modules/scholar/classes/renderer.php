@@ -2,6 +2,10 @@
 
 class scholar_renderer
 {
+    protected $_brInPre = true;
+    protected $_rawTags = array();
+    protected $_forbiddenTags = array();
+
     protected $_converters = array( // {{{
     ); // }}}
 
@@ -36,6 +40,13 @@ class scholar_renderer
         ),
     ); // }}}
 
+    public function __construct($options = array()) // {{{
+    {
+        if ($options) {
+            $this->setOptions($options);
+        }
+    } // }}}
+
     /**
      * Przekształca drzewo dokumentu BBCode na odpowiadający mu dokument HTML.
      *
@@ -45,13 +56,76 @@ class scholar_renderer
      *     tagi, które nie będą przekształcane, a ich zawartość zostanie dodana
      *     bez zmian do wynikowego kodu
      */
-    public function render(Zend_Markup_TokenList $tree, array $no_render = array()) // {{{
+    public function render(Zend_Markup_TokenList $tree) // {{{
     {
-        $html = $this->_render($tree, $no_render);
+        $html = $this->_render($tree);
         return $html;
     } // }}}
 
-    protected function _render(Zend_Markup_TokenList $tree, array $verbatim = array(), $depth = 0) // {{{
+    public function setOptions($options = array()) // {{{
+    {
+        foreach ((array) $options as $key => $value) {
+            $method = 'set' . $key;
+
+            if (method_exists($this, $method)) {
+                $this->$method($value);
+            }
+        }
+
+        return $this;
+    } // }}}
+
+    /**
+     * Set tags that will be included directly (with no processing)
+     * in the rendering result.
+     *
+     * @param array $tags
+     */
+    public function setRawTags($tags) // {{{
+    {
+        $this->_rawTags = array_map('strtolower', (array) $tags);
+        return $this;
+    } // }}}
+
+    /**
+     * Set tags that that will be ignored during rendering.
+     *
+     * @param array $tags
+     */
+    public function setForbiddenTags($tags) // {{{
+    {
+        $this->_forbiddenTags = array_map('strtolower', (array) $tags);
+        return $this;
+    } // }}}
+
+    public function isRawTag($tag) // {{{
+    {
+        return in_array(strtolower($tag), $this->_rawTags);
+    } // }}}
+
+    public function isForbiddenTag($tag) // {{{
+    {
+        return in_array(strtolower($tag), $this->_forbiddenTags);
+    } // }}}
+
+    /**
+     * Whether all newlines inside PRE tag should be converted to BR tags,
+     * or vice-versa. This setting is used by {@see renderCode} method.
+     *
+     * @param bool $flag
+     */ 
+    public function setBrInPre($flag = true) // {{{
+    {
+        $this->_brInPre = (bool) $flag;
+        return $this;
+    } // }}}
+
+    public function getBrInPre() // {{{
+    {
+        return $this->_brInPre;
+    } // }}}
+
+    protected function _render(Zend_Markup_TokenList $tree, $depth = 0) // {{{
     {
         $result = array();
 
@@ -60,24 +134,27 @@ class scholar_renderer
 
             if (Zend_Markup_Token::TYPE_TAG == $type) {
                 $tagName  = strtolower($token->getName());
-                $noRender = in_array($tag, $verbatim);
 
-                if ($noRender) {
+                if ($this->isForbiddenTag($tagName)) {
+                    continue;
+                }
+
+                if ($this->isRawTag($tagName)) {
                     // fallback to bbcode representation of this token, convert
                     // any angle brackets to HTML entities
-                    $result[] = htmlspecialchars($this->renderBBCode($token));
+                    $result[] = htmlspecialchars($this->rawTag($token));
                     continue;
                 }
 
                 $contents = $token->hasChildren() 
-                          ? $this->_render($token->getChildren(), $verbatim, $depth + 1) 
+                          ? $this->_render($token->getChildren(), $depth + 1) 
                           : null;
 
                 // check for available tag renderers
                 if (isset($this->_converters[$tagName])) {
                     $result[] = $this->_converters[$tagName]->convert($token, $contents);
 
-                } elseif (is_callable(array($this, $method = 'render' . $tagName))) {
+                } elseif (is_callable(array($this, $method = 'convert' . $tagName))) {
                     $result[] = $this->$method($token, $contents);
 
                 } else {
@@ -117,7 +194,7 @@ class scholar_renderer
                 // Root token has children and its type is TYPE_NONE, do not increment
                 // depth counter if starting from root token.
                 if ($token->hasChildren() && 'Zend_Markup_Root' == $token->getName()) {
-                    $result[] = $this->_render($token->getChildren(), $verbatim, 0);
+                    $result[] = $this->_render($token->getChildren(), 0);
 
                 } else {
                     $contents = htmlspecialchars($token->getTag());
@@ -297,7 +374,7 @@ class scholar_renderer
         return null;
     } // }}}
  
-    public function renderBBCode(Zend_Markup_Token $token) // {{{
+    public function rawTag(Zend_Markup_Token $token) // {{{
     {
         switch ($token->getType()) {
             case Zend_Markup_Token::TYPE_TAG:
@@ -338,7 +415,7 @@ class scholar_renderer
 
                         if ($token->hasChildren()) {
                             foreach ($token->getChildren() as $child) {
-                                $contents[] = $this->renderBBCode($child);
+                                $contents[] = $this->rawTag($child);
                             }
                         }
 
@@ -351,19 +428,26 @@ class scholar_renderer
         }
     } // }}}
 
-    public function renderCode(Zend_Markup_Token $token, $contents) // {{{
+    public function convertCode(Zend_Markup_Token $token, $contents) // {{{
     {
         // class name is for code highlighting, it is
         // compatible with default highlight.js settings
         $code = $token->getAttribute('code');
         $code = preg_replace('/[^_a-z0-9]/i', '', $code);
 
+        // convert all BR tags to newlines
+        $contents = preg_replace('/<br\s*\/?>/i', "\n", $contents);
+        $contents = htmlspecialchars($contents);
+
+        if ($this->_brInPre) {
+            $contents = nl2br($contents);
+        }
+
         return '<pre><code' . ($code ? ' class="' . $code . '"' : '') . '>'
-             . $contents
-             . '</code></pre>';
+             . $contents . '</code></pre>';
     } // }}}
 
-    public function renderColor(Zend_Markup_Token $token, $contents) // {{{
+    public function convertColor(Zend_Markup_Token $token, $contents) // {{{
     {
         $color = $token->getAttribute('color');
         $color = self::validateColor($color);
@@ -375,7 +459,7 @@ class scholar_renderer
         return $contents;
     } // }}}
 
-    public function renderImg(Zend_Markup_Token $token, $contents) // {{{
+    public function convertImg(Zend_Markup_Token $token, $contents) // {{{
     {
         // [img]{url}[/img]
         // [img width={width} height={height}]{url}[/img]
@@ -398,7 +482,7 @@ class scholar_renderer
         return '<img' . $attrs . '/>';
     } // }}}
 
-    public function renderList(Zend_Markup_Token $token, $contents) // {{{
+    public function convertList(Zend_Markup_Token $token, $contents) // {{{
     {
         $contents = trim($contents);
 
@@ -417,7 +501,7 @@ class scholar_renderer
         return '';
     } // }}}
 
-    public function renderUrl(Zend_Markup_Token $token, $contents) // {{{
+    public function convertUrl(Zend_Markup_Token $token, $contents) // {{{
     {
         $url = $token->getAttribute('url');
 
