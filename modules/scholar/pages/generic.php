@@ -175,10 +175,17 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     $record->subtype = $subtype;
 
     if (scholar_save_generic($record)) {
-        drupal_set_message($is_new
-            ? t('%title created successfully.', array('%title' => $record->title))
-            : t('%title updated successfully.', array('%title' => $record->title))
-        );
+        if (empty($record->title)) {
+            drupal_set_message($is_new
+                ? t('Entry created successfully.')
+                : t('Entry updated successfully.')
+            );
+        } else {
+            drupal_set_message($is_new
+                ? t('%title created successfully.', array('%title' => $record->title))
+                : t('%title updated successfully.', array('%title' => $record->title))
+            );
+        }
         drupal_goto(scholar_admin_path($subtype));
     }
 } // }}}
@@ -229,7 +236,7 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
 
     $form = scholar_generic_form(array(
         'title' => array(
-            '#tit;e' => t('Conference name'),
+            '#title' => t('Conference name'),
             '#required' => true
         ),
         'start_date' => array(
@@ -242,14 +249,14 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#required' => true,
             '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
+        'category_id' => empty($categories) ? false : array(
+            '#options' => $categories,
+        ),
         'locality' => array(
             '#required' => true,
         ),
         'country',
         'url', 
-        'category_id' => empty($categories) ? false : array(
-            '#options' => $categories,
-        ),
         'files',
         'events',
         'nodes',
@@ -257,7 +264,7 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
 
     $form['submit'] = array(
         '#type'     => 'submit',
-        '#value'    => $record ? t('Save changes') : t('Add conference'),
+        '#value'    => empty($record) ? t('Save') : t('Save changes'),
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
@@ -292,22 +299,39 @@ function _scholar_conference_form_process_values(&$values) // {{{
 
 function scholar_presentation_form(&$form_state, &$record = null) // {{{
 {
+    // prezentacje moga nalezec do konferencji
+    $parents    = scholar_generic_parent_options('conference');
+    $categories = scholar_category_options('generics', 'presentation');
+
+    // pusty tytul oznacza uczestnictwo w konferencji bez zadnego
+    // wystapienia publicznego. Jezeli brak zdefiniowanych konferencji
+    // ustaw pole tytulu jako wymagane.
     $form = scholar_generic_form(array(
-        'title',
-        'start_date' => t('Data i czas'),
-        'parent_id'  => t('Konferencja'),
-        'authors' => t('Prowadzący'),
+        'title'       => empty($parents) ? array('#required' => true) : array(
+            '#description' => t('Leave empty to mark conference attendance if no public presentation was given. In this case, a conference must be chosen.'),
+        ),
+        'start_date'  => t('Data'), // opcjonalny
+        'parent_id'   => empty($parents) ? false : array(
+            '#title'    => t('Conference'),
+            '#options'  => $parents,
+        ),
+        'category_id' => empty($categories) ? false : array(
+            '#options'  => $categories,
+        ),
+        'authors'     => t('Autorzy'),
         'files',
         'nodes',
-        'events' => array(
+        'events'      => array(
             // prezentacje odbywaja sie jednego dnia
-            'end_date' => false,
+            'end_date'  => false,
         ),
     ), $record);
 
+    $form['#validate'][] = 'scholar_presentation_form_validate';
+
     $form['submit'] = array(
         '#type'  => 'submit',
-        '#value' => $record ? t('Save changes') : t('Add presentation'),
+        '#value' => empty($record) ? t('Save') : t('Save changes'),
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
@@ -315,6 +339,30 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
     );
 
     return $form;
+} // }}}
+
+function scholar_presentation_form_validate($form, &$form_state) // {{{
+{
+    $values = $form_state['values'];
+
+    $empty_title  = empty($values['title']) || ctype_space((string) $values['title']);
+    $empty_parent = empty($values['parent_id']) || 0 == intval($values['parent_id']);
+
+    if ($empty_title && $empty_parent) {
+        form_set_error('title', t('Presentation title is required if no conference is chosen.'));
+    }
+} // }}}
+
+function _scholar_presentation_form_process_values(&$values) // {{{
+{
+    // jezeli pusty tytul, czyli obecnosc na konferencji bez wystapienia
+    // publicznego, usun kategorie
+
+    $values['title'] = trim($values['title']);
+
+    if (empty($values['title'])) {
+        $values['category_id'] = null;
+    }
 } // }}}
 
 function scholar_book_form(&$form_state, &$record = null) // {{{
@@ -390,7 +438,7 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
     }
 
     // artykuly moga nalezec do ksiazki (wydawnictwa zwartego)
-    $parents    = scholar_generic_parent_options('book');
+    $parents = scholar_generic_parent_options('book');
 
     $form = scholar_generic_form(array(
         'title' => array(
@@ -402,11 +450,11 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
             '#required'    => true,
         ),
         'authors' => array(
-            '#description' => 'Pamiętaj o ustawieniu odpowiedniej kolejności autorów.',
+            '#description' => 'Pamiętaj o ustawieniu odpowiedniej kolejności autorów jeżeli jest ich więcej niż jeden.',
         ),
         'details' => array(
-            '#title'       => 'Szczegóły bibliograficzne',
-            '#description' => 'Np. nr tomu, strony',
+            '#title'       => t('Bibliographic details'), // Szczegóły bibliograficzne
+            '#description' => t('e.g. volume and issue number, page numbers'), // np. numery tomu i wydania, numery stron
         ),
         'parent_id' => empty($parents) ? false : array(
             '#options'     => $parents,
@@ -511,18 +559,20 @@ function _scholar_presentation_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('Date'), 'field' => 'start_date', 'sort' => 'desc'),
-            array('data' => t('Title'), 'field' => 'title'),
-            array('data' => t('Country'), 'field' => 'country_name'),
-            array('data' => t('Category'),   'field' => 'category_name'),
+            array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Authors'),  'field' => 'bib_authors'),
+            array('data' => t('Title'),    'field' => 'title'),
+            array('data' => t('Category'), 'field' => 'category_name'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
     }
 
+    $title = trim($row['title']);
+
     return array(
         substr($row['start_date'], 0, 10),
-        check_plain($row['title']),
-        check_plain($row['country_name']),
+        check_plain($row['bib_authors']),
+        empty($title) ? '<em>' . t('attendance') . '</em>' : check_plain($title),
         check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
         intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),

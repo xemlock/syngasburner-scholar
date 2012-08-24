@@ -170,12 +170,11 @@ function scholar_save_generic(&$generic) // {{{
     if ($generic->id) {
         // zapamietaj oryginalne wartosci parent_id i category_id,
         // zeby pozniej wymusic przeliczenie liczby odwolan do nich
-        $query = db_query("SELECT parent_id, category_id FROM {scholar_generics} WHERE id = %d", $generic->id);
+        $query = db_query("SELECT category_id FROM {scholar_generics} WHERE id = %d", $generic->id);
         if ($row = db_fetch_array($query)) {
-            $parent_id = $row['parent_id'];
             $category_id = $row['category_id'];
         } else {
-            $parent_id = $category_id = null;
+            $category_id = 0;
         }
 
         if (scholar_db_write_record('scholar_generics', $generic, 'id')) {

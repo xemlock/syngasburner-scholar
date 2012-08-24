@@ -119,7 +119,9 @@ function render_people_node($id, $node)
     //
 
     // TODO pobierz wszystkie prezentacje
-    
+    // wpisy postaci
+    // Data konferencji, <a href="">Nazwa konferencji</a>
+    // Kategoria: Tytuł, detale
 
 
     return ob_get_clean();

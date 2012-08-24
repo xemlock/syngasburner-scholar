@@ -101,14 +101,20 @@ function scholar_menu() // {{{
         t('Conferences'), 
         array('edit' => t('Edit conference'))
     );
-    $items += _scholar_category_menu($root . '/conference', 'generics', 'conference');
+    $items += _scholar_category_menu($root . '/conference', 'generics', 'conference', array(
+        'edit'   => t('Edit conference category'),
+        'delete' => t('Delete conference category'),
+    ));
 
     $items += _scholar_generic_menu($root . '/presentation',
         'presentation',
         t('Presentations'), 
         array('edit' => t('Edit presentation'))
     );
-    $items += _scholar_category_menu($root . '/presentation', 'generics', 'presentation');
+    $items += _scholar_category_menu($root . '/presentation', 'generics', 'presentation', array(
+        'edit'   => t('Edit presentation category'),
+        'delete' => t('Delete presentation category'),
+    ));
 
     $items += _scholar_generic_menu($root . '/article',
         'article',
@@ -123,7 +129,10 @@ function scholar_menu() // {{{
         t('Books'),
         array('edit' => t('Edit book'))
     );
-    $items += _scholar_category_menu($root . '/book', 'generics', 'book');
+    $items += _scholar_category_menu($root . '/book', 'generics', 'book', array(
+        'edit'   => t('Edit book category'),
+        'delete' => t('Delete book category'),
+    ));
 
     $items[$root . '/file'] = array(
         'title'             => t('Files'),

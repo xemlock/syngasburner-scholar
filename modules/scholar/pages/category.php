@@ -47,7 +47,7 @@ function scholar_category_list($table_name, $subtype = null) // {{{
 } // }}}
 
 /**
- * Strona z formularzem edycji kategorii.
+ * Strona z formularzem edycji kategorii / typu
  *
  * @param array &$form_state
  * @param string $table_name
@@ -73,10 +73,10 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
 
     foreach (scholar_languages() as $code => $name) {
         $names[$code] = array(
-            '#type' => 'textfield',
-            '#title' => scholar_language_label($code, t('Name')),
-            '#description' => t('Category name in language: @language', array('@language' => $name)),
-            '#required' => true,
+            '#type'          => 'textfield',
+            '#title'         => scholar_language_label($code, t('Name')),
+            '#description'   => t('Category name in language: @language', array('@language' => $name)),
+            '#required'      => true,
             '#default_value' => $record ? $record->names[$code] : null,
         );
     }
@@ -89,7 +89,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
 
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => empty($record->id) ? t('Add category') : t('Save changes'),
+        '#value' => empty($record->id) ? t('Save') : t('Save changes'),
     );
     $form['cancel'] = array(
         '#type' => 'scholar_element_cancel',
