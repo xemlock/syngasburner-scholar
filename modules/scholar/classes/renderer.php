@@ -51,7 +51,7 @@ class scholar_renderer
         return $html;
     } // }}}
 
-    protected function _render(Zend_Markup_TokenList $tree, array $verbatim = array()) // {{{
+    protected function _render(Zend_Markup_TokenList $tree, array $verbatim = array(), $depth = 0) // {{{
     {
         $result = array();
 
@@ -70,7 +70,7 @@ class scholar_renderer
                 }
 
                 $contents = $token->hasChildren() 
-                          ? $this->_render($token->getChildren(), $verbatim) 
+                          ? $this->_render($token->getChildren(), $verbatim, $depth + 1) 
                           : null;
 
                 // check for available tag renderers
@@ -114,10 +114,17 @@ class scholar_renderer
 
             } else if (Zend_Markup_Token::TYPE_NONE == $type) {
                 // text content of an element is stored in _tag property of a token,
-                // handle properly root token
-                $result[] = $token->hasChildren() // Zend_Markup_Root 
-                          ? $this->_render($token->getChildren(), $verbatim) 
-                          : htmlspecialchars($token->getTag());
+                // Root token has children and its type is TYPE_NONE, do not increment
+                // depth counter if starting from root token.
+                if ($token->hasChildren() && 'Zend_Markup_Root' == $token->getName()) {
+                    $result[] = $this->_render($token->getChildren(), $verbatim, 0);
+
+                } else {
+                    $contents = htmlspecialchars($token->getTag());
+
+                    // convert newlines to BR if outside any tag
+                    $result[] = !$depth ? nl2br($contents) : $contents;
+                }
             }
         }
 
@@ -348,17 +355,17 @@ class scholar_renderer
     {
         // class name is for code highlighting, it is
         // compatible with default highlight.js settings
-        $language = self::getTokenAttribute($token);
-        $language = preg_replace('/[^_a-z0-9]/i', '', $language);
+        $code = $token->getAttribute('code');
+        $code = preg_replace('/[^_a-z0-9]/i', '', $code);
 
-        return '<pre><code' . ($language ? ' class="' . $language . '"' : '') . '>'
+        return '<pre><code' . ($code ? ' class="' . $code . '"' : '') . '>'
              . $contents
              . '</code></pre>';
     } // }}}
 
     public function renderColor(Zend_Markup_Token $token, $contents) // {{{
     {
-        $color = self::getTokenAttribute($token);
+        $color = $token->getAttribute('color');
         $color = self::validateColor($color);
 
         if ($color) {
@@ -370,7 +377,25 @@ class scholar_renderer
 
     public function renderImg(Zend_Markup_Token $token, $contents) // {{{
     {
-        return '<img src="' . htmlspecialchars($contents) . '" alt="" />';
+        // [img]{url}[/img]
+        // [img width={width} height={height}]{url}[/img]
+
+        $width  = intval($token->getAttribute('width'));
+        $height = intval($token->getAttribute('height'));
+
+        if ($width <= 0 || $height <= 0) {
+            $width  = 0;
+            $height = 0;
+        }
+
+        $attrs = ' src="' . htmlspecialchars($contents) . '"'
+               . ' alt="' . htmlspecialchars($token->getAttribute('alt')) . '"';
+
+        if ($width && $height) {
+            $attrs .= ' width="' . $width . '" height="' . $height . '"';
+        }
+
+        return '<img' . $attrs . '/>';
     } // }}}
 
     public function renderList(Zend_Markup_Token $token, $contents) // {{{
@@ -378,7 +403,7 @@ class scholar_renderer
         $contents = trim($contents);
 
         if ($contents) {
-            if ($type = self::getTokenAttribute($token)) {
+            if ($type = $token->getAttribute('list')) {
                 if (is_numeric($type)) {
                     return '<ol start="' . $type . '">' . $contents . '</ol>';                
                 } else {
@@ -394,7 +419,7 @@ class scholar_renderer
 
     public function renderUrl(Zend_Markup_Token $token, $contents) // {{{
     {
-        $url = self::getTokenAttribute($token);
+        $url = $token->getAttribute('url');
 
         if (empty($url)) {
             $url = $contents;

@@ -243,6 +243,8 @@ function scholar_node_form(&$form_state, $node) // {{{
     }
 } // }}}
 
+
+
 function scholar_nodeapi($node, $op)
 {
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {

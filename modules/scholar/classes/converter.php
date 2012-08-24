@@ -2,14 +2,14 @@
 
 interface scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents);
+    public function convert($token, $contents);
 } // }}}
 
 class scholar_converter_preface implements scholar_converter // {{{
 {
     protected $_prefaces = array();
 
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
         $this->_prefaces[] = $contents;
         return '';
@@ -23,48 +23,62 @@ class scholar_converter_preface implements scholar_converter // {{{
 
 class scholar_converter_chapter implements scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
-        return '<div class="scholar-chapter"><h1>' . scholar_renderer::getTokenAttribute($token) . '</h1>' . $contents . '</div>';
+        return '<div class="scholar-chapter"><h1>' . $token->getAttribute('chapter') . '</h1>' . trim($contents) . '</div>';
     }
 } // }}}
 
 class scholar_converter_section implements scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
-        return '<div class="scholar-section"><h2>' . scholar_renderer::getTokenAttribute($token) . '</h2>' . $contents . '</div>';
+        return '<div class="scholar-section"><h2>' . $token->getAttribute('section') . '</h2>' . trim($contents) . '</div>';
     }
 } // }}}
 
 class scholar_converter_block implements scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
-        $date = scholar_renderer::getTokenAttribute($token);
+        $date = $token->getAttribute('block');
         $result = '';
         if ($date) {
             $date = str_replace('--', ' &ndash; ', $date);
             $result .= '<div class="tm">' . trim($date) . '</div>';
         }
         $result .= '<div class="details">' . trim($contents) . '</div>';
-        return '<div class="entry">' . $result . '</div>';
+        return '<div class="scholar-block">' . $result . '</div>';
     }
 } // }}}
 
 class scholar_converter_box implements scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
-        return '<div>' . $contents . '</div>';
+        $class = $token->getAttribute('box');
+        if ($class) {
+            $class = trim(preg_replace('[^-_ a-z0-9]', '', $class));
+        }
+
+        return '<div' . ($class ? ' class="' . $class . '"' : '') . '>'
+             . trim($contents)
+             . '</div>';
     }
 } // }}}
 
 class scholar_converter_res implements scholar_converter // {{{
 {
-    public function convert(Zend_Markup_Token $token, $contents)
+    public function convert($token, $contents)
     {
-        return '';
+        $label = trim($token->getAttribute('res'));
+
+        if (empty($label)) {
+            $label = basename($contents);
+        }
+
+        return '<a class="scholar-res" href="' . htmlspecialchars($contents) . '">'
+             . htmlspecialchars($label) . '</a>';
     }
 } // }}}
 

@@ -26,7 +26,7 @@ class scholar_parser extends Zend_Markup_Parser_Bbcode
     /**
      * @throws Zend_Markup_Parser_Exception
      */
-    public function addTag($name, $properties) // {{{
+    public function addTag($name, $properties = array()) // {{{
     {
         if (preg_match('/[^a-z0-9]/i', $name)) {
             throw new Zend_Markup_Parser_Exception('Tag name contains invalid characters. Only alphanumeric characters are allowed.');
@@ -62,7 +62,7 @@ class scholar_parser extends Zend_Markup_Parser_Bbcode
             $tag['parse_inside'] = false;
         }
 
-        $this->_tags[$name] = $properties;
+        $this->_tags[$name] = $tag;
 
         return $this;
     } // }}}
