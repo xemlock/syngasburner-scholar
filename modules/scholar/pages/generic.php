@@ -323,12 +323,6 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
         $record->start_date = intval($record->start_date);
     }
 
-    // rendering: $authors: <a href="$url">$title</a> $details
-    // <a href="http://syngasburner.eu/pl/publikacje/monografia-ekoenergetyka">"Eco-energetics - biogas and syngas"</a> (red. A. Cenian, J. Gołaszewski i T. Noch)
-    // <a href="http://www.springer.com/physics/classical+continuum+physics/book/978-3-642-03084-0">"Advances in Turbulence XII, Proceedings of the Twelfth European Turbulence Conference, September 7–10, 2009, Marburg, Germany"</a>, Springer Proceedings in Physics, Vol. 132
-    // jezeli pierwszym znakiem jest nawias otwierajacy <{[( dodaj details za " "
-    // w przeciwnym razie dodaj ", "
-
     $categories = scholar_category_options('generics', 'book');
 
     $form = scholar_generic_form(array(

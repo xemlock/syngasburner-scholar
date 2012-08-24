@@ -282,9 +282,10 @@ function scholar_save_node(&$node, $row_id, $table_name) // {{{
 {
     $body = trim($node->body);
 
-    $node->type = 'scholar';
-    $node->body = ''; // puste body, bo tresc do przetworzenia zostanie
-                      // zapisana w bindingu
+    $node->format = 2;  // full HTML
+    $node->type   = 'scholar';
+    $node->body   = ''; // puste body, bo tresc do przetworzenia zostanie
+                        // zapisana w bindingu
 
     $node->revision = null; // nigdy nie tworz nowych rewizji, poniewaz
                             // tresc jest generowana automatycznie

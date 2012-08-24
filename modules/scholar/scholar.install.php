@@ -259,7 +259,7 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_authors'] = array( // {{{
-        'description' => 'autorzy artykułów',
+        'description' => 'autorzy artykułów lub książek',
         'fields' => array(
             'person_id' => array(
                 // REFERENCES scholar_people (id)

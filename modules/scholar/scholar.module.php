@@ -259,7 +259,7 @@ function scholar_nodeapi($node, $op)
             $body = '';
 
             if (function_exists($func)) {
-                $body = $func($info['row_id']);
+                $body = $func($info['row_id'], $node);
             }
 
             // TODO najpierw sprawdz czy ZF jest dostepny
@@ -292,9 +292,11 @@ function scholar_nodeapi($node, $op)
                 // przeksztalcane na znaczniki BR, zamien je na spacje. Znaki nowego wiersza
                 // wewnatrz PRE sa zamienione na BR przez renderer.
                 $rendering = str_replace(array("\r\n", "\n", "\r"), ' ', $rendering);
-p($rendering);exit;
+
+                // niestety dodaje tez paragrafy, ale to mozna obejsc ustawiajac odpowiednie marginesy.
+
             } catch (Exception $e) {}
-//echo $rendering; exit;
+//p($bbcode); exit;
             $node->body = $rendering;
             // $node->body = $markup;
             // $node->created = $node->changed = $timestamp;

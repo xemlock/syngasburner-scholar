@@ -512,7 +512,13 @@ class scholar_renderer
         $url = self::validateUrl($url);
 
         if ($url) {
-            return '<a href="' . $url . '" target="_blank">' . $contents . '</a>';
+            if ('_self' == $token->getAttribute('target')) {
+                $target = '_self';
+            } else {
+                $target = '_blank';
+            }
+
+            return '<a href="' . $url . '" target="' . $target . '">' . $contents . '</a>';
         }
 
         return $contents;
