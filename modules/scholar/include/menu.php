@@ -9,6 +9,28 @@ function scholar_admin_path($path = '') // {{{
 } // }}}
 
 /**
+ * Zwraca ścieżkę do listy kategorii powiązanych z daną tabelą i opcjonalnie
+ * rekordami danego podtypu. Reguła tworzenia ścieżki jest następująca:
+ * jeżeli podtyp jest pusty, do nazwy tabeli dołączany jest przyrostek 
+ * '/category', jeżeli podana została nazwa podtypu, zostaje ona użyta 
+ * w miejscu nazwy tabeli (nazwa tabeli - kontenera jest ignorowana).
+ * Nazwy tabel i podtypów muszą być więc unikalne.
+ *
+ * @param string $table_name OPTIONAL   nazwa tabeli
+ * @param string $subtype OPTIONAL      nazwa podtypu
+ */
+function scholar_category_path($table_name = null, $subtype = null, $page = 'list') // {{{
+{
+    if (null !== $table_name) {
+        $path = (null === $subtype ? $table_name : $subtype) . '/category/' . ltrim($page, '/');
+    } else {
+        $path = '/';
+    }
+
+    return scholar_admin_path($path);
+} // }}}
+
+/**
  * Definicja menu wywoływana i zapamiętywana podczas instalacji modułu.
  * Implementacja hook_menu.
  * @return array
