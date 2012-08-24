@@ -41,31 +41,29 @@ function render_people_node($id, $node)
     // w ktorych sie znajduja), wsrod ktorych autorow znajduje sie ta osoba
     $articles = array();
 
-    $query = db_query("SELECT g.*, g2.title AS parent_title, g2.url AS parent_url FROM {scholar_authors} a JOIN {scholar_generics} g ON a.generic_id = g.id LEFT JOIN {scholar_generics} g2 ON g.parent_id = g2.id WHERE g.subtype = 'article' AND a.person_id = %d ORDER BY start_date DESC", $person->id);
+    $query = db_query("SELECT g.*, g2.title AS parent_title, g2.url AS parent_url FROM {scholar_authors} a JOIN {scholar_generics} g ON a.generic_id = g.id LEFT JOIN {scholar_generics} g2 ON g.parent_id = g2.id WHERE g.subtype = 'article' AND a.person_id = %d ORDER BY g.start_date DESC", $person->id);
     while ($row = db_fetch_array($query)) {
         $articles[] = $row;
     }
 
-    // pobierz pelne listy autorow, posortowanych w odpowiedniej kolejnosci
-    foreach ($articles as &$article) {
-        $article['authors'] = scholar_load_authors($article['id']);
-    }
-    unset($article);
-
     ob_start();
+
+    // co z ksiazkami? na razie nic :)
 
     // kazdy z autorow, artykulow i ich rodzicow moze miec podpiety wezel
     // trzeba go pobrac (aliasy zrobia sie same?)
     if ($articles) {
-        echo '[section="' . t('Articles', array(), $node->language) . '"]';
+        echo '[section="' . t('Publications', array(), $node->language) . '"]', "\n";
 
         foreach ($articles as $article) {
+            // pobierz pelne listy autorow, posortowanych w odpowiedniej kolejnosci
+            $authors = scholar_load_authors($article['id']);
             echo '[block="' . intval($article['start_date']) . '"]', "\n";
 
             // autorzy
-            $keys = array_keys($article['authors']);
+            $keys = array_keys($authors);
             for ($i = 0, $n = count($keys); $i < $n; ++$i) {
-                $author = $article['authors'][$keys[$i]];
+                $author = $authors[$keys[$i]];
 
                 if ($i == $n - 1) {
                     echo t(' and ');
@@ -82,9 +80,11 @@ function render_people_node($id, $node)
                 } else {
                     echo $fn;
                 }
-
             }
+            // nazwa artykulu (kursywa)
             echo ', [i]', _scholar_render_escape($article['title']) . '[/i]';
+
+            // nazwa czasopisma (hiperlacze)
             $parent = trim($article['parent_title']);
             if ($parent) {
                 // parent or external
@@ -98,8 +98,12 @@ function render_people_node($id, $node)
                     echo ', ', _scholar_render_escape($parent);
                 }
             }
+
+            // szczegoly bibliograficzne
             $details = trim($article['details']);
             if ($details) {
+                // jezeli szczegoly rozpoczynaja sie od nawiasu otwierajacego nie umieszczaj
+                // przed nimi przecinka
                 if (false !== strpos("<{([", $details{0})) {
                     echo ' ';
                 } else {
@@ -108,6 +112,7 @@ function render_people_node($id, $node)
                 echo _scholar_render_escape($details);
             }
 
+            // TODO zalaczone pliki
             echo '[/block]', "\n";
         }
 
@@ -123,6 +128,96 @@ function render_people_node($id, $node)
     // Data konferencji, <a href="">Nazwa konferencji</a>
     // Kategoria: Tytuł, detale
 
+    $presentations = array();
+
+    // Pobierz wszystkie prezentacje powiazane z ta osoba, dla kazdej prezentacji
+    // pobierz nazwe jej kategorii oraz dane konferencji. Poniewaz blok nosi
+    // tytul konferencje / seminaria / warsztaty mamy JOIN na generykach a nie LEFT JOIN
+    $query = db_query("SELECT g.*, c.name AS category_name, g2.title AS parent_title, g2.url AS parent_url, g2.start_date AS parent_start_date, g2.end_date AS parent_end_date, g2.locality AS parent_locality, g2.country AS parent_country, g2.details AS parent_details FROM {scholar_authors} a JOIN {scholar_generics} g ON a.generic_id = g.id JOIN {scholar_generics} g2 ON g.parent_id = g2.id LEFT JOIN {scholar_category_names} c ON g.category_id = c.category_id WHERE g.subtype = 'presentation' AND a.person_id = %d AND (c.language = '%s' OR c.language IS NULL) ORDER BY g2.start_date DESC", $person->id, $node->language);
+
+    while ($row = db_fetch_array($query)) {
+        $presentations[] = $row;
+    }
+
+    $roman = array('', 
+        'I', 'II', 'III', 'IV',
+        'V', 'VI', 'VII', 'VIII',
+        'IX', 'X', 'XI', 'XII',
+    );
+
+    if ($presentations) {
+        $countries = scholar_countries();
+
+        echo '[section="', t('Conferences, seminars, workshops'), '"]', "\n";
+        // w przeciwienstwie do artykulow w przypadku prezentacji nie podajemy autorow
+        foreach ($presentations as $presentation) {
+            $start_date = $presentation['parent_start_date'];
+            $year = substr($start_date, 0, 4);
+            $month = intval(substr($start_date, 5, 2));
+            $month = $roman[$month];
+
+            echo '[block="' . $year . ' ' . $month . '"]', "\n";
+
+            $confname = $presentation['parent_title'];
+
+            echo '[box]', "\n";
+            $url = _scholar_node_url($presentation['parent_id'], 'generics', $node->language);
+            if ($url) {
+                echo '[url="' . $url . '" target="_self"]' . $confname . '[/url]';
+            } else if ($presentation['parent_url']) {
+                echo '[url="' . $presentation['parent_url'] . '"]' . $confname . '[/url]';
+            } else {
+                echo $confname;
+            }
+            $pd = trim($presentation['parent_details']);
+            if ($pd) {
+                echo ', ' . $pd;
+            }
+
+            // specjalna wartosc 'internet' wylacza pokazywanie miejscowosci i kraju
+            $locality = trim($presentation['parent_locality']);
+            if ($locality && strcasecmp('internet', $locality)) {
+                if ($locality) {
+                    echo ', ', $locality;
+                }
+                $country = isset($countries[$presentation['parent_country']])
+                    ? $countries[$presentation['parent_country']]
+                    : '';
+                if ($country) {
+                    echo ', ', $country;
+                }
+            }
+            echo '[/box]', "\n";
+
+            echo '[box]', "\n";
+            $category = trim($presentation['category_name']);
+            if ($category) {
+                echo $category, ': ';
+            }
+
+            $title = trim($presentation['title']);
+            if ($title) {
+                echo '[i]', $title, '[/i]';
+            }
+
+            $details = trim($presentation['details']);
+            if ($details) {
+                if ($title) {
+                    echo '. ';
+                } else {
+                    echo ' ';
+                }
+                echo $details;
+            }
+            echo '[/box]';
+
+            // TODO zalaczone pliki
+            echo '[/block]', "\n";
+        }
+        
+    
+        echo '[/section]';
+    }
 
     return ob_get_clean();
 }

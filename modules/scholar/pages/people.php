@@ -58,8 +58,8 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     if (scholar_save_person($record)) {
         $name = $record->first_name . ' ' . $record->last_name;
         drupal_set_message($is_new
-            ? t('Person %name created successfully', array('%name' => $name))
-            : t('Person %name updated successfully', array('%name' => $name))
+            ? t('%name created successfully.', array('%name' => $name))
+            : t('%name updated successfully.', array('%name' => $name))
         );
     }
 

@@ -254,8 +254,12 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         ),
         'locality' => array(
             '#required' => true,
+            '#description' => t('In case of virtual conferences enter "internet" (without quotes, case-insensitive) to ignore country.'),
         ),
         'country',
+        'details' => array(
+            '#description' => t('Additional details about conference, its location or organizer.'),
+        ),
         'url', 
         'files',
         'events',
@@ -318,12 +322,21 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
         'category_id' => empty($categories) ? false : array(
             '#options'  => $categories,
         ),
-        'authors'     => t('Autorzy'),
+        'authors'     => array(
+            '#title'    => t('Autorzy'),
+            '#required' => true,
+        ),
+        'details'     => array(
+            '#description' => t('Additional details about this presentation.'),
+        ),
         'files',
         'nodes',
         'events'      => array(
             // prezentacje odbywaja sie jednego dnia
-            'end_date'  => false,
+            'start_date' => array(
+                '#title' => t('Date'),
+            ),
+            'end_date'   => false,
         ),
     ), $record);
 

@@ -297,7 +297,7 @@ function scholar_nodeapi($node, $op)
 
             } catch (Exception $e) {}
 //p($bbcode); exit;
-            $node->body = $rendering;
+            $node->body = '<div class="scholar-rendering">' . $rendering . '</div>';
             // $node->body = $markup;
             // $node->created = $node->changed = $timestamp;
             // db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
