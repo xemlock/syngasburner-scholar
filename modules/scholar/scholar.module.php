@@ -26,20 +26,26 @@ function p($var, $label = null)
     $last = ($last + 1) % count($colors);
 }
 
-function scholar_init() // {{{
+function _scholar_include_dir($directory) // {{{
 {
-    $dir = dirname(__FILE__);
-    $sub = array('include', 'models');
+    $__dir__ = dirname(__FILE__);
 
-    foreach ($sub as $subdir) {
-        if ($dh = @opendir($dir . '/' . $subdir)) {
+    foreach ((array) $directory as $dir) {
+        $dirpath = $__dir__ . '/' . ltrim($dir, '/');
+        if ($dh = @opendir($dirpath)) {
             while ($entry = readdir($dh)) {
-                if ('.php' === substr($entry, -4)) {
-                    require_once $dir . '/' . $subdir . '/' . $entry;
+                $filepath = $dirpath . '/' . $entry;
+                if (is_file($filepath) && '.php' === substr($entry, -4)) {
+                    require_once $filepath;
                 }
             }
         }
     }
+} // }}}
+
+function scholar_init() // {{{
+{
+    _scholar_include_dir(array('include', 'models'));
 } // }}}
 
 function scholar_preprocess_page(&$vars)
@@ -522,16 +528,28 @@ function scholar_nodeapi($node, $op)
         $info = scholar_node_owner_info($node->nid);
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
+            _scholar_include_dir('classes');
 
             $parser = new scholar_parser;
-            $parser->addTag('chapter', array('single' => true))
-                   ->addTag('section', array('single' => true));
+            $parser->addTag('chapter')
+                   ->addTag('section');
 
             $renderer = new scholar_renderer;
+            $renderer->addConverter('preface', new scholar_converter_preface)
+                     ->addConverter('chapter', new scholar_converter_chapter)
+                     ->addConverter('section', new scholar_converter_section)
+                     ->addConverter('block',   new scholar_converter_block)
+                     ->addConverter('box',     new scholar_converter_box)
+                     ->addConverter('res',     new scholar_converter_res);
 
             $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
-    $tree = $parser->parse($bbcode);
-            echo($renderer->render($tree));
+            $tree = $parser->parse($bbcode);
+            $rendering = $renderer->render($tree);
+            $preface   = $renderer->getConverter('preface')->render();
+            if ($preface) {
+                $rendering = $preface . $rendering;
+            }
+            echo $rendering;
             exit;
 	
             /*

@@ -26,6 +26,14 @@ class scholar_renderer
             'start' => '<blockquote>',
             'end'   => '</blockquote>',
         ),
+        'sub' => array(
+            'start' => '<sub>',
+            'end'   => '</sub>',
+        ),
+        'sup' => array(
+            'start' => '<sup>',
+            'end'   => '</sup>',
+        ),
     ); // }}}
 
     /**
@@ -40,7 +48,6 @@ class scholar_renderer
     public function render(Zend_Markup_TokenList $tree, array $no_render = array()) // {{{
     {
         $html = $this->_render($tree, $no_render);
-        $html = nl2br($html);
         return $html;
     } // }}}
 
@@ -122,12 +129,18 @@ class scholar_renderer
      */
     public function addConverter($tag, $converter) // {{{
     {
-        if (!is_callable($converter, 'convert')) {
+        if (!is_callable(array($converter, 'convert'))) {
             throw new Exception('Token converter object must implement method "convert"');
         }
 
         $this->_converters[strtolower($tag)] = $converter;
         return $this;
+    } // }}}
+
+    public function getConverter($tag) // {{{
+    {
+        $tag = strtolower($tag);
+        return isset($this->_converters[$tag]) ? $this->_converters[$tag] : null;
     } // }}}
 
     public function removeConverter($tag) // {{{
@@ -152,7 +165,7 @@ class scholar_renderer
      * @return null|string
      *     null if not attribute was found
      */
-    public function getTokenAttribute(Zend_Markup_Token $token, $name = null) // {{{
+    public static function getTokenAttribute(Zend_Markup_Token $token, $name = null) // {{{
     {
         if (null == $name) {
             $name = $token->getName();
@@ -175,7 +188,7 @@ class scholar_renderer
         return null;
     } // }}}
 
-    public function validateUrl($url) // {{{
+    public static function validateUrl($url) // {{{
     {
         $url = (string) $url;
 
@@ -191,7 +204,7 @@ class scholar_renderer
         return null;
     } // }}}
 
-    public function validateColor($color) { // {{{
+    public static function validateColor($color) { // {{{
         // trim white spaces (white spaces are ignored in CSS)
         $color = trim(strtolower($color));
 
@@ -335,7 +348,7 @@ class scholar_renderer
     {
         // class name is for code highlighting, it is
         // compatible with default highlight.js settings
-        $language = $this->getTokenAttribute($token);
+        $language = self::getTokenAttribute($token);
         $language = preg_replace('/[^_a-z0-9]/i', '', $language);
 
         return '<pre><code' . ($language ? ' class="' . $language . '"' : '') . '>'
@@ -345,8 +358,8 @@ class scholar_renderer
 
     public function renderColor(Zend_Markup_Token $token, $contents) // {{{
     {
-        $color = $this->getTokenAttribute($token);
-        $color = $this->validateColor($color);
+        $color = self::getTokenAttribute($token);
+        $color = self::validateColor($color);
 
         if ($color) {
             return '<span style="color:' . $color . '">' . $contents . '</span>';
@@ -365,7 +378,7 @@ class scholar_renderer
         $contents = trim($contents);
 
         if ($contents) {
-            if ($type = $this->getTokenAttribute($token)) {
+            if ($type = self::getTokenAttribute($token)) {
                 if (is_numeric($type)) {
                     return '<ol start="' . $type . '">' . $contents . '</ol>';                
                 } else {
@@ -381,13 +394,13 @@ class scholar_renderer
 
     public function renderUrl(Zend_Markup_Token $token, $contents) // {{{
     {
-        $url = $this->getTokenAttribute($token);
+        $url = self::getTokenAttribute($token);
 
         if (empty($url)) {
             $url = $contents;
         }
 
-        $url = $this->validateUrl($url);
+        $url = self::validateUrl($url);
 
         if ($url) {
             return '<a href="' . $url . '" target="_blank">' . $contents . '</a>';
@@ -395,29 +408,6 @@ class scholar_renderer
 
         return $contents;
     } // }}}
-
-
-    function renderSection($token, $contents) {
-        return '<h2>' . $this->getTokenAttribute($token) . '</h2>';
-    }
-
-    function renderChapter($token, $contents) {
-        return '<h1>' . $this->getTokenAttribute($token) . '</h1>';
-    }
-
-    function renderEntry($token, $contents) {
-        $date = $this->getTokenAttribute($token);
-        $result = '';
-        if ($date) {
-            $result .= '<div class="tm">' . $date . '</div>';
-        }
-        $result .= '<div class="details">' . trim($contents) . '</div>';
-        return '<div class="entry">' . $result . '</div>';
-    }
-
-    function renderDiv($token, $contents) {
-        return '<div>' . $contents . '</div>';
-    }
 }
 
 // vim: fdm=marker
