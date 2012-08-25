@@ -131,32 +131,37 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
     }
 
-    $values['title'] = isset($values['title']) ? trim($values['title']) : '';
+    $image_id = isset($values['image_id']) ? intval($values['image_id']) : 0;
+    $values['image_id'] = $image_id ? $image_id : null;
+
+    $title = isset($values['title']) ? trim($values['title']) : '';
+    $values['title'] = $title;
 
     // jezeli nie podano tytulu wezla, uzyj tytulu rekordu
     if (isset($values['nodes'])) {
         foreach ($values['nodes'] as $language => &$node) {
-            $title = trim($node['title']);
+            $node_title = trim($node['title']);
 
-            if (0 == strlen($title)) {
-                $title = $values['title'];
+            if (0 == strlen($node_title)) {
+                $node_title = $title;
             }
 
-            $node['title'] = $title;
+            $node['title'] = $node_title;
         }
         unset($node);
     }
 
-    // to samo tyczy sie tytulu dla eventow
+    // to samo tyczy sie tytulu dla eventow, ponadto skopiuj obraz do eventu
     if (isset($values['events'])) {
         foreach ($values['events'] as $language => &$event) {
-            $title = trim($event['title']);
+            $event_title = trim($event['title']);
 
-            if (0 == strlen($title)) {
-                $title = $values['title'];
+            if (0 == strlen($event_title)) {
+                $event_title = $title;
             }
 
-            $event['title'] = $title;
+            $event['title']    = $event_title;
+            $event['image_id'] = $image_id;
         }
         unset($event);
     }
@@ -265,7 +270,11 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         'image_id',
         'url', 
         'files',
-        'events',
+        'events' => array(
+            // dane poczatku i konca wydarzenia beda pobierane z danych konferencji
+            'start_date' => false,
+            'end_date'   => false,
+        ),
         'nodes',
     ), $record);
 

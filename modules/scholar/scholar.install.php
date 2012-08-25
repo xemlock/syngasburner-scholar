@@ -376,7 +376,7 @@ function scholar_schema() // {{{
         'primary key' => array('table_name', 'row_id', 'file_id', 'language'),
     ); // }}}
 
-  return $schema;
+    return $schema;
 } // }}}
 
 function scholar_install() // {{{

@@ -226,8 +226,9 @@ function scholar_node_form(&$form_state, $node) // {{{
     // strony z formularzem edycji tegoz rekordu
     if ($info = scholar_node_owner_info($node->nid)) {
 	switch ($info['table_name']) {
-	    case 'people':
-		return scholar_goto(scholar_admin_path('people/edit/' . $info['row_id']));
+            case 'people':
+                $record = scholar_load_person($info['row_id']);
+		return scholar_goto(scholar_admin_path('people/edit/' . $record->id));
 
 	    case 'generics':
 		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
@@ -244,8 +245,40 @@ function scholar_node_form(&$form_state, $node) // {{{
 } // }}}
 
 
+function scholar_eventapi(&$event, $op)
+{
+    if ($op == 'prepare') {
+        $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
+        $info = db_fetch_array($query);
 
-function scholar_nodeapi($node, $op)
+        if ($info) {
+	switch ($info['table_name']) {
+            case 'people':
+                $record = scholar_load_person($info['row_id'], scholar_admin_path());
+		return scholar_goto(scholar_admin_path('people/edit/' . $record->id));
+
+	    case 'generics':
+		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
+	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id));
+
+	    case 'categories':
+		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
+		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id));
+	}      
+        }
+        return;
+    }
+
+    if ($op == 'load' && _scholar_rendering_enabled()) {
+        $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
+        $binding = db_fetch_array($query);
+
+        if ($binding) {
+        }
+    }
+}
+
+function scholar_nodeapi(&$node, $op)
 {
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
         $info = scholar_node_owner_info($node->nid);
@@ -406,9 +439,9 @@ function scholar_countries($code = null) // {{{
     static $countries;
 
     if (null === $countries) {
-        $key = 'scholar_countries_' . $language->language;
+        $cid = 'scholar_countries:' . $language->language;
 
-        if (!($data = cache_get($key))) {
+        if (!($data = cache_get($cid))) {
             $locale = new Zend_Locale($language->language);
             $zflang = $locale->getLanguage();
 
@@ -431,7 +464,8 @@ function scholar_countries($code = null) // {{{
             // https://bugs.php.net/bug.php?id=46165
             asort($countries, SORT_LOCALE_STRING);
 
-            cache_set($key, $countries);
+            cache_set($cid, $countries);
+
         } else {
             $countries = (array) $data->data;
         }

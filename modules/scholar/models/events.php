@@ -18,6 +18,7 @@ function scholar_load_events($row_id, $table_name) // {{{
     $rows = array();
 
     if (module_exists('events')) {
+        $rendering = _scholar_rendering_enabled(false);
         $query = db_query("SELECT * FROM {scholar_events} WHERE row_id = %d AND table_name = '%s'", $row_id, $table_name);
 
         // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
@@ -31,6 +32,8 @@ function scholar_load_events($row_id, $table_name) // {{{
                 $rows[$event['language']] = $event;
             }
         }
+
+         _scholar_rendering_enabled($rendering);
     }
 
     return $rows;

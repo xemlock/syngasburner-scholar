@@ -64,7 +64,6 @@ function scholar_elements() // {{{
         '#input'            => true,
         '#fields'           => null,
         '#process'          => array('form_type_scholar_element_events_process'),
-        '#element_validate' => array('form_type_scholar_element_events_validate'),
     );
 
     $elements['scholar_element_files'] = array(
@@ -197,6 +196,11 @@ function form_type_scholar_element_events_process($element) // {{{
 
     if (false !== $fields['start_date']) {
         $element_fields['start_date'] = $fields['start_date'];
+
+        // dodaj walidacje poczatku, poniewaz jest element z data poczatku.
+        // Jezeli go nie ma, zakladamy, ze walidacja bedzie przeprowadzona
+        // gdzie indziej.
+        $element_fields['start_date']['#element_validate'] = array('form_type_scholar_element_events_validate');
     }
 
     if (false !== $fields['end_date']) {
@@ -327,8 +331,13 @@ function theme_scholar_element_events($element) // {{{
 
     // ponadto trzeba przekazac wartosci elementom
     foreach ($element['#value'] as $language => $event) {
-        $fields['start_date']['#value'] = $event['start_date'];
-        $fields['end_date']['#value']   = $event['end_date'];
+        if (isset($fields['start_date'])) {
+            $fields['start_date']['#value'] = $event['start_date'];
+        }
+
+        if (isset($fields['end_date'])) {
+            $fields['end_date']['#value'] = $event['end_date'];
+        }
 
         $fields[$language]['#default_value']  = $event['status'];
         $fields[$language]['title']['#value'] = $event['title'];
