@@ -858,13 +858,17 @@ function scholar_populate_record(&$record, $values) // {{{
 
 function scholar_validate_url($element, &$form_state)
 {
-    $scheme = '(ftp|http)s?:\/\/';
-    $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
-    $port = '(:\d+)?';
-    $path = '(\/[^\s]*)*';
+    $value = (string) $element['#value'];
 
-    if (!preg_match("/$scheme$host$port$path/i", (string) $element['#value'])) {
-        form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.'));
+    if (strlen($value)) {
+        $scheme = '(ftp|http)s?:\/\/';
+        $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
+        $port = '(:\d+)?';
+        $path = '(\/[^\s]*)*';
+
+        if (!preg_match("/^$scheme$host$port$path$/i", $value)) {
+            form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.'));
+        }
     }
 }
 
@@ -974,18 +978,18 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     foreach ($fields as $key => $value) {
         // jezeli podano nazwe formularza jako wartosc, z numerycznym
         // kluczem, uzyj tej nazwy do pobrania definicji pola
-        if (is_int($key)) {
-            $key = strval($value);
+        if (is_int($key) && is_string($value)) {
+            $key   = $value;
             $value = true;
         }
 
-        // klucz elementu nie moze byc pusty
-        if (!strlen($key) || ctype_space($key)) {
-            continue;
-        }
+        // zrzutuj typ klucza do stringa, w przeciwnym razie podczas porownan
+        // wartosci tekstowe w case bylyby konwertowane do liczb (do zera),
+        // co mogloby skutkowac wejsciem do nie tej galezi co trzeba.
+        $key = (string) $key;
 
         // wyodrebnij ustawienia formularza, nie sprawdzaj ich poprawnosci
-        if ($key{0} == '#') {
+        if (!strncmp('#', $key, 1)) {
             $form[$key] = $value;
             continue;
         }
@@ -1087,6 +1091,11 @@ function theme_scholar_element_vtable_row($element) // {{{
     $id = isset($element['#id']) ? (' id="' . $element['#id'] . '"') : '';
 
     return '<tr' . $id . '><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
+} // }}}
+
+function scholar_element_separator() // {{{
+{
+    return array('#type' => 'markup', '#value' => '<div style="width:95%;margin:2em 0 1em"><hr/></div>');
 } // }}}
 
 // vim: fdm=marker

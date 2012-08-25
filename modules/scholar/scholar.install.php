@@ -120,12 +120,6 @@ function scholar_schema() // {{{
                 'not null'  => true,
                 'default'   => 0,
             ),
-            'list' => array(
-                'description' => 'czy dodawac rekordy powiązane z tą kategorią do automatycznie generowanych listingow na stronach osob i stronie z wystapieniami na konferencjach. Poniewaz nie wszystkie rekordy wymagaja ustawienia tej wartosci zezwol na NULL',
-                'type'      => 'int',
-                'size'      => 'tiny',
-                'unsigned'  => true,
-            ),
         ),
         'primary key'  => array('id'),
     ); // }}}
@@ -218,6 +212,12 @@ function scholar_schema() // {{{
                 'description' => 'tekstowa reprezentacja autorów artykułu do umieszczenia w treści, zawierająca max trzy nazwiska',
                 'type'      => 'varchar',
                 'length'    => 128,
+            ),
+            'list' => array(
+                'description' => 'czy dodawac rekordy do automatycznie generowanych listingow na stronach osob i stronie z wystapieniami na konferencjach',
+                'type'      => 'int',
+                'size'      => 'tiny',
+                'unsigned'  => true,
             ),
         ),
         'primary key' => array('id'),

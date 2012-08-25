@@ -246,6 +246,7 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#title' => t('Conference name'),
             '#required' => true
         ),
+        scholar_element_separator(),
         'start_date' => array(
             '#maxlength' => 10,
             '#required' => true,
@@ -256,19 +257,26 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#required' => true,
             '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
-        'category_id' => empty($categories) ? false : array(
-            '#options' => $categories,
-        ),
         'locality' => array(
             '#required' => true,
             '#description' => t('In case of virtual conferences enter "internet" (without quotes, case-insensitive) to ignore country.'),
         ),
         'country',
-        'details' => array(
-            '#description' => t('Additional details about conference, its location or organizer.'),
+        scholar_element_separator(),
+        'category_id' => empty($categories) ? false : array(
+            '#options' => $categories,
         ),
+        'list' => array(
+            '#type' => 'checkbox',
+            // Uwzględnij prezentacje z tej konferencji przy automatycznym tworzeniu list
+            '#title' => t('Include presentations from this conference in auto-generated lists'),
+            // Ustawienie to dotyczy stron osób oraz strony z wystąpieniami na konferencjach.
+            '#description' => t('This setting applies to person pages and conference presentations page.'),
+            '#default_value' => true,
+        ),
+        scholar_element_separator(),
         'image_id',
-        'url', 
+        'url',
         'files',
         'events' => array(
             // dane poczatku i konca wydarzenia beda pobierane z danych konferencji
@@ -326,27 +334,29 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
     // wystapienia publicznego. Jezeli brak zdefiniowanych konferencji
     // ustaw pole tytulu jako wymagane.
     $form = scholar_generic_form(array(
-        'title'       => empty($parents) ? array('#required' => true) : array(
+        'title' => empty($parents) ? array('#required' => true) : array(
             '#description' => t('Leave empty to mark conference attendance if no public presentation was given. In this case, a conference must be chosen.'),
         ),
-        'start_date'  => t('Data'), // opcjonalny
-        'parent_id'   => empty($parents) ? false : array(
-            '#title'    => t('Conference'),
-            '#options'  => $parents,
+        'authors' => array(
+            '#title'       => t('Authors'),
+            '#required'    => true,
+            '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
+        ),
+        'parent_id' => empty($parents) ? false : array(
+            '#title'       => t('Conference'),
+            '#options'     => $parents,
+            '#description' => t('A conference during which this presentation was given.'),
         ),
         'category_id' => empty($categories) ? false : array(
-            '#options'  => $categories,
+            '#options'     => $categories,
+            '#description' => t('Specify presentation type, e.g. speech, poster, etc.'),
         ),
-        'authors'     => array(
-            '#title'    => t('Autorzy'),
-            '#required' => true,
-        ),
-        'details'     => array(
+        'details' => array(
             '#description' => t('Additional details about this presentation.'),
         ),
         'files',
         'nodes',
-        'events'      => array(
+        'events' => array(
             // prezentacje odbywaja sie jednego dnia
             'start_date' => array(
                 '#title' => t('Date'),
@@ -396,7 +406,9 @@ function _scholar_presentation_form_process_values(&$values) // {{{
 function scholar_book_form(&$form_state, &$record = null) // {{{
 {
     if ($record) {
-        $record->start_date = intval($record->start_date);
+        $record->start_date = strlen($record->start_date) 
+            ? intval(substr($record->start_date, 0, 4))
+            : '';
     }
 
     $categories = scholar_category_options('generics', 'book');
@@ -408,19 +420,21 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
         'start_date' => array(
             '#title'       => t('Year'),
             '#maxlength'   => 4,
-            '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza (czasopismo).',
-        ),
-        'category_id' => empty($categories) ? false : array(
-            '#options'     => $categories,
-        ),
-        'authors' => array(
-            '#title' => t('Authors'),
-            '#description' => 'Wypełnij jeżeli książka. Informacje o redakcji umieść w polu \'szczegóły\'.',
+            '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza lub czasopismo.',
         ),
         'details' => array(
             '#title' => 'Szczegóły wydawnicze',
             '#description' => 'Np. redaktorzy, seria wydawnicza, wydawca',
         ),
+        'authors' => array(
+            '#title' => t('Authors'),
+            '#description' => 'Wypełnij jeżeli książka. Informacje o redakcji umieść w polu \'szczegóły\'.',
+        ),
+        scholar_element_separator(),
+        'category_id' => empty($categories) ? false : array(
+            '#options'     => $categories,
+        ),
+        scholar_element_separator(),
         'image_id',
         'url',
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
@@ -453,7 +467,15 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
 
 function _scholar_book_form_process_values(&$values) // {{{
 {
-    $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
+    $start_date = trim($values['start_date']);
+
+    if (strlen($start_date)) {
+        $start_date = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
+    } else {
+        $start_date = null;
+    }
+
+    $values['start_date'] = $start_date;
     $values['end_date']   = null;
 } // }}}
 
@@ -474,15 +496,16 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
         ),
         'start_date' => array(
             '#title'       => t('Year'),
+            '#description' => t('Date of publication'),
             '#maxlength'   => 4,
             '#required'    => true,
         ),
         'authors' => array(
-            '#description' => 'Pamiętaj o ustawieniu odpowiedniej kolejności autorów jeżeli jest ich więcej niż jeden.',
+            '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
         'details' => array(
             '#title'       => t('Bibliographic details'), // Szczegóły bibliograficzne
-            '#description' => t('e.g. volume and issue number, page numbers'), // np. numery tomu i wydania, numery stron
+            '#description' => t('e.g. volume and issue number, page numbers etc.'), // np. numery tomu i wydania, numery stron
         ),
         'parent_id' => empty($parents) ? false : array(
             '#options'     => $parents,
@@ -509,10 +532,9 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
 
 function _scholar_article_form_process_values(&$values) // {{{
 {
-    // poniewaz jako date artykulu zapisuje sie tylko rok, trzeba
-    // dodac do niego brakujace znaki, aby byl poprawna wartoscia DATETIME
-    $values['start_date'] = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
-    $values['end_date']   = null;
+    // nic poza dopelnieniem wartosci start_date z roku do pelnego
+    // typu DATETIME i wykasowanie wartosci end_date
+    _scholar_book_form_process_values($values);
 } // }}}
 
 /**
@@ -550,8 +572,14 @@ function _scholar_book_list_spec($row = null) // {{{
         );
     }
 
+    if (strlen($row['start_date'])) {
+        $year = intval(substr($row['start_date'], 0, 4));
+    } else {
+        $year = '';
+    }
+
     return array(
-        intval($row['start_date']),
+        $year,
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
         check_plain($row['category_name']),

@@ -47,26 +47,6 @@ function scholar_category_list($table_name, $subtype = null) // {{{
 } // }}}
 
 /**
- * Dodaje do pól formularza edycji kategorii pola charakterystyczne
- * dla kategorii rekordów z tabeli generics i podtypu conference.
- *
- * @param array &$fields
- *     tablica z deklaracją pól w postaci akceptowanej przez
- *     {@see scholar_generic_form}
- */
-function scholar_category_form_generics_conference(&$fields) // {{{
-{
-    $fields['list'] = array(
-        '#type' => 'checkbox',
-        // Uwzględnij prezentacje z konferencji należącej do tej kategorii przy automatycznym tworzeniu list
-        '#title' => t('Include presentations belonging to a conference of this category in auto-generated lists'),
-        // Ustawienie to dotyczy stron osób oraz strony z wystąpieniami na konferencjach.
-        '#description' => t('This setting applies to person pages and conference presentations page.'),
-        '#default_value' => true,
-    );
-} // }}}
-
-/**
  * Strona z formularzem edycji kategorii. Jeżeli istnieje funkcja o nazwie
  * scholar_category_form_{table_name}_{subtype} zostanie ona wywolana do
  * zmodyfikowania struktury formularza. Gdy nie podano podtypu lub jest on
@@ -106,8 +86,8 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
 
     $fields = array(
         'names' => $names,
-        'files',
-        'nodes',
+        // 'files',
+        // 'nodes',
     );
 
     // dodaj dodatkowe pola zwiazane z kategoriami rekordow konktretnych typow

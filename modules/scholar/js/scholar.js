@@ -1612,7 +1612,7 @@ var Scholar = {
                             id   = $(this).attr('id'),
                             vtab = $('<div class="vtable-vtab"/>'),
                             pane = $('<div class="vtable-pane"/>');
-                    
+
                         // przenies atrybut id z wiersza, do diva z trescia drugiej
                         // kolumny. Chodzi o to, zeby w przypadku podania id elementu scroll
                         // okna byl ustawiony na gore tabeli.

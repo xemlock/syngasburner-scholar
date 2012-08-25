@@ -281,7 +281,7 @@ class scholar_renderer
         $port = '(:\d+)?';
         $path = '(\/[^\s]*)*';
 
-        if (preg_match("/$scheme$host$port$path/i", $url)) {
+        if (preg_match("/^$scheme$host$port$path$/i", $url)) {
             return $url;
         }
 

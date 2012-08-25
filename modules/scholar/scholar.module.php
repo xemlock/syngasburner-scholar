@@ -217,6 +217,28 @@ function scholar_goto($path, $query = null, $fragment = null) // {{{
 } // }}}
 
 /**
+ * @param int $row_id
+ * @param string $table_name
+ * @param string $fragment
+ */
+function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
+{
+    switch ($table_name) {
+        case 'people':
+            $record = scholar_load_person($row_id, scholar_admin_path('people'));
+            return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, $fragment);
+
+        case 'generics':
+            $record = scholar_load_generic($row_id, null, scholar_admin_path());
+            return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, $fragment);
+
+        case 'categories':
+            $record = scholar_fetch_category($row_id, false, false, scholar_admin_path());
+            return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, $fragment);
+    }
+} // }}}
+
+/**
  * Wbrew pozorom to nie tyle jest formularz, co funkcja wywoływana
  * podczas edycji węzła. Formularz wywoływany automatycznie dla węzłów typu scholar.
  * Funkcja definiująca strukturę formularza dla powiązanych węzłów,
@@ -229,19 +251,7 @@ function scholar_node_form(&$form_state, $node) // {{{
     // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
     // strony z formularzem edycji tegoz rekordu
     if ($info = scholar_node_owner_info($node->nid)) {
-	switch ($info['table_name']) {
-            case 'people':
-                $record = scholar_load_person($info['row_id']);
-		return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, '!scholar-form-vtable-nodes');
-
-	    case 'generics':
-		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
-	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, '!scholar-form-vtable-nodes');
-
-	    case 'categories':
-		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
-		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, '!scholar-form-vtable-nodes');
-	}
+        scholar_redirect_to_form($info['row_id'], $info['table_name'], '!scholar-form-vtable-nodes');
 
     } else {
 	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
@@ -251,34 +261,21 @@ function scholar_node_form(&$form_state, $node) // {{{
 
 function scholar_eventapi(&$event, $op)
 {
-    if ($op == 'prepare') {
-        $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
-        $info = db_fetch_array($query);
+    switch ($op) {
+        case 'prepare':
+            $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
+            $info = db_fetch_array($query);
 
-        if ($info) {
-	switch ($info['table_name']) {
-            case 'people':
-                $record = scholar_load_person($info['row_id'], scholar_admin_path());
-		return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, '!scholar-form-vtable-events');
+            if ($info) {
+                return scholar_redirect_to_form($info['row_id'], $info['table_name'], '!scholar-form-vtable-events');
+            }
+            break;
 
-	    case 'generics':
-		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
-	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, '!scholar-form-vtable-events');
-
-	    case 'categories':
-		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
-		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, '!scholar-form-vtable-events');
-	}      
-        }
-        return;
-    }
-
-    if ($op == 'load' && _scholar_rendering_enabled()) {
-        $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
-        $binding = db_fetch_array($query);
-
-        if ($binding) {
-        }
+        case 'load':
+            if (_scholar_rendering_enabled()) {
+                
+            }
+            break;
     }
 }
 
