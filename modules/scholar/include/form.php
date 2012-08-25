@@ -961,7 +961,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     );
 
     $vtable['record'] = array(
-        '#type' => 'scholar_element_vtable_row',
+        '#id'    => 'scholar-form-vtable-record',
+        '#type'  => 'scholar_element_vtable_row',
         '#title' => t('Basic data'),
         '#description' => t('Enter the basic information'),
     );
@@ -992,7 +993,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         switch ($key) {
             case 'files':
                 $vtable['files'] = array(
-                    '#type' => 'scholar_element_vtable_row',
+                    '#id'    => 'scholar-form-vtable-files',
+                    '#type'  => 'scholar_element_vtable_row',
                     '#title' => t('File attachments'),
                     '#description' => t('Edit attached files'),
                 );
@@ -1003,7 +1005,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 
             case 'nodes':
                 $vtable['nodes'] = array(
-                    '#type' => 'scholar_element_vtable_row',
+                    '#id'    => 'scholar-form-vtable-nodes',
+                    '#type'  => 'scholar_element_vtable_row',
                     '#title' => t('Node'),
                     '#description' => t('Edit related pages'),
                 );
@@ -1016,7 +1019,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                 // eventow
                 if (module_exists('events')) {
                     $vtable['events'] = array(
-                        '#type' => 'scholar_element_vtable_row',
+                        '#id'    => 'scholar-form-vtable-events',
+                        '#type'  => 'scholar_element_vtable_row',
                         '#title' => t('Event'),
                         '#description' => t('Edit related events'),
                     );
@@ -1080,7 +1084,9 @@ function theme_scholar_element_vtable($element) // {{{
 
 function theme_scholar_element_vtable_row($element) // {{{
 {
-    return '<tr><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
+    $id = isset($element['#id']) ? (' id="' . $element['#id'] . '"') : '';
+
+    return '<tr' . $id . '><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
 } // }}}
 
 // vim: fdm=marker

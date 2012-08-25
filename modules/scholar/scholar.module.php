@@ -198,11 +198,15 @@ function scholar_referer() // {{{
  * @param string $path
  * @param string $query
  */
-function scholar_goto($path, $query = null) // {{{
+function scholar_goto($path, $query = null, $fragment = null) // {{{
 {
     // drupal_goto jest fundamentalnie uposledzone ze wzgledu
     // na dzika obsluge destination
-    $url = url($path, array('query' => $query, 'absolute' => true));
+    $url = url($path, array(
+        'query'    => $query,
+        'absolute' => true,
+        'fragment' => $fragment ? ltrim($fragment, '#') : null,
+    ));
     $url = str_replace(array("\r", "\n"), '', $url);
 
     session_write_close();
@@ -228,15 +232,15 @@ function scholar_node_form(&$form_state, $node) // {{{
 	switch ($info['table_name']) {
             case 'people':
                 $record = scholar_load_person($info['row_id']);
-		return scholar_goto(scholar_admin_path('people/edit/' . $record->id));
+		return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, '!scholar-form-vtable-nodes');
 
 	    case 'generics':
 		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
-	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id));
+	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, '!scholar-form-vtable-nodes');
 
 	    case 'categories':
 		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
-		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id));
+		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, '!scholar-form-vtable-nodes');
 	}
 
     } else {
@@ -255,15 +259,15 @@ function scholar_eventapi(&$event, $op)
 	switch ($info['table_name']) {
             case 'people':
                 $record = scholar_load_person($info['row_id'], scholar_admin_path());
-		return scholar_goto(scholar_admin_path('people/edit/' . $record->id));
+		return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, '!scholar-form-vtable-events');
 
 	    case 'generics':
 		$record = scholar_load_generic($info['row_id'], null, scholar_admin_path());
-	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id));
+	        return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, '!scholar-form-vtable-events');
 
 	    case 'categories':
 		$record = scholar_fetch_category($info['row_id'], false, false, scholar_admin_path());
-		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id));
+		return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, '!scholar-form-vtable-events');
 	}      
         }
         return;

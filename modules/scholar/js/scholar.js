@@ -1,7 +1,7 @@
 /**
  * @fileOverview Biblioteka funkcji wykorzystycznych przez moduł Scholar.
  * @author xemlock
- * @version 2012-08-22
+ * @version 2012-08-25
  */
 
 /**
@@ -1609,8 +1609,14 @@ var Scholar = {
 
                     trows.each(function() {
                         var tds  = $(this).children('td'),
+                            id   = $(this).attr('id'),
                             vtab = $('<div class="vtable-vtab"/>'),
                             pane = $('<div class="vtable-pane"/>');
+                    
+                        // przenies atrybut id z wiersza, do diva z trescia drugiej
+                        // kolumny. Chodzi o to, zeby w przypadku podania id elementu scroll
+                        // okna byl ustawiony na gore tabeli.
+                        pane.attr('id', id).data('vtab', vtab);
 
                         $(tds.get(0)).contents().appendTo(vtab);
                         $(tds.get(1)).contents().appendTo(pane);
@@ -1637,6 +1643,25 @@ var Scholar = {
                         vtab.appendTo(vtabs);
                         pane.appendTo(panes);
                     });
+
+                    // jezeli w hashu adresu znajduje sie poprawny identyfikator aktywnej
+                    // zakladke, uczyn ja aktywna.
+                    var hash = document.location.hash.substr(1);
+
+                    // jezeli podano wersje identyfikatora, ktora nie powoduje przesuniecia
+                    // scrolla okna, pomin wykrzyknik
+                    if (hash.charAt(0) == '!') {
+                        hash = hash.substr(1);
+                    }
+
+                    if (hash.length) {
+                        panes.children().each(function() {
+                            var j = $(this);
+                            if (j.attr('id') == hash) {
+                                j.data('vtab').click();
+                            }
+                        });
+                    }
 
                     tbody.empty().append(tr);
                 });
