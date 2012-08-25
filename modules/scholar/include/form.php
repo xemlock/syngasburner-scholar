@@ -847,6 +847,30 @@ function scholar_populate_record(&$record, $values) // {{{
     return $count;
 } // }}}
 
+function scholar_validate_url($element, &$form_state)
+{
+    $scheme = '(ftp|http)s?:\/\/';
+    $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
+    $port = '(:\d+)?';
+    $path = '(\/[^\s]*)*';
+
+    if (!preg_match("/$scheme$host$port$path/i", (string) $element['#value'])) {
+        form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.'));
+    }
+}
+
+function scholar_validate_date($element, &$form_state)
+{
+    
+}
+
+// zwykle dołączana do elementu end_date
+function scholar_validate_date_range($element, &$form_state)
+{
+    // zaklada, ze data startowa jest poprawna data
+
+}
+
 /**
  * Generator formularzy rekordów generycznych.
  */
@@ -901,6 +925,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#title'     => t('URL'),
             '#maxlength' => 255,
             '#description' => t('Adres URL zewnętrznej strony ze szczegółowymi informacjami (musi zaczynać się od http:// lub https://).'),
+            '#element_validate' => array('scholar_validate_url'),
         ),
         'parent_id' => array(
             '#type'     => 'select',
@@ -932,12 +957,27 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         '#description' => t('Enter the basic information'),
     );
 
+    // tablica przechowujaca definicje formularza. Tutaj umieszczane sa
+    // wartosci, ktorych klucze rozpoczynaja sie od #
+    $form = array();
+
     foreach ($fields as $key => $value) {
         // jezeli podano nazwe formularza jako wartosc, z numerycznym
         // kluczem, uzyj tej nazwy do pobrania definicji pola
         if (is_int($key)) {
             $key = strval($value);
             $value = true;
+        }
+
+        // klucz elementu nie moze byc pusty
+        if (!strlen($key) || ctype_space($key)) {
+            continue;
+        }
+
+        // wyodrebnij ustawienia formularza, nie sprawdzaj ich poprawnosci
+        if ($key{0} == '#') {
+            $form[$key] = $value;
+            continue;
         }
 
         switch ($key) {
@@ -993,6 +1033,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                         $value = array('#title' => $value);
                     }
 
+                    // ustawienia podane jawnie nadpisuja domyslne (czyli np.
+                    // walidatory i atrybuty)
                     $vtable['record'][$key] = is_array($value) 
                         ? array_merge($record_fields[$key], $value)
                         : $record_fields[$key];
@@ -1004,7 +1046,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         }
     }
 
-    $form = array();
+    // dodaj do formularza powiazany rekord, oraz pola w vtable
     $form['#record'] = $record;
     $form['vtable']  = $vtable;
 

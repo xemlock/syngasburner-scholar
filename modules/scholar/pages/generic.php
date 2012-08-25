@@ -30,8 +30,9 @@ function scholar_generics_list($subtype) // {{{
 
     foreach ($header as $col) {
         if (isset($col['field']) && 'country_name' == $col['field']) {
-            $cols .= ', ' . scholar_db_country_name('g.country', 'scholar_generics')
-                   . ' AS country_name';
+            $cols .= ', CASE LOWER(locality) WHEN \'internet\' THEN NULL ELSE '
+                   . scholar_db_country_name('g.country', 'scholar_generics')
+                   . ' END AS country_name';
             break;
         }
     }
@@ -235,6 +236,7 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
     $categories = scholar_category_options('generics', 'conference');
 
     $form = scholar_generic_form(array(
+        '#id' => 'scholar-conference-form',
         'title' => array(
             '#title' => t('Conference name'),
             '#required' => true
@@ -260,11 +262,15 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         'details' => array(
             '#description' => t('Additional details about conference, its location or organizer.'),
         ),
+        'image_id',
         'url', 
         'files',
         'events',
         'nodes',
     ), $record);
+
+    // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
+    drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -472,7 +478,6 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
         'parent_id' => empty($parents) ? false : array(
             '#options'     => $parents,
         ),
-        'image_id',
         'url',
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
             'end_date'     => false,
