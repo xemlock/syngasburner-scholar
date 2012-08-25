@@ -54,22 +54,23 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
  */
 function scholar_save_category(&$category) // {{{
 {
+    // nie zezwalaj na modyfikacje liczby odwolan
+    if (property_exists($category, 'refcount')) {
+        unset($category->refcount);
+    }
+
     if (empty($category->id)) {
-        $sql = "INSERT INTO {scholar_categories} (table_name, subtype) VALUES (" 
-             . scholar_db_quote($category->table_name) . ", "
-             . scholar_db_quote($category->subtype) . ")";
-        db_query($sql);
-
-        $category->id = db_last_insert_id('scholar_categories', 'id');
-
+        scholar_db_write_record('scholar_categories', $category);
+    } else {
+        scholar_db_write_record('scholar_categories', $category, 'id');
     }
 
     // zapisz nazwy kategorii
+    db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d", $category->id);
+
     foreach ($category->names as $language => $name) {
-        db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d AND language = '%s'", $category->id, $language);
         db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
     }
-    unset($name);
 
     scholar_save_files($category->id, 'categories', $category->files);
     scholar_save_nodes($category->id, 'categories', $category->nodes);

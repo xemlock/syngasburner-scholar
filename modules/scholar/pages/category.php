@@ -47,11 +47,34 @@ function scholar_category_list($table_name, $subtype = null) // {{{
 } // }}}
 
 /**
- * Strona z formularzem edycji kategorii / typu
+ * Dodaje do pól formularza edycji kategorii pola charakterystyczne
+ * dla kategorii rekordów z tabeli generics i podtypu conference.
+ *
+ * @param array &$fields
+ *     tablica z deklaracją pól w postaci akceptowanej przez
+ *     {@see scholar_generic_form}
+ */
+function scholar_category_form_generics_conference(&$fields) // {{{
+{
+    $fields['list'] = array(
+        '#type' => 'checkbox',
+        // Uwzględnij prezentacje z konferencji należącej do tej kategorii przy automatycznym tworzeniu list
+        '#title' => t('Include presentations belonging to a conference of this category in auto-generated lists'),
+        // Ustawienie to dotyczy stron osób oraz strony z wystąpieniami na konferencjach.
+        '#description' => t('This setting applies to person pages and conference presentations page.'),
+        '#default_value' => true,
+    );
+} // }}}
+
+/**
+ * Strona z formularzem edycji kategorii. Jeżeli istnieje funkcja o nazwie
+ * scholar_category_form_{table_name}_{subtype} zostanie ona wywolana do
+ * zmodyfikowania struktury formularza. Gdy nie podano podtypu lub jest on
+ * pusty nazwa funkcji nie zawiera przyrostka _{subtype}.
  *
  * @param array &$form_state
  * @param string $table_name
- * @param string $subtype
+ * @param string $subtype OPTIONAL
  * @param int $id OPTIONAL
  */
 function scholar_category_form(&$form_state, $table_name, $subtype = null, $id = null) // {{{
@@ -81,11 +104,23 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         );
     }
 
-    $form = scholar_generic_form(array(
+    $fields = array(
         'names' => $names,
         'files',
         'nodes',
-    ), $record);
+    );
+
+    // dodaj dodatkowe pola zwiazane z kategoriami rekordow konktretnych typow
+    $callback = 'scholar_category_form_' . $table_name;
+    if ($subtype) {
+        $callback .= '_' . $subtype;
+    }
+
+    if (function_exists($callback)) {
+        call_user_func_array($callback, array(&$fields));
+    }
+
+    $form = scholar_generic_form($fields, $record);
 
     $form['submit'] = array(
         '#type' => 'submit',
@@ -113,6 +148,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
     if ($record) {
         $is_new = empty($record->id);
         $values = $form_state['values'];
+
         scholar_populate_record($record, $values);
 
         // ustaw nazwy kategorii w dostepnych jezykach
@@ -136,8 +172,8 @@ function scholar_category_form_submit($form, &$form_state) // {{{
         scholar_save_category($record);
 
         drupal_set_message($is_new
-            ? t('Category was added successfully')
-            : t('Category was updated successfully')
+            ? t('Category %title added successfully.', array('%title' => $title))
+            : t('Category %title updated successfully.', array('%title' => $title))
         );
         drupal_goto(scholar_category_path($record->table_name, $record->subtype));
     }

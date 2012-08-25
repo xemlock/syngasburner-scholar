@@ -120,6 +120,12 @@ function scholar_schema() // {{{
                 'not null'  => true,
                 'default'   => 0,
             ),
+            'list' => array(
+                'description' => 'czy dodawac rekordy powiązane z tą kategorią do automatycznie generowanych listingow na stronach osob i stronie z wystapieniami na konferencjach. Poniewaz nie wszystkie rekordy wymagaja ustawienia tej wartosci zezwol na NULL',
+                'type'      => 'int',
+                'size'      => 'tiny',
+                'unsigned'  => true,
+            ),
         ),
         'primary key'  => array('id'),
     ); // }}}

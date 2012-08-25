@@ -900,7 +900,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#type'      => 'textfield',
             '#title'     => t('URL'),
             '#maxlength' => 255,
-            '#description' => t('Adres URL strony ze szczegółowymi informacjami.'),
+            '#description' => t('Adres URL zewnętrznej strony ze szczegółowymi informacjami (musi zaczynać się od http:// lub https://).'),
         ),
         'parent_id' => array(
             '#type'     => 'select',
@@ -1027,9 +1027,9 @@ function theme_scholar_element_vtable($element) // {{{
     return '<table id="' . $id . '" class="scholar-vtable"><tbody>' . $element['#children'] . '</tbody></table>';
 } // }}}
 
-function theme_scholar_element_vtable_row($element)
+function theme_scholar_element_vtable_row($element) // {{{
 {
     return '<tr><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
-}
+} // }}}
 
 // vim: fdm=marker
