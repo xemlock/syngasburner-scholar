@@ -25,7 +25,7 @@ class scholar_converter_chapter implements scholar_converter // {{{
 {
     public function convert($token, $contents)
     {
-        return '<div class="scholar-chapter"><h1>' . $token->getAttribute('chapter') . '</h1>' . trim($contents) . '</div>';
+        return '<div class="scholar-chapter"><h1>' . str_replace("''", '"', $token->getAttribute('chapter')) . '</h1>' . trim($contents) . '</div>';
     }
 } // }}}
 
@@ -33,7 +33,7 @@ class scholar_converter_section implements scholar_converter // {{{
 {
     public function convert($token, $contents)
     {
-        return '<div class="scholar-section"><h2>' . $token->getAttribute('section') . '</h2>' . trim($contents) . '</div>';
+        return '<div class="scholar-section"><h2>' . str_replace("''", '"', $token->getAttribute('section')) . '</h2>' . trim($contents) . '</div>';
     }
 } // }}}
 

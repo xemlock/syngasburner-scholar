@@ -10,6 +10,11 @@ function _scholar_render_escape($str)
     return str_replace(array('[', ']'), array('\[', '\]'), $str);
 }
 
+function _scholar_render_attr($str)
+{
+    return str_replace("\"", "''", $str);
+}
+
 function _scholar_node_url($id, $table_name, $language, $path = null)
 {
     $b = _scholar_fetch_node_binding($id, $table_name, $language);
@@ -222,18 +227,7 @@ function render_people_node($id, $node)
     return ob_get_clean();
 }
 
-function render_categories_node($id)
-{
-    $category = scholar_load_category($id);
-
-    if (empty($category)) {
-        return '';
-    }
-
-    return __FUNCTION__;
-}
-
-function render_generics_node($id)
+function render_generics_node($id, $node)
 {
     $generic = scholar_load_generic($id);
 
@@ -241,5 +235,17 @@ function render_generics_node($id)
         return '';
     }
 
+    $func = '_render_generics_' . $generic->subtype . '_node';
+    if (function_exists($func)) {
+        $func($generic, $node);
+    }
+
     return __FUNCTION__;
 }
+
+function _render_generics_conference_node($generic, $node)
+{
+    
+}
+
+// vim: fdm=marker

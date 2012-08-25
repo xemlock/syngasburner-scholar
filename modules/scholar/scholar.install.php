@@ -376,6 +376,33 @@ function scholar_schema() // {{{
         'primary key' => array('table_name', 'row_id', 'file_id', 'language'),
     ); // }}}
 
+    $schema['scholar_pages'] = array( // {{{
+        'description' => 'Lista funkcji generujacych tresci stron. Dlatego tak, zeby wykorzystac mechanizmy dolaczania wezlow i plikow.',
+        'fields' => array(
+            'id' => array(
+                'type'      => 'serial',
+                'not null'  => true,
+            ),
+            'title' => array(
+                'description' => 'tytul strony wyswietlany uzytkownikowi',
+                'type'      => 'varchar',
+                'length'    => 255,
+                'not null'  => true,
+            ),
+            'callback' => array(
+                'description' => 'nazwa funkcji generujacej zrodlo tresci strony, by moglo zostac wyrenderowane jako tresc wezla',
+                'type'      => 'varchar',
+                'length'    => 255,
+                'not null'  => true,
+            ),
+        ),
+        'primary key' => array('id'),
+        'unique keys' => array(
+            'callback' => array('callback'),
+        ),
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_bin',
+    ); // }}}
+
     return $schema;
 } // }}}
 
@@ -389,6 +416,16 @@ function scholar_install() // {{{
     }
 
     drupal_install_schema('scholar');
+
+    // raz utworzone strony nie moga zostac usuniete
+    db_query("INSERT INTO {scholar_pages} (callback, title) VALUES ('%s', '%s')",
+        'scholar_page_publications', 'Publications and results presentation'
+        // Publikacje i prezentacja wyników
+    );
+    db_query("INSERT INTO {scholar_pages} (callback, title) VALUES ('%s', '%s')",
+        'scholar_page_conferences', 'Presentations at Conferences, Workshops and Seminars'
+        // Wystąpienia na konferencjach, warsztatach i seminariach
+    );
 } // }}}
 
 function scholar_uninstall() // {{{
