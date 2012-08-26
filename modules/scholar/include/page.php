@@ -37,6 +37,7 @@ function scholar_page_conferences() // {{{
     unset($row);
 
     // pamietaj o podziale na lata, jezeli jest wiecej niz jeden rok
+
 } // }}}
 
 // vim: fdm=marker

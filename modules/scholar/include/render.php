@@ -34,7 +34,7 @@ function _scholar_node_url($id, $table_name, $language, $path = null)
     return null;
 }
 
-function render_people_node($id, $node)
+function scholar_render_people_node($id, $node)
 {
     $person = scholar_load_person($id);
     
@@ -227,7 +227,7 @@ function render_people_node($id, $node)
     return ob_get_clean();
 }
 
-function render_generics_node($id, $node)
+function scholar_render_generics_node($id, $node)
 {
     $generic = scholar_load_generic($id);
 
@@ -246,6 +246,18 @@ function render_generics_node($id, $node)
 function _render_generics_conference_node($generic, $node)
 {
     
+}
+
+function scholar_render_pages_node($id, $node)
+{
+    $page = scholar_load_page($id);
+    if (!$page) {
+        return;
+    }
+
+    if (function_exists($page->callback)) {
+        return call_user_func($page->callback, $node);
+    }
 }
 
 // vim: fdm=marker

@@ -226,13 +226,14 @@ function scholar_nodeapi(&$node, $op)
 {
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
         $info = scholar_node_owner_info($node->nid);
+
         if (empty($info)) {
             $node->body = '';
             return;
         }
 
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
-            $func = 'render_' . $info['table_name'] . '_node';
+            $func = 'scholar_render_' . $info['table_name'] . '_node';
             $body = '';
 
             if (function_exists($func)) {
