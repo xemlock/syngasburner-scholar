@@ -54,9 +54,9 @@ function scholar_preprocess_page(&$vars)
 {
 }
 
-function scholar_perm() {
+function scholar_perm() { // {{{
   return array('administer scholar');
-}
+} // }}}
 
 
 /**

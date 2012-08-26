@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Lista stron.
+ *
+ * @return string
+ */
 function scholar_page_list() // {{{
 {
     // pojedynczy element w podmenu z typem MENU_DEFAULT_LOCAL_TASK
@@ -31,20 +36,46 @@ function scholar_page_list() // {{{
 
     // pobierz liste stron wraz z informacja o liczbie opublikowanych wersji
     // jezykowych w aktywnych jezykach
-    $query = db_query("SELECT p.id, p.title, SUM(CASE WHEN n.status <> 0 AND n.language IN $languages_sql THEN 1 ELSE 0 END) AS published FROM {scholar_pages} p LEFT JOIN {scholar_nodes} n ON n.table_name = 'pages' AND p.id = n.row_id AND p.id = %d GROUP BY p.id, p.title", $row['id']);
+    $sql = "SELECT p.id, p.title, SUM(CASE WHEN n.status <> 0 AND n.language IN $languages_sql THEN 1 ELSE 0 END) AS published FROM {scholar_pages} p LEFT JOIN {scholar_nodes} n ON n.table_name = 'pages' AND p.id = n.row_id GROUP BY p.id, p.title ORDER BY p.title";
+
+    $query = db_query($sql);
     $rows  = array();
 
-    while ($row = db_fetch_array($query)) {
-        
-    }
-    asort($countries, SORT_LOCALE_STRING);
+    // ciagniemy z bazy liste stron, przygotowujac tytuly stron do sortowania
+    // wzgledem ich tlumaczen w biezacym jezyku.
 
+    $num_languages = count($languages);
+
+    // dla kazdego wiersza podaj ile wersji jezykowych wezlow odpowiadajacych
+    // danej stronie jest opublikowanych
     while ($row = db_fetch_array($query)) {
+        $published = intval($row['published']);
+
+        if ($published) {
+            $published_html = '<em>' . t('Yes') . '</em>';
+
+            if ($published < $num_languages) {
+                $published_html .= ' (' . $published . '/' . $num_languages . ')';
+            }
+
+        } else {
+            $published_html = '<em>' . t('No') . '</em>';
+        }
+
         $rows[] = array(
-            t($row['title']),
-            $row['published'],
+            $row['title'],
+            $published_html,
             l(t('edit'), scholar_admin_path('page/edit/' . $row['id'])),
         );
+    }
+
+    // posortuj nazwy stron wzgledem tlumaczen ich tytulow
+    if ('en' != $language->language) {
+        scholar_asort($rows, create_function('$a, $b', 'return strcoll($a[0], $b[0]);'));
+    }
+
+    foreach ($rows as &$row) {
+        $row[0] = check_plain($row[0]);
     }
 
     if (empty($rows)) {
@@ -60,6 +91,13 @@ function scholar_page_list() // {{{
     return $help . theme('table', $header, $rows);
 } // }}}
 
+/**
+ * Formularz edycji strony.
+ *
+ * @param array &$form_state
+ * @param int $id
+ * @return array
+ */
 function scholar_page_form(&$form_state, $id) // {{{
 {
     $page = scholar_load_page($id, scholar_admin_path('page'));
@@ -92,7 +130,13 @@ function scholar_page_form(&$form_state, $id) // {{{
     return $form;
 } // }}}
 
-function scholar_page_form_submit($form, &$form_state)
+/**
+ * Zapisuje nowe ustawienia dla wybranej strony.
+ *
+ * @param array $form
+ * @param array &$form_state
+ */
+function scholar_page_form_submit($form, &$form_state) // {{{
 {
     if (empty($form['#record'])) {
         return;
@@ -101,23 +145,24 @@ function scholar_page_form_submit($form, &$form_state)
     $values = $form_state['values'];
     $record = $form['#record'];
 
+    $title  = $record->title;
+
     // jezeli wezly maja pusty tytul wstaw tytul strony odpowiedni
     // dla jezyka wezla
     foreach ($values['nodes'] as $language => &$node) {
-        $title = trim($node['title']);
+        $node_title = trim($node['title']);
         if (empty($title)) {
-            $title = t($record->title, array(), $language);
+            $node_title = t($title, array(), $language);
         }
-        $node['title'] = $title;
+        $node['title'] = $node_title;
     }
     unset($node);
 
     scholar_populate_record($record, $values);
     scholar_save_page($record);
 
-    drupal_set_message(t('%title updated successfully.', array('%title' => $record->title)));
+    drupal_set_message(t('%title updated successfully.', array('%title' => t($title))));
     drupal_goto(scholar_admin_path('page'));
-}
-
+} // }}}
 
 // vim: fdm=marker

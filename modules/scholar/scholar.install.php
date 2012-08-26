@@ -434,6 +434,6 @@ function scholar_uninstall() // {{{
 } // }}}
 
 // cleanup query
-// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DELETE FROM system WHERE name = 'scholar';
+// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DROP TABLE scholar_pages; DELETE FROM system WHERE name = 'scholar';
 
 // vim: fdm=marker

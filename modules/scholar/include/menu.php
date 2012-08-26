@@ -333,13 +333,4 @@ function _scholar_menu_add_page_argument_positions(&$items) // {{{
     unset($item);
 } // }}}
 
-function scholar_add_tab($text, $path)
-{
-    // funkcja udostepniana przez modul tabs
-    if (function_exists('drupal_add_tab')) {
-        drupal_add_tab($text, $path);
-    }
-}
-
-
 // vim: fdm=marker

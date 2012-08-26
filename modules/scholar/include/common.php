@@ -63,6 +63,14 @@ function scholar_goto($path, $query = null, $fragment = null) // {{{
     exit;
 } // }}}
 
+function scholar_add_tab($text, $path) // {{{
+{
+    // funkcja udostepniana przez modul tabs
+    if (function_exists('drupal_add_tab')) {
+        drupal_add_tab($text, $path);
+    }
+} // }}}
+
 /**
  * Wykorzystuje locale_language_list().
  *
@@ -142,7 +150,7 @@ function _scholar_detect_locale($language) // {{{
  *
  * @return string
  */
-function scholar_get_locale()
+function scholar_get_locale() // {{{
 {
     global $language;
     static $locale = null;
@@ -159,7 +167,7 @@ function scholar_get_locale()
     }
 
     return $locale;
-}
+} // }}}
 
 /**
  * Działa tylko pod Linuksem, ponieważ ustawienia locali pod Windowsami
@@ -183,8 +191,6 @@ function scholar_asort(&$array, $callback = 'strcoll') // {{{
     // $ ./install-language-pack {locale_name}
     // $ dpkg-reconfigure locales
 
-    // Windows: polish_Poland.28592
-    // Linux: pl_PL, pl_PL.utf8, pl_PL.ISO8859-2
     if ($locale && ('strcoll' == $callback)) {
         // this of course won't work on Windows, see:
         // https://bugs.php.net/bug.php?id=46165
@@ -243,7 +249,7 @@ function scholar_countries($code = null) // {{{
                 }
 
                 scholar_asort($countries);
-                cache_set($cid, $countries);
+                // cache_set($cid, $countries);
 
             } else {
                 // no Zend_Locale class available, write nothing to cache
