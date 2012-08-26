@@ -15,9 +15,13 @@ function _scholar_render_attr($str)
     return str_replace("\"", "''", $str);
 }
 
-function _scholar_node_url($id, $table_name, $language, $path = null)
+function _scholar_node_url($id, $table_name, $language)
 {
-    $b = _scholar_fetch_node_binding($id, $table_name, $language);
+    // FIXME to nie potrzebuje bindingu tylko 2 kolumny, status i node_id
+    // language musi byc zrzutowany do stringa, bo gdyby podano
+    // null to dostalibysmy wszystkie bindingi
+    $b = _scholar_fetch_node_binding($id, $table_name, (string) $language);
+
     if ($b && $b['status']) {
         if (db_table_exists('url_alias')) {
             $qq = db_query("SELECT dst FROM url_alias WHERE pid = %d", $b['pid']);

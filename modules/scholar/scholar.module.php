@@ -202,7 +202,7 @@ function scholar_node_form(&$form_state, $node) // {{{
     }
 } // }}}
 
-function scholar_eventapi(&$event, $op)
+function scholar_eventapi(&$event, $op) // {{{
 {
     switch ($op) {
         case 'prepare':
@@ -216,11 +216,11 @@ function scholar_eventapi(&$event, $op)
 
         case 'load':
             if (_scholar_rendering_enabled()) {
-                
+                // TODO feature do zrealizowania w przyszlosci
             }
             break;
     }
-}
+} // }}}
 
 function scholar_nodeapi(&$node, $op)
 {
@@ -277,7 +277,7 @@ function scholar_nodeapi(&$node, $op)
 //p($bbcode); exit;
             $node->body = '<div class="scholar-rendering">' . $rendering . '</div>';
             // $node->body = $markup;
-            // $node->created = $node->changed = $timestamp;
+            $node->created = $node->changed = time();
             // db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
             // db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
             // db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);

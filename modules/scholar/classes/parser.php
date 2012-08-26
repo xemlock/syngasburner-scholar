@@ -1,5 +1,7 @@
 <?php
 
+if (class_exists('Zend_Markup_Parser_Bbcode')) {
+
 /**
  * A BBCode markup parser with added support for escaped square brackets.
  */
@@ -78,6 +80,8 @@ class scholar_parser extends Zend_Markup_Parser_Bbcode
         $value = str_replace(array('\[', '\]'), array('[ldelim]', '[rdelim]'), $value);
         return parent::parse($value);
     } // }}}
+}
+
 }
 
 // vim: fdm=marker

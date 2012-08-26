@@ -1,16 +1,36 @@
 <?php
 
 /**
- * @param array $header         tablica koloumn tabeli w postaci opisanej
- *                              w theme_table()
- * @param string|array $before  jeżeli podano argument typu array, zostanie on
- *                              użyty zamiast parametru $columns, w przeciwnym
- *                              razie argument zostanie umieszczony w wynikowym
- *                              stringu bezpośrednio za klauzulą ORDER BY, przed
- *                              kodem opisującym sortowanie
- * @param array $columns        OPTIONAL tablica z dopuszczalnymi nazwami kolumn,
- *                              jeżeli została podana kolumny, których nazwy nie
- *                              znajdują się na niej zostaną usunięte z zapytania
+ * Pobiera wszystkie rekordy związane z wynikiem zapytania.
+ *
+ * @param resource $result
+ *     zasób reprezentujący wynik funkcji db_query
+ * @return array
+ *     lista pobranych rekordów
+ */
+function scholar_db_fetch_all($result) // {{{
+{
+    $rows = array();
+
+    while ($row = db_fetch_array($result)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
+} // }}}
+
+/**
+ * @param array $header
+ *     tablica koloumn tabeli w postaci opisanej w theme_table()
+ * @param string|array $before
+ *     jeżeli podano argument typu array, zostanie on użyty zamiast parametru
+ *     $columns, w przeciwnym razie argument zostanie umieszczony w wynikowym
+ *     stringu bezpośrednio za klauzulą ORDER BY, przed kodem opisującym
+ *     sortowanie
+ * @param array $columns
+ *     opcjonalna tablica z dopuszczalnymi nazwami kolumn. Jeżeli została
+ *     podana, kolumny, których nazwy nie znajdują się w niej, zostaną usunięte
+ *     z zapytania
  * @return string
  */
 function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
@@ -59,7 +79,8 @@ function scholar_db_quote($value) // {{{
  * z używanym rodzajem bazy danych tak, by można go było użyć jako
  * nazwę tabeli lub kolumny.
  *
- * @param string $identifier            nazwa tabeli lub kolumny
+ * @param string $identifier
+ *     nazwa tabeli lub kolumny
  * @return string
  */
 function scholar_db_quote_identifier($identifier) // {{{
@@ -140,11 +161,13 @@ function scholar_db_where($conds) // {{{
 /**
  * Zwraca wyrażenie SQL, które przekształca kod kraju w jego nazwę
  * w bieżącym języku.
- * @param string $column        nazwa kolumny przechowującej dwuliterowy kod kraju,
- *                              jeżeli w nazwie kolumnny występuje kropka zostanie
- *                              ona potraktowana jako alias
- * @param string $table         nazwa tabeli
- * @return string               wyrażenie CASE przekształcające kod kraju w jego nazwę
+ * @param string $column
+ *     nazwa kolumny przechowującej dwuliterowy kod kraju, jeżeli w nazwie
+ *     kolumny występuje kropka, zostanie ona potraktowana jako alias
+ * @param string $table
+ *     nazwa tabeli
+ * @return string
+ *     wyrażenie CASE przekształcające kod kraju w jego nazwę
  */
 function scholar_db_country_name($column, $table) // {{{
 {
@@ -200,8 +223,15 @@ function scholar_db_country_name($column, $table) // {{{
     return $sql;
 } // }}}
 
-// drupal_write_record dziala dobrze, jezeli zadna z wartosci obiektu nie
-// jest nullem i gdy operuje na tabeli gdzie wszystkie kolumny sa NOT NULL.
+/**
+ * Funkcja zapisująca rekord do bazy. W przeciwieństwie do funkcji
+ * drupal_write_record dziala dobrze, gdy nowe wartości kolumny mają wartość
+ * NULL.
+ *
+ * @param string $table
+ * @param object &$record
+ * @param string|array $update
+ */
 function scholar_db_write_record($table, &$record, $update = array()) // {{{
 {
     $schema = drupal_get_schema($table);

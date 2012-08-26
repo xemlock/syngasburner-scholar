@@ -278,12 +278,12 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         'image_id',
         'url',
         'files',
+        'nodes',
         'events' => array(
             // dane poczatku i konca wydarzenia beda pobierane z danych konferencji
             'start_date' => false,
             'end_date'   => false,
         ),
-        'nodes',
     ), $record);
 
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
@@ -437,11 +437,11 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
         scholar_element_separator(),
         'image_id',
         'url',
+        'files',  // pliki
+        'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
             'end_date'     => false,
         ),
-        'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
-        'files',  // pliki
     ), $record);
 
     array_unshift($form, array(
@@ -511,11 +511,10 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
             '#options'     => $parents,
         ),
         'url',
+        'files',
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
             'end_date'     => false,
         ),
-        'nodes',  // dodatkowa wewnetrzna strona poswiecona wydawnictwu
-        'files',  // pliki
     ), $record);
 
     $form['submit'] = array(
@@ -592,10 +591,11 @@ function _scholar_conference_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('Date'), 'field' => 'start_date', 'sort' => 'desc'),
-            array('data' => t('Title'), 'field' => 'title'),
-            array('data' => t('Country'), 'field' => 'country_name'),
-            array('data' => t('Category'),   'field' => 'category_name'),
+            array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Title'),    'field' => 'title'),
+            array('data' => t('Country'),  'field' => 'country_name'),
+            array('data' => t('Category'), 'field' => 'category_name'),
+            array('data' => t('Listed')),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
     }
@@ -605,6 +605,7 @@ function _scholar_conference_list_spec($row = null) // {{{
         check_plain($row['title']),
         check_plain($row['country_name']),
         check_plain($row['category_name']),
+        $row['list'] ? t('Yes') : t('No'),
         l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
         intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
     );

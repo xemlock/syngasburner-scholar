@@ -151,7 +151,7 @@ function scholar_page_form_submit($form, &$form_state) // {{{
     // dla jezyka wezla
     foreach ($values['nodes'] as $language => &$node) {
         $node_title = trim($node['title']);
-        if (empty($title)) {
+        if (empty($node_title)) {
             $node_title = t($title, array(), $language);
         }
         $node['title'] = $node_title;
