@@ -20,7 +20,7 @@ function scholar_file_list() // {{{
     $header = array(
         array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
         array('data' => t('Size'),      'field' => 'size'),
-        array('data' => t('Operations'), 'colspan' => '2')
+        array('data' => t('Operations'), 'colspan' => '2'),
     );
 
     $query = db_query("SELECT * FROM {scholar_files}" . tablesort_sql($header));
@@ -282,17 +282,10 @@ function scholar_file_edit_form(&$form_state, $file_id)
         );
     }
 
-    // dodaj taby jezeli dostepny jest modul tabs
-    if (function_exists('drupal_add_tab')) {
-        drupal_add_tab(t('List'), scholar_admin_path('file'));
-        drupal_add_tab(t('Edit'), scholar_admin_path('file/edit/' . $file->id), array('class' => 'active'));
-
-        // zezwol na usuniecie plitu tylko wtedy, jezeli nie ma stron 
-        // odwolujacych sie do tego pliku
-        if (empty($rows)) {
-            drupal_add_tab(t('Delete'), scholar_admin_path('file/delete/' . $file->id));
-        }
-    }
+    // dodaj taby (dziala jezeli dostepny jest modul tabs)
+    scholar_add_tab(t('list'), scholar_admin_path('file'));
+    scholar_add_tab(t('edit'), scholar_admin_path('file/edit/' . $file->id));
+    scholar_add_tab(t('delete'), scholar_admin_path('file/delete/' . $file->id));
 
     return $form;
 }

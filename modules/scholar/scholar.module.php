@@ -119,43 +119,6 @@ function scholar_add_js() // {{{
     drupal_add_js(drupal_get_path('module', 'scholar') . '/js/scholar.js', 'module', 'header');
 } // }}}
 
-/**
- * Transliteracja z UTF-8 do ASCII.
- *
- * @param string $string
- * @return string
- */
-function scholar_ascii($string) // {{{
-{
-    // http://stackoverflow.com/questions/5048401/why-doesnt-translit-work#answer-5048939
-    // The transliteration done by iconv is not consistent across
-    // implementations. For instance, the glibc implementation transliterates
-    // é into e, but libiconv transliterates it into 'e.
-
-    $string = str_replace(
-        array("æ",  "Æ",   "ß",  "þ",  "Þ", "–", "’", "‘", "“", "”", "„"),
-        array("ae", "Ae", "ss", "th", "Th", "-", "'", "'", "\"", "\"", "\""), 
-        $string
-    );
-
-    if (ICONV_IMPL === 'glibc') {
-        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
-    } else {
-        // na podstawie http://smoku.net/artykuly/zend-filter-ascii
-        $string = iconv('UTF-8', 'WINDOWS-1250//TRANSLIT//IGNORE', $string);
-        $string = strtr($string,
-            "\xa5\xa3\xbc\x8c\xa7\x8a\xaa\x8d\x8f\x8e\xaf\xb9\xb3\xbe"
-          . "\x9c\x9a\xba\x9d\x9f\x9e\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6"
-          . "\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4"
-          . "\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2"
-          . "\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0"
-          . "\xf1\xf2\xf3\xf4\xf5\xf6\xf8\xf9\xfa\xfb\xfc\xfd\xfe",
-            "ALLSSSSTZZZallssstzzzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYT"
-          . "sraaaalccceeeeiiddnnooooruuuuyt");
-    }
-
-    return $string;
-} // }}}
 
 /**
  * Zwraca względną ścieżkę w obrębie bieżącej instalacji Drupala
@@ -192,29 +155,6 @@ function scholar_referer() // {{{
     return null;
 } // }}}
 
-/**
- * Przekierowanie bez żadnej wyrafinowanej obsługi parametru destination.
- *
- * @param string $path
- * @param string $query
- */
-function scholar_goto($path, $query = null, $fragment = null) // {{{
-{
-    // drupal_goto jest fundamentalnie uposledzone ze wzgledu
-    // na dzika obsluge destination
-    $url = url($path, array(
-        'query'    => $query,
-        'absolute' => true,
-        'fragment' => $fragment ? ltrim($fragment, '#') : null,
-    ));
-    $url = str_replace(array("\r", "\n"), '', $url);
-
-    session_write_close();
-
-    header('Status: 302 Found');
-    header('Location: '. $url, true, 302);
-    exit;
-} // }}}
 
 /**
  * @param int $row_id
@@ -229,15 +169,15 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
             return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, $fragment);
 
         case 'generics':
-            $record = scholar_load_generic($row_id, null, scholar_admin_path());
+            $record = scholar_load_generic($row_id, false, scholar_admin_path());
             return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, $fragment);
 
         case 'categories':
-            $record = scholar_fetch_category($row_id, false, false, scholar_admin_path());
+            $record = scholar_load_category($row_id, false, false, scholar_admin_path());
             return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, $fragment);
 
         case 'pages':
-            $record = scholar_fetch_page($row_id, scholar_admin_path());
+            $record = scholar_load_page($row_id, scholar_admin_path());
             return scholar_goto(scholar_admin_path('page/edit/' . $record->id), null, $fragment);
     }
 } // }}}
@@ -261,7 +201,6 @@ function scholar_node_form(&$form_state, $node) // {{{
 	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
     }
 } // }}}
-
 
 function scholar_eventapi(&$event, $op)
 {
@@ -415,72 +354,6 @@ Dwukrotne kliknięcie zaznacza element
 <div id="items"></div>
 <?php
     return scholar_render(ob_get_clean(), true);
-} // }}}
-
-/**
- * Wykorzystuje locale_language_list().
- */
-function scholar_languages($language = null, $default = null) // {{{
-{
-    static $languages = null;
-
-    if (null === $languages) {
-        $languages = module_invoke('locale', 'language_list');
-    }
-
-    if (null === $language) {
-        return $languages;
-    }
-
-    return isset($languages[$language]) ? $languages[$language] : '';
-} // }}}
-
-/**
- * Zwraca listę wszystkich krajów.
- */
-function scholar_countries($code = null) // {{{
-{
-    global $language;
-    static $countries;
-
-    if (null === $countries) {
-        $cid = 'scholar_countries:' . $language->language;
-
-        if (!($data = cache_get($cid))) {
-            $locale = new Zend_Locale($language->language);
-            $zflang = $locale->getLanguage();
-
-            $countries = Zend_Locale::getTranslationList('Territory', $zflang, 2);
-            // filter out unknown region (ZZ)
-            unset($countries['ZZ']);
-
-            switch ($zflang) {
-                case 'pl':
-                    // remove SAR part from China administered country names, as
-                    // it is not obligatory, see: 
-                    // http://en.wikipedia.org/wiki/Hong_Kong#cite_note-1
-                    foreach ($countries as $key => $value) {
-                        $countries[$key] = str_ireplace(', Specjalny Region Administracyjny Chin', '', $value);
-                    }
-                    break;
-            }
-
-            // this of course won't work on Windows, see:
-            // https://bugs.php.net/bug.php?id=46165
-            asort($countries, SORT_LOCALE_STRING);
-
-            cache_set($cid, $countries);
-
-        } else {
-            $countries = (array) $data->data;
-        }
-    }
-
-    if (null === $code) {
-        return $countries;
-    }
-
-    return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
 
 function scholar_render_form() // {{{

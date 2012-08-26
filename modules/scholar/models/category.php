@@ -2,11 +2,11 @@
 
 /**
  * @param int $id
- * @param null|string $table_name
- * @param null|string $subtype
+ * @param string $table_name
+ * @param string $subtype
  * @return object
  */
-function scholar_fetch_category($id, $table_name = false, $subtype = false, $redirect = null) // {{{
+function scholar_load_category($id, $table_name = false, $subtype = false, $redirect = null) // {{{
 {
     $where = array('id' => $id);
 
@@ -41,7 +41,7 @@ function scholar_fetch_category($id, $table_name = false, $subtype = false, $red
         $record->files = scholar_load_files($record->id, 'categories');
         $record->nodes = scholar_load_nodes($record->id, 'categories');
 
-    } elseif (strlen($redirect)) {
+    } else if ($redirect) {
         drupal_set_message(t('Invalid category identifier supplied (%id)', array('%id' => $id)), 'error');
         return scholar_goto($redirect);
     }
@@ -72,8 +72,13 @@ function scholar_save_category(&$category) // {{{
         db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
     }
 
-    scholar_save_files($category->id, 'categories', $category->files);
-    scholar_save_nodes($category->id, 'categories', $category->nodes);
+    if (isset($category->files)) {
+        scholar_save_files($category->id, 'categories', $category->files);
+    }
+
+    if (isset($category->nodes)) {
+        scholar_save_nodes($category->id, 'categories', $category->nodes);
+    }
 
     scholar_invalidate_rendering();
 } // }}}

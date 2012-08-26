@@ -25,7 +25,7 @@ function scholar_page_conferences() // {{{
     }
 
     // pobierz konferencje
-    $query = db_query("SELECT * FROM {scholar_generics} WHERE " . scholar_db_where('id' => array_keys($conferences)));
+    $query = db_query("SELECT * FROM {scholar_generics} WHERE " . scholar_db_where(array('id' => array_keys($conferences))));
     while ($row = db_fetch_array($query)) {
         $conferences[$row['id']] = $row;
     }

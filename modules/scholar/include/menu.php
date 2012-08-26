@@ -183,6 +183,24 @@ function scholar_menu() // {{{
         'file'              => 'pages/file.php',
     );
 
+    $items[$root . '/page'] = array(
+        'type'              => MENU_LOCAL_TASK,
+        'title'             => t('Pages'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_page_list',
+        'parent'            => $root,
+        'file'              => 'pages/page.php',
+    );
+    $items[$root . '/page/edit/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Edit page'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_page_form'),
+        'parent'            => $root . '/page',
+        'file'              => 'pages/page.php',
+    );
+
     _scholar_menu_add_page_argument_positions($items);
 
     return $items;
@@ -314,6 +332,14 @@ function _scholar_menu_add_page_argument_positions(&$items) // {{{
     }
     unset($item);
 } // }}}
+
+function scholar_add_tab($text, $path)
+{
+    // funkcja udostepniana przez modul tabs
+    if (function_exists('drupal_add_tab')) {
+        drupal_add_tab($text, $path);
+    }
+}
 
 
 // vim: fdm=marker

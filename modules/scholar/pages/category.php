@@ -67,7 +67,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         $record->subtype = $subtype;
 
     } else {
-        $record = scholar_fetch_category($id, $table_name, $subtype, scholar_category_path($table_name, $subtype));
+        $record = scholar_load_category($id, $table_name, $subtype, scholar_category_path($table_name, $subtype));
     }
 
     $names = array(
@@ -169,7 +169,7 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
 {
     global $language;
 
-    $record = scholar_fetch_category($id, false, false, scholar_category_path());
+    $record = scholar_load_category($id, false, false, scholar_category_path());
 
     $form = array(
         '#record' => $record,

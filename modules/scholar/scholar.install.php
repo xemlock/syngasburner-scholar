@@ -88,7 +88,7 @@ function scholar_schema() // {{{
             ),
         ),
         'primary key'  => array('id'),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
     $schema['scholar_categories'] = array( // {{{
@@ -144,7 +144,7 @@ function scholar_schema() // {{{
             ),
         ),
         'primary key' => array('category_id', 'language'),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',  
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',  
     ); // }}}
 
     $schema['scholar_generics'] = array( // {{{
@@ -225,7 +225,7 @@ function scholar_schema() // {{{
             'parent'        => array('parent_id'),
             'subtype_category' => array('subtype', 'category_id'),
         ),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_polish_ci',
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
     $schema['scholar_events'] = array( // {{{
@@ -383,14 +383,14 @@ function scholar_schema() // {{{
                 'type'      => 'serial',
                 'not null'  => true,
             ),
-            'title' => array(
-                'description' => 'tytul strony wyswietlany uzytkownikowi',
+            'callback' => array(
+                'description' => 'nazwa funkcji generujacej zrodlo tresci strony, by moglo zostac wyrenderowane jako tresc wezla',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'callback' => array(
-                'description' => 'nazwa funkcji generujacej zrodlo tresci strony, by moglo zostac wyrenderowane jako tresc wezla',
+            'title' => array(
+                'description' => 'tytul strony wyswietlany uzytkownikowi',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
@@ -400,7 +400,7 @@ function scholar_schema() // {{{
         'unique keys' => array(
             'callback' => array('callback'),
         ),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_bin',
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
     return $schema;
