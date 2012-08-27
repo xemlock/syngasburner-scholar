@@ -498,7 +498,7 @@ function theme_scholar_element_people($element) // {{{
     $params = array(
         '#' . $element['#id'],
         $element['#name'],
-        scholar_admin_path('people/itempicker'),
+        url(scholar_admin_path('people/itempicker')),
         $element['#value'],
     );
     $params = implode(',', array_map('drupal_to_js', $params));

@@ -100,7 +100,7 @@ function scholar_page_publications($view, $node) // {{{
     // Reviewed papers / Publikacje w czasopismach recenzowanych
     $articles = array();
 
-    // artykuly wchodzace wsklad ksiazek lub prac zbiorowych
+    // artykuly wchodzace w sklad ksiazek lub prac zbiorowych
     $book_articles = array();
 
     while ($row = db_fetch_array($query)) {
@@ -174,57 +174,82 @@ function scholar_page_publications($view, $node) // {{{
 
 function scholar_page_conferences($view, $node) // {{{
 {
+    $language = $node->language;
+
     // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
+    // country name, locality (Internet), kategoria
     $query = db_query("
         SELECT g.id, g.title, g.details, g.url, g.parent_id,
                g2.title AS parent_title, g2.start_date AS parent_start_date,
                g2.end_date AS parent_end_date, g2.details AS parent_details,
-               g2.url AS parent_url
+               g2.url AS parent_url, g2.country AS parent_country,
+               g2.locality AS parent_locality, c.name AS category_name
         FROM {scholar_generics} g
         JOIN {scholar_generics} g2
             ON g.parent_id = g2.id
+        LEFT JOIN {scholar_category_names} c
+            ON g.category_id = c.category_id
         WHERE g2.list <> 0
             AND g.subtype = 'presentation'
             AND g2.subtype = 'conference'
             AND LENGTH(g.title) > 0
-        ORDER BY g2.start_date DESC
-    ");
+            AND (c.language IS NULL OR c.language = '%s')
+        ORDER BY g2.start_date DESC, g.start_date
+    ", $language);
 
-    // prezentacje pogrupowane wedlug konferencji
-    $conferences = array();
+    // TODO co z kolejnoscia prezentacji w konferencji???
+    // prezentacje pogrupowane wedlug konferencji, a te z kolei
+    // malejaco wedlug roku
+    $year_conferences = array();
+
+    $countries = scholar_countries();
 
     while ($row = db_fetch_array($query)) {
         $parent_id = $row['parent_id'];
+        $year = intval(substr($row['parent_start_date'], 0, 4));
 
-        if (!isset($conferences[$parent_id])) {
-            $conferences[$parent_id] = array(
-                'id'           => $parent_id,
-                'title'        => $row['parent_title'],
-                'start_date'   => $row['parent_start_date'],
-                'end_date'     => $row['parent_end_date'],
-                'details'      => $row['parent_details'],
-                'url'          => $row['parent_url'],
+        if (!isset($year_conferences[$year][$parent_id])) {
+            $locality = trim($row['parent_locality']);
+
+            if (strcasecmp('internet', $locality)) {
+                $country  = isset($countries[$row['parent_country']]) ? ', ' . $countries[$row['parent_country']] : '';
+                $locality = _scholar_publication_details($locality);
+            } else {
+                $country  = '';
+                $locality = '';
+            }
+
+            $year_conferences[$year][$parent_id] = array(
+                'id'         => $parent_id,
+                'title'      => $row['parent_title'],
+                'start_date' => substr($row['parent_start_date'], 0, 10),
+                'end_date'   => substr($row['parent_end_date'], 0, 10),
+                'details'    => $row['parent_details'],
+                'url'        => $row['parent_url'],
+                'country'    => $country,
+                'locality'   => $locality,
                 'presentations' => array(),
             );
         }
 
         _scholar_page_unset_parent_keys($row);
-        $conferences[$parent_id]['presentations'][] = $row;
+        $year_conferences[$year][$parent_id]['presentations'][] = $row;
     }
 
     // dodaj URL do stron z konferencjami i prezentacjami oraz
     // autorow prezentacji
-    foreach ($conferences as &$conference) {
-        _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
-        foreach ($conference['presentations'] as &$presentation) {
-            _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
+    foreach ($year_conferences as &$conferences) {
+        foreach ($conferences as &$conference) {
+            _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
+            foreach ($conference['presentations'] as &$presentation) {
+                _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
+            }
         }
     }
 
-    // pamietaj o podziale na lata, jezeli jest wiecej niz jeden rok
     return $view
-        ->assign('conferences', $conferences)
+        ->assign('year_conferences', $year_conferences)
         ->render('conferences.tpl');
 } // }}}
 

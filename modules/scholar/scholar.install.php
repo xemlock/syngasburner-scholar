@@ -408,9 +408,7 @@ function scholar_schema() // {{{
 
 function scholar_install() // {{{
 {
-    require_once dirname(__FILE__) . '/models/file.php';
-
-    $dir = scholar_file_path();
+    $dir = file_directory_path() . '/scholar';
     if (!is_dir($dir) && !mkdir($dir, 0777)) {
         trigger_error('scholar_install: Unable to create storage directory: ' . $dir, E_USER_ERROR);
     }
