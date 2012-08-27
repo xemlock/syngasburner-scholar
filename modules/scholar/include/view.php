@@ -2,27 +2,22 @@
 
 class scholar_view_vars implements Iterator
 {
-    const FIRST = 0x01;
-    const LAST  = 0x02;
-
     private $_vars = array();
     private $_escape;
 
-    public function __construct($escape = null, $vars = null, $flags = 0) // {{{
+    public function __construct($escape = null, $vars = null) // {{{
     {
         if (null === $escape) {
             $this->_escape = 'htmlspecialchars';
         } else {
             if (!is_callable($escape)) {
-                throw new InvalidArgumentException('Invalid escape function: ' . implode('::', (array) $escape));
+                throw new InvalidArgumentException('Invalid escape function');
             }
             $this->_escape = $escape;
         }
 
-        $keys = self::keys($vars);
-        if ($keys) {
-            for ($i = 0, $n = count($keys); $i < $n; ++$i) {
-                $key = $keys[$i];
+        if (is_array($vars) || ($vars instanceof Iterator)) {
+            foreach ($vars as $key => $value) {
                 $this->assign($key, $value);
             }
         }
@@ -44,9 +39,26 @@ class scholar_view_vars implements Iterator
         return is_string($value) ? $this->escape($value) : $value;
     } // }}}
 
-    public function raw($name) // {{{
+    public function raw($key) // {{{
     {
-        return isset($this->_vars[$name]) ? $this->_vars[$name] : null;
+        return isset($this->_vars[$key]) ? $this->_vars[$key] : null;
+    } // }}}
+
+    /**
+     * Sprawdza czy istnieje zmienna, jeżeli zmienna jest pustym
+     * tekstem jest ona traktowana jakby jej nie było.
+     *
+     * @param string $key
+     */
+    public function has($key) // {{{
+    {
+        $value = $this->raw($key);
+
+        if (is_string($value)) {
+            return 0 < strlen($value);
+        }
+
+        return null !== $value;
     } // }}}
 
     public function escape($value) // {{{
@@ -87,23 +99,6 @@ class scholar_view_vars implements Iterator
     public function __toString() // {{{
     {
         return '';
-    } // }}}
-    
-    public static function keys($var) // {{{
-    {
-        if (is_array($var)) {
-            return array_keys($var);
-        }
-
-        if (is_object($var) && $var implements Iterator) {
-            $keys = array();
-            foreach ($var as $key => $value) {
-                $keys[] = $key;
-            }
-            return $keys;
-        }
-
-        return false;
     } // }}}
 }
 

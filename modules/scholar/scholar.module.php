@@ -242,9 +242,11 @@ function scholar_nodeapi(&$node, $op)
             if (function_exists($func)) {
                 $body = $func($view, $info['row_id'], $node);
             }
+            $bbcode = $body . $info['body'];
 
-            // TODO najpierw sprawdz czy ZF jest dostepny
-            _scholar_include('classes');
+            // $node->body = $bbcode; return;
+
+
 
             $parser = new scholar_parser;
             $parser->addTag('chapter')
@@ -258,7 +260,7 @@ function scholar_nodeapi(&$node, $op)
                      ->addConverter('box',     new scholar_converter_box)
                      ->addConverter('res',     new scholar_converter_res);
 
-            $bbcode = $body . $info['body'];
+            
             //            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
             $rendering = '';
             try {

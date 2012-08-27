@@ -27,18 +27,13 @@ foreach (array('include', 'models') as $dir) {
     }
 }
 
-$classes = '<?php';
-foreach (glob('classes/*.php') as $inc) {
-    $classes .= "\n\n" . get_contents($inc);
-}
-
 $pages = '<?php';
 foreach (glob('pages/*.php') as $inc) {
     $pages .= "\n\n" . get_contents($inc);
 }
 
+@mkdir('build');
 file_put_contents('build/scholar.module', $module);
-file_put_contents('build/scholar.classes.inc', $classes);
 file_put_contents('build/scholar.pages.inc', $pages);
 
 $info = trim(file_get_contents('scholar.info')) . "\n\n"
@@ -49,3 +44,6 @@ file_put_contents('build/scholar.info', $info);
 copy('js/scholar.js',   'build/scholar.js');
 copy('css/scholar.css', 'build/scholar.css');
 copy('scholar.install.php', 'build/scholar.install');
+
+@mkdir('build/templates');
+`cp -R templates/*.tpl build/templates`;

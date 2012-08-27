@@ -16,7 +16,7 @@ function _scholar_page_unset_parent_keys(&$row) // {{{
     }
 } // }}}
 
-function _scholar_page_prepare_collection(&$collection)
+function _scholar_page_augment_collection(&$collection)
 {
     if (is_array($collection)) {
         $keys = array_keys($collection);
@@ -28,9 +28,12 @@ function _scholar_page_prepare_collection(&$collection)
     }
 
     for ($i = 0, $n = count($keys); $i < $n; ++$i) {
-        $key = $keys[$i];
-        $collection[$key]['first'] = 0 == $i;
-        $collection[$key]['last']  = $n - 1 == $i;
+        $element = &$collection[$keys[$i]];
+
+        if (is_array($element)) {
+            $element['first'] = 0 == $i;
+            $element['last']  = $n - 1 == $i;
+        }
     }
 }
 
@@ -38,18 +41,44 @@ function _scholar_page_augment_record(&$record, $row_id, $table_name, $language)
 {
     $language = (string) $language;
 
-    $url = _scholar_node_url($id, $table_name, $language);
+    $url = _scholar_node_url($row_id, $table_name, $language);
     if ($url) {
         $record['url'] = $url;
     }
 
-    $record['authors'] = scholar_load_authors($row_id);
-    $record['files']   = scholar_load_files($row_id, $table_name, $language);
+    $authors = scholar_load_authors($row_id);
+    _scholar_page_augment_collection($authors);
+    $record['authors'] = $authors;
+
+    $files = scholar_load_files($row_id, $table_name, $language);
+    _scholar_page_augment_collection($files);
+    $record['files']   = $files;
+} // }}}
+
+function _scholar_publication_details($details) // {{{
+{
+    // jezeli sa informacje szczegolowe, dodaj do nich przecinek,
+    // ale tylko jezeli nie rozpoczynaja sie od nawiasu
+    $details = trim($details);
+
+    if (strlen($details)) {
+        if (false === strpos('<{([', substr($details, 0, 1))) {
+            $separator = ', ';
+        } else {
+            $separator = ' ';
+        }
+
+        $details = $separator . $details;
+    }
+
+    // poniewaz poza byciem dodatkowym tekstem szczegoly nic nie wnosza,
+    // nie widze przeciwskazan, aby je w ten sposob uzupelnic
+    return $details;
 } // }}}
 
 function scholar_page_publications($view, $node) // {{{
 {
-    global $language;
+    $language = $node->language;
 
     $query = db_query("
         SELECT g.id, g.title, g.start_date, g.details, g.url, g.parent_id,
@@ -66,7 +95,7 @@ function scholar_page_publications($view, $node) // {{{
                 AND (g2.subtype IS NULL OR g2.subtype = 'book')
                 AND (c.language IS NULL OR c.language = '%s')
         ORDER BY g.start_date DESC
-    ", $language->language);
+    ", $language);
 
     // Reviewed papers / Publikacje w czasopismach recenzowanych
     $articles = array();
@@ -85,11 +114,11 @@ function scholar_page_publications($view, $node) // {{{
         // (istniejacy lub nie) to seria wydawnicza lub czasopismo.
         if (empty($row['parent_id']) || empty($row['parent_start_date']) || !strlen($category)) {
             $year  = intval(substr($row['start_date'], 0, 4));
-            $row['year'] = $year ? $year : '';
+            $row['year']    = $year ? $year : '';
+            $row['details'] = _scholar_publication_details($row['details']);
 
-            // wywal kolumny parenta, nie beda pozniej potrzebne
-            _scholar_page_unset_parent_keys($row);
-
+            // dane parenta sa potrzebne do wypisania informacji
+            // o czasopismie, wiec ich nie usuwaj
             $articles[] = $row;
             continue;
         }
@@ -103,27 +132,36 @@ function scholar_page_publications($view, $node) // {{{
                 'id'         => $row['parent_id'],
                 'title'      => $title,
                 'year'       => $year ? $year : '',
-                'details'    => $row['parent_details'],
+                'details'    => _scholar_publication_details($row['parent_details']),
                 'url'        => $row['parent_url'],
                 'articles'   => array(),
             );
         }
 
-        // usun dane parenta z artykulu
+        // usun dane parenta z artykulu, nie beda juz potrzebne
         _scholar_page_unset_parent_keys($row);
+        $row['details'] = _scholar_publication_details($row['details']);
+
         $book_articles[$category][$title]['articles'][] = $row;
     }
 
     // przypisz URLe do stron artykulow i ksiazek oraz autorow
     foreach ($articles as &$article) {
-        _scholar_page_augment_record($article, $article['id'], 'generics', $node->language);
+        _scholar_page_augment_record($article, $article['id'], 'generics', $language);
+
+        // w przypadku artykulow w czasopismach trzeba ustawic
+        // odpowiedni URL parenta
+        $url = _scholar_node_url($article['parent_id'], 'generics', $language);
+        if ($url) {
+            $article['parent_url'] = $url;
+        }
     }
 
     foreach ($book_articles as $category => &$books) {
         foreach ($books as &$book) {
-            _scholar_page_augment_record($book, $book['id'], 'generics', $node->language);
+            _scholar_page_augment_record($book, $book['id'], 'generics', $language);
             foreach ($book['articles'] as &$article) {
-                _scholar_page_augment_record($article, $article['id'], 'generics', $node->language);
+                _scholar_page_augment_record($article, $article['id'], 'generics', $language);
             }
         }
     }
@@ -183,8 +221,6 @@ function scholar_page_conferences($view, $node) // {{{
             _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
         }
     }
-
-    p($conferences);
 
     // pamietaj o podziale na lata, jezeli jest wiecej niz jeden rok
     return $view
