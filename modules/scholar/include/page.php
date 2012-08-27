@@ -16,6 +16,24 @@ function _scholar_page_unset_parent_keys(&$row) // {{{
     }
 } // }}}
 
+function _scholar_page_prepare_collection(&$collection)
+{
+    if (is_array($collection)) {
+        $keys = array_keys($collection);
+    } else {
+        $keys = array();
+        foreach ($collection as $key => $value) {
+            $keys[] = $key;
+        }
+    }
+
+    for ($i = 0, $n = count($keys); $i < $n; ++$i) {
+        $key = $keys[$i];
+        $collection[$key]['first'] = 0 == $i;
+        $collection[$key]['last']  = $n - 1 == $i;
+    }
+}
+
 function _scholar_page_augment_record(&$record, $row_id, $table_name, $language) // {{{
 {
     $language = (string) $language;
@@ -66,19 +84,25 @@ function scholar_page_publications($view, $node) // {{{
         // lub o nieskategoryzowanym parencie. Zakladamy wtedy, ze parent
         // (istniejacy lub nie) to seria wydawnicza lub czasopismo.
         if (empty($row['parent_id']) || empty($row['parent_start_date']) || !strlen($category)) {
+            $year  = intval(substr($row['start_date'], 0, 4));
+            $row['year'] = $year ? $year : '';
+
             // wywal kolumny parenta, nie beda pozniej potrzebne
             _scholar_page_unset_parent_keys($row);
+
             $articles[] = $row;
             continue;
         }
 
         // ksiazki pogrupuj w kategorie
         $title = $row['parent_title'];
+        $year  = intval(substr($row['parent_start_date'], 0, 4));
+
         if (!isset($book_articles[$category][$title])) {
             $book_articles[$category][$title] = array(
                 'id'         => $row['parent_id'],
                 'title'      => $title,
-                'start_date' => $row['parent_start_date'],
+                'year'       => $year ? $year : '',
                 'details'    => $row['parent_details'],
                 'url'        => $row['parent_url'],
                 'articles'   => array(),

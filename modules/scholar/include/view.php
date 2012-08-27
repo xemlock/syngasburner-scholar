@@ -2,12 +2,27 @@
 
 class scholar_view_vars implements Iterator
 {
-    private $_vars = array();    
+    const FIRST = 0x01;
+    const LAST  = 0x02;
 
-    public function __construct($vars = null) // {{{
+    private $_vars = array();
+    private $_escape;
+
+    public function __construct($escape = null, $vars = null, $flags = 0) // {{{
     {
-        if (is_array($vars)) {
-            foreach ($vars as $key => $value) {
+        if (null === $escape) {
+            $this->_escape = 'htmlspecialchars';
+        } else {
+            if (!is_callable($escape)) {
+                throw new InvalidArgumentException('Invalid escape function: ' . implode('::', (array) $escape));
+            }
+            $this->_escape = $escape;
+        }
+
+        $keys = self::keys($vars);
+        if ($keys) {
+            for ($i = 0, $n = count($keys); $i < $n; ++$i) {
+                $key = $keys[$i];
                 $this->assign($key, $value);
             }
         }
@@ -16,7 +31,7 @@ class scholar_view_vars implements Iterator
     public function assign($key, $value) // {{{
     {
         if (is_array($value)) {
-            $this->_vars[$key] = new self($value);
+            $this->_vars[$key] = new self($this->_escape, $value);
         } else {
             $this->_vars[$key] = $value;
         }
@@ -36,7 +51,7 @@ class scholar_view_vars implements Iterator
 
     public function escape($value) // {{{
     {
-        return str_replace(array('[', ']'), array('\[', '\]'), (string) $value);
+        return call_user_func($this->_escape, $value);
     } // }}}
 
     public function __get($key) // {{{
@@ -72,6 +87,23 @@ class scholar_view_vars implements Iterator
     public function __toString() // {{{
     {
         return '';
+    } // }}}
+    
+    public static function keys($var) // {{{
+    {
+        if (is_array($var)) {
+            return array_keys($var);
+        }
+
+        if (is_object($var) && $var implements Iterator) {
+            $keys = array();
+            foreach ($var as $key => $value) {
+                $keys[] = $key;
+            }
+            return $keys;
+        }
+
+        return false;
     } // }}}
 }
 
@@ -140,6 +172,11 @@ class scholar_view extends scholar_view_abstract
         ob_start();
         require func_get_arg(0);
         return ob_get_clean();
+    } // }}}
+
+    public function e($value) // {{{
+    {
+        return $this->escape($value);
     } // }}}
 }
 

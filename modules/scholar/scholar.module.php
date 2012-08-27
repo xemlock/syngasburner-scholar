@@ -236,7 +236,7 @@ function scholar_nodeapi(&$node, $op)
             $func = 'scholar_render_' . $info['table_name'] . '_node';
             $body = '';
 
-            $view = new scholar_view;
+            $view = new scholar_view('_scholar_render_escape');
             $view->setTemplateDir(dirname(__FILE__) . '/templates');
 
             if (function_exists($func)) {
