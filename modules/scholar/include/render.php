@@ -38,7 +38,7 @@ function _scholar_node_url($id, $table_name, $language)
     return null;
 }
 
-function scholar_render_people_node($id, $node)
+function scholar_render_people_node($view, $id, $node)
 {
     $person = scholar_load_person($id);
     
@@ -231,7 +231,7 @@ function scholar_render_people_node($id, $node)
     return ob_get_clean();
 }
 
-function scholar_render_generics_node($id, $node)
+function scholar_render_generics_node($view, $id, $node)
 {
     $generic = scholar_load_generic($id);
 
@@ -241,18 +241,18 @@ function scholar_render_generics_node($id, $node)
 
     $func = '_render_generics_' . $generic->subtype . '_node';
     if (function_exists($func)) {
-        $func($generic, $node);
+        $func($view, $generic, $node);
     }
 
     return __FUNCTION__;
 }
 
-function _render_generics_conference_node($generic, $node)
+function _render_generics_conference_node($view, $generic, $node)
 {
     
 }
 
-function scholar_render_pages_node($id, $node)
+function scholar_render_pages_node($view, $id, $node)
 {
     $page = scholar_load_page($id);
     if (!$page) {
@@ -260,7 +260,7 @@ function scholar_render_pages_node($id, $node)
     }
 
     if (function_exists($page->callback)) {
-        return call_user_func($page->callback, $node);
+        return call_user_func($page->callback, $view, $node);
     }
 }
 

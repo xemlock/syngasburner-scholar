@@ -16,7 +16,20 @@ function _scholar_page_unset_parent_keys(&$row) // {{{
     }
 } // }}}
 
-function scholar_page_publications($node) // {{{
+function _scholar_page_augment_record(&$record, $row_id, $table_name, $language) // {{{
+{
+    $language = (string) $language;
+
+    $url = _scholar_node_url($id, $table_name, $language);
+    if ($url) {
+        $record['url'] = $url;
+    }
+
+    $record['authors'] = scholar_load_authors($row_id);
+    $record['files']   = scholar_load_files($row_id, $table_name, $language);
+} // }}}
+
+function scholar_page_publications($view, $node) // {{{
 {
     global $language;
 
@@ -77,83 +90,82 @@ function scholar_page_publications($node) // {{{
         $book_articles[$category][$title]['articles'][] = $row;
     }
 
-    // przypisz URLe do rekordow
+    // przypisz URLe do stron artykulow i ksiazek oraz autorow
     foreach ($articles as &$article) {
-        $url = _scholar_node_url($article['id'], 'generics', $node->language);
-        if ($url) {
-            $article['url'] = $url;
-        }
+        _scholar_page_augment_record($article, $article['id'], 'generics', $node->language);
     }
 
     foreach ($book_articles as $category => &$books) {
         foreach ($books as &$book) {
-            // pobierz URL dla ksiazki...
-            $url = _scholar_node_url($book['id'], 'generics', $node->language);
-            p($url);
-            if ($url) {
-                $book['url'] = $url;
-            }
-
-            // ...i dla wszystkich znajdujacych sie w niej artykulow
+            _scholar_page_augment_record($book, $book['id'], 'generics', $node->language);
             foreach ($book['articles'] as &$article) {
-                $url = _scholar_node_url($article['id'], 'generics', $node->language);
-                if ($url) {
-                    $article['url'] = $url;
-                }
+                _scholar_page_augment_record($article, $article['id'], 'generics', $node->language);
             }
         }
     }
 
-    // TODO wyrenderuj dane
-    p($articles);
-    p($book_articles);
+    return $view
+        ->assign('articles', $articles)
+        ->assign('book_articles', $book_articles)
+        ->render('publications.tpl');
 } // }}}
 
-function scholar_page_conferences($node) // {{{
+function scholar_page_conferences($view, $node) // {{{
 {
     // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
-    $query = db_query("SELECT g.* FROM {scholar_generics} g JOIN {scholar_generics} g2 ON g.parent_id = g2.id WHERE g2.list <> 0 AND g.subtype = 'presentation' AND g2.subtype = 'conference' AND LENGTH(g.title) > 0 ORDER BY g2.start_date DESC");
+    $query = db_query("
+        SELECT g.id, g.title, g.details, g.url, g.parent_id,
+               g2.title AS parent_title, g2.start_date AS parent_start_date,
+               g2.end_date AS parent_end_date, g2.details AS parent_details,
+               g2.url AS parent_url
+        FROM {scholar_generics} g
+        JOIN {scholar_generics} g2
+            ON g.parent_id = g2.id
+        WHERE g2.list <> 0
+            AND g.subtype = 'presentation'
+            AND g2.subtype = 'conference'
+            AND LENGTH(g.title) > 0
+        ORDER BY g2.start_date DESC
+    ");
 
-    // pobierz prezentacje i identyfikatory konferencji
+    // prezentacje pogrupowane wedlug konferencji
     $conferences = array();
-    $presentations = array();
 
-    foreach (scholar_db_fetch_all($query) as $row) {
-        // dodaj URL strony z prezentacja
-        $row['url'] = _scholar_node_url($row['id'], 'presentation', $node->language);
-        $presentations[] = $row;
-        $conferences[$row['parent_id']] = null;
-    }
+    while ($row = db_fetch_array($query)) {
+        $parent_id = $row['parent_id'];
 
-    // pobierz konferencje
-    $query = db_query("SELECT * FROM {scholar_generics} WHERE " . scholar_db_where(array('id' => array_keys($conferences))));
-    foreach (scholar_db_fetch_all($query) as $row) {
-        // poszukaj najpierw URLa wezla konferencji, dopiero gdy nie zostal
-        // znaleziony uzyj zewnetrznego
-        $url = _scholar_node_url($row['id'], 'generics', $node->language);
-        if ($url) {
-            $row['url'] = $url;
-        }
-        $conferences[$row['id']] = $row;
-    }
-
-    // pobierz autorow prezentacji
-    foreach ($presentations as &$row) {
-        $authors = scholar_load_authors($row['id']);
-
-        foreach ($authors as &$author) {
-            // dodaj adres URL stron osob
-            $author['url'] = _scholar_node_url($author['id'], 'people', $node->language);
+        if (!isset($conferences[$parent_id])) {
+            $conferences[$parent_id] = array(
+                'id'           => $parent_id,
+                'title'        => $row['parent_title'],
+                'start_date'   => $row['parent_start_date'],
+                'end_date'     => $row['parent_end_date'],
+                'details'      => $row['parent_details'],
+                'url'          => $row['parent_url'],
+                'presentations' => array(),
+            );
         }
 
-        $row['authors'] = $authors;
+        _scholar_page_unset_parent_keys($row);
+        $conferences[$parent_id]['presentations'][] = $row;
     }
-    unset($row);
+
+    // dodaj URL do stron z konferencjami i prezentacjami oraz
+    // autorow prezentacji
+    foreach ($conferences as &$conference) {
+        _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
+        foreach ($conference['presentations'] as &$presentation) {
+            _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
+        }
+    }
+
+    p($conferences);
 
     // pamietaj o podziale na lata, jezeli jest wiecej niz jeden rok
-    p($conferences);
-    p($presentations);
+    return $view
+        ->assign('conferences', $conferences)
+        ->render('conferences.tpl');
 } // }}}
 
 // vim: fdm=marker

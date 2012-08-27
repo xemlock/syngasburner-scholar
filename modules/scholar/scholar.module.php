@@ -236,8 +236,11 @@ function scholar_nodeapi(&$node, $op)
             $func = 'scholar_render_' . $info['table_name'] . '_node';
             $body = '';
 
+            $view = new scholar_view;
+            $view->setTemplateDir(dirname(__FILE__) . '/templates');
+
             if (function_exists($func)) {
-                $body = $func($info['row_id'], $node);
+                $body = $func($view, $info['row_id'], $node);
             }
 
             // TODO najpierw sprawdz czy ZF jest dostepny

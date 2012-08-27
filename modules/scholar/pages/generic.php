@@ -615,7 +615,6 @@ function _scholar_presentation_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),  'field' => 'bib_authors'),
             array('data' => t('Title'),    'field' => 'title'),
             array('data' => t('Category'), 'field' => 'category_name'),
@@ -626,9 +625,8 @@ function _scholar_presentation_list_spec($row = null) // {{{
     $title = trim($row['title']);
 
     return array(
-        substr($row['start_date'], 0, 10),
         check_plain($row['bib_authors']),
-        empty($title) ? '<em>' . t('attendance') . '</em>' : check_plain($title),
+        empty($title) ? '<em>' . t('attendance only') . '</em>' : check_plain($title),
         check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
         intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),

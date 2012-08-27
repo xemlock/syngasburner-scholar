@@ -5,7 +5,7 @@
  */
 function scholar_load_authors($generic_id) // {{{
 {
-    $query = db_query("SELECT p.id, p.first_name, p.last_name FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $generic_id);
+    $query = db_query("SELECT p.id, p.first_name, p.last_name, a.weight FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $generic_id);
     $rows = array();
 
     while ($row = db_fetch_array($query)) {
