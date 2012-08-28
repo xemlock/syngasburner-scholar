@@ -134,7 +134,7 @@ function scholar_schema() // {{{
             'language'    => $field_type['language'],
             'name'        => array(
                 'type'     => 'varchar',
-                'length'   => 255,
+                'length'   => 128,
                 'not null' => true,
             ),
         ),
@@ -212,7 +212,7 @@ function scholar_schema() // {{{
             'language'   => $field_type['language'],
             'suppinfo'   => array(
                 'type'     => 'varchar',
-                'length'   => 255,
+                'length'   => 128,
                 'not null' => true,
             ),
         ),

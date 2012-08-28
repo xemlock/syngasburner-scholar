@@ -85,7 +85,14 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     }
 
     $fields = array(
-        'names' => $names,
+        // 'names' => $names,
+        'names' => array(
+            '#type'  => 'scholar_element_langtext',
+            '#title'       => t('Category name'),
+            '#description' => t('Enter category names for each language.'),
+            '#required'    => true,
+            '#maxlength'   => 128,
+        ),
         // 'files',
         // 'nodes',
     );
@@ -131,22 +138,17 @@ function scholar_category_form_submit($form, &$form_state) // {{{
 
         scholar_populate_record($record, $values);
 
-        // ustaw nazwy kategorii w dostepnych jezykach
-        foreach (scholar_languages() as $language => $name) {
-            if (isset($values['names'][$language])) {
-                $record->names[$language] = $values['names'][$language];
+        if (isset($record->nodes)) {
+            // jezeli nie podano tytulow wezla (segmentu) uzyj nazwy kategorii
+            foreach ($record->nodes as $language => &$node) {
+                $title = trim($node['title']);
+                if (0 == strlen($title)) {
+                    $title = strval($record->names[$language]);
+                }
+                $node['title'] = $title;
             }
+            unset($node);
         }
-
-        // jezeli nie podano tytulow wezla (segmentu) uzyj nazwy kategorii
-        foreach ($record->nodes as $language => &$node) {
-            $title = trim($node['title']);
-            if (0 == strlen($title)) {
-                $title = strval($record->names[$language]);
-            }
-            $node['title'] = $title;
-        }
-        unset($node);
 
         // zapisz kategorie
         scholar_save_category($record);

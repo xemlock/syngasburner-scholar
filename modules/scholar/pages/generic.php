@@ -246,7 +246,6 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#title' => t('Conference name'),
             '#required' => true
         ),
-        scholar_element_separator(),
         'start_date' => array(
             '#maxlength' => 10,
             '#required' => true,
@@ -262,6 +261,9 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#description' => t('In case of virtual conferences enter "internet" (without quotes, case-insensitive) to ignore country.'),
         ),
         'country',
+        'suppinfo' => array(
+            '#description' => t('Additional details about this conference.'),
+        ),
         scholar_element_separator(),
         'category_id' => empty($categories) ? false : array(
             '#options' => $categories,
@@ -351,7 +353,7 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
             '#options'     => $categories,
             '#description' => t('Specify presentation type, e.g. speech, poster, etc.'),
         ),
-        'details' => array(
+        'suppinfo' => array(
             '#description' => t('Additional details about this presentation.'),
         ),
         'files',
@@ -422,9 +424,8 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
             '#maxlength'   => 4,
             '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza lub czasopismo.',
         ),
-        'details' => array(
-            '#title' => 'Szczegóły wydawnicze',
-            '#description' => 'Np. redaktorzy, seria wydawnicza, wydawca',
+        'bib_details' => array(
+            '#description' => t('Information about editors, series, publisher etc.'),
         ),
         'authors' => array(
             '#title' => t('Authors'),
@@ -503,8 +504,7 @@ function scholar_article_form(&$form_state, &$record = null) // {{{
         'authors' => array(
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
-        'details' => array(
-            '#title'       => t('Bibliographic details'), // Szczegóły bibliograficzne
+        'bib_details' => array(
             '#description' => t('e.g. volume and issue number, page numbers etc.'), // np. numery tomu i wydania, numery stron
         ),
         'parent_id' => empty($parents) ? false : array(

@@ -45,6 +45,14 @@ function scholar_load_generic($id, $subtype = false, $redirect = null) // {{{
         $record->nodes   = scholar_load_nodes($record->id, 'generics');
         $record->events  = scholar_load_events($record->id, 'generics');
 
+        $query = db_query("SELECT * FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $record->id);
+
+        $suppinfo = array();
+        while ($row = db_fetch_array($query)) {
+            $suppinfo[$row['language']] = $row['suppinfo'];
+        }
+        $record->suppinfo = $suppinfo;
+
     } else if ($redirect) {
         drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
         return scholar_goto($redirect);
@@ -109,6 +117,17 @@ function scholar_save_generic(&$generic) // {{{
             scholar_save_events($generic->id, 'generics', $generic->events);
         }
 
+        if (isset($generic->suppinfo)) {
+            db_query("DELETE FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $generic->id);
+            foreach ((array) $generic->suppinfo as $language => $suppinfo) {
+                $suppinfo = trim($suppinfo);
+                if (strlen($suppinfo)) {
+                    db_query("INSERT INTO {scholar_generic_suppinfo} (generic_id, language, suppinfo) VALUES (%d, '%s', '%s')", $generic->id, $language, $suppinfo);
+                }
+            }
+        }
+
+
         // wymus wygenerowanie na nowo tresci wezlow (segmentow)
         scholar_invalidate_rendering();
     }
@@ -138,6 +157,9 @@ function scholar_delete_generic(&$generic) // {{{
 
     // usuniecie wydarzen
     scholar_delete_events($generic->id, 'generics');
+
+    // usuniecie dodatkowych informacji
+    db_query("DELETE FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $generid->id);
 
     // usuniecie rekordu generycznego
     db_query("DELETE FROM {scholar_generics} WHERE id = %d", $generic->id);

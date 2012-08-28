@@ -69,7 +69,7 @@ function scholar_save_category(&$category) // {{{
     db_query("DELETE FROM {scholar_category_names} WHERE category_id = %d", $category->id);
 
     foreach ($category->names as $language => $name) {
-        db_query("INSERT INTO {scholar_category_names} (category_id, name, language) VALUES (%d, '%s', '%s')", $category->id, $name, $language);
+        db_query("INSERT INTO {scholar_category_names} (category_id, language, name) VALUES (%d, '%s', '%s')", $category->id, $language, $name);
     }
 
     if (isset($category->files)) {

@@ -204,6 +204,55 @@ form.scholar .scholar-cancel:hover {
   background: #fff;
 }
 
+.scholar-language-label .language-icon {
+  margin-right: 2px;
+  border: 1px solid #999;
+}
+
+.scholar-element-wrapper {
+  border: 1px solid #aaa;
+  width: 95%;
+  padding: 0.5em;
+}
+.scholar-element-wrapper:hover {
+  border-color: #777;
+}
+
+.scholar-element-langtext table {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+.scholar-element-langtext tbody {
+  border: none;
+}
+.scholar-element-langtext td {
+}
+.scholar-element-langtext td:first-child {
+  white-space: nowrap;
+}
+.scholar-element-langtext .form-item {
+  margin: 0;
+}
+.scholar-element-langtext .form-text {
+  width: 99%;
+}
+
+.scholar-element-langtext .scholar-character-countdown {
+  font-size: 85%;
+  color: #888;
+  cursor: help;
+  display: block;
+}
+
+form.scholar .form-text {
+  padding: .25em;
+}
+
+form.scholar .form-text:focus {
+  border-color: #000;
+}
+
 
 /* modal {{{ */
 .dialog {

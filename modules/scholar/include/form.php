@@ -72,6 +72,12 @@ function scholar_elements() // {{{
         '#element_validate' => array('form_type_scholar_element_files_validate'),
     );
 
+    $elements['scholar_element_langtext'] = array(
+        '#input'            => true,
+        '#process'          => array('form_type_scholar_element_langtext_process'),
+        '#element_validate' => array('form_type_scholar_element_langtext_validate'),
+    );
+
     $elements['scholar_element_people'] = array(
         '#input'            => true,
     );
@@ -95,10 +101,6 @@ function scholar_elements() // {{{
                                      // stanie sie tablica
     );
 
-    $elements['scholar_element_multilang'] = array(
-        '#input'            => true,
-    );
-
     return $elements;
 } // }}}
 
@@ -120,6 +122,7 @@ function scholar_elements_theme() // {{{
     $theme['scholar_element_cancel']       = $theme_arguments;
     $theme['scholar_element_events']       = $theme_arguments;
     $theme['scholar_element_files']        = $theme_arguments;
+    $theme['scholar_element_langtext']     = $theme_arguments;
     $theme['scholar_element_people']       = $theme_arguments;
     $theme['scholar_element_vtable']       = $theme_arguments;
     $theme['scholar_element_vtable_row']   = $theme_arguments;
@@ -241,10 +244,13 @@ function scholar_language_label($language, $label = null) // {{{
         $dummy = new stdClass;
         $dummy->language = $language;
 
-        return theme('languageicons_icon', $dummy, $name) . ' ' . $label;
+        $label = theme('languageicons_icon', $dummy, $name) . ' ' . $label;
+
+    } else {
+        $label = '[' . $name . '] ' . $label;
     }
 
-    return '[' . $name . '] ' . $label;
+    return '<span class="scholar-language-label">' . $label . '</span>';
 } // }}}
 
 /**
@@ -391,10 +397,15 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#title'     => t('Title'),
             '#maxlength' => 255,
         ),
-        'details' => array(
+        'bib_details' => array(
             '#type'      => 'textfield',
-            '#title'     => t('Details'),
+            '#title'     => t('Bibliographic details'), // Szczegóły bibliograficzne
             '#maxlength' => 255,
+        ),
+        'suppinfo' => array(
+            '#type'      => 'scholar_element_langtext',
+            '#title'     => t('Supplementary information'),
+            '#maxlength' => 128,
         ),
         'start_date' => array(
             '#type'      => 'textfield',
@@ -564,6 +575,18 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 function scholar_element_separator() // {{{
 {
     return array('#type' => 'markup', '#value' => '<div style="width:95%;margin:2em 0 1em"><hr/></div>');
+} // }}}
+
+/**
+ * Owija zawartość elementu w DIV.scholar-element-wrapper.
+ *
+ * @param array $element
+ * @param string $content
+ * @return string
+ */
+function scholar_theme_element($element, $content) // {{{
+{
+    return theme('form_element', $element, '<div class="scholar-element-wrapper">' . $content . '</div>');
 } // }}}
 
 // vim: fdm=marker

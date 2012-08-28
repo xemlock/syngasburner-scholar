@@ -1672,3 +1672,38 @@ var Scholar = {
 
 Scholar.modal = new Scholar.Dialog;
 
+$(function() {
+    $('.scholar-character-countdown').each(function() {
+        var j = $(this),
+            target = $('#' + j.attr('data-id')),
+            maxlen = parseInt(target.attr('maxlength'));
+
+        if (!maxlen) {
+            return;
+        }
+
+        function update() {
+            j.html(String(maxlen - target.val().length));
+        }
+
+        target.bind('change', update);
+
+        target.keydown(function() {
+            var delta = maxlen - target.val().length;
+            // keydown jest wyzwalany w momencie pojawienia sie nowego
+            // znaku, przed puszczeniem klawisza. Stad trzeba dodac 1,
+            // ale tylko wtedy gdy maksymalna liczba znakow nie zostala
+            // osiagnieta.
+            if (delta > 0) {
+                ++delta;
+            }
+            j.html(String(delta));
+        });
+
+        update();
+    });
+
+
+});
+
+// vim: fdm=marker
