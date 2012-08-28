@@ -205,12 +205,12 @@ function scholar_schema() // {{{
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
-    $schema['scholar_generic_shortinfo'] = array( // {{{
+    $schema['scholar_generic_suppinfo'] = array( // {{{
         'description' => 'Short info about related generic record.',
         'fields' => array(
             'generic_id' => $field_type['id_ref'],
             'language'   => $field_type['language'],
-            'shortinfo'  => array(
+            'suppinfo'   => array(
                 'type'     => 'varchar',
                 'length'   => 255,
                 'not null' => true,
@@ -370,6 +370,6 @@ function scholar_uninstall() // {{{
 } // }}}
 
 // cleanup query
-// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generic_shortinfo; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DROP TABLE scholar_pages; DELETE FROM system WHERE name = 'scholar';
+// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generic_suppinfo; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DROP TABLE scholar_pages; DELETE FROM system WHERE name = 'scholar';
 
 // vim: fdm=marker

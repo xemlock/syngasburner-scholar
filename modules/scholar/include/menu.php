@@ -201,10 +201,35 @@ function scholar_menu() // {{{
         'file'              => 'pages/page.php',
     );
 
+    $items[$root . '/schema'] = array(
+        'type'              => MENU_CALLBACK,
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_show_schema',
+    );
+
     _scholar_menu_add_page_argument_positions($items);
 
     return $items;
 } // }}}
+
+function scholar_show_schema()
+{
+    $html = '';
+
+    foreach (drupal_get_schema() as $name => $table) {
+        if (strncmp('scholar_', $name, 8)) {
+            continue;
+        }
+
+        $html .= db_prefix_tables(
+            implode(";\n", db_create_table_sql($name, $table)) . ";\n"
+        );
+        $html .= "\n";
+    }
+
+    drupal_set_title('Schema');
+    return '<pre><code class="sql">' . $html . '</code></pre>';
+}
 
 function _scholar_category_menu($root_path, $table_name, $subtype = null, $titles = array()) // {{{
 {

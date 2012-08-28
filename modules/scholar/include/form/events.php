@@ -118,8 +118,9 @@ function form_type_scholar_element_events_process($element) // {{{
 
 /**
  * Wartością elementu są dane wydarzeń, których kluczami są kody języka.
- * Niestety form_builder nadpisuje wartości dla kontenerów. Więc trzeba
- * sobie z tym poradzić.
+ * Niestety form_builder w przypadku kontenerów dopisuje wartości elementów
+ * zawartych w kontenerach do wartości zwracanych przez same kontenery. Co może
+ * całkowicie zniszczyć wartość zwracaną przez funkcje analogiczne do tej.
  * @return array
  */
 function form_type_scholar_element_events_value($element, $post = false) // {{{

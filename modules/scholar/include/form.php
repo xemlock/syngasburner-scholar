@@ -91,8 +91,12 @@ function scholar_elements() // {{{
     $elements['scholar_element_vtable_row'] = array(
         '#input'            => false,
         '#title'            => null,
-        '#description'      => null, // jezeli bedzie pusty string #description
+        '#description'      => null, // jezeli bedzie pusty string, #description
                                      // stanie sie tablica
+    );
+
+    $elements['scholar_element_multilang'] = array(
+        '#input'            => true,
     );
 
     return $elements;
