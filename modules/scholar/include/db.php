@@ -192,7 +192,7 @@ function scholar_db_country_name($column, $table) // {{{
 
     // pobierz liste wystepujacych w tabeli krajow, tutaj alias
     // nie jest potrzebny
-    $query = db_query("SELECT DISTINCT $column AS country FROM {$table} WHERE country IS NOT NULL");
+    $query = db_query("SELECT DISTINCT $column AS country FROM {{$table}} WHERE country IS NOT NULL");
     $codes = array();
 
     while ($row = db_fetch_array($query)) {

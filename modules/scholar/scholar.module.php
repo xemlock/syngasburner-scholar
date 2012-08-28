@@ -26,12 +26,14 @@ function p($var, $label = null)
     $last = ($last + 1) % count($colors);
 }
 
-function _scholar_include($names) // {{{
+function _scholar_include($names, $rootdir = null) // {{{
 {
-    $__dir__ = dirname(__FILE__);
+    if (null === $rootdir) {
+        $rootdir = dirname(__FILE__);
+    }
 
     foreach ((array) $names as $name) {
-        $path = $__dir__ . '/' . ltrim($name, '/');
+        $path = $rootdir . '/' . ltrim($name, '/');
 
         if (is_file($path)) {
             require_once $path;
@@ -39,8 +41,16 @@ function _scholar_include($names) // {{{
         } elseif (is_dir($path)) {
             if ($dh = @opendir($path)) {
                 while ($entry = readdir($dh)) {
+                    if ($entry{0} == '.') {
+                        continue;
+                    }
+
                     $filepath = $path . '/' . $entry;
-                    if (is_file($filepath) && '.php' === substr($entry, -4)) {
+
+                    if (is_dir($filepath)) {
+                        _scholar_include($entry, $path);
+
+                    } else if (is_file($filepath) && '.php' === substr($entry, -4)) {
                         require_once $filepath;
                     }
                 }

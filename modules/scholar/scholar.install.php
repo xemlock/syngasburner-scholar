@@ -7,20 +7,52 @@
  */
 function scholar_schema() // {{{
 {
+    // predefiniowane typy kolumn {{{
+    $field_type['id'] = array(
+        'type'      => 'serial',
+        'not null'  => true,
+    );
+    $field_type['table_name'] = array(
+        'description' => 'Table name containing referenced record, without scholar_ prefix.',
+        'type'      => 'varchar',
+        'length'    => 32, // polowa maksymalnej dlugosci nazwy tabeli / kolumny
+                           // w MySQL
+        'not null'  => true,
+    );
+    $field_type['subtype'] = array(
+        'description' => 'Subtype of a record.',
+        'type'      => 'varchar',
+        'length'    => 32,
+    );
+    $field_type['id_ref'] = array(
+        'description' => 'Identifier (primary key value) of referenced record',
+        'type'      => 'int',
+        'not null'  => true,
+    );
+    $field_type['optional_id_ref'] = array(
+        'type'      => 'int',
+        'not null'  => false,
+    );
+    $field_type['language'] = array(
+        'description' => 'Name of a language, references languages (language)',
+        'type'      => 'varchar', // typem languages.language jest VARCHAR(12)
+        'length'    => 12,
+        'not null'  => true,
+    );
+    $field_type['weight'] = array(
+        'description' => 'Record ordering',
+        'type'      => 'int',
+        'default'   => 0,
+        'not null'  => true,
+    );
+    // }}}
+
     $schema['scholar_nodes'] = array( // {{{
-        'description' => 'numery węzłów zarządzanych przez obiekty scholara',
+        'description' => 'Bindings between nodes and scholar records.',
         'fields' => array(
-            'table_name' => array(
-                // people, generics, categories
-                'type'      => 'varchar',
-                'length'    => 32,
-                'not null'  => true,
-            ),
-            'row_id' => array(
-                // scholar_people.id OR scholar_generics.id OR scholar_categories.id
-                'type'      => 'int',
-                'not null'  => true,
-            ),
+            'table_name' => $field_type['table_name'],
+            'row_id'     => $field_type['id_ref'],
+            'language'   => $field_type['language'],
             'node_id' => array(
                 // REFERENCES node (nid)
                 'description' => 'REFERENCES node (nid)',
@@ -35,26 +67,17 @@ function scholar_schema() // {{{
                 // REFERENCES url_alias (pid)
                 'type'      => 'int',
             ),
-            'language' => array(
-                // REFERENCES languages (language)
-                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
-                'length'    => 12,
-                'not null'  => true,
-            ),
-            'status' => array( // czy wezel opublikowany
+            'status' => array(
+                'description' => 'Is node published?',
                 'type'      => 'int',
                 'size'      => 'tiny',
                 'not null'  => true,
             ),
             'last_rendered' => array(
-                // kiedy ostatnio renderowano zawartosc wezla, porownywane
-                // z variable(name='scholar_last_change')
-                // pusta wartosc oznacza koniecznosci wygenerowania tresci
                 'type'      => 'int', // timestamp
             ),
             'body' => array(
-                // tresc wezla, ktora po przetworzeniu (renderowaniu)
-                // zostanie zapisana do wezla
+                'description' => 'User-generated content that will be included in automatically generated node content.',
                 'type'      => 'text',
                 'size'      => 'big',
             ),
@@ -68,21 +91,18 @@ function scholar_schema() // {{{
     $schema['scholar_people'] = array( // {{{
         'description' => 'osoby - autorzy prac, prowadzący wykłady etc.',
         'fields' => array(
-            'id' => array(
-                'type'      => 'serial',
-                'not null'  => true,
-            ),
+            'id'         => $field_type['id'],
             'first_name' => array(
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'last_name' => array(
+            'last_name'  => array(
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
-            'image_id' => array(
+            'image_id'   => array(
                 // REFERENCES image (id)
                 'type'      => 'int',
             ),
@@ -94,26 +114,9 @@ function scholar_schema() // {{{
     $schema['scholar_categories'] = array( // {{{
         'description' => 'typy czasopism, załączników, wykładów',
         'fields' => array(
-            'id' => array(
-                'type'      => 'serial',
-                'not null'  => true,
-            ),
-            'table_name' => array(
-                'description' => 'do rekordów jakiej tabeli można zastostować te kategorie, nazwa tabeli bez prefiksu scholar_',
-                'type'      => 'varchar',
-                'length'    => 32,
-                'not null'  => true,
-            ),
-            'subtype' => array(
-                'description' => 'podtyp w tabeli, może być pusty jeżeli tabela tego nie wymaga',
-                'type'      => 'varchar',
-                'length'    => 32,
-            ),
-            'color' => array(
-                'description' => 'kolor do oznaczenia obiektów danej kategorii np. w kalendarzu',
-                'type'      => 'varchar',
-                'length'    => 7, // #rrggbb
-            ),
+            'id'         => $field_type['id'],
+            'table_name' => $field_type['table_name'],
+            'subtype'    => $field_type['subtype'],
             'refcount' => array(
                 'description' => 'liczba rekordow powiązanych z tą kategorią',
                 'type'      => 'int',
@@ -125,54 +128,28 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_category_names'] = array( // {{{
-        'description' => 'Nazwy kategorii',
+        'description' => 'Category names',
         'fields' => array(
-            'category_id' => array(
-                'type' => 'int',
+            'category_id' => $field_type['id_ref'],
+            'language'    => $field_type['language'],
+            'name'        => array(
+                'type'     => 'varchar',
+                'length'   => 255,
                 'not null' => true,
-            ),
-            'name' => array(
-                'description' => 'nazwa kategorii',
-                'type'      => 'varchar',
-                'length'    => 255,
-                'not null'  => true,
-            ),
-            'language' => array(
-                'type'      => 'varchar',
-                'length'    => 12,
-                'not null'  => true,
             ),
         ),
         'primary key' => array('category_id', 'language'),
-        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',  
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
     $schema['scholar_generics'] = array( // {{{
-        'description' => 'Generyczna tabela na obiekty: kontenery na publikacje: czasopisma, monografie lub wykłady: konferencje, seminaria, oraz ich elementy',
+        'description' => 'Table for storing generic records: articles, books (article containers), presentations, conferences (presentation containers), etc.',
         'fields' => array(
-            'id' => array(
-                'type'      => 'serial',
-                'not null'  => true,
-            ),
-            'parent_id' => array(
-                'type'      => 'int', // references scholar_generics (id)
-            ),
-            'subtype' => array(
-                // predefiniowane:  
-                //   conference (jak journal ale z dokładną datą początku),
-                //   presentation (element składowy conference),
-                //   journal (czasopismo, książka, monografia, proceedings),
-                //   article (element składowy journal),
-                'description' => 'predefiniowany typ, raz ustalony nie podlega zmianie',
-                'type'      => 'varchar', 
-                'length'    => 32,
-                'not null'  => true,
-            ), 
-            'category_id' => array(
-                // REFERENCES scholar_categories (id)
-                // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
-                'type'      => 'int',
-            ),
+            'id'          => $field_type['id'],
+            'parent_id'   => $field_type['optional_id_ref'], // references scholar_generics (id)
+            'subtype'     => $field_type['subtype'],
+            'category_id' => $field_type['optional_id_ref'], // REFERENCES scholar_categories (id)
+                                                             // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
             'start_date' => array(
                 'type'      => 'datetime',
             ),
@@ -203,8 +180,8 @@ function scholar_schema() // {{{
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
-            'details' => array(
-                'description' => 'article - dodatkowa specyfikacja uzupełniająca bibliografię',
+            'bib_details' => array(
+                'description' => 'bibliographic details (books and articles)',
                 'type'      => 'varchar',
                 'length'    => 255,
             ),
@@ -228,34 +205,37 @@ function scholar_schema() // {{{
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
+    $schema['scholar_generic_shortinfo'] = array( // {{{
+        'description' => 'Short info about related generic record.',
+        'fields' => array(
+            'generic_id' => $field_type['id_ref'],
+            'language'   => $field_type['language'],
+            'shortinfo'  => array(
+                'type'     => 'varchar',
+                'length'   => 255,
+                'not null' => true,
+            ),
+        ),
+        'primary key' => array('generic_id', 'language'),
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
+    ); // }}}
+
     $schema['scholar_events'] = array( // {{{
         'description' => 'Powiazania miedzy rekordami generycznymi a zdarzeniami',
         'fields' => array(
-            'table_name' => array(
-                'type'      => 'varchar',
-                'length'    => 32,
-                'not null'  => true,
-            ),
-            'row_id' => array(
-                'type'      => 'int',
-                'not null'  => true,
-            ),
-            'event_id' => array(
+            'table_name' => $field_type['table_name'],
+            'row_id'     => $field_type['id_ref'],
+            'event_id'   => array(
                 // REFERENCES events (id)
-                'type'      => 'int',
-                'not null'  => true,
+                'type'     => 'int',
+                'not null' => true,
             ),
-            'language' => array(
-                // REFERENCES languages (language)
-                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
-                'length'    => 12,
-                'not null'  => true,
-            ),
-            'body' => array(
+            'language'   => $field_type['language'],
+            'body'       => array(
                 // tresc wydarzenia, ktora po przetworzeniu (renderowaniu)
                 // zostanie zapisana do wezla
-                'type'      => 'text',
-                'size'      => 'medium',
+                'type'     => 'text',
+                'size'     => 'medium',
             ),
         ),
         'primary key' => array('table_name', 'row_id', 'language'),
@@ -267,22 +247,9 @@ function scholar_schema() // {{{
     $schema['scholar_authors'] = array( // {{{
         'description' => 'autorzy artykułów lub książek',
         'fields' => array(
-            'person_id' => array(
-                // REFERENCES scholar_people (id)
-                'type'      => 'int',
-                'not null'  => true,
-            ),
-            'generic_id' => array(
-                // REFERENCES scholar_generics (id)
-                'type'      => 'int',
-                'not null'  => true,
-            ),
-            'weight' => array(
-                'description' => 'kolejność autorów artykułu',
-                'type'      => 'int',
-                'not null'  => true,
-                'default'   => 0,
-            ),
+            'person_id'  => $field_type['id_ref'], // REFERENCES scholar_people (id)
+            'generic_id' => $field_type['id_ref'], // REFERENCES scholar_generics (id)
+            'weight'     => $field_type['weight'],
         ),
         'primary key'  => array('person_id', 'generic_id'),
     ); // }}}
@@ -292,10 +259,7 @@ function scholar_schema() // {{{
         // innymi dlatego, zeby jeden plik mogl byc podpiety do wiecej niz
         // jednego wezla.
         'fields' => array(
-            'id' => array(
-                'type'      => 'serial',
-                'not null'  => true,
-            ),
+            'id' => $field_type['id'],
             'filename' => array(
                 'description' => 'Nazwa pliku na dysku wewnatrz katalogu z plikami',
                 'type'      => 'varchar',
@@ -338,38 +302,15 @@ function scholar_schema() // {{{
     $schema['scholar_attachments'] = array( // {{{
         'description' => 'pliki podpięte do wpisów',
         'fields' => array(
-            'table_name' => array(
-                'description' => 'do rekordu jakiej tabeli nalezy identyfikator',
-                'type'      => 'varchar',
-                'length'    => 32,
-                'not null'  => true,
-            ),
-            'row_id' => array(
-                'description' => 'scholar_people.id albo scholar_generics.id, rozroznienie na podstawie table_name',
-                'type'      => 'int',
-                'not null'  => true,
-            ),
-            'file_id' => array(
-                // REFERENCES scholar_files (fid)
-                'type'      => 'int',
-                'not null'  => true,
-            ),
-            'label' => array(
+            'table_name' => $field_type['table_name'],
+            'row_id'     => $field_type['id_ref'],
+            'file_id'    => $field_type['id_ref'], // REFERENCES scholar_files (fid)
+            'language'   => $field_type['language'],
+            'weight'     => $field_type['weight'],
+            'label'      => array(
                 'description' => 'etykieta pliku uzywana np. w nazwie linku do tego pliku',
                 'type'      => 'varchar',
                 'length'    => 64,
-                'not null'  => true,
-            ),
-            'language' => array(
-                'description' => 'jezyk etykiety pliku',
-                'type'      => 'varchar', // typ languages.language to VARCHAR(12)
-                'length'    => 12,
-                'not null'  => true,
-            ),
-            'weight' => array(
-                'description' => 'kolejnosc pliku na liscie',
-                'type'      => 'int',
-                'default'   => 0,
                 'not null'  => true,
             ),
         ),
@@ -379,18 +320,15 @@ function scholar_schema() // {{{
     $schema['scholar_pages'] = array( // {{{
         'description' => 'Lista funkcji generujacych tresci stron. Dlatego tak, zeby wykorzystac mechanizmy dolaczania wezlow i plikow.',
         'fields' => array(
-            'id' => array(
-                'type'      => 'serial',
-                'not null'  => true,
-            ),
+            'id' => $field_type['id'],
             'callback' => array(
-                'description' => 'nazwa funkcji generujacej zrodlo tresci strony, by moglo zostac wyrenderowane jako tresc wezla',
+                'description' => 'Name of a function that generates page code to be rendered.',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
             ),
             'title' => array(
-                'description' => 'tytul strony wyswietlany uzytkownikowi',
+                'description' => 'Human-readable page title.',
                 'type'      => 'varchar',
                 'length'    => 255,
                 'not null'  => true,
@@ -432,6 +370,6 @@ function scholar_uninstall() // {{{
 } // }}}
 
 // cleanup query
-// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DROP TABLE scholar_pages; DELETE FROM system WHERE name = 'scholar';
+// DROP TABLE scholar_events; DROP TABLE scholar_attachments; DROP TABLE scholar_files; DROP TABLE scholar_authors; DROP TABLE scholar_nodes; DROP TABLE scholar_people; DROP TABLE scholar_generic_shortinfo; DROP TABLE scholar_generics; DROP TABLE scholar_category_names; DROP TABLE scholar_categories; DROP TABLE scholar_pages; DELETE FROM system WHERE name = 'scholar';
 
 // vim: fdm=marker
