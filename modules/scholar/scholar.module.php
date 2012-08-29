@@ -179,7 +179,7 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
             return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, $fragment);
 
         case 'generics':
-            $record = scholar_load_generic($row_id, false, scholar_admin_path());
+            $record = scholar_load_record('generics', $row_id, scholar_admin_path());
             return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, $fragment);
 
         case 'categories':

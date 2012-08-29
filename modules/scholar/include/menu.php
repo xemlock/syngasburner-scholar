@@ -101,6 +101,16 @@ function scholar_menu() // {{{
         t('Conferences'), 
         array('edit' => t('Edit conference'))
     );
+    $items[$root . '/conference/presentations/%'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Conference presentations'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_conference_presentations_form'),
+        'parent'            => $root . '/conference',
+        'file'              => 'pages/generic.php',
+    );
+
     $items += _scholar_category_menu($root . '/conference', 'generics', 'conference', array(
         'edit'   => t('Edit conference category'),
         'delete' => t('Delete conference category'),

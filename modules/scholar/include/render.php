@@ -40,7 +40,7 @@ function _scholar_node_url($id, $table_name, $language)
 
 function scholar_render_people_node($view, $id, $node)
 {
-    $person = scholar_load_person($id);
+    $person = scholar_load_record('people', $id);
     
     if (empty($person)) {
         return '';
@@ -66,7 +66,7 @@ function scholar_render_people_node($view, $id, $node)
 
         foreach ($articles as $article) {
             // pobierz pelne listy autorow, posortowanych w odpowiedniej kolejnosci
-            $authors = scholar_load_authors($article['id']);
+            $authors = scholar_load_authors($article['id'], 'generics');
             echo '[block="' . intval($article['start_date']) . '"]', "\n";
 
             // autorzy
@@ -82,8 +82,12 @@ function scholar_render_people_node($view, $id, $node)
 
                 $fn = _scholar_render_escape($author['first_name'] . ' ' . $author['last_name']);
 
-                // sprobuj znalezc link
-                $url = _scholar_node_url($author['id'], 'people', $node->language);
+                // sprobuj znalezc link, ale tylko jesli autor nie jest aktualna osoba
+                if ($author['id'] != $person->id) {
+                    $url = _scholar_node_url($author['id'], 'people', $node->language);
+                } else {
+                    $url = null;
+                }
                 if ($url) {
                     echo '[url="' . $url . '"]' . $fn . '[/url]';
                 } else {
@@ -142,7 +146,31 @@ function scholar_render_people_node($view, $id, $node)
     // Pobierz wszystkie prezentacje powiazane z ta osoba, dla kazdej prezentacji
     // pobierz nazwe jej kategorii oraz dane konferencji. Poniewaz blok nosi
     // tytul konferencje / seminaria / warsztaty mamy JOIN na generykach a nie LEFT JOIN
-    $query = db_query("SELECT g.*, c.name AS category_name, g2.title AS parent_title, g2.url AS parent_url, g2.start_date AS parent_start_date, g2.end_date AS parent_end_date, g2.locality AS parent_locality, g2.country AS parent_country, g2.details AS parent_details FROM {scholar_authors} a JOIN {scholar_generics} g ON a.generic_id = g.id JOIN {scholar_generics} g2 ON g.parent_id = g2.id LEFT JOIN {scholar_category_names} c ON g.category_id = c.category_id WHERE g.subtype = 'presentation' AND a.person_id = %d AND (c.language = '%s' OR c.language IS NULL) ORDER BY g2.start_date DESC", $person->id, $node->language);
+    $query = db_query("
+        SELECT g.*, c.name AS category_name, i.suppinfo AS details,
+               g2.title AS parent_title, g2.url AS parent_url, 
+               g2.start_date AS parent_start_date,
+               g2.end_date AS parent_end_date,
+               g2.locality AS parent_locality,
+               g2.country AS parent_country, i2.suppinfo AS parent_details
+        FROM {scholar_authors} a
+        JOIN {scholar_generics} g
+            ON a.generic_id = g.id
+        JOIN {scholar_generics} g2
+            ON g.parent_id = g2.id
+        LEFT JOIN {scholar_category_names} c
+            ON g.category_id = c.category_id
+        LEFT JOIN {scholar_generic_suppinfo} i
+            ON g.id = i.generic_id
+        LEFT JOIN {scholar_generic_suppinfo} i2
+            ON g2.id = i2.generic_id
+        WHERE g.subtype = 'presentation'
+            AND a.person_id = %d
+            AND (c.language = '%s' OR c.language IS NULL)
+            AND (i.language = '%s' OR i.language IS NULL)
+            AND (i2.language = '%s' OR i2.language IS NULL)
+        ORDER BY g2.start_date DESC
+    ", $person->id, $node->language);
 
     while ($row = db_fetch_array($query)) {
         $presentations[] = $row;
@@ -233,13 +261,13 @@ function scholar_render_people_node($view, $id, $node)
 
 function scholar_render_generics_node($view, $id, $node)
 {
-    $generic = scholar_load_generic($id);
+    $generic = scholar_load_record('generics', $id);
 
     if (empty($generic)) {
         return '';
     }
 
-    $func = '_render_generics_' . $generic->subtype . '_node';
+    $func = 'scholar_render_' . $generic->subtype . '_node';
     if (function_exists($func)) {
         $func($view, $generic, $node);
     }

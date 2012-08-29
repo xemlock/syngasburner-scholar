@@ -199,7 +199,8 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
 
 function scholar_generics_delete_form(&$form_state, $subtype, $id) // {{{
 {
-    $record = scholar_load_generic($id, $subtype, scholar_admin_path($subtype));
+    $conds  = array('id' => $id, 'subtype' => $subtype);
+    $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
 
     $form = array(
         '#record' => $record,
@@ -291,6 +292,90 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
 
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
     drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
+
+    // dodaj formularz edycji kolejnosci prezentacji, o ile sa jakies
+    $query = db_query("SELECT * FROM {scholar_generics} WHERE parent_id = %d AND subtype = 'presentation'", $record->id);
+    $children = scholar_db_fetch_all($query);
+p($children);
+    /*
+    if ($children) {
+    $form['vtable']['presentations'] = array(
+        '#type' => 'scholar_element_vtable_row',
+        '#title' => t('Presentations'),
+        '#description' => t('Change the order of presentations'),
+    );
+
+    
+
+    $form = array(
+        'weight' => array(
+            '#tree' => true,
+        ),
+    );
+
+    $weight_options = array();
+    $delta = 10;
+    for ($i = -$delta; $i <= $delta; ++$i) {
+        $weight_options[$i] = $i;
+    }
+
+    while ($row = db_fetch_array($query)) {
+        $form['weight'][$row['id']] = array(
+            'title' => array(
+                '#type' => 'hidden',
+                '#default_value' => $row['title'],
+            ),        
+        );
+
+        $element = array(
+            '#type' => 'select',
+            '#default_value' => intval($row['weight']),
+            '#attributes' => array('class' => 'scholar-presentation-weight'),
+            '#options' => $weight_options,
+            '#parents' => array('weight', $row['id']),
+        );
+
+        $element['#type'] = 'hidden';
+
+        $rows[] = array(
+            'data' => array(
+                check_plain($row['title']),
+                check_plain($row['bib_authors']),
+                theme_select($element),
+            ),
+            'class' => 'draggable',
+        );
+    }
+
+    $header = array(
+        t('Presentation title'),
+        t('Authors'),
+        t('Weight'),
+    );
+
+    // to jest formularz!!!
+    $form[] = array(
+        '#type' => 'markup',
+        '#value' => theme('table', $header, $rows, array('id' => 'scholar-conference-presentations')),
+    );
+    $form[] = array(
+        '#type' => 'submit',
+        '#value' => t('Save changes'),
+    );
+    $form[] = array(
+        '#type' => 'scholar_element_cancel',
+        '#value' => scholar_admin_path('conference'),
+    );
+
+    scholar_add_tab(t('Edit'), scholar_admin_path('conference/edit/' . $conference->id));
+    scholar_add_tab(t('List'), scholar_admin_path('conference'));
+
+    drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'scholar-presentation-weight');
+    }
+     */
+
+
+
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -633,5 +718,6 @@ function _scholar_presentation_list_spec($row = null) // {{{
         intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
     );
 } // }}}
+
 
 // vim: fdm=marker

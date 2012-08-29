@@ -82,6 +82,19 @@ function scholar_delete_generics_record(&$generic) // {{{
 } // }}}
 
 /**
+ * Hook author_update wywoływany podczas modifikacji rekordu osoby
+ * powiązanej z rekordem innej tabeli poprzez relację bycia autorem.
+ * W przypadku tabeli rekordów generycznych funkcja jest aliasem
+ * {@see scholar_generic_update_bib_authors}.
+ *
+ * @param int $row_id
+ */
+function scholar_generics_author_update($generic_id) // {{{
+{
+    scholar_generic_update_bib_authors($generic_id);
+} // }}}
+
+/**
  * Lista dostępnych rekordów rodzica podzielonych na kategorie, do użycia jako
  * opcje elementu SELECT formularza. Jeżeli nie istnieje żaden potencjalny
  * rodzic, zwrócona zostanie pusta lista. W przeciwnym razie na pierwszym

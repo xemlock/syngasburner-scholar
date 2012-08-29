@@ -46,8 +46,12 @@ function _scholar_page_augment_record(&$record, $row_id, $table_name, $language)
         $record['url'] = $url;
     }
 
-    $authors = scholar_load_authors($row_id);
+    $authors = scholar_load_authors($row_id, $table_name);
     _scholar_page_augment_collection($authors);
+
+    foreach ($authors as &$author) {
+        $author['url'] = _scholar_node_url($author['id'], 'people', $language);
+    }
     $record['authors'] = $authors;
 
     $files = scholar_load_files($row_id, $table_name, $language);

@@ -3,7 +3,7 @@
 [block="<?php echo $article->year ?>"]
   [box]
 <?php   foreach ($article->authors as $author) { ?>
-<?php     echo (!$author->first ? ', ' : ''), $author->first_name, ' ', $author->last_name ?>
+<?php     echo (!$author->first ? ', ' : ''), '[url="', $author->url, '" target="_self"]', $author->first_name, ' ', $author->last_name, '[/url]' ?>
 <?php   } ?>
     [i][url="<?php echo $article->url ?>"]<?php echo $article->title ?>[/url][/i]<?php
         if ($article->has('parent_id')) { ?>, [url="<?php echo $article->parent_url ?>"]<?php echo $article->parent_title ?>[/url]<?php } ?><?php
@@ -24,7 +24,7 @@
 <?php     foreach ($book->articles as $article) { ?>
   [box]
 <?php   foreach ($article->authors as $author) { ?>
-<?php     echo (!$author->first ? ', ' : ''), $author->first_name, ' ', $author->last_name ?>
+<?php     echo (!$author->first ? ', ' : ''), '[url="', $author->url, '" target="_self"]', $author->first_name, ' ', $author->last_name, '[/url]' ?>
 <?php   } ?>:
     [i][url="<?php echo $article->url ?>"]<?php echo $article->title ?>[/url][/i]<?php echo $article->details ?>
   [/box]

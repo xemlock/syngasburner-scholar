@@ -146,6 +146,7 @@ user-select: none;
 .scholar-vtable .vtab-description {
   font-size: 80%;
   font-weight: normal;
+  line-height: 150%;
 }
 
 .scholar-vtable .active .vtab {

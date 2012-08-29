@@ -2,7 +2,7 @@
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $record = $id ? scholar_load_person($id, scholar_admin_path('people')) : null;
+    $record = $id ? scholar_load_record('people', $id, scholar_admin_path('people')) : null;
 
     $form = scholar_generic_form(array(
         'first_name' => array(
@@ -55,7 +55,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
 
     scholar_populate_record($record, $values);
 
-    if (scholar_save_person($record)) {
+    if (scholar_save_record('people', $record)) {
         $name = $record->first_name . ' ' . $record->last_name;
         drupal_set_message($is_new
             ? t('%name created successfully.', array('%name' => $name))
@@ -73,7 +73,7 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $record = scholar_load_person($id, scholar_admin_path('people'));
+    $record = scholar_load_record('people', $id, scholar_admin_path('people'));
 
     $form = array('#record' => $record);
     $form = confirm_form($form,
@@ -95,7 +95,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
 function scholar_people_delete_form_submit($form, &$form_state) // {{{
 {
     if ($record = $form['#record']) {
-        scholar_delete_person($record);
+        scholar_delete_record('people', $record);
 
         $name = $record->first_name . ' ' . $record->last_name;
         drupal_set_message(t('%name deleted successfully.', array('%name' => $name)));
