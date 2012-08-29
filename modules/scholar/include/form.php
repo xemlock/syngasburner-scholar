@@ -405,7 +405,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         'suppinfo' => array(
             '#type'      => 'scholar_element_langtext',
             '#title'     => t('Supplementary information'),
-            '#maxlength' => 128,
+            '#maxlength' => 255,
         ),
         'start_date' => array(
             '#type'      => 'textfield',

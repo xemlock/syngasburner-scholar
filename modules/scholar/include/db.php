@@ -3,16 +3,21 @@
 /**
  * Pobiera wszystkie rekordy związane z wynikiem zapytania.
  *
- * @param resource $result
- *     zasób reprezentujący wynik funkcji db_query
+ * @param string|resource $query
+ *     zapytanie SQL albo zasób reprezentujący wynik funkcji db_query
  * @return array
  *     lista pobranych rekordów
  */
-function scholar_db_fetch_all($result) // {{{
+function scholar_db_fetch_all($query) // {{{
 {
     $rows = array();
 
-    while ($row = db_fetch_array($result)) {
+    if (is_string($query)) {
+        $args  = func_get_args();
+        $query = call_user_func_array('db_query', $args);
+    }
+
+    while ($row = db_fetch_array($query)) {
         $rows[] = $row;
     }
 
@@ -113,7 +118,12 @@ function scholar_db_quote_identifier($identifier) // {{{
  * Jeżeli wartosć jest tablicą zostanie użyta klauzula WHERE IN.
  * Jeżeli nazwa kolumny rozpoczyna się od ? dopuszczona zostanie
  * wartość NULL
- * @param array $conds          tablica z warunkami
+ *
+ * @param array $conds
+ *     tablica z warunkami
+ * @return string
+ *     jezeli wejsciowa tablica warunkow jest pusta, zwrocony
+ *     zostaje string "0"
  */
 function scholar_db_where($conds) // {{{
 {
@@ -155,7 +165,10 @@ function scholar_db_where($conds) // {{{
         $where[] = $expr;
     }
 
-    return implode(' AND ', $where);
+    // jezeli wynikowa tablica jest pusta zwroc 0, tak by warunek
+    // nigdy nie byl spelniony (WHERE 0)
+
+    return $where ? implode(' AND ', $where) : '0';
 } // }}}
 
 /**

@@ -188,7 +188,7 @@ function scholar_schema() // {{{
             'bib_authors' => array(
                 'description' => 'tekstowa reprezentacja autorów artykułu do umieszczenia w treści, zawierająca max trzy nazwiska',
                 'type'      => 'varchar',
-                'length'    => 128,
+                'length'    => 255,
             ),
             'list' => array(
                 'description' => 'czy dodawac rekordy do automatycznie generowanych listingow na stronach osob i stronie z wystapieniami na konferencjach',
@@ -196,6 +196,7 @@ function scholar_schema() // {{{
                 'size'      => 'tiny',
                 'unsigned'  => true,
             ),
+            'weight' => $field_type['weight'],
         ),
         'primary key' => array('id'),
         'indexes' => array(
@@ -212,7 +213,7 @@ function scholar_schema() // {{{
             'language'   => $field_type['language'],
             'suppinfo'   => array(
                 'type'     => 'varchar',
-                'length'   => 128,
+                'length'   => 255,
                 'not null' => true,
             ),
         ),
@@ -245,13 +246,14 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_authors'] = array( // {{{
-        'description' => 'autorzy artykułów lub książek',
+        'description' => 'authors / contributors to articles, books, presentations',
         'fields' => array(
+            'table_name' => $field_type['table_name'],
+            'row_id'     => $field_type['id_ref'], // REFERENCES scholar_generics (id)
             'person_id'  => $field_type['id_ref'], // REFERENCES scholar_people (id)
-            'generic_id' => $field_type['id_ref'], // REFERENCES scholar_generics (id)
             'weight'     => $field_type['weight'],
         ),
-        'primary key'  => array('person_id', 'generic_id'),
+        'primary key'  => array('table_name', 'row_id', 'person_id'),
     ); // }}}
 
     $schema['scholar_files'] = array( // {{{

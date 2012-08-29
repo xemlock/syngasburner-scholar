@@ -81,9 +81,10 @@ function scholar_page_publications($view, $node) // {{{
     $language = $node->language;
 
     $query = db_query("
-        SELECT g.id, g.title, g.start_date, g.details, g.url, g.parent_id,
-               g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.details AS parent_details, g2.url AS parent_url,
+        SELECT g.id, g.title, g.start_date, g.bib_details AS details, g.url,
+               g.parent_id, g2.title AS parent_title,
+               g2.start_date AS parent_start_date,
+               g2.bib_details AS parent_details, g2.url AS parent_url,
                c.name AS category_name
             FROM {scholar_generics} g
             LEFT JOIN {scholar_generics} g2
@@ -178,11 +179,12 @@ function scholar_page_conferences($view, $node) // {{{
 
     // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
-    // country name, locality (Internet), kategoria
+    // country name, locality (Internet), kategoria. Wystepienia w obrebie
+    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
     $query = db_query("
-        SELECT g.id, g.title, g.details, g.url, g.parent_id,
+        SELECT g.id, g.title, i.suppinfo AS details, g.url, g.parent_id,
                g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.end_date AS parent_end_date, g2.details AS parent_details,
+               g2.end_date AS parent_end_date, i2.suppinfo AS parent_details,
                g2.url AS parent_url, g2.country AS parent_country,
                g2.locality AS parent_locality, c.name AS category_name
         FROM {scholar_generics} g
@@ -190,13 +192,19 @@ function scholar_page_conferences($view, $node) // {{{
             ON g.parent_id = g2.id
         LEFT JOIN {scholar_category_names} c
             ON g.category_id = c.category_id
+        LEFT JOIN {scholar_generic_suppinfo} i
+            ON i.generic_id = g.id
+        LEFT JOIN {scholar_generic_suppinfo} i2
+            ON i2.generic_id = g2.id
         WHERE g2.list <> 0
             AND g.subtype = 'presentation'
             AND g2.subtype = 'conference'
             AND LENGTH(g.title) > 0
             AND (c.language IS NULL OR c.language = '%s')
-        ORDER BY g2.start_date DESC, g.start_date
-    ", $language);
+            AND (i.language IS NULL OR i.language = '%s')
+            AND (i2.language IS NULL OR i2.language = '%s')
+        ORDER BY g2.start_date DESC, g.bib_authors
+    ", $language, $language, $language);
 
     // TODO co z kolejnoscia prezentacji w konferencji???
     // prezentacje pogrupowane wedlug konferencji, a te z kolei

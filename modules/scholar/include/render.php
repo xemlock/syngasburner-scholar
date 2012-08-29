@@ -24,7 +24,7 @@ function _scholar_node_url($id, $table_name, $language)
 
     if ($b && $b['status']) {
         if (db_table_exists('url_alias')) {
-            $qq = db_query("SELECT dst FROM url_alias WHERE pid = %d", $b['pid']);
+            $qq = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $b['pid']);
             $rr = db_fetch_array($qq);
             $alias = $rr ? $rr['dst'] : null;
         }
@@ -249,7 +249,7 @@ function scholar_render_generics_node($view, $id, $node)
 
 function _render_generics_conference_node($view, $generic, $node)
 {
-    
+    // wszystkie wystapienia w obrebie konferencji, sortowane wg. wagi a pozniej po nazwisku pierwszego autora
 }
 
 function scholar_render_pages_node($view, $id, $node)

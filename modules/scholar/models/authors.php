@@ -3,26 +3,20 @@
 /**
  * @return array
  */
-function scholar_load_authors($generic_id) // {{{
+function scholar_load_authors($row_id, $table_name) // {{{
 {
-    $query = db_query("SELECT p.id, p.first_name, p.last_name, a.weight FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.generic_id = %d ORDER BY a.weight", $generic_id);
-    $rows = array();
-
-    while ($row = db_fetch_array($query)) {
-        $rows[] = $row;
-    }
-
-    return $rows;
+    $query = db_query("SELECT p.id, p.first_name, p.last_name, a.weight FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.table_name = '%s' AND a.row_id = %d ORDER BY a.weight", $table_name, $row_id);
+    return scholar_db_fetch_all($query);
 } // }}}
 
 /**
  * Funkcja ustawia nowych autorów dla tego rekordu generycznego.
  * Poprzedni autorzy zostają usunięci.
  *
- * @param int $generic_id
+ * @param int $row_id
  * @param array $authors
  */
-function scholar_save_authors($generic_id, $authors) // {{{
+function scholar_save_authors($row_id, $table_name, $authors) // {{{
 {
     // dla wszystkich identyfikatorow osob (rekordow w tabeli people)
     // w podanej tablicy sprawdz czy sa one poprawne
@@ -40,9 +34,7 @@ function scholar_save_authors($generic_id, $authors) // {{{
     }
 
     // dodaj tylko te rekordy, ktore sa poprawne
-    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic_id);
-
-    $names = array();
+    db_query("DELETE FROM {scholar_authors} WHERE row_id = %d", $row_id);
 
     foreach ($authors as $person) {
         $person_id = $person['id'];
@@ -51,21 +43,13 @@ function scholar_save_authors($generic_id, $authors) // {{{
             continue;
         }
 
-        db_query("INSERT INTO {scholar_authors} (generic_id, person_id, weight) VALUES (%d, %d, %d)", $generic_id, $person_id, $person['weight']);
-
-        if (count($names) < 4) {
-            $names[] = $ids[$person_id]['last_name'];
-        }
+        db_query("INSERT INTO {scholar_authors} (table_name, row_id, person_id, weight) VALUES ('%s', %d, %d, %d)", $table_name, $row_id, $person_id, $person['weight']);
     }
-
-    $bib = scholar_bib_authors($names);
-
-    db_query("UPDATE {scholar_generics} SET bib_authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
 } // }}}
 
-function scholar_delete_authors($generic_id) // {{{
+function scholar_delete_authors($row_id, $table_name) // {{{
 {
-    db_query("DELETE FROM {scholar_authors} WHERE generic_id = %d", $generic_id);
+    db_query("DELETE FROM {scholar_authors} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
 } // }}}
 
 /**

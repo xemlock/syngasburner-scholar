@@ -1686,18 +1686,26 @@ $(function() {
             j.html(String(maxlen - target.val().length));
         }
 
-        target.bind('change', update);
+        target.bind('blur change keyup', update);
 
-        target.keydown(function() {
-            var delta = maxlen - target.val().length;
+        target.keydown(function(e) {
+            var len = target.val().length;
+
             // keydown jest wyzwalany w momencie pojawienia sie nowego
-            // znaku, przed puszczeniem klawisza. Stad trzeba dodac 1,
-            // ale tylko wtedy gdy maksymalna liczba znakow nie zostala
-            // osiagnieta.
-            if (delta > 0) {
-                ++delta;
+            // znaku, przed puszczeniem klawisza. Stad trzeba uwzglednic
+            // wlasnie wpisywany (lub kasowany, gdy wcisniego backspace,
+            // kod 8) 1 znak.
+            if (e.which == 8) {
+                if (len > 0) {
+                    --len;
+                }
+            } else {
+                if (len < maxlen) {
+                    ++len;
+                }
             }
-            j.html(String(delta));
+
+            j.html(String(maxlen - len));
         });
 
         update();

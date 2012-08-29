@@ -90,7 +90,8 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
         if (null === $id) {
             $record = null;
         } else {
-            $record = scholar_load_generic($id, $subtype, scholar_admin_path($subtype));
+            $conds  = array('id' => $id, 'subtype' => $subtype);
+            $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
         }
 
         // przygotuj argumenty do wygenerowania formularza
@@ -172,7 +173,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     }
 
     $is_new = empty($form['#record']);
-    $record = $is_empty ? scholar_new_generic() : $form['#record'];
+    $record = $is_empty ? new stdClass : $form['#record'];
 
     // wypelnij rekord danymi z formularza
     scholar_populate_record($record, $values);
@@ -180,7 +181,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     // dla pewnosci ustaw odpowiedni podtyp
     $record->subtype = $subtype;
 
-    if (scholar_save_generic($record)) {
+    if (scholar_save_record('generics', $record)) {
         if (empty($record->title)) {
             drupal_set_message($is_new
                 ? t('Entry created successfully.')
@@ -220,7 +221,7 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
     $record = $form['#record'];
 
     if ($record) {
-        scholar_delete_generic($record);
+        scholar_delete_record('generics', $record);
         drupal_set_message(t('%title deleted successfully.', array('%title' => $record->title)));
         drupal_goto(scholar_admin_path($record->subtype));
     }
