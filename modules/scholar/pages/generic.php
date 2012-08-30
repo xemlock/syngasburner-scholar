@@ -193,6 +193,8 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
                 : t('%title updated successfully.', array('%title' => $record->title))
             );
         }
+
+        // tu zadziala destination
         drupal_goto(scholar_admin_path($subtype));
     }
 } // }}}
@@ -293,88 +295,11 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
     drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
 
-    // dodaj formularz edycji kolejnosci prezentacji, o ile sa jakies
-    $query = db_query("SELECT * FROM {scholar_generics} WHERE parent_id = %d AND subtype = 'presentation'", $record->id);
-    $children = scholar_db_fetch_all($query);
-p($children);
-    /*
-    if ($children) {
     $form['vtable']['presentations'] = array(
         '#type' => 'scholar_element_vtable_row',
         '#title' => t('Presentations'),
         '#description' => t('Change the order of presentations'),
     );
-
-    
-
-    $form = array(
-        'weight' => array(
-            '#tree' => true,
-        ),
-    );
-
-    $weight_options = array();
-    $delta = 10;
-    for ($i = -$delta; $i <= $delta; ++$i) {
-        $weight_options[$i] = $i;
-    }
-
-    while ($row = db_fetch_array($query)) {
-        $form['weight'][$row['id']] = array(
-            'title' => array(
-                '#type' => 'hidden',
-                '#default_value' => $row['title'],
-            ),        
-        );
-
-        $element = array(
-            '#type' => 'select',
-            '#default_value' => intval($row['weight']),
-            '#attributes' => array('class' => 'scholar-presentation-weight'),
-            '#options' => $weight_options,
-            '#parents' => array('weight', $row['id']),
-        );
-
-        $element['#type'] = 'hidden';
-
-        $rows[] = array(
-            'data' => array(
-                check_plain($row['title']),
-                check_plain($row['bib_authors']),
-                theme_select($element),
-            ),
-            'class' => 'draggable',
-        );
-    }
-
-    $header = array(
-        t('Presentation title'),
-        t('Authors'),
-        t('Weight'),
-    );
-
-    // to jest formularz!!!
-    $form[] = array(
-        '#type' => 'markup',
-        '#value' => theme('table', $header, $rows, array('id' => 'scholar-conference-presentations')),
-    );
-    $form[] = array(
-        '#type' => 'submit',
-        '#value' => t('Save changes'),
-    );
-    $form[] = array(
-        '#type' => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('conference'),
-    );
-
-    scholar_add_tab(t('Edit'), scholar_admin_path('conference/edit/' . $conference->id));
-    scholar_add_tab(t('List'), scholar_admin_path('conference'));
-
-    drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'scholar-presentation-weight');
-    }
-     */
-
-
 
 
     $form['submit'] = array(
@@ -434,7 +359,11 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
             '#title'       => t('Conference'),
             '#options'     => $parents,
             '#description' => t('A conference during which this presentation was given.'),
+            // jezeli w adresie strony podano identyfikator konferencji
+            // ustaw ja jako domyslna wartosc pola
+            '#default_value' => isset($_GET['conference']) ? intval($_GET['conference']) : null,
         ),
+        'start_date',
         'category_id' => empty($categories) ? false : array(
             '#options'     => $categories,
             '#description' => t('Specify presentation type, e.g. speech, poster, etc.'),
@@ -483,6 +412,8 @@ function _scholar_presentation_form_process_values(&$values) // {{{
 {
     // jezeli pusty tytul, czyli obecnosc na konferencji bez wystapienia
     // publicznego, usun kategorie
+    $values['start_date'] = substr($values['start_date'], 0, 10);
+    $values['end_date'] = null;
 
     $values['title'] = trim($values['title']);
 
@@ -682,7 +613,7 @@ function _scholar_conference_list_spec($row = null) // {{{
             array('data' => t('Country'),  'field' => 'country_name'),
             array('data' => t('Category'), 'field' => 'category_name'),
             array('data' => t('Listed')),
-            array('data' => t('Operations'), 'colspan' => '2'),
+            array('data' => t('Operations'), 'colspan' => '3'),
         );
     }
 
@@ -693,7 +624,8 @@ function _scholar_conference_list_spec($row = null) // {{{
         check_plain($row['category_name']),
         $row['list'] ? t('Yes') : t('No'),
         l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
-        intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
+        l(t('presentations'),  scholar_admin_path('conference/presentations/' . $row['id'])),
+        l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
     );
 } // }}}
 
@@ -715,9 +647,183 @@ function _scholar_presentation_list_spec($row = null) // {{{
         empty($title) ? '<em>' . t('attendance only') . '</em>' : check_plain($title),
         check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
-        intval($row['refcount']) ? '' : l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
+        l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
     );
 } // }}}
 
+/**
+ * Strona z listą wszystkich prezentacji podpiętych do danej
+ * konferencji. Daje możliwość sortowania prezentacji.
+ */
+function scholar_conference_presentations_form(&$form_state, $id)
+{
+    $conference = scholar_load_record('generics', array('id' => $id, 'subtype' => 'conference'), scholar_admin_path('conference'));
+
+    $query = db_query("SELECT * FROM {scholar_generics} WHERE parent_id = %d AND subtype = 'presentation' ORDER BY start_date, weight", $conference->id);
+
+    $form = array(
+        'weight' => array(
+            '#tree' => true,
+        ),
+    );
+
+    $weight_options = array();
+    $delta = 10;
+    for ($i = -$delta; $i <= $delta; ++$i) {
+        $weight_options[$i] = $i;
+    }
+
+    $subgroups = array();
+    $d = array('query' => 'destination=' . scholar_admin_path('conference/presentations/' . $conference->id));
+
+    $tbody[] = array(); 
+    while ($row = db_fetch_array($query)) {
+        $form['weight'][$row['id']] = array(
+            'title' => array(
+                '#type' => 'hidden',
+                '#default_value' => $row['title'],
+            ),        
+        );
+
+        $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
+
+        if (strlen($subgroup)) {
+            $subgroup = 'scholar-tbody-' . $subgroup;
+        } else {
+            $subgroup = 'scholar-tbody';
+        }
+
+        $subgroups[$subgroup] = true;
+
+        $element = array(
+            '#type' => 'select',
+            '#default_value' => intval($row['weight']),
+            '#attributes' => array('class' => 'tr-weight'),
+            '#options' => $weight_options,
+            '#parents' => array('weight', $row['id']),
+        );
+
+        $element['#type'] = 'hidden';
+        
+        $rows[] = array(
+            'data' => array(
+                check_plain($row['bib_authors']),
+                check_plain($row['title']),
+                theme_select($element),
+                l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id']), $d),
+                l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id']), $d),
+            ),
+            'class' => 'draggable',
+            'tbody' => $subgroup,
+        );
+    }
+
+    $header = array(
+        t('Authors'),
+        t('Title'),
+        t('Weight'),
+        array('data' => t('Operations'), 'colspan' => 2),
+    );
+
+    // tabledrag totalnie nie dziala gdy jest wiecej niz jedno tbody
+    drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
+    
+    // hack do tabledrag, zeby nie mieszac wierszy miedzy TBODY
+    // normalnie mozna przeniesc z pozostalych TBODY do pierwszego, 
+    // ale nie na odwrot. \
+    drupal_add_js("
+        var old =         Drupal.tableDrag.prototype.dragRow;
+        var locked = false;
+        var originalTBody;
+        Drupal.tableDrag.prototype.dragRow = function(event, self) {
+            if (self.dragObject) {
+                self.currentMouseCoords = self.mouseCoords(event);
+
+                var y = self.currentMouseCoords.y - self.dragObject.initMouseOffset.y;
+                var x = self.currentMouseCoords.x - self.dragObject.initMouseOffset.x;
+
+                var currentRow = self.findDropTargetRow(x, y);
+
+                var outside = true;
+                if (currentRow) {
+                    console.log('currentRow: ' + currentRow.__id);
+                    console.log('original: ' + (originalTBody && originalTBody.__id));
+                    if ($(currentRow).parents('tbody').get(0) == originalTBody) {
+                        console.log('ok');
+                        outside = false;
+                    }
+                } else console.log('no currentRow');
+
+                if (!outside) {
+                    old.apply(this, [event, self]);
+                }
+            }
+        }
+
+        $(function() {
+            var i = 0;
+            $('tbody').each(function() {
+                this.__id = ++i;
+            });
+
+            $('#scholar-conference-presentations > tbody').find('.tabledrag-handle').mousedown(function() {
+                originalTBody = $(this).parents('tbody').get(0);
+            });
+        });
+        $(function() {return;
+        $('#scholar-conference-presentations > tbody').each(function() {
+            var j = $(this);
+            j.find('.tabledrag-handle, .tabledrag-handle .handle').each(function() {
+                // pobierz wszystkie handlery
+                var events = $(this).data('events'),
+                    handlers = [];
+                if (events && events.mousedown) {
+                    $.each(events.mousedown, function(k, v) {
+                        handlers[handlers.length] = v;
+                    });
+                }
+
+                $(this).unbind('mousedown');
+                $(this).bind('mousedown', function(e) {
+                    e.stopPropagation();
+                    return false;
+                });
+
+                for (var i = 0, n = handlers.length; i < n; ++i) {
+                    // $(this).bind('mousedown', handlers[i]);
+                }
+
+console.log($(this).data('events').mousedown);
+            });
+})
+
+
+})", 'inline');
+
+    $form[] = array(
+        '#type' => 'markup',
+        '#value' => scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations'))
+        . '<style>tbody {border:2px solid black;}</style>',
+    );
+
+    $form[] = array(
+        '#type' => 'submit',
+        '#value' => t('Save changes'),
+    );
+    $form[] = array(
+        '#type' => 'scholar_element_cancel',
+        '#value' => scholar_admin_path('conference'),
+    );
+
+
+
+
+
+    scholar_add_tab(t('Add presentation'), scholar_admin_path('presentation/add'), $d['query'] . '&conference=' . $conference->id);
+    scholar_add_tab(t('Edit'), scholar_admin_path('conference/edit/' . $conference->id));
+    scholar_add_tab(t('List'), scholar_admin_path('conference'));
+
+    return $form;
+}
 
 // vim: fdm=marker

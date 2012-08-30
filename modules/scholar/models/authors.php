@@ -27,14 +27,14 @@ function scholar_save_authors($row_id, $table_name, $authors) // {{{
     }
 
     $where = array('id' => array_keys($ids));
-    $query = db_query("SELECT id, last_name FROM {scholar_people} WHERE " . scholar_db_where($where));
+    $query = db_query("SELECT id FROM {scholar_people} WHERE " . scholar_db_where($where));
 
     while ($row = db_fetch_array($query)) {
         $ids[$row['id']] = $row;
     }
 
     // dodaj tylko te rekordy, ktore sa poprawne
-    db_query("DELETE FROM {scholar_authors} WHERE row_id = %d", $row_id);
+    db_query("DELETE FROM {scholar_authors} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
 
     foreach ($authors as $person) {
         $person_id = $person['id'];

@@ -187,7 +187,7 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
             return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, $fragment);
 
         case 'pages':
-            $record = scholar_load_page($row_id, scholar_admin_path());
+            $record = scholar_load_record('pages', $row_id, scholar_admin_path());
             return scholar_goto(scholar_admin_path('page/edit/' . $record->id), null, $fragment);
     }
 } // }}}

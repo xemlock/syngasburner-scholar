@@ -100,7 +100,7 @@ function scholar_page_list() // {{{
  */
 function scholar_page_form(&$form_state, $id) // {{{
 {
-    $page = scholar_load_page($id, scholar_admin_path('page'));
+    $page = scholar_load_record('pages', $id, scholar_admin_path('page'));
 
     scholar_add_tab(t('list'), scholar_admin_path('page'));
     scholar_add_tab(t('edit'), scholar_admin_path('page/edit/' . $page->id));
@@ -159,10 +159,11 @@ function scholar_page_form_submit($form, &$form_state) // {{{
     unset($node);
 
     scholar_populate_record($record, $values);
-    scholar_save_page($record);
-
-    drupal_set_message(t('%title updated successfully.', array('%title' => t($title))));
-    drupal_goto(scholar_admin_path('page'));
+    
+    if (scholar_save_record('pages', $record)) {
+        drupal_set_message(t('%title updated successfully.', array('%title' => t($title))));
+        drupal_goto(scholar_admin_path('page'));
+    }
 } // }}}
 
 // vim: fdm=marker

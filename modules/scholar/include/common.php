@@ -40,6 +40,7 @@ function scholar_ascii($string) // {{{
 
 /**
  * Przekierowanie bez żadnej wyrafinowanej obsługi parametru destination.
+ * Używane tylko tam, gdzie musimy zignorować destination.
  *
  * @param string $path
  * @param string $query
@@ -63,11 +64,11 @@ function scholar_goto($path, $query = null, $fragment = null) // {{{
     exit;
 } // }}}
 
-function scholar_add_tab($text, $path) // {{{
+function scholar_add_tab($text, $path, $query = null) // {{{
 {
     // funkcja udostepniana przez modul tabs
     if (function_exists('drupal_add_tab')) {
-        drupal_add_tab($text, $path);
+        drupal_add_tab($text, $path, $query);
     }
 } // }}}
 

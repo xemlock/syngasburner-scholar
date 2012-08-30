@@ -282,7 +282,7 @@ function _render_generics_conference_node($view, $generic, $node)
 
 function scholar_render_pages_node($view, $id, $node)
 {
-    $page = scholar_load_page($id);
+    $page = scholar_load_record('pages', $id);
     if (!$page) {
         return;
     }
