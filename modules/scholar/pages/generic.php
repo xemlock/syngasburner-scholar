@@ -676,7 +676,8 @@ function scholar_conference_presentations_form(&$form_state, $id)
     $subgroups = array();
     $d = array('query' => 'destination=' . scholar_admin_path('conference/presentations/' . $conference->id));
 
-    $tbody[] = array(); 
+    $tbody[] = array();
+    $last_region = null;
     while ($row = db_fetch_array($query)) {
         $form['weight'][$row['id']] = array(
             'title' => array(
@@ -686,6 +687,20 @@ function scholar_conference_presentations_form(&$form_state, $id)
         );
 
         $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
+
+        if ($subgroup !== $last_region) {
+            $rows[] = array(
+                'data' => array(
+                    array(
+                        'data' => $subgroup,
+                        'colspan' => 5,
+                        'class' => 'region',
+                    ),
+                ),
+                'class' => 'region',
+            );
+            $last_region = $subgroup;
+        }
 
         if (strlen($subgroup)) {
             $subgroup = 'scholar-tbody-' . $subgroup;
@@ -714,7 +729,7 @@ function scholar_conference_presentations_form(&$form_state, $id)
                 l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id']), $d),
             ),
             'class' => 'draggable',
-            'tbody' => $subgroup,
+            //'tbody' => $subgroup,
         );
     }
 
@@ -734,9 +749,11 @@ function scholar_conference_presentations_form(&$form_state, $id)
     drupal_add_js("
         var old =         Drupal.tableDrag.prototype.dragRow;
         var locked = false;
-        var originalTBody;
+        var originalRegion;
+        var kurczePieczone;
         Drupal.tableDrag.prototype.dragRow = function(event, self) {
-            if (self.dragObject) {
+            if (kurczePieczone) {
+                if (self.dragObject) {
                 self.currentMouseCoords = self.mouseCoords(event);
 
                 var y = self.currentMouseCoords.y - self.dragObject.initMouseOffset.y;
@@ -746,9 +763,9 @@ function scholar_conference_presentations_form(&$form_state, $id)
 
                 var outside = true;
                 if (currentRow) {
-                    console.log('currentRow: ' + currentRow.__id);
-                    console.log('original: ' + (originalTBody && originalTBody.__id));
-                    if ($(currentRow).parents('tbody').get(0) == originalTBody) {
+                    console.log(currentRow);
+                    console.log('original: ' + ($(originalRegion).attr('id')));
+                    if ($(currentRow).prev('tr.region').get(0) == originalRegion) {
                         console.log('ok');
                         outside = false;
                     }
@@ -756,18 +773,32 @@ function scholar_conference_presentations_form(&$form_state, $id)
 
                 if (!outside) {
                     old.apply(this, [event, self]);
-                }
+                } else console.log('outside!');
+            }
+            } else {
+                old.apply(this, [event, self]);
             }
         }
 
         $(function() {
             var i = 0;
-            $('tbody').each(function() {
-                this.__id = ++i;
-            });
+            $('tr.region').each(function() {
+                $(this).attr('id', 'region-' + (++i))
+});
+var j = 0;
 
             $('#scholar-conference-presentations > tbody').find('.tabledrag-handle').mousedown(function() {
-                originalTBody = $(this).parents('tbody').get(0);
+                kurczePieczone = true;
+                console && console.log('locking kurczePieczone');
+                originalRegion = $($(this).parents('tr').get(0)).prevAll('tr.region').get(0);
+                console && console.log(originalRegion);
+                var tr = $($(this).parents('tr').get(0));
+//                tr.attr('xxx', ++j);
+  //              console && console.log(tr.get(0));
+            });
+            $(document).bind('mouseup', function() {
+                kurczePieczone = false;
+                console && console.log('releasing kurczePieczone');
             });
         });
         $(function() {return;
@@ -802,7 +833,7 @@ console.log($(this).data('events').mousedown);
 
     $form[] = array(
         '#type' => 'markup',
-        '#value' => scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations'))
+        '#value' => theme_table($header, $rows, array('id' => 'scholar-conference-presentations'))
         . '<style>tbody {border:2px solid black;}</style>',
     );
 
