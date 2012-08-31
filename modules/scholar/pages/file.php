@@ -215,7 +215,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
     $form = array('#file' => $file);
     $form['properties'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Properties'),
+        '#title' => t('File properties'),
         '#attributes' => array('class' => 'scholar'),
     );
 
@@ -229,7 +229,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
 <dt>MIME type</dt><dd>' . check_plain($file->mimetype) . '</dd>
 <dt>MD5 checksum</dt><dd>' . check_plain($file->md5sum) . '</dd>
 <dt>File URL</dt><dd>' . l($url, $url, array('attributes' => array('target' => '_blank'))) . '</dd>
-<dt>Uploaded</dt><dd>' . check_plain($file->upload_time). ', by <em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : 'unknown user') . '</em></dd>
+<dt>Uploaded</dt><dd>' . ($file->upload_time). ', by <em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : 'unknown user') . '</em></dd>
 </dl>',
     );
 

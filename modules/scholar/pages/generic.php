@@ -743,18 +743,44 @@ function scholar_conference_presentations_form(&$form_state, $id)
     drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
 
     $form['#record'] = $conference;
+    $form['properties'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Conference properties'),
+        '#attributes' => array('class' => 'scholar'),
+        '#collapsible' => true,
+        '#collapsed' => true,
+    );
+
+    $location = trim($conference->locality);
+    if (strcasecmp($location, 'internet')) {
+        $country = scholar_countries($conference->country);
+        if ($country) {
+            $location .= ' (' . $country . ')';
+        }
+        $location = check_plain($location);
+    } else {
+        $location = '<em>internet</em>';
+    }
+
+    $form['properties'][] = array(
+        '#type' => 'markup',
+        '#value' => '<dl class="scholar">
+<dt>' . t('Title') . '</dt><dd>' . check_plain($conference->title) . '</dd>
+<dt>' . t('Start date') . '</dt><dd>' . scholar_format_date($conference->start_date) . '</dd>
+<dt>' . t('End date') . '</dt><dd>' . scholar_format_date($conference->end_date) . '</dd>
+<dt>' . t('Location') . '</dt><dd>' . $location . '</dd>
+</dl>',
+    );
     $form[] = array(
         '#type' => 'markup',
-        '#value' => theme('table', $header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
+        '#value' => 
+            '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>' .
+            theme('table', $header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
     );
 
     $form[] = array(
         '#type' => 'submit',
         '#value' => t('Save changes'),
-    );
-    $form[] = array(
-        '#type' => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('conference'),
     );
 
     scholar_add_tab(t('Add presentation'), scholar_admin_path('presentation/add'), $d['query'] . '&conference=' . $conference->id);

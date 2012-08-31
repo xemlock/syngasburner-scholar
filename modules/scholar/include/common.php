@@ -269,5 +269,21 @@ function scholar_countries($code = null) // {{{
     return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
 
+function scholar_format_date($date)
+{
+    if (is_int($date)) {
+        // unix timestamp
+        $date = date('Y-m-d', $date);
+    } else {
+        // jezeli datetime wez tylko date i usun czas
+        $date = substr(trim($date), 0, 10);
+    }
+
+    if (strlen($date)) {
+        return '[' . $date . ']';
+    }
+
+    return '';
+}
 
 // vim: fdm=marker
