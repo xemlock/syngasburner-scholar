@@ -207,8 +207,9 @@ function scholar_generic_load_children($generic_id, $subtype = null, $order = nu
 
     $where['parent_id'] = $generic_id;
     $where['?i.language'] = $language->language;
+    $where['?c.language'] = $language->language;
 
-    $sql = "SELECT g.*, i.suppinfo AS suppinfo FROM {scholar_generics} g LEFT JOIN {scholar_generic_suppinfo} i ON i.generic_id = g.id WHERE parent_id <> id AND " . scholar_db_where($where);
+    $sql = "SELECT g.*, i.suppinfo AS suppinfo, c.name AS category_name FROM {scholar_generics} g LEFT JOIN {scholar_generic_suppinfo} i ON i.generic_id = g.id LEFT JOIN {scholar_category_names} c ON g.category_id = c.category_id WHERE parent_id <> id AND " . scholar_db_where($where);
     if ($order) {
         $sql .= " ORDER BY " . $order;
     }

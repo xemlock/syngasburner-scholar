@@ -257,7 +257,7 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
         // albo jawnie okreslic, ze wydarzenie nie ma sprecyzowanego konca
         'end_date' => array(
             '#required' => true,
-            '#field_suffix' => '<input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.'),
+            '#field_suffix' => ' <label><input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.') . '</label>',
         ),
         'locality' => array(
             '#required' => true,
@@ -345,6 +345,11 @@ function _scholar_conference_form_process_values(&$values) // {{{
 
 function scholar_presentation_form(&$form_state, &$record = null) // {{{
 {
+    if ($record) {
+        $record->start_date = substr($record->start_date, 0, 10);
+        $record->end_date   = substr($record->end_date, 0, 10);
+    }
+
     // prezentacje moga nalezec do konferencji
     $parents    = scholar_generic_parent_options('conference');
     $categories = scholar_category_options('generics', 'presentation');
@@ -356,6 +361,7 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
         'title' => empty($parents) ? array('#required' => true) : array(
             '#description' => t('Leave empty to mark conference attendance if no public presentation was given. In this case, a conference must be chosen.'),
         ),
+        'start_date',
         'authors' => array(
             '#title'       => t('Authors'),
             '#required'    => true,
@@ -369,7 +375,6 @@ function scholar_presentation_form(&$form_state, &$record = null) // {{{
             // ustaw ja jako domyslna wartosc pola
             '#default_value' => isset($_GET['conference']) ? intval($_GET['conference']) : null,
         ),
-        'start_date',
         'category_id' => empty($categories) ? false : array(
             '#options'     => $categories,
             '#description' => t('Specify presentation type, e.g. speech, poster, etc.'),

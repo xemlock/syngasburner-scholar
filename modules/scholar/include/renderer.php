@@ -136,6 +136,11 @@ class scholar_renderer
                 $tagName  = strtolower($token->getName());
 
                 if ($this->isForbiddenTag($tagName)) {
+                    // ignore this tag, but try to render its contents
+                    // (watch out for lists!)
+                    if ($token->hasChildren()) {
+                        $result[] = $this->_render($token->getChildren(), $depth + 1);
+                    }
                     continue;
                 }
 
@@ -175,6 +180,7 @@ class scholar_renderer
                             $result[] = "<hr/>";
                             break;
 
+                        case 'item':
                         case '*':
                             $result[] = '<li>' . trim($contents) . '</li>';
                             break;
@@ -486,7 +492,8 @@ class scholar_renderer
     {
         $contents = trim($contents);
 
-        if ($contents) {
+        // make sure list contents are LI tags only
+        if (preg_match('/^<li[ >]/i', $contents) && preg_match('/<\/li>$/i', $contents)) {
             if ($type = $token->getAttribute('list')) {
                 if (is_numeric($type)) {
                     return '<ol start="' . $type . '">' . $contents . '</ol>';                

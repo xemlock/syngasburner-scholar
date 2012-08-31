@@ -82,4 +82,29 @@ class scholar_converter_res implements scholar_converter // {{{
     }
 } // }}}
 
+// wewnetrzne konwertery nie do dokumentacji
+class scholar_converter___tag implements scholar_converter // {{{
+{
+    public function convert($token, $contents)
+    {
+        $tag = preg_replace('/[^-_a-z0-9]/i', '', $token->getAttribute('__tag'));
+
+        if (empty($tag)) {
+            return $contents;
+        }
+
+        $attribs = $token->getAttributes();
+        unset($attribs['__tag']);
+
+        $output = '<' . $tag;
+        foreach ($attribs as $key => $value) {
+            $output .= ' ' . $key . '="' . htmlspecialchars($value) . '"';
+        }
+        $output .= '>' . $contents . '</' . $tag . '>';
+
+        return $output;
+    }
+} // }}}
+
+
 // vim: fdm=marker

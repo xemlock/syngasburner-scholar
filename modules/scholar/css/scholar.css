@@ -169,6 +169,10 @@ user-select: none;
 .scholar-vtable .form-text.form-date {
   width: auto;
 }
+.scholar .field-suffix label {
+  display: inline-block;
+  font-weight: normal;
+}
 
 .scholar-vtable .resizable-textarea textarea {
   display: block;
