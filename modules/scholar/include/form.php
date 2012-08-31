@@ -410,12 +410,18 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         'start_date' => array(
             '#type'      => 'textfield',
             '#title'     => t('Start date'),
-            '#maxlength' => 19, // YYYY-MM-DD HH:MM::SS
+            '#maxlength' => 10, // YYYY-MM_DD
+            '#size' => 32,
+            '#description' => t('Date format: YYYY-MM-DD.'),
+            '#attributes' => array('class' => 'form-date'),
         ),
         'end_date' => array(
             '#type'      => 'textfield',
             '#title'     => t('End date'),
-            '#maxlength' => 19,
+            '#maxlength' => 10,
+            '#size' => 32,
+            '#description' => t('Date format: YYYY-MM-DD.'),
+            '#attributes' => array('class' => 'form-date'),
         ),
         'locality' => array(
             '#type'      => 'textfield',

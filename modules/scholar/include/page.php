@@ -207,7 +207,7 @@ function scholar_page_conferences($view, $node) // {{{
             AND (c.language IS NULL OR c.language = '%s')
             AND (i.language IS NULL OR i.language = '%s')
             AND (i2.language IS NULL OR i2.language = '%s')
-        ORDER BY g2.start_date DESC, g.bib_authors
+        ORDER BY g2.start_date DESC, g.start_date, g.weight
     ", $language, $language, $language);
 
     // TODO co z kolejnoscia prezentacji w konferencji???

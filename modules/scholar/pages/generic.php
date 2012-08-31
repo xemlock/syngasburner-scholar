@@ -251,14 +251,13 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
             '#required' => true
         ),
         'start_date' => array(
-            '#maxlength' => 10,
             '#required' => true,
-            '#description' => t('Date format: YYYY-MM-DD.'),
-        ), 
+        ),
+        // w przeciwienstwie do modulu events, date konca trzeba podac zawsze,
+        // albo jawnie okreslic, ze wydarzenie nie ma sprecyzowanego konca
         'end_date' => array(
-            '#maxlength' => 10,
             '#required' => true,
-            '#description' => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
+            '#field_suffix' => '<input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.'),
         ),
         'locality' => array(
             '#required' => true,
@@ -295,12 +294,12 @@ function scholar_conference_form(&$form_state, &$record = null) // {{{
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
     drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
 
+    /*
     $form['vtable']['presentations'] = array(
         '#type' => 'scholar_element_vtable_row',
         '#title' => t('Presentations'),
         '#description' => t('Change the order of presentations'),
-    );
-
+    );*/
 
     $form['submit'] = array(
         '#type'     => 'submit',
@@ -319,6 +318,13 @@ function _scholar_conference_form_process_values(&$values) // {{{
     // data poczatku i konca maja obcieta czesc zwiazana z czasem,
     // trzeba ja dodac aby byla poprawna wartoscia DATETIME
     $values['start_date'] .= ' 00:00:00';
+
+    // jezeli zaznaczono, ze konferencja ma nieokreslona date zakonczenia
+    // (podano wartosc ujemna), ustaw jej date konca na NULL
+    if ($values['end_date'] < 0) {
+        $values['end_date'] = null;
+    }
+
     if (strlen($values['end_date'])) {
         $values['end_date'] .= ' 00:00:00';
     }
@@ -413,7 +419,7 @@ function _scholar_presentation_form_process_values(&$values) // {{{
     // jezeli pusty tytul, czyli obecnosc na konferencji bez wystapienia
     // publicznego, usun kategorie
     $values['start_date'] = substr($values['start_date'], 0, 10);
-    $values['end_date'] = null;
+    $values['end_date']   = $values['start_date'];
 
     $values['title'] = trim($values['title']);
 
@@ -655,11 +661,11 @@ function _scholar_presentation_list_spec($row = null) // {{{
  * Strona z listą wszystkich prezentacji podpiętych do danej
  * konferencji. Daje możliwość sortowania prezentacji.
  */
-function scholar_conference_presentations_form(&$form_state, $id)
+function scholar_conference_presentations_form(&$form_state, $id) // {{{
 {
     $conference = scholar_load_record('generics', array('id' => $id, 'subtype' => 'conference'), scholar_admin_path('conference'));
 
-    $query = db_query("SELECT * FROM {scholar_generics} WHERE parent_id = %d AND subtype = 'presentation' ORDER BY start_date, weight", $conference->id);
+    $presentations = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
 
     $form = array(
         'weight' => array(
@@ -678,7 +684,7 @@ function scholar_conference_presentations_form(&$form_state, $id)
 
     $tbody[] = array();
     $last_region = ''; // pierwszy region to ten bez daty
-    while ($row = db_fetch_array($query)) {
+    foreach ($presentations as $row) {
         $form['weight'][$row['id']] = array(
             '#type' => 'hidden',
             '#default_value' => $row['weight'],
@@ -788,7 +794,7 @@ function scholar_conference_presentations_form(&$form_state, $id)
     scholar_add_tab(t('List'), scholar_admin_path('conference'));
 
     return $form;
-}
+} // }}}
 
 function scholar_conference_presentations_form_submit($form, &$form_state) // {{{
 {

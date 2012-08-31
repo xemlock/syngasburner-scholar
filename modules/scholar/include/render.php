@@ -267,27 +267,45 @@ function scholar_render_generics_node($view, $id, $node)
         return '';
     }
 
-    $func = 'scholar_render_' . $generic->subtype . '_node';
+    $func = 'scholar_render_generics_' . $generic->subtype . '_node';
     if (function_exists($func)) {
-        $func($view, $generic, $node);
+        return $func($view, $generic, $node);
     }
-
-    return __FUNCTION__;
 }
 
-function _render_generics_conference_node($view, $generic, $node)
+function scholar_render_generics_conference_node($view, $conference, $node)
 {
-    // wszystkie wystapienia w obrebie konferencji, sortowane wg. wagi a pozniej po nazwisku pierwszego autora
+    // wszystkie wystapienia w obrebie konferencji, sortowane wg. dnia, i wagi.
+    // Tytul wystapienia musi byc niepusty
+    $year_presentations = array();
+
+    $children = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
+
+    foreach ($children as &$row) {
+        // tylko rekordy, ktore maja niepusty tytul sa brane pod uwage
+        // jako wystapienia na konferencji
+        if (!strlen($row['title'])) {
+            continue;
+        }
+
+        // pogrupuj wzgledem roku
+        $year = substr($row['start_date'], 0, 4);
+
+        _scholar_page_augment_record($row, $row['id'], 'generics', $node->language);
+        $year_presentations[$year][] = $row;
+    }
+    unset($row, $children);
+
+    return $view->assign('conference', (array) $conference)
+                ->assign('year_presentations', $year_presentations)
+                ->render('conference.tpl');
 }
 
 function scholar_render_pages_node($view, $id, $node)
 {
     $page = scholar_load_record('pages', $id);
-    if (!$page) {
-        return;
-    }
 
-    if (function_exists($page->callback)) {
+    if ($page && function_exists($page->callback)) {
         return call_user_func($page->callback, $view, $node);
     }
 }

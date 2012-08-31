@@ -269,7 +269,7 @@ function scholar_countries($code = null) // {{{
     return isset($countries[$code]) ? $countries[$code] : null;
 } // }}}
 
-function scholar_format_date($date)
+function scholar_format_date($date) // {{{
 {
     if (is_int($date)) {
         // unix timestamp
@@ -284,6 +284,6 @@ function scholar_format_date($date)
     }
 
     return '';
-}
+} // }}}
 
 // vim: fdm=marker

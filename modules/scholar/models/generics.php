@@ -170,7 +170,7 @@ function scholar_generic_update_child_count($generic_id) // {{{
 {
     // niestety nie mozemy wywolac SELECT na tej samej tabeli, na ktorej
     // wywolujemy UPDATE, stad koniecznosc wykonania dwoch zapytan
-    $row = db_fetch_array(db_query("SELECT COUNT(*) AS child_count FROM {scholar_generics} WHERE parent_id = %d", $generic_id));
+    $row = db_fetch_array(db_query("SELECT COUNT(*) AS child_count FROM {scholar_generics} WHERE parent_id = %d AND id <> parent_id", $generic_id));
     db_query("UPDATE {scholar_generics} SET child_count = %d WHERE id = %d", $row['child_count'], $generic_id);
 } // }}}
 
@@ -183,11 +183,40 @@ function scholar_generic_update_children_weights($generic_id, $weights) // {{{
     $updated = 0;
 
     foreach ((array) $weights as $id => $weight) {
-        db_query("UPDATE {scholar_generics} SET weight = %d WHERE id = %d AND parent_id = %d", $weight, $id, $generic_id);
+        db_query("UPDATE {scholar_generics} SET weight = %d WHERE id = %d AND parent_id = %d AND id <> parent_id", $weight, $id, $generic_id);
         $updated += db_affected_rows();
     }
 
     return $updated;
+} // }}}
+
+function scholar_generic_load_children($generic_id, $subtype = null, $order = null) // {{{
+{
+    global $language;
+
+    if (is_array($subtype)) {
+        $where = $subtype;
+
+    } else if ($subtype) {
+        $where = array(
+            'subtype' => $subtype,
+        );
+    } else {
+        $where = array();
+    }
+
+    $where['parent_id'] = $generic_id;
+    $where['?i.language'] = $language->language;
+
+    $sql = "SELECT g.*, i.suppinfo AS suppinfo FROM {scholar_generics} g LEFT JOIN {scholar_generic_suppinfo} i ON i.generic_id = g.id WHERE parent_id <> id AND " . scholar_db_where($where);
+    if ($order) {
+        $sql .= " ORDER BY " . $order;
+    }
+
+    $query = db_query($sql);
+    $rows  = scholar_db_fetch_all($query);
+
+    return $rows;
 } // }}}
 
 // vim: fdm=marker
