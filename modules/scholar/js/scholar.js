@@ -1737,6 +1737,10 @@ $(function() {
                 var outsideCurrentRegion = true;
 
                 if (currentRow) {
+                    //console && console.log('currentRegion: ' + $(currentRegion).attr('id'));
+                    //console && console.log('currentRow: ' + $(currentRow).attr('id'));
+                    //console && console.log('currentRowRegion: ' + $($(currentRow).prevAll('tr.region').get(0)).attr('id'));
+                    //console && console.log('----------');
                     // currentRow to wiersz tabeli nad ktorym sie znajdujemy podczas
                     // przeciagania
 
@@ -1744,12 +1748,24 @@ $(function() {
                     // odpowiadajacy wierszowi tabeli, nad ktorym trzymamy przenoszony
                     // wiersz tabeli, jest dokladnie tym samym regionem co region 
                     // trzymanego wiersza.
-                    if ($(currentRow).prevAll('tr.region').get(0) === currentRegion) {
+                    // Jezeli currentRow jest naglowkiem regionu, nie mozemy zezwolic
+                    // na zmiane polozenia, w przeciwnym razie nastapi przeniesienie
+                    // wiersza do innego regionu.
+                    if ($(currentRow).filter(':not(.region)').prevAll('tr.region').get(0) === currentRegion) {
                         originalTableDrag.apply(this, [event, self]);
                     }
                 }
             }
+
+            return false;
         }
+
+        var i = 0;
+        $('table tr').each(function() {
+            $(this).attr('id', i);
+            $(this).children('td:first-child').prepend(i + ' ');
+            ++i;
+        });
 
         // po upuszczeniu wiersza przywroc oryginalne ustawienia zezwalajace
         // na zmiane regionow
@@ -1763,6 +1779,7 @@ $(function() {
             // wyznacz region wlasciwy dla tego wiersza tabeli
             var tr = $($(this).parents('tr').get(0));
             currentRegion = tr.prevAll('tr.region').get(0);
+            //console && console.log('currentRegion: ' + $(currentRegion).attr('id'));
         });
     }
 

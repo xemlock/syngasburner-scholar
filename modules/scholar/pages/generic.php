@@ -624,7 +624,7 @@ function _scholar_conference_list_spec($row = null) // {{{
         check_plain($row['category_name']),
         $row['list'] ? t('Yes') : t('No'),
         l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
-        l(t('presentations'),  scholar_admin_path('conference/presentations/' . $row['id'])),
+        $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('conference/presentations/' . $row['id'])) : '',
         l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
     );
 } // }}}
@@ -677,13 +677,11 @@ function scholar_conference_presentations_form(&$form_state, $id)
     $d = array('query' => 'destination=' . scholar_admin_path('conference/presentations/' . $conference->id));
 
     $tbody[] = array();
-    $last_region = null;
+    $last_region = ''; // pierwszy region to ten bez daty
     while ($row = db_fetch_array($query)) {
         $form['weight'][$row['id']] = array(
-            'title' => array(
-                '#type' => 'hidden',
-                '#default_value' => $row['title'],
-            ),        
+            '#type' => 'hidden',
+            '#default_value' => $row['weight'],
         );
 
         $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
@@ -712,10 +710,12 @@ function scholar_conference_presentations_form(&$form_state, $id)
 
         $element = array(
             '#type' => 'select',
-            '#default_value' => intval($row['weight']),
             '#attributes' => array('class' => 'tr-weight'),
             '#options' => $weight_options,
             '#parents' => array('weight', $row['id']),
+            '#value' => $row['weight'],
+            '#name' => 'weight[' . $row['id'] . ']',
+            '#id' => 'weight-' . $row['id'],
         );
 
         $element['#type'] = 'hidden';
@@ -742,6 +742,7 @@ function scholar_conference_presentations_form(&$form_state, $id)
     // tabledrag totalnie nie dziala gdy jest wiecej niz jedno tbody
     drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
 
+    $form['#record'] = $conference;
     $form[] = array(
         '#type' => 'markup',
         '#value' => theme('table', $header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
@@ -756,15 +757,25 @@ function scholar_conference_presentations_form(&$form_state, $id)
         '#value' => scholar_admin_path('conference'),
     );
 
-
-
-
-
     scholar_add_tab(t('Add presentation'), scholar_admin_path('presentation/add'), $d['query'] . '&conference=' . $conference->id);
     scholar_add_tab(t('Edit'), scholar_admin_path('conference/edit/' . $conference->id));
     scholar_add_tab(t('List'), scholar_admin_path('conference'));
 
     return $form;
 }
+
+function scholar_conference_presentations_form_submit($form, &$form_state) // {{{
+{
+    if ($form['#record']) {
+        $record = $form['#record'];
+        $values = $form_state['values'];
+
+        if (scholar_generic_update_children_weights($record->id, (array) $values['weight'])) {
+            drupal_set_message(t('Presentation order updated successfully.'));
+        }
+
+        drupal_goto(scholar_admin_path('conference'));
+    }
+} // }}}
 
 // vim: fdm=marker

@@ -45,6 +45,12 @@ function scholar_schema() // {{{
         'default'   => 0,
         'not null'  => true,
     );
+    $field_type['counter'] = array(
+        'type'      => 'int',
+        'unsigned'  => true,
+        'not null'  => true,
+        'default'   => 0,
+    );
     // }}}
 
     $schema['scholar_nodes'] = array( // {{{
@@ -117,12 +123,7 @@ function scholar_schema() // {{{
             'id'         => $field_type['id'],
             'table_name' => $field_type['table_name'],
             'subtype'    => $field_type['subtype'],
-            'refcount' => array(
-                'description' => 'liczba rekordow powiązanych z tą kategorią',
-                'type'      => 'int',
-                'not null'  => true,
-                'default'   => 0,
-            ),
+            'refcount'   => $field_type['counter'], // liczba rekordow powiązanych z tą kategorią
         ),
         'primary key'  => array('id'),
     ); // }}}
@@ -146,8 +147,9 @@ function scholar_schema() // {{{
         'description' => 'Table for storing generic records: articles, books (article containers), presentations, conferences (presentation containers), etc.',
         'fields' => array(
             'id'          => $field_type['id'],
-            'parent_id'   => $field_type['optional_id_ref'], // references scholar_generics (id)
             'subtype'     => $field_type['subtype'],
+            'parent_id'   => $field_type['optional_id_ref'], // REFERENCES scholar_generics (id)
+            'child_count' => $field_type['counter'], // liczba rekordow takich ze parent_id jest id tego rekordu
             'category_id' => $field_type['optional_id_ref'], // REFERENCES scholar_categories (id)
                                                              // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
             'start_date' => array(

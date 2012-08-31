@@ -34,13 +34,15 @@ function scholar_load_generics_record(&$record) // {{{
  */
 function scholar_presave_generics_record(&$generic) // {{{
 {
+    $generic->prev_parent_id   = null;
     $generic->prev_category_id = null;
 
     if ($generic->id) {
         // zapamietaj oryginalne wartosci parent_id i category_id,
         // zeby pozniej wymusic przeliczenie liczby odwolan do nich
-        $query = db_query("SELECT category_id FROM {scholar_generics} WHERE id = %d", $generic->id);
+        $query = db_query("SELECT parent_id, category_id FROM {scholar_generics} WHERE id = %d", $generic->id);
         if ($row = db_fetch_array($query)) {
+            $generic->prev_parent_id   = $row['parent_id'];
             $generic->prev_category_id = $row['category_id'];
         }
     }
@@ -50,6 +52,11 @@ function scholar_save_generics_record(&$generic) // {{{
 {
     scholar_category_dec_refcount($generic->prev_category_id);
     scholar_category_inc_refcount($generic->category_id);
+
+    scholar_generic_update_child_count($generic->prev_parent_id);
+    if ($generic->parent_id != $generic->prev_parent_id) {
+        scholar_generic_update_child_count($generic->parent_id);
+    }
 
     // zaktualizuj informacje dodatkowe
     db_query("DELETE FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $generic->id);
@@ -79,6 +86,14 @@ function scholar_delete_generics_record(&$generic) // {{{
 
     // usuniecie dodatkowych informacji
     db_query("DELETE FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $generid->id);
+} // }}}
+
+/**
+ * Hook wywolywany po usunieciu rekordu.
+ */
+function scholar_postdelete_generics_record(&$generic) // {{{
+{
+    scholar_generic_update_child_count($generic->parent_id);
 } // }}}
 
 /**
@@ -149,6 +164,30 @@ function scholar_generic_update_bib_authors($generic_id) // {{{
     $bib = scholar_bib_authors($names);
 
     db_query("UPDATE {scholar_generics} SET bib_authors = " . scholar_db_quote($bib) . " WHERE id = %d", $generic_id);
+} // }}}
+
+function scholar_generic_update_child_count($generic_id) // {{{
+{
+    // niestety nie mozemy wywolac SELECT na tej samej tabeli, na ktorej
+    // wywolujemy UPDATE, stad koniecznosc wykonania dwoch zapytan
+    $row = db_fetch_array(db_query("SELECT COUNT(*) AS child_count FROM {scholar_generics} WHERE parent_id = %d", $generic_id));
+    db_query("UPDATE {scholar_generics} SET child_count = %d WHERE id = %d", $row['child_count'], $generic_id);
+} // }}}
+
+/**
+ * @return int
+ *     liczba zaktualizowanych rekordów
+ */
+function scholar_generic_update_children_weights($generic_id, $weights) // {{{
+{
+    $updated = 0;
+
+    foreach ((array) $weights as $id => $weight) {
+        db_query("UPDATE {scholar_generics} SET weight = %d WHERE id = %d AND parent_id = %d", $weight, $id, $generic_id);
+        $updated += db_affected_rows();
+    }
+
+    return $updated;
 } // }}}
 
 // vim: fdm=marker

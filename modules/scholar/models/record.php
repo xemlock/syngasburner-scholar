@@ -63,6 +63,10 @@ function scholar_save_record($model, &$record) // {{{
     return $success;
 } // }}}
 
+/**
+ * Usuwa rekord. Po wykonaniu tej funkcji właściwość id rekordu
+ * ma pustą wartość.
+ */
 function scholar_delete_record($model, &$record) // {{{
 {
     _scholar_invoke_record('delete', $model, $record);
@@ -84,6 +88,8 @@ function scholar_delete_record($model, &$record) // {{{
     $record->id = null;
 
     scholar_invalidate_rendering();
+
+    _scholar_invoke_record('postdelete', $model, $record);
 } // }}}
 
 function _scholar_invoke_record($hook, $model, &$record) // {{{

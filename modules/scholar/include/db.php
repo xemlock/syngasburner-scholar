@@ -286,8 +286,11 @@ function scholar_db_write_record($table, &$record, $update = array()) // {{{
             $not_null = isset($spec['not null']) && $spec['not null'];
             $value    = $record->$name;
 
-            if (is_string($value)) {
-                // przytnij wszystkie stringi
+            // wszystkie wartosci rozne od liczb zmiennoprzecinkowych sa
+            // konwertowane do stringow. Floaty sa poprawnie formatowane
+            // przez scholar_db_quote na etapie budowania zapytania.
+            if (!is_float($value)) {
+                // przytnij wszystkie stringi, puste zastap nullem
                 $value = trim($value);
                 if (0 == strlen($value)) {
                     $value = null;
