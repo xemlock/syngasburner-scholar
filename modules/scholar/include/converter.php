@@ -60,18 +60,32 @@ class scholar_converter_box implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_res implements scholar_converter // {{{
+class scholar_converter_asset implements scholar_converter // {{{
 {
+    // [asset={url} details={details}]{label}[/asset]
+    // [asset]{url}[/asset]
     public function convert($token, $contents)
     {
-        $label = trim($token->getAttribute('res'));
+        $asset   = trim($token->getAttribute('asset'));
+        $details = trim($token->getAttribute('details'));
 
-        if (empty($label)) {
+        if (empty($asset)) {
+            $asset = $contents;
             $label = basename($contents);
+        } else {
+            $label = $contents;
         }
 
-        return '<a class="scholar-res" href="' . htmlspecialchars($contents) . '">'
-             . htmlspecialchars($label) . '</a>';
+        if (strlen($details)) {
+            $details = ' title="' . htmlspecialchars($details) . '"';
+        }
+
+        // usun wszystkie potencjalnie niebezpieczne protokoly z adresu
+        $contents = check_url($contents);
+
+        return '<span class="scholar-asset">'
+             . '<a href="' . htmlspecialchars($asset) . '"' . $details . ' target="_blank">' . htmlspecialchars($label) . '</a>'
+             . '</span>';
     }
 } // }}}
 

@@ -253,7 +253,7 @@ scholar_add_css();
                 $body = $func($view, $info['row_id'], $node);
             }
             $bbcode = $body . $info['body'];
-p($bbcode);
+
             // $node->body = $bbcode; return;
 
 
@@ -268,7 +268,7 @@ p($bbcode);
                      ->addConverter('section', new scholar_converter_section)
                      ->addConverter('block',   new scholar_converter_block)
                      ->addConverter('box',     new scholar_converter_box)
-                     ->addConverter('res',     new scholar_converter_res)
+                     ->addConverter('asset',   new scholar_converter_asset)
                      ->addConverter('__tag',   new scholar_converter___tag);
 
             

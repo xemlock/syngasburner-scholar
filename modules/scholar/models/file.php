@@ -1,5 +1,11 @@
 <?php
 
+function scholar_file_url($filename) // {{{
+{
+    global $base_url;
+    return $base_url . '/' . scholar_file_path($filename);
+} // }}}
+
 /**
  * Zwraca ścieżkę do katalogu z plikami zarządzanymi przez ten moduł,
  * lub gdy podano nazwę pliku ścieżkę do tego pliku wewnątrz wspomnianego

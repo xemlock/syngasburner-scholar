@@ -56,6 +56,13 @@ function _scholar_page_augment_record(&$record, $row_id, $table_name, $language)
 
     $files = scholar_load_files($row_id, $table_name, $language);
     _scholar_page_augment_collection($files);
+
+    // dodaj urle do plikow
+    foreach ($files as &$file) {
+        $file['url'] = scholar_file_url($file['filename']);
+    }
+    unset($file);
+
     $record['files']   = $files;
 } // }}}
 
@@ -85,10 +92,10 @@ function scholar_page_publications($view, $node) // {{{
     $language = $node->language;
 
     $query = db_query("
-        SELECT g.id, g.title, g.start_date, g.bib_details AS details, g.url,
+        SELECT g.id, g.title, g.start_date, g.bib_details AS bib_details, g.url,
                g.parent_id, g2.title AS parent_title,
                g2.start_date AS parent_start_date,
-               g2.bib_details AS parent_details, g2.url AS parent_url,
+               g2.bib_details AS parent_bib_details, g2.url AS parent_url,
                c.name AS category_name
             FROM {scholar_generics} g
             LEFT JOIN {scholar_generics} g2
@@ -120,7 +127,7 @@ function scholar_page_publications($view, $node) // {{{
         if (empty($row['parent_id']) || empty($row['parent_start_date']) || !strlen($category)) {
             $year  = intval(substr($row['start_date'], 0, 4));
             $row['year']    = $year ? $year : '';
-            $row['details'] = _scholar_publication_details($row['details']);
+            $row['bib_details'] = _scholar_publication_details($row['bib_details']);
 
             // dane parenta sa potrzebne do wypisania informacji
             // o czasopismie, wiec ich nie usuwaj
@@ -134,18 +141,18 @@ function scholar_page_publications($view, $node) // {{{
 
         if (!isset($book_articles[$category][$title])) {
             $book_articles[$category][$title] = array(
-                'id'         => $row['parent_id'],
-                'title'      => $title,
-                'year'       => $year ? $year : '',
-                'details'    => _scholar_publication_details($row['parent_details']),
-                'url'        => $row['parent_url'],
-                'articles'   => array(),
+                'id'          => $row['parent_id'],
+                'title'       => $title,
+                'year'        => $year ? $year : '',
+                'bib_details' => _scholar_publication_details($row['parent_bib_details']),
+                'url'         => $row['parent_url'],
+                'articles'    => array(),
             );
         }
 
         // usun dane parenta z artykulu, nie beda juz potrzebne
         _scholar_page_unset_parent_keys($row);
-        $row['details'] = _scholar_publication_details($row['details']);
+        $row['bib_details'] = _scholar_publication_details($row['bib_details']);
 
         $book_articles[$category][$title]['articles'][] = $row;
     }

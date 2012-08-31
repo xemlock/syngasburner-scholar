@@ -109,6 +109,7 @@ class scholar_view_vars implements Iterator
 abstract class scholar_view_abstract
 {
     private $_templateDir;
+    private $_vars = array();
 
     abstract public function render($template);
 
@@ -145,24 +146,9 @@ abstract class scholar_view_abstract
         return false;
     } // }}}
 
-    private $_vars = array();
-
-    private function _var($var)
-    {
-        if (is_array($var) || is_object($var)) {
-            $vars = new stdClass;
-            foreach ($var as $key => $value) {
-                $vars->$key = $this->_var($value);
-            }
-            return $vars;
-        }
-
-        return $var;
-    }
-
     public function assign($key, $value)
     {
-        $this->_vars[$key] = $this->_var($value);
+        $this->_vars[$key] = $value;
         return $this;
     }
 

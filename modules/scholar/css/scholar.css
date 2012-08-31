@@ -387,3 +387,25 @@ form.scholar .form-text:focus {
 .scholar-rendering .hCite .author {
   font-weight: bold;
 }
+
+.scholar-asset {
+  overflow: hidden;
+  background: #027AC6;
+  padding: .15em .3em;
+  border-radius: 2px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  color: #fff;
+  margin-right: .25em;
+}
+.scholar-asset a,
+.scholar-asset a:hover,
+.scholar-asset a:link,
+.scholar-asset a:visited {
+  color: #fff;
+  text-decoration: none;
+  background: none;
+}
+.scholar-asset:hover {
+  background: #0062A0;
+}
