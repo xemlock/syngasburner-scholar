@@ -297,7 +297,7 @@ function scholar_render_generics_conference_node($view, $conference, $node)
     }
     unset($row, $children);
 
-    return $view->assign('conference', (array) $conference)
+    return $view->assign('conference', $conference)
                 ->assign('year_date_presentations', $year_date_presentations)
                 ->render('conference.tpl');
 }

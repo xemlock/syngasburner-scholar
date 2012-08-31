@@ -20,3 +20,4 @@
 <?php   } ?>
 <?php   if ($sections) { ?>[/section]<?php } ?>
 <?php } ?>
+<?php // vim: ft=php

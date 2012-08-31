@@ -56,14 +56,7 @@ class scholar_converter_box implements scholar_converter // {{{
 {
     public function convert($token, $contents)
     {
-        $class = $token->getAttribute('box');
-        if ($class) {
-            $class = trim(preg_replace('[^-_ a-z0-9]', '', $class));
-        }
-
-        return '<div' . ($class ? ' class="' . $class . '"' : '') . '>'
-             . trim($contents)
-             . '</div>';
+        return '<div>' . trim($contents) . '</div>';
     }
 } // }}}
 

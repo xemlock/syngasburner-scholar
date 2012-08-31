@@ -383,3 +383,7 @@ form.scholar .form-text:focus {
 }
 /* }}} */
 
+
+.scholar-rendering .hCite .author {
+  font-weight: bold;
+}

@@ -106,7 +106,7 @@ class scholar_view_vars implements Iterator
  * Klasa abstrakcyjna, kapsułkująca ustawienia widoku, tak, by
  * nie można ich było zmodyfikować podczas renderingu widoku.
  */
-abstract class scholar_view_abstract extends scholar_view_vars
+abstract class scholar_view_abstract
 {
     private $_templateDir;
 
@@ -143,6 +143,54 @@ abstract class scholar_view_abstract extends scholar_view_vars
         }
 
         return false;
+    } // }}}
+
+    private $_vars = array();
+
+    private function _var($var)
+    {
+        if (is_array($var) || is_object($var)) {
+            $vars = new stdClass;
+            foreach ($var as $key => $value) {
+                $vars->$key = $this->_var($value);
+            }
+            return $vars;
+        }
+
+        return $var;
+    }
+
+    public function assign($key, $value)
+    {
+        $this->_vars[$key] = $this->_var($value);
+        return $this;
+    }
+
+    // wypisuje eskejpowana zawartosc zmiennej
+    public function escape($value)
+    {
+        return str_replace(array('[', ']'), array('\[', '\]'), (string) $value);
+    }
+
+    // wypisuje zawartosc zmiennej eskejpowana do bycia atrybutem
+    public function escapeAttr($value)
+    {
+        return str_replace('"', "''", (string) $value);
+    }
+
+    public function display($value)
+    {
+        echo $this->escape($value);
+    }
+
+    public function displayAttr($value)
+    {
+        echo $this->escapeAttr($value);
+    }
+
+    public function __get($key) // {{{
+    {
+        return isset($this->_vars[$key]) ? $this->_vars[$key] : null;
     } // }}}
 }
 

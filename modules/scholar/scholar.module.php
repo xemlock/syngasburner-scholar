@@ -241,7 +241,7 @@ function scholar_nodeapi(&$node, $op)
             $node->body = '';
             return;
         }
-
+scholar_add_css();
         if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
             $func = 'scholar_render_' . $info['table_name'] . '_node';
             $body = '';
