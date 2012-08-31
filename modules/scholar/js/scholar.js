@@ -1672,8 +1672,10 @@ var Scholar = {
 
 Scholar.modal = new Scholar.Dialog;
 
+
+
 $(function() {
-    $('.scholar-character-countdown').each(function() {
+    $('.scholar-character-countdown').each(function() { // {{{
         var j = $(this),
             target = $('#' + j.attr('data-id')),
             maxlen = parseInt(target.attr('maxlength'));
@@ -1709,9 +1711,65 @@ $(function() {
         });
 
         update();
-    });
+    }); // }}}
 
+    /**
+     * Hack do tabledrag umozliwiajacy zablokowanie mozliwosci przenoszenia
+     * wierszy miedzy regionami.
+     */
+    function enhanceTableDrag()
+    {
+        var originalTableDrag = Drupal.tableDrag.prototype.dragRow,
+            currentRegion = null; // element TR.region wlasciwy dla chwyconego wiersza tabeli
 
+        Drupal.tableDrag.prototype.dragRow = function(event, self) {
+            if (!currentRegion) {
+                return originalTableDrag.apply(this, [event, self]);
+            }
+
+            if (self.dragObject) {
+                currentMouseCoords = self.mouseCoords(event);
+
+                var x = currentMouseCoords.x - self.dragObject.initMouseOffset.x,
+                    y = currentMouseCoords.y - self.dragObject.initMouseOffset.y;
+
+                var currentRow = self.findDropTargetRow(x, y);
+                var outsideCurrentRegion = true;
+
+                if (currentRow) {
+                    // currentRow to wiersz tabeli nad ktorym sie znajdujemy podczas
+                    // przeciagania
+
+                    // wywolaj oryginalna metode dragRow tylko wtedy, jezeli region
+                    // odpowiadajacy wierszowi tabeli, nad ktorym trzymamy przenoszony
+                    // wiersz tabeli, jest dokladnie tym samym regionem co region 
+                    // trzymanego wiersza.
+                    if ($(currentRow).prevAll('tr.region').get(0) === currentRegion) {
+                        originalTableDrag.apply(this, [event, self]);
+                    }
+                }
+            }
+        }
+
+        // po upuszczeniu wiersza przywroc oryginalne ustawienia zezwalajace
+        // na zmiane regionow
+        $(document).bind('mouseup', function() {
+            currentRegion = null;
+        });
+
+        // dodaj do wszystkich uchwytow do przenoszenia wiersza umieszczonych
+        // w tabelach z klasa .region-locked blokade regionu
+        $('table.region-locked > tbody').find('.tabledrag-handle').mousedown(function() {
+            // wyznacz region wlasciwy dla tego wiersza tabeli
+            var tr = $($(this).parents('tr').get(0));
+            currentRegion = tr.prevAll('tr.region').get(0);
+        });
+    }
+
+    try {
+        enhanceTableDrag();
+    } catch (e) {
+    }
 });
 
 // vim: fdm=marker

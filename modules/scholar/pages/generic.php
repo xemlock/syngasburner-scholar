@@ -729,7 +729,6 @@ function scholar_conference_presentations_form(&$form_state, $id)
                 l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id']), $d),
             ),
             'class' => 'draggable',
-            //'tbody' => $subgroup,
         );
     }
 
@@ -742,99 +741,10 @@ function scholar_conference_presentations_form(&$form_state, $id)
 
     // tabledrag totalnie nie dziala gdy jest wiecej niz jedno tbody
     drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
-    
-    // hack do tabledrag, zeby nie mieszac wierszy miedzy TBODY
-    // normalnie mozna przeniesc z pozostalych TBODY do pierwszego, 
-    // ale nie na odwrot. \
-    drupal_add_js("
-        var old =         Drupal.tableDrag.prototype.dragRow;
-        var locked = false;
-        var originalRegion;
-        var kurczePieczone;
-        Drupal.tableDrag.prototype.dragRow = function(event, self) {
-            if (kurczePieczone) {
-                if (self.dragObject) {
-                self.currentMouseCoords = self.mouseCoords(event);
-
-                var y = self.currentMouseCoords.y - self.dragObject.initMouseOffset.y;
-                var x = self.currentMouseCoords.x - self.dragObject.initMouseOffset.x;
-
-                var currentRow = self.findDropTargetRow(x, y);
-
-                var outside = true;
-                if (currentRow) {
-                    console.log(currentRow);
-                    console.log('original: ' + ($(originalRegion).attr('id')));
-                    if ($(currentRow).prev('tr.region').get(0) == originalRegion) {
-                        console.log('ok');
-                        outside = false;
-                    }
-                } else console.log('no currentRow');
-
-                if (!outside) {
-                    old.apply(this, [event, self]);
-                } else console.log('outside!');
-            }
-            } else {
-                old.apply(this, [event, self]);
-            }
-        }
-
-        $(function() {
-            var i = 0;
-            $('tr.region').each(function() {
-                $(this).attr('id', 'region-' + (++i))
-});
-var j = 0;
-
-            $('#scholar-conference-presentations > tbody').find('.tabledrag-handle').mousedown(function() {
-                kurczePieczone = true;
-                console && console.log('locking kurczePieczone');
-                originalRegion = $($(this).parents('tr').get(0)).prevAll('tr.region').get(0);
-                console && console.log(originalRegion);
-                var tr = $($(this).parents('tr').get(0));
-//                tr.attr('xxx', ++j);
-  //              console && console.log(tr.get(0));
-            });
-            $(document).bind('mouseup', function() {
-                kurczePieczone = false;
-                console && console.log('releasing kurczePieczone');
-            });
-        });
-        $(function() {return;
-        $('#scholar-conference-presentations > tbody').each(function() {
-            var j = $(this);
-            j.find('.tabledrag-handle, .tabledrag-handle .handle').each(function() {
-                // pobierz wszystkie handlery
-                var events = $(this).data('events'),
-                    handlers = [];
-                if (events && events.mousedown) {
-                    $.each(events.mousedown, function(k, v) {
-                        handlers[handlers.length] = v;
-                    });
-                }
-
-                $(this).unbind('mousedown');
-                $(this).bind('mousedown', function(e) {
-                    e.stopPropagation();
-                    return false;
-                });
-
-                for (var i = 0, n = handlers.length; i < n; ++i) {
-                    // $(this).bind('mousedown', handlers[i]);
-                }
-
-console.log($(this).data('events').mousedown);
-            });
-})
-
-
-})", 'inline');
 
     $form[] = array(
         '#type' => 'markup',
-        '#value' => theme_table($header, $rows, array('id' => 'scholar-conference-presentations'))
-        . '<style>tbody {border:2px solid black;}</style>',
+        '#value' => theme('table', $header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
     );
 
     $form[] = array(
