@@ -12,11 +12,11 @@
         if ($article->parent_title) { ?>, [__tag="span" class="fn journal"][url="<?php $this->display($article->parent_url) ?>"]<?php $this->display($article->parent_title) ?>[/url][/__tag]<?php 
         } ?><?php $this->display($article->details) ?>
   [/__tag]
+
 <?php   if ($article->files) { ?>
-  [__tag="div" class="files"]
-<?php   $files = $article->files;
-        include dirname(__FILE__) . '/_files.tpl'; ?>
-  [/__tag]
+  [__tag="div" class="files"]<?php
+          $files = $article->files;
+          include dirname(__FILE__) . '/_files.tpl'; ?>[/__tag]
 <?php   } ?>
 [/block]
 <?php } ?>

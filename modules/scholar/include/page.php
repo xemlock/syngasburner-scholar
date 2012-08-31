@@ -186,9 +186,9 @@ function scholar_page_conferences($view, $node) // {{{
     // country name, locality (Internet), kategoria. Wystepienia w obrebie
     // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
     $query = db_query("
-        SELECT g.id, g.title, i.suppinfo AS details, g.url, g.parent_id,
+        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
                g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.end_date AS parent_end_date, i2.suppinfo AS parent_details,
+               g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
                g2.url AS parent_url, g2.country AS parent_country,
                g2.locality AS parent_locality, c.name AS category_name
         FROM {scholar_generics} g
@@ -224,23 +224,39 @@ function scholar_page_conferences($view, $node) // {{{
         if (!isset($year_conferences[$year][$parent_id])) {
             $locality = trim($row['parent_locality']);
 
-            if (strcasecmp('internet', $locality)) {
-                $country  = isset($countries[$row['parent_country']]) ? ', ' . $countries[$row['parent_country']] : '';
-                $locality = _scholar_publication_details($locality);
+            if (!strcasecmp('internet', $locality)) {
+                // jezeli miejscowosc to internet usun dane lokalizacji
+                $country      = '';
+                $country_name = '';
+                $locality     = '';
             } else {
-                $country  = '';
-                $locality = '';
+                $country      = $row['parent_country'];
+                $country_name = isset($countries[$country]) ? $countries[$country] : '';
+            }
+
+            $start_date = substr($row['parent_start_date'], 0, 10);
+            $end_date   = substr($row['parent_end_date'], 0, 10);
+
+            $date_span = $start_date;
+            if ($end_date) {
+                if ($end_date != $start_date) {
+                    $date_span .= ' – ' . $end_date;
+                }
+            } else {
+                $date_span .= ' – …';
             }
 
             $year_conferences[$year][$parent_id] = array(
                 'id'         => $parent_id,
                 'title'      => $row['parent_title'],
-                'start_date' => substr($row['parent_start_date'], 0, 10),
-                'end_date'   => substr($row['parent_end_date'], 0, 10),
-                'details'    => $row['parent_details'],
+                'start_date' => $start_date,
+                'end_date'   => $end_date,
+                'date_span'  => $date_span,
+                'suppinfo'   => $row['parent_suppinfo'],
                 'url'        => $row['parent_url'],
-                'country'    => $country,
                 'locality'   => $locality,
+                'country'    => $country,
+                'country_name'  => $country_name,
                 'presentations' => array(),
             );
         }
