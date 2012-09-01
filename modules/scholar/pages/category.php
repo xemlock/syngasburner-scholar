@@ -66,7 +66,12 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         $record->subtype = $subtype;
 
     } else {
-        $record = scholar_load_category($id, $table_name, $subtype, scholar_category_path($table_name, $subtype));
+        $conds = array(
+            'id'         => $id,
+            'table_name' => $table_name,
+            'subtype'    => $subtype,
+        );
+        $record = scholar_load_record('categories', $conds, scholar_category_path($table_name, $subtype));
     }
 
     $names = array(
@@ -96,7 +101,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         // 'nodes',
     );
 
-    // dodaj dodatkowe pola zwiazane z kategoriami rekordow konktretnych typow
+    // dodaj dodatkowe pola zwiazane z kategoriami rekordow konkretnych typow
     $callback = 'scholar_category_form_' . $table_name;
     if ($subtype) {
         $callback .= '_' . $subtype;
@@ -150,7 +155,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
         }
 
         // zapisz kategorie
-        scholar_save_category($record);
+        scholar_save_record('categories', $record);
 
         drupal_set_message($is_new
             ? t('Category %title added successfully.', array('%title' => $title))
@@ -170,7 +175,7 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
 {
     global $language;
 
-    $record = scholar_load_category($id, false, false, scholar_category_path());
+    $record = scholar_load_record('categories', $id, scholar_category_path());
 
     $form = array(
         '#record' => $record,
@@ -200,10 +205,17 @@ function scholar_category_delete_form_submit($form, &$form_state) // {{{
     $record = $form['#record'];
 
     if ($record) {
-        scholar_delete_category($record);
+        scholar_delete_record('categories', $record);
         drupal_set_message(t('Category %name deleted successfully', array('%name' => $record->names[$language->language])));
         drupal_goto(scholar_category_path($record->table_name, $record->subtype));
     }
+} // }}}
+
+function scholar_category_form_generics_conference(&$fields) // {{{
+{
+    // dodaj pola formularza odpowiedzialne za konfiguracje
+    // powiazanych wezlow
+    $fields[] = 'nodes';
 } // }}}
 
 // vim: fdm=marker

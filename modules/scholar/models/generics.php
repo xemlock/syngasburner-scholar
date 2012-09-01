@@ -48,7 +48,7 @@ function scholar_presave_generics_record(&$generic) // {{{
     }
 } // }}}
 
-function scholar_save_generics_record(&$generic) // {{{
+function scholar_postsave_generics_record(&$generic) // {{{
 {
     scholar_category_dec_refcount($generic->prev_category_id);
     scholar_category_inc_refcount($generic->category_id);
@@ -80,7 +80,7 @@ function scholar_save_generics_record(&$generic) // {{{
  *
  * @param object &$generic
  */
-function scholar_delete_generics_record(&$generic) // {{{
+function scholar_predelete_generics_record(&$generic) // {{{
 {
     scholar_category_dec_refcount($generic->category_id);
 

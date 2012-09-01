@@ -3,7 +3,7 @@
 /**
  * @param object &$person
  */
-function scholar_save_people_record(&$person) // {{{
+function scholar_postsave_people_record(&$person) // {{{
 {
     // modyfikacja rekordu osoby wymusza aktualizacje rekordow, ktore
     // odwoluja sie do tego rekordu jako autora
@@ -15,7 +15,7 @@ function scholar_save_people_record(&$person) // {{{
  *
  * @param object &$person
  */
-function scholar_delete_people_record(&$person) // {{{
+function scholar_predelete_people_record(&$person) // {{{
 {
     // usun powiazania tej osoby z rekordami innych tabel
     db_query("DELETE FROM {scholar_authors} WHERE person_id = %d", $person->id);

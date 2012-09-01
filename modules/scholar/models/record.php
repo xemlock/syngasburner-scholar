@@ -56,7 +56,7 @@ function scholar_save_record($model, &$record) // {{{
             scholar_save_events($record->id, $model, $record->events);
         }
 
-        _scholar_invoke_record('save', $model, $record);
+        _scholar_invoke_record('postsave', $model, $record);
         scholar_invalidate_rendering();
     }
 
@@ -69,7 +69,7 @@ function scholar_save_record($model, &$record) // {{{
  */
 function scholar_delete_record($model, &$record) // {{{
 {
-    _scholar_invoke_record('delete', $model, $record);
+    _scholar_invoke_record('predelete', $model, $record);
 
     // usuniecie autorow
     scholar_delete_authors($record->id, $model);

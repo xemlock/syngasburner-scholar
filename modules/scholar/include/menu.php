@@ -2,9 +2,12 @@
 
 function scholar_admin_path($path = '') // {{{
 {
+    $path = ltrim($path, '/');
+
     if (strlen($path)) {
-        $path = '/' . ltrim($path);
+        $path = '/' . $path;
     }
+
     return 'admin/scholar' . $path;
 } // }}}
 
