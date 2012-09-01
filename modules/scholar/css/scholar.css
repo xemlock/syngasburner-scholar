@@ -409,3 +409,21 @@ form.scholar .form-text:focus {
 .scholar-asset:hover {
   background: #0062A0;
 }
+
+.scholar-rendering p {
+  margin:0;
+  padding:0;
+}
+.scholar-block {
+  margin: 1em 0;
+  overflow: hidden;
+}
+
+.scholar-block > .tm {
+  float: left;
+  width: 12em;
+}
+
+.scholar-block > .details {
+  margin-left: 12em;
+}

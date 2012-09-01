@@ -21,10 +21,9 @@ function scholar_category_list($table_name, $subtype = null) // {{{
     $where = array(
         'c.table_name' => $table_name,
         'c.subtype'    => $subtype,
-        'n.language'   => $language->language,
     );
 
-    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON c.id = n.category_id WHERE " . scholar_db_where($where) . tablesort_sql($header));
+    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON (c.id = n.category_id AND n.language = '%s') WHERE " . scholar_db_where($where) . tablesort_sql($header), $language->language);
 
     $rows = array();
 

@@ -39,11 +39,10 @@ function scholar_generics_list($subtype) // {{{
 
     $where = array(
         'g.subtype'   => $subtype,
-        '?n.language' => $language->language,
     );
 
     $rpp = scholar_admin_page_size();
-    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON g.category_id = n.category_id WHERE " 
+    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") WHERE " 
          . scholar_db_where($where)
          . tablesort_sql($header);
 

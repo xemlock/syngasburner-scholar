@@ -99,13 +99,11 @@ function scholar_page_publications($view, $node) // {{{
                c.name AS category_name
             FROM {scholar_generics} g
             LEFT JOIN {scholar_generics} g2
-                ON g.parent_id = g2.id
+                ON (g.parent_id = g2.id AND g2.subtype = 'book')
             LEFT JOIN {scholar_category_names} c
-                ON g2.category_id = c.category_id
+                ON (g2.category_id = c.category_id AND c.language = '%s')
             WHERE
                 g.subtype = 'article'
-                AND (g2.subtype IS NULL OR g2.subtype = 'book')
-                AND (c.language IS NULL OR c.language = '%s')
         ORDER BY g.start_date DESC
     ", $language);
 
@@ -163,9 +161,11 @@ function scholar_page_publications($view, $node) // {{{
 
         // w przypadku artykulow w czasopismach trzeba ustawic
         // odpowiedni URL parenta
-        $url = _scholar_node_url($article['parent_id'], 'generics', $language);
-        if ($url) {
-            $article['parent_url'] = $url;
+        if ($article['parent_id']) {
+            $url = _scholar_node_url($article['parent_id'], 'generics', $language);
+            if ($url) {
+                $article['parent_url'] = $url;
+            }
         }
     }
 
@@ -179,56 +179,15 @@ function scholar_page_publications($view, $node) // {{{
     }
 
     return $view
+        ->assign('section_title', t('Reviewed papers', array(), $language))
         ->assign('articles', $articles)
         ->assign('book_articles', $book_articles)
         ->render('publications.tpl');
 } // }}}
 
-function scholar_page_conferences($view, $node) // {{{
+function __scholar_prepare_conference_from_parent_fields($row)
 {
-    $language = $node->language;
-
-    // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
-    // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
-    // country name, locality (Internet), kategoria. Wystepienia w obrebie
-    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
-    $query = db_query("
-        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
-               g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
-               g2.url AS parent_url, g2.country AS parent_country,
-               g2.locality AS parent_locality, c.name AS category_name
-        FROM {scholar_generics} g
-        JOIN {scholar_generics} g2
-            ON g.parent_id = g2.id
-        LEFT JOIN {scholar_category_names} c
-            ON g.category_id = c.category_id
-        LEFT JOIN {scholar_generic_suppinfo} i
-            ON i.generic_id = g.id
-        LEFT JOIN {scholar_generic_suppinfo} i2
-            ON i2.generic_id = g2.id
-        WHERE g2.list <> 0
-            AND g.subtype = 'presentation'
-            AND g2.subtype = 'conference'
-            AND LENGTH(g.title) > 0
-            AND (c.language IS NULL OR c.language = '%s')
-            AND (i.language IS NULL OR i.language = '%s')
-            AND (i2.language IS NULL OR i2.language = '%s')
-        ORDER BY g2.start_date DESC, g.start_date, g.weight
-    ", $language, $language, $language);
-
-    // TODO co z kolejnoscia prezentacji w konferencji???
-    // prezentacje pogrupowane wedlug konferencji, a te z kolei
-    // malejaco wedlug roku
-    $year_conferences = array();
-
-    $countries = scholar_countries();
-
-    while ($row = db_fetch_array($query)) {
-        $parent_id = $row['parent_id'];
-        $year = intval(substr($row['parent_start_date'], 0, 4));
-
-        if (!isset($year_conferences[$year][$parent_id])) {
+            $countries = scholar_countries();
             $locality = trim($row['parent_locality']);
 
             if (!strcasecmp('internet', $locality)) {
@@ -253,7 +212,7 @@ function scholar_page_conferences($view, $node) // {{{
                 $date_span .= ' – …';
             }
 
-            $year_conferences[$year][$parent_id] = array(
+            return array(
                 'id'         => $parent_id,
                 'title'      => $row['parent_title'],
                 'start_date' => $start_date,
@@ -265,7 +224,50 @@ function scholar_page_conferences($view, $node) // {{{
                 'country'    => $country,
                 'country_name'  => $country_name,
                 'presentations' => array(),
-            );
+            );    
+}
+
+function scholar_page_conferences($view, $node) // {{{
+{
+    $language = $node->language;
+
+    // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
+    // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
+    // country name, locality (Internet), kategoria. Wystepienia w obrebie
+    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
+    $query = db_query("
+        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
+               g2.title AS parent_title, g2.start_date AS parent_start_date,
+               g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
+               g2.url AS parent_url, g2.country AS parent_country,
+               g2.locality AS parent_locality, c.name AS category_name
+        FROM {scholar_generics} g
+        JOIN {scholar_generics} g2
+            ON g.parent_id = g2.id
+        LEFT JOIN {scholar_category_names} c
+            ON (g.category_id = c.category_id AND c.language = '%s')
+        LEFT JOIN {scholar_generic_suppinfo} i
+            ON (i.generic_id = g.id AND i.language = '%s')
+        LEFT JOIN {scholar_generic_suppinfo} i2
+            ON (i2.generic_id = g2.id AND i2.language = '%s')
+        WHERE g2.list <> 0
+            AND g.subtype = 'presentation'
+            AND g2.subtype = 'conference'
+            AND LENGTH(g.title) > 0
+        ORDER BY g2.start_date DESC, g.start_date, g.weight
+    ", $language, $language, $language);
+
+    // TODO co z kolejnoscia prezentacji w konferencji???
+    // prezentacje pogrupowane wedlug konferencji, a te z kolei
+    // malejaco wedlug roku
+    $year_conferences = array();
+
+    while ($row = db_fetch_array($query)) {
+        $parent_id = $row['parent_id'];
+        $year = intval(substr($row['parent_start_date'], 0, 4));
+
+        if (!isset($year_conferences[$year][$parent_id])) {
+            $year_conferences[$year][$parent_id] = __scholar_prepare_conference_from_parent_fields($row);
         }
 
         _scholar_page_unset_parent_keys($row);
