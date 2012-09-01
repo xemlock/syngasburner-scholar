@@ -318,7 +318,7 @@ function scholar_delete_file(&$file) // {{{
  */
 function scholar_file_allowed_extensions() // {{{
 {
-    return 'bib jpg gif png pdf ps zip';
+    return 'bib gif jpg pdf png ps txt zip';
 } // }}}
 
 /**
@@ -399,5 +399,52 @@ function scholar_file_validate_filename(&$file) // {{{
 
     return $errors;
 } // }}}
+
+
+// file_save_upload nie radzi sobie gdy plik o takiej samej nazwie
+// istnieje.
+function scholar_save_upload($source) // {{{
+{
+    $validators = array(
+        'scholar_file_validate_md5sum'    => array(),
+        'scholar_file_validate_filename'  => array(),
+        'scholar_file_validate_extension' => array(),
+    );
+
+    if ($file = file_save_upload($source, $validators)) {
+        $success = false;
+
+        // przenies plik z katalogu tymczasowego do katalogu scholara,
+        // pamietajac o zmianie nazwy, gdy plik o takiej nazwie jak
+        // przeslany juz istnieje
+        $filepath = file_destination(scholar_file_path($file->filename), FILE_EXISTS_RENAME);
+
+        if (@rename($file->filepath, $filepath)) {
+            // przygotuj pola odpowiadajace kolumnom tabeli scholar_files.
+            // filename po walidacji zawiera bazowa sciezke (ASCII) do wgranego
+            // pliku, czyli dokladnie to co jest potrzebne.
+            $file->filepath = $filepath;
+            $file->filename = basename($filepath); // to musi byc unikalne
+            $file->id       = null;
+            $file->mimetype = $file->filemime;
+            $file->size     = $file->filesize;
+            $file->user_id  = $file->uid;
+            $file->upload_time = date('Y-m-d H:i:s', $file->timestamp);
+
+            $success = scholar_db_write_record('scholar_files', $file);
+        }
+
+        // trzeba usunac plik z tabeli files
+        db_query("DELETE FROM {files} WHERE fid = '%d'", $file->fid);
+
+        // jezeli pomyslnie zapisano plik, zwroc reprezentujacy go obiekt
+        if ($success) {
+            return $file;
+        }
+    }
+
+    return false;
+} // }}}
+
 
 // vim: fdm=marker
