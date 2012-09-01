@@ -216,10 +216,7 @@ function scholar_eventapi(&$event, $op) // {{{
 {
     switch ($op) {
         case 'prepare':
-            $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event->id);
-            $info = db_fetch_array($query);
-
-            if ($info) {
+            if ($info = scholar_event_owner_info($event->id)) {
                 return scholar_redirect_to_form($info['row_id'], $info['table_name'], '!scholar-form-vtable-events');
             }
             break;

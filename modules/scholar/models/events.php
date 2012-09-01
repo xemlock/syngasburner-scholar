@@ -146,4 +146,10 @@ function scholar_delete_events($row_id, $table_name) // {{{
     }
 } // }}}
 
+function scholar_event_owner_info($event_id) // {{{
+{
+    $query = db_query("SELECT * FROM {scholar_events} WHERE event_id = %d", $event_id);
+    return db_fetch_array($query);
+} // }}}
+
 // vim: fdm=marker

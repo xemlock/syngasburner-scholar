@@ -1760,12 +1760,12 @@ $(function() {
             return false;
         }
 
-        var i = 0;
+        /*var i = 0;
         $('table tr').each(function() {
             $(this).attr('id', i);
             $(this).children('td:first-child').prepend(i + ' ');
             ++i;
-        });
+        });*/
 
         // po upuszczeniu wiersza przywroc oryginalne ustawienia zezwalajace
         // na zmiane regionow

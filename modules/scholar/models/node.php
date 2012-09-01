@@ -9,7 +9,8 @@
 
 /**
  * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
- *
+ * Jeżeli nie podano języka cache nie jest używany do odczytu, ale jego
+ * wynik juz bedzie zapisany do cacheu.
  * @param int $row_id
  * @param string $table_name
  * @param string $language OPTIONAL     jeżeli nie podany zostaną pobrane
@@ -19,6 +20,14 @@
  */
 function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // {{{
 {
+    static $_bindings = array();
+
+    if (null !== $language) {
+        if (isset($_bindings[$table_name][$row_id][$language])) {
+            return $_bindings[$table_name][$row_id][$language];
+        }
+    }
+
     $sql = sprintf(
         "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND row_id = %d",
         db_escape_string($table_name), $row_id
@@ -30,12 +39,14 @@ function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // 
 
         while ($row = db_fetch_array($query)) {
             $result[] = $row;
+            $_bindings[$table_name][$row_id][$row['language']] = $row;
         }
 
     } else {
         $sql .= sprintf(" AND language = '%s'", db_escape_string($language));
         $query  = db_query($sql);
         $result = db_fetch_array($query);
+        $_bindings[$table_name][$row_id][$language] = $result;
     }
 
     return $result;
@@ -377,5 +388,35 @@ function scholar_node_owner_info($node_id) // {{{
     return db_fetch_array($query);
 } // }}}
 
+function _scholar_node_url($id, $table_name, $language)
+{
+    static $_cache = array();
+
+    // language musi byc zrzutowany do stringa, bo gdyby podano
+    // null to dostalibysmy wszystkie bindingi
+    $language = (string) $language;
+
+    if (!isset($_cache[$table_name][$id][$language])) {
+        $path = false;
+        $b = _scholar_fetch_node_binding($id, $table_name, $language);
+
+        if ($b && $b['status']) {
+            if (db_table_exists('url_alias')) {
+                $qq = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $b['pid']);
+                $rr = db_fetch_array($qq);
+                $alias = $rr ? $rr['dst'] : null;
+            }
+            $path = $alias ? $alias : 'node/' . $b['node_id'];
+        }
+
+        if ($path) {
+            $path = url($path, array('absolute' => true));
+        }
+
+        $_cache[$table_name][$id][$language] = $path;
+    }
+
+    return $_cache[$table_name][$id][$language];
+}
 
 // vim: fdm=marker

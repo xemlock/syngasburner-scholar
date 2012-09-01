@@ -129,7 +129,7 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
 {
     global $language;
 
-    $where = array('?language' => $language->language);
+    $where = array();
 
     if ($table_name) {
         $where['table_name'] = $table_name;
@@ -139,7 +139,11 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
         $where['subtype'] = $subtype;
     }
 
-    $query = db_query("SELECT c.id, n.name FROM {scholar_categories} c JOIN {scholar_category_names} n ON c.id = n.category_id WHERE " . scholar_db_where($where) . " ORDER BY n.name");
+    if (count($where)) {
+        $where = 'WHERE ' . scholar_db_where($where);
+    }
+
+    $query = db_query("SELECT c.id, n.name FROM {scholar_categories} c JOIN {scholar_category_names} n ON (c.id = n.category_id AND n.language = '%s') " . $where . " ORDER BY n.name", $language->language);
 
     $options = array(
         0 => '', // pusta kategoria

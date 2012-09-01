@@ -148,17 +148,17 @@ function scholar_fetch_file($file_id, $redirect = null) // {{{
 function scholar_load_files($row_id, $table_name, $language = null) // {{{
 {
     $conds = array(
-        'table_name' => $table_name,
-        'row_id'     => $row_id,
+        'a.table_name' => $table_name,
+        'a.row_id'     => $row_id,
     );
 
     if (null !== $language) {
         $language = strval($language);
-        $conds['language'] = $language;
+        $conds['a.language'] = $language;
     }
 
     $where = scholar_db_where($conds);
-    $query = db_query("SELECT * FROM {scholar_attachments} a JOIN {scholar_files} f ON a.file_id = f.id WHERE " . $where . " ORDER BY language, weight");
+    $query = db_query("SELECT * FROM {scholar_attachments} a JOIN {scholar_files} f ON a.file_id = f.id WHERE " . $where . " ORDER BY a.language, a.weight");
     $rows = array();
 
     while ($row = db_fetch_array($query)) {

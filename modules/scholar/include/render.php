@@ -15,29 +15,6 @@ function _scholar_render_attr($str)
     return str_replace("\"", "''", $str);
 }
 
-function _scholar_node_url($id, $table_name, $language)
-{
-    // FIXME to nie potrzebuje bindingu tylko 2 kolumny, status i node_id
-    // language musi byc zrzutowany do stringa, bo gdyby podano
-    // null to dostalibysmy wszystkie bindingi
-    $b = _scholar_fetch_node_binding($id, $table_name, (string) $language);
-
-    if ($b && $b['status']) {
-        if (db_table_exists('url_alias')) {
-            $qq = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $b['pid']);
-            $rr = db_fetch_array($qq);
-            $alias = $rr ? $rr['dst'] : null;
-        }
-        $path = $alias ? $alias : 'node/' . $b['node_id'];
-    }
-
-    if ($path) {
-        return url($path, array('absolute' => true));
-    }
-
-    return null;
-}
-
 function scholar_render_people_node($view, $id, $node)
 {
     $person = scholar_load_record('people', $id);
