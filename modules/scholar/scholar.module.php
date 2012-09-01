@@ -175,7 +175,7 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
 {
     switch ($table_name) {
         case 'people':
-            $record = scholar_load_person($row_id, scholar_admin_path('people'));
+            $record = scholar_load_record('people', $row_id, scholar_admin_path('people'));
             return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, $fragment);
 
         case 'generics':

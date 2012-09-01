@@ -56,9 +56,8 @@ function scholar_render_people_node($view, $id, $node)
         JOIN {scholar_generics} g 
             ON a.row_id = g.id
         LEFT JOIN {scholar_generics} g2
-            ON g.parent_id = g2.id
-        WHERE g.subtype = 'article' 
-            AND a.person_id = %d
+            ON (g.parent_id = g2.id AND g.subtype = 'article')
+        WHERE a.person_id = %d
             AND a.table_name = 'generics'
         ORDER BY g.start_date DESC
     ", $person->id);
@@ -163,7 +162,7 @@ function scholar_render_generics_node($view, $id, $node)
     }
 
     $func = 'scholar_render_generics_' . $generic->subtype . '_node';
-    p($func);
+
     if (function_exists($func)) {
         return $func($view, $generic, $node);
     }
