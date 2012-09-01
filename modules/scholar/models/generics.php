@@ -109,6 +109,13 @@ function scholar_generics_author_update($generic_id) // {{{
     scholar_generic_update_bib_authors($generic_id);
 } // }}}
 
+function scholar_generics_all_records($subtype = null, $header = null)
+{
+    
+
+}
+
+
 /**
  * Lista dostępnych rekordów rodzica podzielonych na kategorie, do użycia jako
  * opcje elementu SELECT formularza. Jeżeli nie istnieje żaden potencjalny

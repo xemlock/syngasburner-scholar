@@ -1,12 +1,12 @@
-dl.scholar {
-
+.scholar-dl {
+  margin-top: 0;
 }
-dl.scholar dt {
+.scholar-dl dt {
   font-weight: bold;
   font-size: 90%;
   margin: 0;
 }
-dl.scholar dd {
+.scholar-dl dd {
   margin: 0 0 .4em 2em;
 }
 

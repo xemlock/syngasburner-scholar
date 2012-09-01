@@ -101,15 +101,6 @@ function scholar_menu() // {{{
         t('Conferences'), 
         array('edit' => t('Edit conference'))
     );
-    $items[$root . '/conference/presentations/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Conference presentations'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_conference_presentations_form'),
-        'parent'            => $root . '/conference',
-        'file'              => 'pages/generic.php',
-    );
 
     $items += _scholar_category_menu($root . '/conference', 'generics', 'conference', array(
         'edit'   => t('Edit conference category'),
@@ -337,6 +328,16 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
         'page arguments'    => array('scholar_generics_delete_form', $subtype),
+        'parent'            => $root_path,
+        'file'              => 'pages/generic.php',
+    );
+    $items[$root_path . '/children/%/%'] = array(
+        'type'              => MENU_CALLBACK,
+        // brak tytulu, funkcja odpowiedzialna za generowanie strony musi sama
+        // go ustawic
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_generics_children_list',
+        'page arguments'    => array($subtype),
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
     );

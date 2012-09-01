@@ -17,7 +17,7 @@ function scholar_generics_list($subtype) // {{{
     $func = '_scholar_' . $subtype . '_list_spec';
 
     if (!function_exists($func)) {
-        drupal_set_message("Unable to retrieve list: Invalid generic subtype '$subtype'", 'error');
+        drupal_set_message("Unable to retrieve list: Invalid subtype '$subtype'", 'error');
         return;
     }
 
@@ -94,7 +94,7 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
         }
 
         // przygotuj argumenty do wygenerowania formularza
-        $args = array(&$form_state, &$record);
+        $args = array(&$form_state, $record);
 
         // pobierz strukture formularza
         $form = call_user_func_array($func, $args);
@@ -105,7 +105,7 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
         return $form;
     }
 
-    drupal_set_message("Unable to retrieve form: Invalid generic subtype '$subtype'", 'error');
+    drupal_set_message("Unable to retrieve form: Invalid subtype '$subtype'", 'error');
 } // }}}
 
 /**
@@ -234,7 +234,7 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
  * @param array &$form_state
  * @param object &$record
  */
-function scholar_conference_form(&$form_state, &$record = null) // {{{
+function scholar_conference_form(&$form_state, $record = null) // {{{
 {
     if ($record) {
         $record->start_date = substr($record->start_date, 0, 10);
@@ -342,7 +342,7 @@ function _scholar_conference_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function scholar_presentation_form(&$form_state, &$record = null) // {{{
+function scholar_presentation_form(&$form_state, $record = null) // {{{
 {
     if ($record) {
         $record->start_date = substr($record->start_date, 0, 10);
@@ -432,7 +432,7 @@ function _scholar_presentation_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function scholar_book_form(&$form_state, &$record = null) // {{{
+function scholar_book_form(&$form_state, $record = null) // {{{
 {
     if ($record) {
         $record->start_date = strlen($record->start_date) 
@@ -441,7 +441,6 @@ function scholar_book_form(&$form_state, &$record = null) // {{{
     }
 
     $categories = scholar_category_options('generics', 'book');
-
     $form = scholar_generic_form(array(
         'title' => array(
             '#required'    => true,
@@ -507,7 +506,7 @@ function _scholar_book_form_process_values(&$values) // {{{
     $values['end_date']   = null;
 } // }}}
 
-function scholar_article_form(&$form_state, &$record = null) // {{{
+function scholar_article_form(&$form_state, $record = null) // {{{
 {
     if ($record) {
         // intval konczy na pierwszym niepoprawnym znaku, wiec dostaniemy
@@ -662,12 +661,47 @@ function _scholar_presentation_list_spec($row = null) // {{{
 } // }}}
 
 /**
+ * Lista rekordów potomnych podpiętych do rekordu o podanym identyfikatorze.
+ *
+ * @param string $subtype
+ * @param int $id
+ * @param string $children_subtype
+ */
+function scholar_generics_children_list($subtype, $id, $children_subtype) // {{{
+{
+    $children_subtype = preg_replace('/[^_a-z0-9]/i', '', $children_subtype);
+
+    $func = 'scholar_' . $subtype . '_children_' . $children_subtype . '_list';
+
+    if (function_exists($func)) {
+        $conds  = array('id' => $id, 'subtype' => $subtype);
+        $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
+        return $func($record);
+    }
+
+    drupal_set_message("Unable to retrieve children list: Invalid parent-children subtype specification: '$subtype' and '$children_subtype'", 'error');
+} // }}}
+
+/**
+ * Wywołuje formularz {@see scholar_conference_children_presentation_form}.
+ *
+ * @param object $record
+ */
+function scholar_conference_children_presentation_list($record) // {{{
+{
+    return scholar_render_form('scholar_conference_children_presentation_form', $record);
+} // }}}
+
+/**
  * Strona z listą wszystkich prezentacji podpiętych do danej
  * konferencji. Daje możliwość sortowania prezentacji.
+ *
+ * @param array &$form_state
+ * @param object $conference
  */
-function scholar_conference_presentations_form(&$form_state, $id) // {{{
+function scholar_conference_children_presentation_form(&$form_state, $conference) // {{{
 {
-    $conference = scholar_load_record('generics', array('id' => $id, 'subtype' => 'conference'), scholar_admin_path('conference'));
+    drupal_set_title(t('Conference presentations'));
 
     $presentations = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
 
@@ -774,12 +808,12 @@ function scholar_conference_presentations_form(&$form_state, $id) // {{{
 
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => '<dl class="scholar">
-<dt>' . t('Title') . '</dt><dd>' . check_plain($conference->title) . '</dd>
-<dt>' . t('Start date') . '</dt><dd>' . scholar_format_date($conference->start_date) . '</dd>
-<dt>' . t('End date') . '</dt><dd>' . scholar_format_date($conference->end_date) . '</dd>
-<dt>' . t('Location') . '</dt><dd>' . $location . '</dd>
-</dl>',
+        '#value' => scholar_theme_dl(array(
+            t('Title'),      check_plain($conference->title),
+            t('Start date'), scholar_format_date($conference->start_date),
+            t('End date'),   $conference->end_date ? scholar_format_date($conference->end_date) : ('<em>' . t('Not specified') . '</em>'),
+            t('Location'),   $location,
+        )),
     );
     $form[] = array(
         '#type' => 'markup',
@@ -800,7 +834,7 @@ function scholar_conference_presentations_form(&$form_state, $id) // {{{
     return $form;
 } // }}}
 
-function scholar_conference_presentations_form_submit($form, &$form_state) // {{{
+function scholar_conference_children_presentation_form_submit($form, &$form_state) // {{{
 {
     if ($form['#record']) {
         $record = $form['#record'];
@@ -813,5 +847,7 @@ function scholar_conference_presentations_form_submit($form, &$form_state) // {{
         drupal_goto(scholar_admin_path('conference'));
     }
 } // }}}
+
+
 
 // vim: fdm=marker

@@ -179,13 +179,16 @@ function scholar_file_edit_form(&$form_state, $file_id)
 
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => '<dl class="scholar">
-<dt>Size</dt><dd>' . format_size($file->size) . '</dd>
-<dt>MIME type</dt><dd>' . check_plain($file->mimetype) . '</dd>
-<dt>MD5 checksum</dt><dd>' . check_plain($file->md5sum) . '</dd>
-<dt>File URL</dt><dd>' . l($url, $url, array('attributes' => array('target' => '_blank'))) . '</dd>
-<dt>Uploaded</dt><dd>' . ($file->upload_time). ', by <em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : 'unknown user') . '</em></dd>
-</dl>',
+        '#value' => scholar_theme_dl(array(
+            t('Size'),         format_size($file->size),
+            t('MIME type'),    check_plain($file->mimetype),
+            t('MD5 checksum'), check_plain($file->md5sum),
+            t('File URL'),     l($url, $url, array('attributes' => array('target' => '_blank'))),
+            t('Uploaded'),     t('!time, by !user', array(
+                '!time' => $file->upload_time,
+                '!user' => '<em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : t('unknown user')) . '</em>'
+            )),
+        )),
     );
 
     $form['rename'] = array(
