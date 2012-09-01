@@ -213,19 +213,26 @@ function scholar_asort(&$array, $callback = 'strcoll') // {{{
  * ISO 3166-1 alpha-2.
  *
  * @param string $code
+ * @param string $language_code
  * @return array|string
  */
-function scholar_countries($code = null) // {{{
+function scholar_countries($code = null, $language_code = null) // {{{
 {
-    global $language;
-    static $countries;
+    static $_cache = array();
 
-    if (null === $countries) {
-        $cid = 'scholar_countries:' . $language->language;
+    if (null === $language_code) {
+        global $language;
+        $language_code = $language->language;
+    }
+
+    $language_code = (string) $language_code;
+
+    if (!isset($_cache[$language_code])) {
+        $cid = 'scholar_countries:' . $language_code;
 
         if (!($data = cache_get($cid))) {
             if (class_exists('Zend_Locale', true)) {
-                $countries = Zend_Locale::getTranslationList('Territory', $language->language, 2);
+                $countries = Zend_Locale::getTranslationList('Territory', $language_code, 2);
 
                 // remove invalid countries
                 // DD = East Germany
@@ -238,7 +245,7 @@ function scholar_countries($code = null) // {{{
                     }
                 }
 
-                switch ($language->language) {
+                switch ($language_code) {
                     case 'pl':
                         // remove SAR part from China administered country names, as
                         // it is not obligatory, see: 
@@ -250,7 +257,7 @@ function scholar_countries($code = null) // {{{
                 }
 
                 scholar_asort($countries);
-                // cache_set($cid, $countries);
+                cache_set($cid, $countries);
 
             } else {
                 // no Zend_Locale class available, write nothing to cache
@@ -260,13 +267,15 @@ function scholar_countries($code = null) // {{{
         } else {
             $countries = (array) $data->data;
         }
+
+        $_cache[$language_code] = $countries;
     }
 
     if (null === $code) {
-        return $countries;
+        return $_cache[$language_code];
     }
 
-    return isset($countries[$code]) ? $countries[$code] : null;
+    return isset($_cache[$language_code][$code]) ? $_cache[$language_code][$code] : null;
 } // }}}
 
 function scholar_format_date($date) // {{{

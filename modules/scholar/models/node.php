@@ -388,7 +388,16 @@ function scholar_node_owner_info($node_id) // {{{
     return db_fetch_array($query);
 } // }}}
 
-function _scholar_node_url($id, $table_name, $language)
+/**
+ * Zwraca adres URL prowadzący do węzła przypisanego do rekordu
+ * z podanej tabeli.
+ *
+ * @param int $row_id
+ * @param string $table_name
+ * @param string $language
+ * @return false|string
+ */
+function scholar_node_url($row_id, $table_name, $language) // {{{
 {
     static $_cache = array();
 
@@ -396,27 +405,27 @@ function _scholar_node_url($id, $table_name, $language)
     // null to dostalibysmy wszystkie bindingi
     $language = (string) $language;
 
-    if (!isset($_cache[$table_name][$id][$language])) {
-        $path = false;
-        $b = _scholar_fetch_node_binding($id, $table_name, $language);
+    if (!isset($_cache[$table_name][$row_id][$language])) {
+        $path    = false;
+        $binding = _scholar_fetch_node_binding($row_id, $table_name, $language);
 
-        if ($b && $b['status']) {
+        if ($binding && $binding['status']) {
             if (db_table_exists('url_alias')) {
-                $qq = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $b['pid']);
-                $rr = db_fetch_array($qq);
-                $alias = $rr ? $rr['dst'] : null;
+                $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
+                $row   = db_fetch_array($query);
+                $alias = $row ? $row['dst'] : false;
             }
-            $path = $alias ? $alias : 'node/' . $b['node_id'];
+            $path = $alias ? $alias : 'node/' . $binding['node_id'];
         }
 
         if ($path) {
             $path = url($path, array('absolute' => true));
         }
 
-        $_cache[$table_name][$id][$language] = $path;
+        $_cache[$table_name][$row_id][$language] = $path;
     }
 
-    return $_cache[$table_name][$id][$language];
-}
+    return $_cache[$table_name][$row_id][$language];
+} // }}}
 
 // vim: fdm=marker

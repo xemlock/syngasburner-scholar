@@ -48,7 +48,7 @@ function scholar_render_people_node($view, $id, $node)
         $article['bib_details'] = _scholar_publication_details($article['bib_details']);
 
         if ($article['parent_id']) {
-            $url = _scholar_node_url($article['parent_id'], 'generics', $language);
+            $url = scholar_node_url($article['parent_id'], 'generics', $language);
             if ($url) {
                 $article['parent_url'] = $url;
             }
@@ -100,7 +100,7 @@ function scholar_render_people_node($view, $id, $node)
     foreach ($presentations as &$presentation) {
         $parent_id = $presentation['parent_id'];
         if (!isset($conferences[$parent_id])) {
-            $conferences[$parent_id] = __scholar_prepare_conference_from_parent_fields($presentation);
+            $conferences[$parent_id] = __scholar_prepare_conference_from_parent_fields($presentation, $language);
         }
 
         // dodajemy konferencje, ale nie dodajemy wystapienia z pustym tytulem

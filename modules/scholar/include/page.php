@@ -41,7 +41,7 @@ function _scholar_page_augment_record(&$record, $row_id, $table_name, $language)
 {
     $language = (string) $language;
 
-    $url = _scholar_node_url($row_id, $table_name, $language);
+    $url = scholar_node_url($row_id, $table_name, $language);
     if ($url) {
         $record['url'] = $url;
     }
@@ -50,7 +50,7 @@ function _scholar_page_augment_record(&$record, $row_id, $table_name, $language)
     _scholar_page_augment_collection($authors);
 
     foreach ($authors as &$author) {
-        $author['url'] = _scholar_node_url($author['id'], 'people', $language);
+        $author['url'] = scholar_node_url($author['id'], 'people', $language);
     }
     $record['authors'] = $authors;
 
@@ -162,7 +162,7 @@ function scholar_page_publications($view, $node) // {{{
         // w przypadku artykulow w czasopismach trzeba ustawic
         // odpowiedni URL parenta
         if ($article['parent_id']) {
-            $url = _scholar_node_url($article['parent_id'], 'generics', $language);
+            $url = scholar_node_url($article['parent_id'], 'generics', $language);
             if ($url) {
                 $article['parent_url'] = $url;
             }
@@ -185,9 +185,9 @@ function scholar_page_publications($view, $node) // {{{
         ->render('publications.tpl');
 } // }}}
 
-function __scholar_prepare_conference_from_parent_fields($row)
+function __scholar_prepare_conference_from_parent_fields($row, $language)
 {
-            $countries = scholar_countries();
+            $countries = scholar_countries(null, $language);
             $locality = trim($row['parent_locality']);
 
             if (!strcasecmp('internet', $locality)) {
@@ -213,7 +213,7 @@ function __scholar_prepare_conference_from_parent_fields($row)
             }
 
             return array(
-                'id'         => $parent_id,
+                'id'         => $row['parent_id'],
                 'title'      => $row['parent_title'],
                 'start_date' => $start_date,
                 'end_date'   => $end_date,
@@ -267,7 +267,7 @@ function scholar_page_conferences($view, $node) // {{{
         $year = intval(substr($row['parent_start_date'], 0, 4));
 
         if (!isset($year_conferences[$year][$parent_id])) {
-            $year_conferences[$year][$parent_id] = __scholar_prepare_conference_from_parent_fields($row);
+            $year_conferences[$year][$parent_id] = __scholar_prepare_conference_from_parent_fields($row, $language);
         }
 
         _scholar_page_unset_parent_keys($row);
