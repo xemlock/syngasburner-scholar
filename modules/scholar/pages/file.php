@@ -23,7 +23,7 @@ function scholar_file_list() // {{{
         array('data' => t('Operations'), 'colspan' => '2'),
     );
 
-    $query = db_query("SELECT * FROM {scholar_files}" . tablesort_sql($header));
+    $query = scholar_files_recordset(null, $header);
     $rows  = array();
 
     while ($row = db_fetch_array($query)) {
@@ -43,7 +43,7 @@ function scholar_file_list() // {{{
 
     $help = t('<p>Below is a list of files managed exclusively by the Scholar module.</p>');
 
-    return '<div class="help">' . $help . '</div>' . theme('table', $header, $rows);
+    return '<div class="help">' . $help . '</div>' . scholar_theme_table($header, $rows);
 } // }}}
 
 /**
@@ -59,9 +59,10 @@ function scholar_file_itempicker(&$options = null) // {{{
         'template'     => '{ filename }',
         'emptyMessage' => t('No files found')
     );
-    $files = array();
 
-    $query = db_query("SELECT * FROM {scholar_files} ORDER BY filename");
+    $files = array();
+    $query = scholar_files_recordset(null, 'filename');
+
     while ($row = db_fetch_array($query)) {
         $files[] = array(
             'id'       => $row['id'],
@@ -155,7 +156,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
  * @param int $file_id          identyfikator pliku
  * @return array
  */
-function scholar_file_edit_form(&$form_state, $file_id)
+function scholar_file_edit_form(&$form_state, $file_id) // {{{
 {
     $file = scholar_fetch_file($file_id, scholar_admin_path('file'));
 
@@ -246,7 +247,7 @@ function scholar_file_edit_form(&$form_state, $file_id)
     scholar_add_tab(t('delete'), scholar_admin_path('file/delete/' . $file->id));
 
     return $form;
-}
+} // }}}
 
 /**
  * Obsługa zmiany nazwy pliku.

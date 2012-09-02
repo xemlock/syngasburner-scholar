@@ -130,4 +130,32 @@ function _scholar_invoke_record($hook, $model, &$record) // {{{
     }
 } // }}}
 
+/**
+ * @param string $query
+ * @param string|array $header
+ * @param string $before
+ * @param array $pager
+ * @return resource
+ */
+function scholar_recordset_query($sql, $header = null, $before = null, $pager = null) // {{{
+{
+    if ($header) {
+        $sql .= scholar_tablesort_sql($header, $before);
+    }
+
+    if ($pager) {
+        // uzupelnij specyfikacje pagera dolaczajac do niej domyslne
+        // wartosci parametrow funkcji pager_query()
+        $pager = (array) $pager + array(
+            'limit'       => 10,
+            'element'     => 0,
+            'count_query' => null,
+        );
+
+        return pager_query($sql, $pager['limit'], $pager['element'], $pager['count_query']);
+    }
+
+    return db_query($sql);
+} // }}}
+
 // vim: fdm=marker

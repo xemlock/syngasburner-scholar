@@ -266,6 +266,7 @@ scholar_add_css();
                      ->addConverter('block',   new scholar_converter_block)
                      ->addConverter('box',     new scholar_converter_box)
                      ->addConverter('asset',   new scholar_converter_asset)
+                     ->addConverter('youtube', new scholar_converter_youtube)
                      ->addConverter('__tag',   new scholar_converter___tag);
 
             

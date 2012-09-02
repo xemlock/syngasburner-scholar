@@ -112,7 +112,7 @@ function scholar_generics_author_update($generic_id) // {{{
 /**
  * @return resource
  */
-function scholar_generics_recordset($conds = null, $header = array(), $before = null, $pager = null) // {{{
+function scholar_generics_recordset($conds = null, $header = null, $before = null, $pager = null) // {{{
 {
     global $language;
 
@@ -131,26 +131,9 @@ function scholar_generics_recordset($conds = null, $header = array(), $before = 
         }
     }
 
-    if ($conds) {
-        $where = 'WHERE ' . scholar_db_where($conds);
-    } else {
-        $where = '';
-    }
+    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") WHERE " . scholar_db_where($conds);
 
-    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") $where " . scholar_tablesort_sql($header, $before);
-
-    if ($pager) {
-        // uzupelnij specyfikacje pagera dolaczajac do niej domyslne
-        // wartosci parametrow funkcji pager_query()
-        $pager = (array) $pager + array(
-            'limit'       => 10,
-            'element'     => 0,
-            'count_query' => null
-        );
-        return pager_query($sql, $pager['limit'], $pager['element'], $pager['count_query']);
-    }
-
-    return db_query($sql);
+    return scholar_recordset_query($sql, $header, $before, $pager);
 } // }}}
 
 

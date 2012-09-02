@@ -446,5 +446,18 @@ function scholar_save_upload($source) // {{{
     return false;
 } // }}}
 
+/**
+ * @param array $conds
+ * @param array $header
+ * @param string $before
+ * @param array $pager
+ */
+function scholar_files_recordset($conds = null, $header = null, $before = null, $pager = null) // {{{
+{
+    $sql = "SELECT * FROM {scholar_files} WHERE " . scholar_db_where($conds);
+
+    return scholar_recordset_query($sql, $header, $before, $pager);
+} // }}}
+
 
 // vim: fdm=marker

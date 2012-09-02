@@ -76,20 +76,61 @@ class scholar_converter_asset implements scholar_converter // {{{
             $label = $contents;
         }
 
+        $attrs = array(
+            'href'   => $asset,
+            'target' => '_blank',
+        );
+
         if (strlen($details)) {
-            $details = ' title="' . htmlspecialchars($details) . '"';
+            $attrs['title'] = $details;
         }
 
         // usun wszystkie potencjalnie niebezpieczne protokoly z adresu
         $contents = check_url($contents);
 
         return '<span class="scholar-asset">'
-             . '<a href="' . htmlspecialchars($asset) . '"' . $details . ' target="_blank">' . htmlspecialchars($label) . '</a>'
+             . '<a' . drupal_attributes($attrs) . '>' . check_plain($label) . '</a>'
              . '</span>';
     }
 } // }}}
 
-// wewnetrzne konwertery nie do dokumentacji
+class scholar_converter_youtube implements scholar_converter // {{{
+{
+    public function convert($token, $contents)
+    {
+        // Format identyfikatora filmu, na podstawie wiadomosci z listy
+        // com.googlegroups.youtube-api-gdata napisana przez YouTube API Guide
+        // (yout...@youtube.com), wiecej szczegolow:
+        // http://markmail.org/message/jb6nsveqs7hya5la
+        //      If you just want to do a quick sanity check, this regex
+        //      basically covers the format: [a-zA-Z0-9_-]{11}
+
+        $youtube = $contents;
+
+        if (preg_match('/^[-_a-z0-9]{11}$/i', $youtube)) {
+            $width  = max(0, $token->getAttribute('width'));
+            $height = max(0, $token->getAttribute('height'));
+
+            if (0 == $width * $height) {
+                // domyslna rozdzielczosc 360p
+                $width = 640;
+                $height = 360;
+            }
+
+            $attrs = array(
+                'src'    => 'http://www.youtube.com/embed/' . $youtube,
+                'width'  => $width,
+                'height' => $height,
+                'frameborder'     => 0,
+                'allowfullscreen' => 1,
+            );
+
+            return '<iframe' . drupal_attributes($attrs) . '></iframe>';
+        }
+    }
+} // }}}
+
+// wewnetrzny konwerter nie do dokumentacji
 class scholar_converter___tag implements scholar_converter // {{{
 {
     public function convert($token, $contents)

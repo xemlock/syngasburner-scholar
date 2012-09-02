@@ -52,4 +52,11 @@ function _scholar_invoke_author_update($person_id) // {{{
     }
 } // }}}
 
+function scholar_people_recordset($conds = null, $header = array(), $before = null, $pager = null) // {{{
+{
+    $sql = "SELECT * FROM {scholar_people} WHERE " . scholar_db_where($conds);
+
+    return scholar_recordset_query($sql, $header, $before, $pager);
+} // }}}
+
 // vim: fdm=marker

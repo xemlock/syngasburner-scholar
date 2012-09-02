@@ -112,4 +112,13 @@ function scholar_category_options($table_name = null, $subtype = null) // {{{
     return count($options) > 1 ? $options : array();
 } // }}}
 
+function scholar_categories_recordset($conds = null, $header = null, $before = null) // {{{
+{
+    global $language;
+
+    $sql = "SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON (c.id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") WHERE " . scholar_db_where($conds);
+   
+    return scholar_recordset_query($sql, $header, $before);
+} // }}}
+
 // vim: fdm=marker

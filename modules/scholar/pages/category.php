@@ -16,16 +16,15 @@ function scholar_category_list($table_name, $subtype = null) // {{{
         array('data' => t('Operations'), 'colspan' => 2),
     );
 
-    // poniewaz subtype moze miec wartosc NULL uzycie placeholderow
-    // w db_query byloby niewygodne
-    $where = array(
-        'c.table_name' => $table_name,
-        'c.subtype'    => $subtype,
+    $conds = array(
+        'table_name' => $table_name,
     );
+    if ($subtype) {
+        $conds['subtype'] = $subtype;
+    }
 
-    $query = db_query("SELECT * FROM {scholar_categories} c LEFT JOIN {scholar_category_names} n ON (c.id = n.category_id AND n.language = '%s') WHERE " . scholar_db_where($where) . tablesort_sql($header), $language->language);
-
-    $rows = array();
+    $query = scholar_categories_recordset($conds, $header);
+    $rows  = array();
 
     while ($row = db_fetch_array($query)) {
         $rows[] = array(
@@ -42,7 +41,7 @@ function scholar_category_list($table_name, $subtype = null) // {{{
         );
     }
 
-    return theme('table',  $header, $rows);
+    return scholar_theme_table($header, $rows);
 } // }}}
 
 /**

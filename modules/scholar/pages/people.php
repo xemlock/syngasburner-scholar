@@ -117,7 +117,7 @@ function scholar_people_list() // {{{
         array('data' => t('Operations'), 'colspan' => '2')
     );
 
-    $query = db_query("SELECT * FROM {scholar_people}" . tablesort_sql($header));
+    $query = scholar_people_recordset(null, $header);
     $rows = array();
 
     while ($row = db_fetch_array($query)) {
@@ -151,9 +151,10 @@ function scholar_people_itempicker(&$options = null) // {{{
         'template'     => '{ full_name }',
         'emptyMessage' => t('No people found'),
     );
-    $rows = array();
 
-    $query = db_query("SELECT * FROM {scholar_people} ORDER BY last_name");
+    $rows  = array();
+    $query = scholar_people_recordset(null, 'last_name');
+
     while ($row = db_fetch_array($query)) {
         $rows[] = array(
             'id'         => $row['id'],

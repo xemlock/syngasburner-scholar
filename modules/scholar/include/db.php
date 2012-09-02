@@ -25,8 +25,11 @@ function scholar_db_fetch_all($query) // {{{
 } // }}}
 
 /**
- * @param array $header
- *     tablica koloumn tabeli w postaci opisanej w theme_table()
+ * @param string|array $header
+ *     tablica koloum tabeli w postaci opisanej w theme_table(), lub gdy jest
+ *     to string zostanie on potraktowany jako nazwa kolumny do sortowania
+ *     rosnącego. Można też podać tablicę w postaci listy array('kolumna1 ASC',
+ *     'kolumna2 DESC', 'kolumna3')
  * @param string|array $before
  *     jeżeli podano argument typu array, zostanie on użyty zamiast parametru
  *     $columns, w przeciwnym razie argument zostanie umieszczony w wynikowym
@@ -45,7 +48,31 @@ function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
     if (is_array($before)) {
         $columns = $before;
         $before  = '';
+    }
 
+    if ($header) {
+        $header = (array) $header;
+
+        // sprawdz czy podano sortowanie w postaci stringow: "kolumna ASC"
+        // lub "kolumna DESC"
+        foreach ($header as &$column) {
+            if (is_string($column)) {
+                $column = trim($column);
+
+                if (preg_match('/\s+(ASC|DESC)$/i', $column, $match)) {
+                    // zeby dostac nazwe pola usun 4 ostatnie znaki, a nastepnie
+                    // pozostale biale spacje z prawej strony
+                    $field = rtrim(substr($column, 0, -4));
+                    $sort  = $match[1];
+                } else {
+                    $field = $column;
+                    $sort  = 'ASC';
+                }
+
+                $column = array('field' => $field, 'sort' => $sort);
+            }
+        }
+        unset($column);
     }
 
     // jezeli podano niepusta liste kolumn odfiltruj kolumny,
@@ -133,13 +160,14 @@ function scholar_db_quote_identifier($identifier) // {{{
  *     tablica z warunkami
  * @return string
  *     jezeli wejsciowa tablica warunkow jest pusta, zwrocony
- *     zostaje string "0"
+ *     zostaje string "1", odpowiadający brakowi zadanych warunków
+ *     wyszukiwania
  */
 function scholar_db_where($conds) // {{{
 {
     $where = array();
 
-    foreach ($conds as $key => $value) {
+    foreach ((array) $conds as $key => $value) {
         if ('?' == substr($key, 0, 1)) {
             $null = true;
             $key  = substr($key, 1);
@@ -178,7 +206,7 @@ function scholar_db_where($conds) // {{{
     // jezeli wynikowa tablica jest pusta zwroc 0, tak by warunek
     // nigdy nie byl spelniony (WHERE 0)
 
-    return $where ? implode(' AND ', $where) : '0';
+    return $where ? implode(' AND ', $where) : '1';
 } // }}}
 
 /**
