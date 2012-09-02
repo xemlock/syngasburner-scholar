@@ -135,7 +135,7 @@ function scholar_people_list() // {{{
         );
     }
 
-    return theme('table', $header, $rows);
+    return scholar_theme_table($header, $rows);
 } // }}}
 
 /**

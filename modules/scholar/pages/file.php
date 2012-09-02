@@ -237,7 +237,7 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
 
         $form['ref'][] = array(
             '#type' => 'markup',
-            '#value' => theme('table', $header, $rows),
+            '#value' => scholar_theme_table($header, $rows),
         );
     }
 

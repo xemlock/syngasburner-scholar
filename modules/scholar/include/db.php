@@ -26,7 +26,7 @@ function scholar_db_fetch_all($query) // {{{
 
 /**
  * @param string|array $header
- *     tablica koloum tabeli w postaci opisanej w theme_table(), lub gdy jest
+ *     tablica kolumn tabeli w postaci opisanej w theme_table(), lub gdy jest
  *     to string zostanie on potraktowany jako nazwa kolumny do sortowania
  *     rosnącego. Można też podać tablicę w postaci listy array('kolumna1 ASC',
  *     'kolumna2 DESC', 'kolumna3')
