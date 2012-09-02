@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Pobiera rekord z bazy danych. Gdy rekord zostanie znaleziony w tabeli
+ * odpowiadającej podanemu modelowi zostanie wywołany hook load Record API
+ * właściwy dla podanego modelu.
+ *
+ * @param string $model
+ *     nazwa modelu rekordu
+ * @param int|array $id
+ *     warunki określające kryterium wyszukiwania rekordu. Jeżeli podano
+ *     wartość skalarną, zostanie ona użyta jako wartość kolumny 'id'
+ * @param string $redirect
+ *     opcjonalny adres do przekierowania jeżeli rekord nie został odnaleziony.
+ *     Jeżeli wśród warunków wyszukiwania podana będzie wartość kolumny id,
+ *     przekierowaniu towarzyszyć będzie komunikat błędu o niepoprawnym
+ *     identyfikatorze rekordu.
+ * @param false|object
+ */
 function scholar_load_record($model, $id, $redirect = false) // {{{
 {
     $where = is_array($id) ? $id : array('id' => $id);
@@ -16,13 +33,22 @@ function scholar_load_record($model, $id, $redirect = false) // {{{
         _scholar_invoke_record('load', $model, $record);
 
     } else if ($redirect) {
-        drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $id)), 'error');
+        if (isset($where['id'])) {
+            drupal_set_message(t('Invalid record identifier supplied (%id)', array('%id' => $where['id']), 'error'));
+        }
         return scholar_goto($redirect);
     }
 
     return $record;
 } // }}}
 
+/**
+ * Zapisuje rekord do bazy danych.
+ *
+ * @param string $model
+ * @param object &$record
+ * @return bool
+ */
 function scholar_save_record($model, &$record) // {{{
 {
     // przygotuj pola rekordu do zapisu
@@ -64,8 +90,11 @@ function scholar_save_record($model, &$record) // {{{
 } // }}}
 
 /**
- * Usuwa rekord. Po wykonaniu tej funkcji właściwość id rekordu
- * ma pustą wartość.
+ * Usuwa rekord. Po wykonaniu tej funkcji właściwości id rekordu zostaje nadana
+ * pusta wartość (null).
+ *
+ * @param string $model
+ * @param pbject &$record
  */
 function scholar_delete_record($model, &$record) // {{{
 {

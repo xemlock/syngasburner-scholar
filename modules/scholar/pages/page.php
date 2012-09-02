@@ -159,7 +159,7 @@ function scholar_page_form_submit($form, &$form_state) // {{{
     unset($node);
 
     scholar_populate_record($record, $values);
-    
+
     if (scholar_save_record('pages', $record)) {
         drupal_set_message(t('%title updated successfully.', array('%title' => t($title))));
         drupal_goto(scholar_admin_path('page'));

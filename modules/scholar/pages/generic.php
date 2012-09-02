@@ -530,12 +530,13 @@ function scholar_article_form(&$form_state, $record = null) // {{{
         'authors' => array(
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
-        'bib_details' => array(
-            '#description' => t('e.g. volume and issue number, page numbers etc.'), // np. numery tomu i wydania, numery stron
-        ),
         'parent_id' => empty($parents) ? false : array(
             '#options'     => $parents,
         ),
+        'bib_details' => array(
+            '#description' => t('e.g. volume and issue number, page numbers etc.'), // np. numery tomu i wydania, numery stron
+        ),
+        'suppinfo',
         'url',
         'files',
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej

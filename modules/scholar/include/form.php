@@ -518,7 +518,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                     '#title' => t('Node'),
                     '#description' => t('Edit related pages'),
                 );
-                $vtable['nodes']['nodes'] = scholar_nodes_subform($value);
+                $vtable['nodes']['nodes'] = scholar_nodes_subform($record);
                 break;
 
             case 'events':

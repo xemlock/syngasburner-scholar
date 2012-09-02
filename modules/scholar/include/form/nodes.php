@@ -7,7 +7,7 @@
  * @param string $table_name
  * @return array
  */
-function scholar_nodes_subform() // {{{
+function scholar_nodes_subform($record = null) // {{{
 {
     $have_menu    = module_exists('menu');
     $have_path    = module_exists('path');
@@ -48,10 +48,16 @@ function scholar_nodes_subform() // {{{
             '#title'    => t('Title'),
             '#description' => t('Page title, if not given it will default to this person\'s full name.'),
         );
+
         $container['body'] = array(
             '#type'     => 'scholar_textarea',
             '#title'    => t('Body'),
         );
+
+        $tags = isset($record->nodes[$code]->taxonomy)
+              ? $record->nodes[$code]->taxonomy
+              : null;
+        $container['taxonomy'] = _scholar_element_taxonomy($tags);
 
         if ($have_menu) {
             $container['menu'] = array(
@@ -121,6 +127,32 @@ function scholar_nodes_subform() // {{{
     }
 
     return $form;
+} // }}}
+
+function _scholar_element_taxonomy($tags = null) // {{{
+{
+    if (function_exists('taxonomy_form_alter')) {
+        // hak zeby taksonomia dodala swoje pole z autowyszukiwaniem
+        // (modules/taxonomy/taxonomy.module):
+        $n = new stdClass;
+        $n->type = 'scholar';
+        $n->taxonomy = $tags;
+        $temp_id = 'scholar_nodes_taxonomy_form';
+        $temp = array(
+            'type' => array(
+                '#value' => $temp_id,
+            ),
+            '#node' => $n,
+        );
+        $state = array();
+        taxonomy_form_alter($temp, $state, $temp_id . '_node_form');
+
+        // usun wage pola
+        unset($temp['taxonomy']['#weight']);
+        return $temp['taxonomy'];
+    }
+
+    return false;
 } // }}}
 
 // vim: fdm=marker

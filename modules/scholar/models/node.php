@@ -181,7 +181,7 @@ function scholar_fetch_node($row_id, $table_name, $language) // {{{
 } // }}}
 
 /**
- * Zwraca wszystkie wezly (segmenty) powiązane z tym rekordem,
+ * Zwraca wszystkie wezly powiązane z tym rekordem,
  * indeksowane kodem języka.
  * @return array
  */
@@ -224,10 +224,12 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
             $node = scholar_create_node();
         }
 
+        foreach ($node_data as $key => $value) {
+            $node->$key = $value;
+        }
+
         $node->status   = $status;
         $node->language = $language;
-        $node->title    = $node_data['title'];
-        $node->body     = $node_data['body'];
 
         if (isset($node_data['menu'])) {
             // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
@@ -241,12 +243,6 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
         // alias zapisywany za pomoca path_nodeapi
         if (isset($node_data['path'])) {
             $node->path = rtrim($node_data['path']['path'], '/');
-        }
-
-        // podobnie galeria, za pomoca gallery_nodeapi
-        if (isset($node_data['gallery'])) {
-            $node->gallery_id = $node_data['gallery']['gallery_id'];
-            $node->gallery_layout = $node_data['gallery']['gallery_layout'];
         }
 
         scholar_save_node($node, $row_id, $table_name);
