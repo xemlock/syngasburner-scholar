@@ -12,6 +12,8 @@
  */
 function scholar_theme_dl($data, $attributes = array())
 {
+    scholar_add_css();
+
     if (isset($attributes['class'])) {
         $attributes['class'] .= ' scholar-dl';
     } else {
@@ -32,6 +34,19 @@ function scholar_theme_dl($data, $attributes = array())
     $output .= '</dl>';
 
     return $output;
+}
+
+function scholar_theme_table($header, $rows, $attributes = array(), $caption = null)
+{
+    scholar_add_css();
+
+    if (isset($attributes['class'])) {
+        $attributes['class'] .= ' scholar-table';
+    } else {
+        $attributes['class'] = 'scholar-table';
+    }
+
+    return theme_table($header, $rows, $attributes, $caption);
 }
 
 // vim: fdm=marker

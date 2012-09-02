@@ -262,6 +262,19 @@ form.scholar .form-text:focus {
   border-color: #000;
 }
 
+.scholar-table tr.region .region-link {
+  font-weight: normal;
+  display: block;
+  text-align: right;
+}
+
+.scholar-table thead th.active {
+  white-space: nowrap;
+}
+
+.scholar-table thead th.active img {
+  margin-left: 4px;
+}
 
 /* modal {{{ */
 .dialog {

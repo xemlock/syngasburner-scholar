@@ -30,8 +30,9 @@ function scholar_db_fetch_all($query) // {{{
  * @param string|array $before
  *     jeżeli podano argument typu array, zostanie on użyty zamiast parametru
  *     $columns, w przeciwnym razie argument zostanie umieszczony w wynikowym
- *     stringu bezpośrednio za klauzulą ORDER BY, przed kodem opisującym
- *     sortowanie
+ *     stringu bezpośrednio za słowami kluczowymi ORDER BY, przed kodem
+ *     opisującym sortowanie. Przecinek oddzielający wartość $before od nazw
+ *     sortowanych kolumn jest automatycznie dodawany.
  * @param array $columns
  *     opcjonalna tablica z dopuszczalnymi nazwami kolumn. Jeżeli została
  *     podana, kolumny, których nazwy nie znajdują się w niej, zostaną usunięte
@@ -44,6 +45,7 @@ function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
     if (is_array($before)) {
         $columns = $before;
         $before  = '';
+
     }
 
     // jezeli podano niepusta liste kolumn odfiltruj kolumny,
@@ -54,6 +56,14 @@ function scholar_tablesort_sql($header, $before = '', $columns = null) // {{{
                 unset($header[$key]);
             }
         }
+    }
+
+    $before = trim($before);
+
+    if (strlen($before)) {
+        // jezeli podano nazwy kolumn do umieszczenia bezposrednio
+        // za slowami ORDER BY, dodaj przecinek
+        $before = rtrim($before, ',') . ',';
     }
 
     return tablesort_sql($header, $before, $columns);

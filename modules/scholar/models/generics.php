@@ -109,11 +109,49 @@ function scholar_generics_author_update($generic_id) // {{{
     scholar_generic_update_bib_authors($generic_id);
 } // }}}
 
-function scholar_generics_all_records($subtype = null, $header = null)
+/**
+ * @return resource
+ */
+function scholar_generics_recordset($conds = null, $header = array(), $before = null, $pager = null) // {{{
 {
-    
+    global $language;
 
-}
+    $header = (array) $header;
+
+    // sprawdz, czy potrzebna jest kolumna z nazwa kraju, jezeli tak,
+    // dodaj ja do zapytania
+    $cols = 'g.*, n.name AS category_name';
+
+    foreach ($header as $col) {
+        if (isset($col['field']) && 'country_name' == $col['field']) {
+            $cols .= ', CASE LOWER(locality) WHEN \'internet\' THEN NULL ELSE '
+                   . scholar_db_country_name('g.country', 'scholar_generics')
+                   . ' END AS country_name';
+            break;
+        }
+    }
+
+    if ($conds) {
+        $where = 'WHERE ' . scholar_db_where($conds);
+    } else {
+        $where = '';
+    }
+
+    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") $where " . scholar_tablesort_sql($header, $before);
+
+    if ($pager) {
+        // uzupelnij specyfikacje pagera dolaczajac do niej domyslne
+        // wartosci parametrow funkcji pager_query()
+        $pager = (array) $pager + array(
+            'limit'       => 10,
+            'element'     => 0,
+            'count_query' => null
+        );
+        return pager_query($sql, $pager['limit'], $pager['element'], $pager['count_query']);
+    }
+
+    return db_query($sql);
+} // }}}
 
 
 /**

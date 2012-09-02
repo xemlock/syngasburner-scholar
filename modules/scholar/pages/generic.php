@@ -12,7 +12,7 @@
  */
 function scholar_generics_list($subtype) // {{{
 {
-    global $language, $pager_total;
+    global $pager_total;
 
     $func = '_scholar_' . $subtype . '_list_spec';
 
@@ -24,51 +24,70 @@ function scholar_generics_list($subtype) // {{{
     // funkcja ma zwracac naglowek tabeli, jezeli nie podano wiersza
     $header = call_user_func($func);
 
-    // sprawdz, czy potrzebna jest kolumna z nazwa kraju, jezeli tak,
-    // dodaj ja do zapytania
-    $cols = 'g.*, n.name AS category_name';
+    // bierzemy pod uwage tylko rekordy o podanym podtypie
+    $conds  = array('subtype' => $subtype);
 
-    foreach ($header as $col) {
-        if (isset($col['field']) && 'country_name' == $col['field']) {
-            $cols .= ', CASE LOWER(locality) WHEN \'internet\' THEN NULL ELSE '
-                   . scholar_db_country_name('g.country', 'scholar_generics')
-                   . ' END AS country_name';
-            break;
-        }
-    }
+    // sortujemy w pierwszej kolejnosci po nazwie kategorii
+    $before = 'category_name';
 
-    $where = array(
-        'g.subtype'   => $subtype,
-    );
+    // specyfikacja paginatora
+    $limit = scholar_admin_page_size();
+    $pager = array('limit' => $limit, 'element' => 0);
 
-    $rpp = scholar_admin_page_size();
-    $sql = "SELECT $cols FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = " . scholar_db_quote($language->language) . ") WHERE " 
-         . scholar_db_where($where)
-         . tablesort_sql($header);
-
-    $query = pager_query($sql, $rpp, 0, null);
+    // pobierz rekordy
+    $query = scholar_generics_recordset($conds, $header, $before, $pager);
     $rows  = array();
 
+    // liczba kolumn w tabeli
+    $colspan = 0;
+    foreach ($header as $col) {
+        $colspan += isset($col['colspan']) ? max(1, $col['colspan']) : 1;
+    }
+
+    $last_category_name = '';
+
     while ($row = db_fetch_array($query)) {
+        $category_name = trim($row['category_name']);
+
+        // dodaj naglowek z nazwa kategorii i linkiem edycji kategorii
+        if ($last_category_name != $category_name) {
+            $last_category_name = $category_name;
+            // dodaj naglowek z nazwa kategorii, poniewaz do tego IFa wejdziemy
+            // tylko wtedy, kiedy nazwa kategorii jest niepusta, mamy pewnosc,
+            // ze catgegory_id bedzie mialo poprawna wartosc
+            $edit_link = ' <span class="region-link">'
+                . l(t('edit'), scholar_category_path('generics', $row['subtype'], 'edit/' . $row['category_id']))
+                . '</span>';
+
+            $rows[] = array(
+                'data' => array(
+                    array(
+                        'data' => check_plain($category_name) . $edit,
+                        'colspan' => $colspan - 1,
+                        'class' => 'region',
+                    ),
+                    array(
+                        'data' => $edit_link,
+                        'class' => 'region',
+                    ),
+                ),
+                'class' => 'region',
+            );
+        }
+
         $rows[] = call_user_func($func, $row);
     }
 
     if (empty($rows)) {
-        $colspan = 0;
-
-        foreach ($header as $col) {
-            $colspan += isset($col['colspan']) ? max(1, $col['colspan']) : 1;
-        }
-
         $rows[] = array(
-            array('data' => t('No records'), 'colspan' => $colspan)
+            array('data' => t('No records'), 'colspan' => $colspan),
         );
     }
 
-    $html = theme('table', $header, $rows);
+    $html = scholar_theme_table($header, $rows);
 
     if ($pager_total > 1) {
-        $html .= theme('pager', array(), $rpp);
+        $html .= theme('pager', array(), $limit);
     }
 
     return $html;
@@ -593,7 +612,6 @@ function _scholar_book_list_spec($row = null) // {{{
             array('data' => t('Year'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),    'field' => 'bib_authors'),
             array('data' => t('Title'),      'field' => 'title'),
-            array('data' => t('Category'),   'field' => 'category_name'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
     }
@@ -608,7 +626,6 @@ function _scholar_book_list_spec($row = null) // {{{
         $year,
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
-        check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('book/edit/' . $row['id'])),
         l(t('delete'), scholar_admin_path('book/delete/' . $row['id'])),
     );
@@ -621,7 +638,6 @@ function _scholar_conference_list_spec($row = null) // {{{
             array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'),    'field' => 'title'),
             array('data' => t('Country'),  'field' => 'country_name'),
-            array('data' => t('Category'), 'field' => 'category_name'),
             array('data' => t('Listed')),
             array('data' => t('Operations'), 'colspan' => '3'),
         );
@@ -631,7 +647,6 @@ function _scholar_conference_list_spec($row = null) // {{{
         substr($row['start_date'], 0, 10),
         check_plain($row['title']),
         check_plain($row['country_name']),
-        check_plain($row['category_name']),
         $row['list'] ? t('Yes') : t('No'),
         l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
         $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('conference/presentations/' . $row['id'])) : '',
@@ -645,7 +660,6 @@ function _scholar_presentation_list_spec($row = null) // {{{
         return array(
             array('data' => t('Authors'),  'field' => 'bib_authors'),
             array('data' => t('Title'),    'field' => 'title'),
-            array('data' => t('Category'), 'field' => 'category_name'),
             array('data' => t('Operations'), 'colspan' => '2'),
         );
     }
@@ -655,7 +669,6 @@ function _scholar_presentation_list_spec($row = null) // {{{
     return array(
         check_plain($row['bib_authors']),
         empty($title) ? '<em>' . t('attendance only') . '</em>' : check_plain($title),
-        check_plain($row['category_name']),
         l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
         l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
     );
@@ -820,7 +833,7 @@ function scholar_conference_children_presentation_form(&$form_state, $conference
         '#type' => 'markup',
         '#value' => 
             '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>' .
-            theme('table', $header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
+            scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
     );
 
     $form[] = array(
