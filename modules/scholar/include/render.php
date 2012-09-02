@@ -28,16 +28,18 @@ function scholar_render_people_node($view, $id, $node)
     // pobierz wszystkie artykuly (razem z tytulami wydawnictw), 
     // wsrod ktorych autorow znajduje sie ta osoba
     $query = db_query("
-        SELECT g.*, g2.title AS parent_title, g2.url AS parent_url
+        SELECT g.*, i.suppinfo, g2.title AS parent_title, g2.url AS parent_url
         FROM {scholar_authors} a 
         JOIN {scholar_generics} g 
-            ON a.row_id = g.id
+            ON (a.row_id = g.id AND g.subtype = 'article')
         LEFT JOIN {scholar_generics} g2
-            ON (g.parent_id = g2.id AND g.subtype = 'article')
+            ON (g.parent_id = g2.id AND g2.subtype = 'book')
+        LEFT JOIN {scholar_generic_suppinfo} i
+            ON (g.id = i.generic_id AND i.language = '%s')
         WHERE a.person_id = %d
             AND a.table_name = 'generics'
         ORDER BY g.start_date DESC
-    ", $person->id);
+    ", $language, $person->id);
 
     $articles = scholar_db_fetch_all($query);
     foreach ($articles as &$article) {
@@ -70,7 +72,7 @@ function scholar_render_people_node($view, $id, $node)
     // Wszystkie prezentacje na konferencjach (JOIN), wktorych uczestniczyla
     // ta osoba (takze te z pustymi tytulami)
     $query = db_query("
-        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
+        SELECT g.id, g.title, i.suppinfo, g.url, g.parent_id,
                g2.title AS parent_title, g2.start_date AS parent_start_date,
                g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
                g2.url AS parent_url, g2.country AS parent_country,

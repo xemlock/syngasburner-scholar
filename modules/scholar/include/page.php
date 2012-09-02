@@ -93,7 +93,7 @@ function scholar_page_publications($view, $node) // {{{
 
     $query = db_query("
         SELECT g.id, g.title, g.start_date, g.bib_details AS bib_details, g.url,
-               g.parent_id, g2.title AS parent_title,
+               i.suppinfo, g.parent_id, g2.title AS parent_title,
                g2.start_date AS parent_start_date,
                g2.bib_details AS parent_bib_details, g2.url AS parent_url,
                c.name AS category_name
@@ -102,10 +102,12 @@ function scholar_page_publications($view, $node) // {{{
                 ON (g.parent_id = g2.id AND g2.subtype = 'book')
             LEFT JOIN {scholar_category_names} c
                 ON (g2.category_id = c.category_id AND c.language = '%s')
+            LEFT JOIN {scholar_generic_suppinfo} i
+                ON (g.id = i.generic_id AND i.language = '%s')
             WHERE
                 g.subtype = 'article'
         ORDER BY g.start_date DESC
-    ", $language);
+    ", $language, $language);
 
     // Reviewed papers / Publikacje w czasopismach recenzowanych
     $articles = array();

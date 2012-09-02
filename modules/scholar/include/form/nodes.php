@@ -132,24 +132,29 @@ function scholar_nodes_subform($record = null) // {{{
 function _scholar_element_taxonomy($tags = null) // {{{
 {
     if (function_exists('taxonomy_form_alter')) {
+        $type = 'scholar';
+
+        $node = new stdClass;
+        $node->type = $type;
+        $node->taxonomy = $tags;
+
         // hak zeby taksonomia dodala swoje pole z autowyszukiwaniem
         // (modules/taxonomy/taxonomy.module):
-        $n = new stdClass;
-        $n->type = 'scholar';
-        $n->taxonomy = $tags;
-        $temp_id = 'scholar_nodes_taxonomy_form';
-        $temp = array(
+        $form = array(
             'type' => array(
-                '#value' => $temp_id,
+                '#value' => $type,
             ),
-            '#node' => $n,
+            '#node' => $node,
         );
-        $state = array();
-        taxonomy_form_alter($temp, $state, $temp_id . '_node_form');
+        $form_state = array();
 
-        // usun wage pola
-        unset($temp['taxonomy']['#weight']);
-        return $temp['taxonomy'];
+        taxonomy_form_alter($form, $form_state, $type . '_node_form');
+
+        // usun wage pol taksonomii, zeby nie ingerowaly w ksztalt
+        // formularza zdefiniowany przez programiste
+        unset($form['taxonomy']['#weight']);
+
+        return $form['taxonomy'];
     }
 
     return false;
