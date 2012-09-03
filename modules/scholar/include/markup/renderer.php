@@ -1,6 +1,6 @@
 <?php
 
-class scholar_renderer
+class scholar_markup_renderer
 {
     protected $_brInPre = true;
     protected $_rawTags = array();
@@ -176,7 +176,7 @@ class scholar_renderer
                             $result[] = "<br/>";
                             break;
 
-                        case 'hr':
+                        case 'rule':
                             $result[] = "<hr/>";
                             break;
 

@@ -5,7 +5,7 @@ if (class_exists('Zend_Markup_Parser_Bbcode')) {
 /**
  * A BBCode markup parser with added support for escaped square brackets.
  */
-class scholar_parser extends Zend_Markup_Parser_Bbcode
+class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
 {
     public function __construct() // {{{
     {

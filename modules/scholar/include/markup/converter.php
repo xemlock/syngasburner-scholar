@@ -1,11 +1,11 @@
 <?php
 
-interface scholar_converter // {{{
+interface scholar_markup_converter // {{{
 {
     public function convert($token, $contents);
 } // }}}
 
-class scholar_converter_preface implements scholar_converter // {{{
+class scholar_markup_converter_preface implements scholar_markup_converter // {{{
 {
     protected $_prefaces = array();
 
@@ -21,7 +21,7 @@ class scholar_converter_preface implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_chapter implements scholar_converter // {{{
+class scholar_markup_converter_chapter implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
@@ -29,7 +29,7 @@ class scholar_converter_chapter implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_section implements scholar_converter // {{{
+class scholar_markup_converter_section implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
@@ -37,7 +37,7 @@ class scholar_converter_section implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_block implements scholar_converter // {{{
+class scholar_markup_converter_block implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
@@ -52,7 +52,7 @@ class scholar_converter_block implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_box implements scholar_converter // {{{
+class scholar_markup_converter_box implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
@@ -60,7 +60,7 @@ class scholar_converter_box implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_asset implements scholar_converter // {{{
+class scholar_markup_converter_asset implements scholar_markup_converter // {{{
 {
     // [asset={url} details={details}]{label}[/asset]
     // [asset]{url}[/asset]
@@ -94,7 +94,7 @@ class scholar_converter_asset implements scholar_converter // {{{
     }
 } // }}}
 
-class scholar_converter_youtube implements scholar_converter // {{{
+class scholar_markup_converter_youtube implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
@@ -131,7 +131,7 @@ class scholar_converter_youtube implements scholar_converter // {{{
 } // }}}
 
 // wewnetrzny konwerter nie do dokumentacji
-class scholar_converter___tag implements scholar_converter // {{{
+class scholar_markup_converter___tag implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
