@@ -126,15 +126,11 @@ function scholar_render_people_node($view, $id, $node) // {{{
 function scholar_render_generics_node($view, $id, $node) // {{{
 {
     $generic = scholar_load_record('generics', $id);
-
-    if (empty($generic)) {
-        return '';
-    }
-
-    $func = 'scholar_render_generics_' . $generic->subtype . '_node';
-
-    if (function_exists($func)) {
-        return $func($view, $generic, $node);
+    if ($generic) {
+        $func = 'scholar_render_generics_' . $generic->subtype . '_node';
+        if (function_exists($func)) {
+            return $func($view, $generic, $node);
+        }
     }
 } // }}}
 
@@ -341,7 +337,27 @@ function scholar_render_pages_conferences_node($view, $node) // {{{
         ->render('conferences.tpl');
 } // }}}
 
+// wywołuje odpowiednią funkcję odpowiedzialną za listowanie rekordów
+// w danej kategorii.
+function scholar_render_categories_node($view, $id, $node) // {{{
+{
+    $category = scholar_load_record('categories', $id);
+    if ($category) {
+        $func = 'scholar_render_categories_' . $category->table_name
+              . ($category->subtype ? '_' . $category->subtype : '')
+              . '_node';
+        if (function_exists($func)) {
+            return $func($view, $category, $node);
+        }
+    }
+} // }}}
 
+// wszystkie konferencje w danej kategorii, np. lista szkoleń
+function scholar_render_categories_generics_conference_node($view, $category, $node)
+{
+    $query = db_query("SELECT * FROM ");
+    p(__FUNCTION__);
+}
 
 /**
  * Funkcja pomocnicza usuwająca z tabeli reprezentującej pobrany

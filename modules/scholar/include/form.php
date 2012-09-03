@@ -65,6 +65,7 @@ function scholar_elements() // {{{
         '#input'            => true,
         '#fields'           => null,
         '#process'          => array('form_type_scholar_element_events_process'),
+        '#element_validate' => array('form_type_scholar_element_events_validate'),
     );
 
     $elements['scholar_element_files'] = array(

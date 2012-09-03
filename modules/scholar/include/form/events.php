@@ -175,19 +175,45 @@ function form_type_scholar_element_events_validate($element, &$form_state) // {{
     // i gdy ma zostac utworzony rekord wydarzenia dla przynajmniej
     // jednego jezyka, wymagaj podania daty poczatku.
     if ($element['#value']) {
-        foreach ($element['#value'] as $language => $event) {
-            if ($event['status'] && 0 == strlen($event['start_date'])) {
-                // zgodnie z dokumentacja dla form_set_error nazwy
-                // elementow zagniezdzonych przechowywane sa jako
-                // zlepek wartosci w #parents sklejonych znakami ][
-                $parents = $element['#parents'];
-                $parents[] = 'start_date';
+        $invalid_start_date = false;
 
-                // form_set_error operuje na statycznej tablicy, wspolnej
-                // dla wszystkich formularzy na stronie
-                form_set_error(implode('][', $parents), t('Event start date is required.'));
-                break;
+        foreach ($element['#value'] as $language => $event) {
+            if (!intval($event['status'])) {
+                // wylaczone tworzenie eventu dla tego jezyka, pomin walidacje
+                continue;
             }
+
+            // tresc opisujaca wydarzenie musi byc podana
+            if (0 == strlen($event['body']) || ctype_space($event['body'])) {
+                $parents = $element['#parents'];
+                $parents[] = $language;
+                $parents[] = 'body';
+                form_set_error(implode('][', $parents), t('Event description (@language) is required.', array('@language' => scholar_languages($language))));
+            }
+
+            $has_start_date = isset($element['#fields'][$language]['start_date']);
+            $has_end_date   = isset($element['#fields'][$language]['end_date']);
+
+            // sprawdz, czy podano date poczatku, ale tylko wtedy jezeli w formularzu
+            // istnieje pole przechowujace date. Komunikat o niepoprawnej dacie
+            // poczatku pokaz tylko raz.
+            if ($has_start_date && 0 == strlen($event['start_date'])) {
+                $invalid_start_date = true;    
+            }
+
+            // TODO walidacja poprawnosci daty
+        }
+
+        if ($invalid_start_date) {
+            // zgodnie z dokumentacja dla form_set_error nazwy
+            // elementow zagniezdzonych przechowywane sa jako
+            // zlepek wartosci w #parents sklejonych znakami ][
+            $parents = $element['#parents'];
+            $parents[] = 'start_date';
+
+            // form_set_error operuje na statycznej tablicy, wspolnej
+            // dla wszystkich formularzy na stronie
+            form_set_error(implode('][', $parents), t('Event start date is required.'));
         }
     }
 } // }}}

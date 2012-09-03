@@ -360,6 +360,10 @@ function scholar_install() // {{{
         'conferences', 'Presentations at Conferences, Workshops and Seminars'
         // Wystąpienia na konferencjach, warsztatach i seminariach
     );
+    db_query("INSERT INTO {scholar_pages} (id, subtype, title) VALUES (3, '%s', '%s')",
+        'trainings', 'Trainings'
+        // Szkolenia
+    );
 } // }}}
 
 function scholar_uninstall() // {{{

@@ -145,6 +145,29 @@ function _scholar_menu() // {{{
         'delete' => t('Delete book category'),
     ));
 
+    // zeby byly taby pierwszego poziomu w elementach w trainings/
+    // korzeniem poddrzewa jest przekierowanie do listy szkolen.
+    // Gdybysmy dali liste szkolej w korzeniu, a pozniej 2 razy DEFAULT_TASK
+    // w trainings/training i trainings/training/list dostalibysmy taby
+    // drugiego poziomu.
+    $items[$root . '/trainings'] = array(
+        'title'             => t('Trainings'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_goto',
+        'page arguments'    => array($root . '/trainings/training'),
+    );
+    $items += _scholar_generic_menu($root . '/trainings/training',
+        'training',
+        t('Trainings'),
+        array('edit' => t('Edit training'))
+    );
+    $items += _scholar_generic_menu($root . '/trainings/class',
+        'class',
+        t('Classes'),
+        array('edit' => t('Edit class'))
+    );
+
+
     $items[$root . '/file'] = array(
         'title'             => t('Files'),
         'access arguments'  => array('administer scholar'),
@@ -201,6 +224,7 @@ function _scholar_menu() // {{{
         'page callback'     => 'scholar_page_list',
         'parent'            => $root,
         'file'              => 'pages/page.php',
+        'weight'            => 10,
     );
     $items[$root . '/page/edit/%'] = array(
         'type'              => MENU_CALLBACK,
