@@ -255,25 +255,16 @@ scholar_add_css();
 
 
 
-            $parser = new scholar_parser;
-            $parser->addTag('chapter')
-                   ->addTag('section');
 
-            $renderer = new scholar_renderer(array('brInCode' => true));
-            $renderer->addConverter('preface', new scholar_converter_preface)
-                     ->addConverter('chapter', new scholar_converter_chapter)
-                     ->addConverter('section', new scholar_converter_section)
-                     ->addConverter('block',   new scholar_converter_block)
-                     ->addConverter('box',     new scholar_converter_box)
-                     ->addConverter('asset',   new scholar_converter_asset)
-                     ->addConverter('youtube', new scholar_converter_youtube)
-                     ->addConverter('__tag',   new scholar_converter___tag);
+
+
 
             
             //            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
             $rendering = '';
             try {
-                $tree = $parser->parse($bbcode);
+                $tree = scholar_markup_parser()->parse($bbcode);
+                $renderer = scholar_markup_renderer();
                 $rendering = $renderer->render($tree);
                 $preface   = $renderer->getConverter('preface')->render();
                 if ($preface) {
@@ -378,8 +369,22 @@ function scholar_render_form() // {{{
     return scholar_render($html);
 } // }}}
 
+function scholar_theme() // {{{
+{
+    // hook_theme jest wywolywany raz, podczas instalacji modulu. Wtedy
+    // modul nie jest jeszcze aktywny, wiec hook_init nie jest wywolywany.
+    // Wersja deweloperska wymaga do poprawnego dzialania uruchomienia
+    // __scholar_init, ladujacego niezbedne pliki. Stad koniecznosc
+    // jawnego wywolania tej funkcji.
+    __scholar_init();
+
+    return scholar_elements_theme();
+} // }}}
+
 function __scholar_init() // {{{
 {
+    // ladowanie powiazanych plikow dopiero gdy srodowisko jest w pelni
+    // zainicjowane (zaleznosc od Zend Framework)
     _scholar_include(array('include', 'models'));
 } // }}}
 
@@ -388,17 +393,11 @@ function scholar_init() // {{{
     __scholar_init();
 } // }}}
 
-function scholar_theme() // {{{
+function scholar_menu() // {{{
 {
-    // hook_theme jest wywolywany raz, podczas instalacji modulu. Wtedy
-    // modul nie jest jeszcze aktywny, wiec hook_init nie jest wywolywany.
-    // Wersja deweloperska wymaga do poprawnego dzialania uruchomienia
-    // __scholar_init, ladujacego sa niezbedne pliki. Stad koniecznosc
-    // jawnego wywolania tej funkcji.
-
     __scholar_init();
 
-    return scholar_elements_theme();
+    return _scholar_menu();
 } // }}}
 
 // vim: fdm=marker

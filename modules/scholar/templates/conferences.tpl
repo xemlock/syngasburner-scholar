@@ -8,11 +8,8 @@
 <?php   foreach ($conferences as $conference) { ?>
 [block="<?php $this->displayAttr($conference['date_span']) ?>"]
 <?php     include dirname(__FILE__) . '/_conference.tpl'; ?>
-  [list]
-<?php     foreach ($conference['presentations'] as $presentation) { ?>
-    [__tag="li"]<?php include dirname(__FILE__) . '/_presentation.tpl'; ?>[/__tag]  
-<?php	  } ?>
-  [/list]
+<?php     $presentations = $conference['presentations']; 
+          include dirname(__FILE__) . '/_presentations.tpl'; ?>
 [/block]
 <?php   } ?>
 

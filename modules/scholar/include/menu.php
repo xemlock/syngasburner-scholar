@@ -5,6 +5,13 @@ function scholar_admin_path($path = '') // {{{
     $path = ltrim($path, '/');
 
     if (strlen($path)) {
+        // jezeli podano wiecej niz jeden argument uzyj sprintf do
+        // zamiany symboli zastepczych na kolejno podane argumenty
+        if (func_num_args() > 1) {
+            $args = func_get_args();
+            $path = call_user_func_array('sprintf', $args);
+        }
+
         $path = '/' . $path;
     }
 
@@ -38,7 +45,7 @@ function scholar_category_path($table_name = null, $subtype = null, $page = 'lis
  * Implementacja hook_menu.
  * @return array
  */
-function scholar_menu() // {{{
+function _scholar_menu() // {{{
 {
     $root = scholar_admin_path();
 

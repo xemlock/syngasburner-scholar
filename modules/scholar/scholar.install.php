@@ -322,16 +322,10 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_pages'] = array( // {{{
-        'description' => 'Lista funkcji generujacych tresci stron. Dlatego tak, zeby wykorzystac mechanizmy dolaczania wezlow i plikow.',
         'fields' => array(
-            'id' => $field_type['id'],
-            'callback' => array(
-                'description' => 'Name of a function that generates page code to be rendered.',
-                'type'      => 'varchar',
-                'length'    => 255,
-                'not null'  => true,
-            ),
-            'title' => array(
+            'id'      => $field_type['id'],
+            'subtype' => $field_type['subtype'],
+            'title'   => array(
                 'description' => 'Human-readable page title.',
                 'type'      => 'varchar',
                 'length'    => 255,
@@ -340,7 +334,7 @@ function scholar_schema() // {{{
         ),
         'primary key' => array('id'),
         'unique keys' => array(
-            'callback' => array('callback'),
+            'subtype' => array('subtype'),
         ),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
@@ -358,12 +352,12 @@ function scholar_install() // {{{
     drupal_install_schema('scholar');
 
     // raz utworzone strony nie moga zostac usuniete
-    db_query("INSERT INTO {scholar_pages} (callback, title) VALUES ('%s', '%s')",
-        'scholar_page_publications', 'Publications and results presentation'
+    db_query("INSERT INTO {scholar_pages} (id, subtype, title) VALUES (1, '%s', '%s')",
+        'publications', 'Publications and results presentation'
         // Publikacje i prezentacja wyników
     );
-    db_query("INSERT INTO {scholar_pages} (callback, title) VALUES ('%s', '%s')",
-        'scholar_page_conferences', 'Presentations at Conferences, Workshops and Seminars'
+    db_query("INSERT INTO {scholar_pages} (id, subtype, title) VALUES (2, '%s', '%s')",
+        'conferences', 'Presentations at Conferences, Workshops and Seminars'
         // Wystąpienia na konferencjach, warsztatach i seminariach
     );
 } // }}}

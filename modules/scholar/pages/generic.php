@@ -648,9 +648,9 @@ function _scholar_conference_list_spec($row = null) // {{{
         check_plain($row['title']),
         check_plain($row['country_name']),
         $row['list'] ? t('Yes') : t('No'),
-        l(t('edit'),  scholar_admin_path('conference/edit/' . $row['id'])),
-        $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('conference/presentations/' . $row['id'])) : '',
-        l(t('delete'), scholar_admin_path('conference/delete/' . $row['id'])),
+        l(t('edit'),  scholar_admin_path('conference/edit/%d', $row['id'])),
+        $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('conference/children/%d/presentation', $row['id'])) : '',
+        l(t('delete'), scholar_admin_path('conference/delete/%d', $row['id'])),
     );
 } // }}}
 
@@ -658,6 +658,7 @@ function _scholar_presentation_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
+            array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),  'field' => 'bib_authors'),
             array('data' => t('Title'),    'field' => 'title'),
             array('data' => t('Operations'), 'colspan' => '2'),
@@ -667,6 +668,7 @@ function _scholar_presentation_list_spec($row = null) // {{{
     $title = trim($row['title']);
 
     return array(
+        substr($row['start_date'], 0, 10),
         check_plain($row['bib_authors']),
         empty($title) ? '<em>' . t('attendance only') . '</em>' : check_plain($title),
         l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
@@ -732,7 +734,7 @@ function scholar_conference_children_presentation_form(&$form_state, $conference
     }
 
     $subgroups = array();
-    $d = array('query' => 'destination=' . scholar_admin_path('conference/presentations/' . $conference->id));
+    $d = array('query' => 'destination=' . scholar_admin_path('conference/children/%d/presentation', $conference->id));
 
     $tbody[] = array();
     $last_region = ''; // pierwszy region to ten bez daty

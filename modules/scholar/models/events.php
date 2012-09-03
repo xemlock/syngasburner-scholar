@@ -139,7 +139,7 @@ function scholar_delete_events($row_id, $table_name) // {{{
 
         while ($row = db_fetch_array($query)) {
             $event = events_load_event($row['event_id']);
-            events_delete_event(&$event);
+            events_delete_event($event);
         }
 
         db_query("DELETE FROM {scholar_events} WHERE row_id = %d AND table_name = '%s'", $row_id, $table_name);
