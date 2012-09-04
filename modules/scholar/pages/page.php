@@ -94,7 +94,8 @@ function scholar_page_form(&$form_state, $id) // {{{
 
     // wczytaj tlumaczenie tytulu strony, bedzie on uzyty w komunikacie
     // o zaktualizowaniu rekordu.
-    $page->title = t($page->title);
+    $title       = $page->title;
+    $page->title = t($title);
 
     $form = scholar_generic_form(array(
         'title' => array(
@@ -104,6 +105,10 @@ function scholar_page_form(&$form_state, $id) // {{{
         'nodes',
         'files',
     ), $page);
+
+    // po wygenerowaniu formularza przywroc oryginalny tytul, poniewaz
+    // moze on byc potrzebny podczas zapisywania danych z formularza
+    $page->title = $title;
 
     $form['submit'] = array(
         '#type'  => 'submit',
