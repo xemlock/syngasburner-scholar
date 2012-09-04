@@ -13,7 +13,7 @@ function form_type_scholar_element_timespan_validate($element, &$form_state)
 
 function theme_scholar_element_timespan($element)
 {
-    return __FUNCTION__;
+    return "<input size=2 placeholder=HH maxlength=2/>:<input size=2 placeholder=MM  maxlength=2 /> - <input size=2 placeholder=HH maxlength=2 />:<input size=2 placeholder=MM maxlength=2 />";
 }
 
 // vim: fdm=marker

@@ -429,7 +429,7 @@ function scholar_save_upload($source) // {{{
             $file->mimetype = $file->filemime;
             $file->size     = $file->filesize;
             $file->user_id  = $file->uid;
-            $file->upload_time = date('Y-m-d H:i:s', $file->timestamp);
+            $file->create_time = date('Y-m-d H:i:s', $file->timestamp);
 
             $success = scholar_db_write_record('scholar_files', $file);
         }
