@@ -139,6 +139,10 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
         // pobierz strukture formularza
         $form = call_user_func_array($func, $args);
 
+        if (function_exists($func . '_validate')) {
+            $form['#validate'][] = $func . '_validate';
+        }
+
         $form['#subtype'] = $subtype;
         $form['#submit']  = array('_scholar_generics_form_submit');
 
@@ -235,7 +239,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
 
         // tu zadziala destination
-        drupal_goto(scholar_admin_path($subtype));
+        drupal_goto(scholar_list_path("generics.$subtype"));
     }
 } // }}}
 

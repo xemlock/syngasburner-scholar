@@ -31,7 +31,7 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('trainings/training'),
+        '#value' => scholar_list_path('generics.training'),
     );
 
     return $form;

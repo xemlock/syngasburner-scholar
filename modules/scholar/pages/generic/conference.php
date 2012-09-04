@@ -69,7 +69,7 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('conference'),
+        '#value' => scholar_list_path('generics.conference'),
     );
 
     return $form;

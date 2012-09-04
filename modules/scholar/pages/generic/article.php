@@ -38,7 +38,7 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('article'),
+        '#value' => scholar_list_path('generics.article'),
     );
 
     return $form;

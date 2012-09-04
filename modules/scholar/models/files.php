@@ -266,7 +266,7 @@ function scholar_file_refcount(&$file) // {{{
     $query = db_query("SELECT COUNT(*) AS cnt FROM {scholar_attachments} WHERE file_id = %d", $file->id);
     $row   = db_fetch_array($query);
 
-    return intval($row['cnr']);
+    return intval($row['cnt']);
 } // }}}
 
 /**

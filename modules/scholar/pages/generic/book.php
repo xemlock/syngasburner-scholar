@@ -54,7 +54,7 @@ function scholar_generics_book_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('book'),
+        '#value' => scholar_list_path('generics.book'),
     );
 
     return $form;

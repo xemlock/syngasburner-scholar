@@ -45,7 +45,7 @@ function scholar_category_subpath($table_name = null, $subtype = null, $page = '
  * Implementacja hook_menu.
  * @return array
  */
-function _scholar_menu() // {{{
+function _scholar_menu(&$scholar_list_path = null) // {{{
 {
     $root = scholar_admin_path();
 
@@ -63,6 +63,7 @@ function _scholar_menu() // {{{
         'page callback'     => 'scholar_people_list',
         'parent'            => $root,
         'file'              => 'pages/people.php',
+        'scholar_list_path' => 'people',
     );
     $items[$root . '/people/list'] = array(
         'type'              => MENU_DEFAULT_LOCAL_TASK,
@@ -167,13 +168,13 @@ function _scholar_menu() // {{{
         array('edit' => t('Edit class'))
     );
 
-
     $items[$root . '/file'] = array(
         'title'             => t('Files'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_file_list',
         'parent'            => $root,
         'file'              => 'pages/file.php',
+        'scholar_list_path' => 'files',
     );
     $items[$root . '/file/list'] = array(
         'type'              => MENU_DEFAULT_LOCAL_TASK,
@@ -225,6 +226,7 @@ function _scholar_menu() // {{{
         'parent'            => $root,
         'file'              => 'pages/page.php',
         'weight'            => 10,
+        'scholar_list_path' => 'pages',
     );
     $items[$root . '/page/edit/%'] = array(
         'type'              => MENU_CALLBACK,
@@ -244,8 +246,38 @@ function _scholar_menu() // {{{
 
     _scholar_menu_add_page_argument_positions($items);
 
+    // jezeli podano jako argument referencje, zapisz do niej sciezki
+    // do list rekordow roznych typow
+    if (func_num_args()) {
+        $scholar_list_path = array();
+        foreach ($items as $path => $item) {
+            if (isset($item['scholar_list_path'])) {
+                $scholar_list_path[$item['scholar_list_path']] = $path;
+            }
+        }
+    }
+
     return $items;
 } // }}}
+
+function scholar_list_path($model)
+{
+    static $list_paths = null;
+
+    if (null === $list_paths) {
+        $cid = 'scholar_list_path';
+
+        if (!($data = cache_get($cid))) {
+            _scholar_menu($list_paths);
+            cache_set($cid, $list_paths);
+
+        } else {
+            $list_paths = $data->data;
+        }
+    }
+
+    return isset($list_paths[$model]) ? $list_paths[$model] : scholar_admin_path();
+}
 
 function scholar_show_schema()
 {
@@ -284,6 +316,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
         'weight'            => 5,
+        'scholar_list_path' => "categories.$table_name.$subtype",
     );
     $items[$root_path . '/category/add'] = array(
         'type'              => MENU_LOCAL_TASK,
@@ -331,6 +364,7 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'page arguments'    => array($subtype),
         'parent'            => dirname($root_path),
         'file'              => 'pages/generic.php',
+        'scholar_list_path' => "generics.$subtype",
     );
     $items[$root_path . '/list'] = array(
         'type'              => MENU_DEFAULT_LOCAL_TASK,

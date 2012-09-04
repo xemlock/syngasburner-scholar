@@ -45,15 +45,13 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
         ),
     ), $record);
 
-    $form['#validate'][] = 'scholar_generics_presentation_form_validate';
-
     $form['submit'] = array(
         '#type'  => 'submit',
         '#value' => empty($record) ? t('Save') : t('Save changes'),
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('presentation'),
+        '#value' => scholar_list_path('generics.presentation'),
     );
 
     return $form;

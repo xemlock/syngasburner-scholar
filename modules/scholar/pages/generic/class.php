@@ -11,16 +11,15 @@ function scholar_generics_class_form(&$form_state, $record = null)
         ),
         'start_date' => array(
             '#maxlength' => 16,
-            '#description' => t('Date and time format: YYYY-MM-DD HH:MM.'),
+            '#description' => t('Date and time format: YYYY-MM-DD HH:MM. The time part (hours and minutes) can be omitted.'),
         ),
         'authors' => array(
             '#title'       => t('Lecturers'),
-            '#required'    => true,
         ),
         'parent_id' => empty($parents) ? false : array(
             '#title'       => t('Training'),
             '#options'     => $parents,
-            '#description' => t('A training during which this class is .'),
+            '#description' => t('A training during which this class is carried out.'),
             // jezeli w adresie strony podano identyfikator konferencji
             // ustaw ja jako domyslna wartosc pola
             '#default_value' => isset($_GET['conference']) ? intval($_GET['conference']) : null,
@@ -35,15 +34,10 @@ function scholar_generics_class_form(&$form_state, $record = null)
         'files',
         'nodes',
         'events' => array(
-            // zajecia odbywaja sie jednego dnia
-            'start_date' => array(
-                '#title' => t('Date'),
-            ),
+            'start_date' => false,
             'end_date'   => false,
         ),
     ), $record);
-
-    $form['#validate'][] = 'scholar_presentation_form_validate';
 
     $form['submit'] = array(
         '#type'  => 'submit',
@@ -51,7 +45,7 @@ function scholar_generics_class_form(&$form_state, $record = null)
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('presentation'),
+        '#value' => scholar_list_path("generics.training"),
     );
 
     return $form;
