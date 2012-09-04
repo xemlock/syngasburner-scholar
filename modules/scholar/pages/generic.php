@@ -75,7 +75,7 @@ function scholar_generics_list($subtype) // {{{
             // tylko wtedy, kiedy nazwa kategorii jest niepusta, mamy pewnosc,
             // ze catgegory_id bedzie mialo poprawna wartosc
             $edit_link = ' <span class="region-link">'
-                . scholar_oplink(t('edit'), scholar_category_subpath('generics', $row['subtype'], 'edit/%d'), $row['category_id'])
+                . scholar_oplink(t('edit'), "categories.generics.{$row['subtype']}", 'edit/%d', $row['category_id'])
                 . '</span>';
 
             $rows[] = array(
@@ -130,7 +130,7 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
             $record = null;
         } else {
             $conds  = array('id' => $id, 'subtype' => $subtype);
-            $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
+            $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
         }
 
         // przygotuj argumenty do wygenerowania formularza
@@ -246,13 +246,13 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
 function scholar_generics_delete_form(&$form_state, $subtype, $id) // {{{
 {
     $conds  = array('id' => $id, 'subtype' => $subtype);
-    $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
+    $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
 
     $form = array(
         '#record' => $record,
     );
 
-    $cancel = isset($_GET['destination']) ? $_GET['destination'] : scholar_admin_path($subtype);
+    $cancel = isset($_GET['destination']) ? $_GET['destination'] : scholar_path("generics.$subtype");
 
     $form = confirm_form($form,
         t('Are you sure you want to delete %title?', array('%title' => $record->title)),
@@ -272,7 +272,7 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
     if ($record) {
         scholar_delete_record('generics', $record);
         drupal_set_message(t('%title deleted successfully.', array('%title' => $record->title)));
-        drupal_goto(scholar_admin_path($record->subtype));
+        drupal_goto(scholar_path("generics.{$record->subtype}"));
     }
 } // }}}
 
@@ -293,7 +293,7 @@ function scholar_generics_children_list($subtype, $id, $children_subtype) // {{{
 
     if (function_exists($func)) {
         $conds  = array('id' => $id, 'subtype' => $subtype);
-        $record = scholar_load_record('generics', $conds, scholar_admin_path($subtype));
+        $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
         return $func($record);
     }
 

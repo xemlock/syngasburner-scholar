@@ -68,8 +68,8 @@ function _scholar_generics_article_list_spec($row = null) // {{{
         substr($row['start_date'], 0, intval($row['start_date_len'])),
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
-        l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),
-        l(t('delete'), scholar_admin_path('article/delete/' . $row['id'])),
+        scholar_oplink(t('edit'), 'generics.article', 'edit/%d', $row['id']),
+        scholar_oplink(t('delete'), 'generics.article' , 'delete/%d', $row['id']),
     );
 } // }}}
 

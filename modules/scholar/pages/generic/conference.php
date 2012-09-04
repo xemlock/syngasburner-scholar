@@ -122,9 +122,11 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
         check_plain($row['title']),
         check_plain($row['country_name']),
         $row['list'] ? t('Yes') : t('No'),
-        l(t('edit'),  scholar_admin_path('conference/edit/%d', $row['id'])),
-        $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('conference/children/%d/presentation', $row['id'])) : '',
-        l(t('delete'), scholar_admin_path('conference/delete/%d', $row['id'])),
+        scholar_oplink(t('edit'), 'generics.conference', 'edit/%d', $row['id']),
+        $row['child_count']
+            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'generics.conference', 'children/%d/presentation', $row['id']) 
+            : '',
+        scholar_oplink(t('delete'), 'generics.conference', 'delete/%d', $row['id']),
     );
 } // }}}
 
@@ -164,7 +166,6 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
     }
 
     $subgroups = array();
-    $d = array('query' => 'destination=' . scholar_admin_path('conference/children/%d/presentation', $conference->id));
 
     $tbody[] = array();
     $last_region = ''; // pierwszy region to ten bez daty
@@ -215,8 +216,8 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
                 check_plain($row['bib_authors']),
                 check_plain($row['title']),
                 theme_select($element),
-                l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id']), $d),
-                l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id']), $d),
+                scholar_oplink(t('edit'), 'generics.presentation', 'edit/%d', $row['id']),
+                scholar_oplink(t('delete'), 'generics.presentation', 'delete/%d', $row['id']),
             ),
             'class' => 'draggable',
         );
@@ -273,9 +274,11 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         '#value' => t('Save changes'),
     );
 
-    scholar_add_tab(t('Add presentation'), scholar_admin_path('presentation/add'), $d['query'] . '&conference=' . $conference->id);
-    scholar_add_tab(t('Edit'), scholar_admin_path('conference/edit/' . $conference->id));
-    scholar_add_tab(t('List'), scholar_admin_path('conference'));
+    $query = 'destination=' . scholar_path('generics.conference', 'children/%d/presentation', $conference->id)
+           . '&conference=' . $conference->id;
+    scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
+    scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $conference->id));
+    scholar_add_tab(t('List'), scholar_path('generics.conference'));
 
     return $form;
 } // }}}
@@ -290,7 +293,7 @@ function scholar_generics_conference_children_presentation_form_submit($form, &$
             drupal_set_message(t('Presentation order updated successfully.'));
         }
 
-        drupal_goto(scholar_admin_path('conference'));
+        drupal_goto(scholar_path('generics.conference'));
     }
 } // }}}
 

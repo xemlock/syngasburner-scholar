@@ -93,8 +93,8 @@ function _scholar_generics_book_list_spec($row = null) // {{{
         $year,
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
-        l(t('edit'),  scholar_admin_path('book/edit/' . $row['id'])),
-        l(t('delete'), scholar_admin_path('book/delete/' . $row['id'])),
+        scholar_oplink(t('edit'), 'generics.book', 'edit/%d', $row['id']),
+        scholar_oplink(t('delete'), 'generics.book', 'delete/%d', $row['id']),
     );
 } // }}}
 

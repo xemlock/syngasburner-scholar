@@ -124,8 +124,8 @@ function scholar_people_list() // {{{
         $rows[] = array(
             check_plain($row['last_name']),
             check_plain($row['first_name']),
-            scholar_oplink(t('edit'), 'people', 'edit/%d', $row['id']), 
-            scholar_oplink(t('delete'), 'people', 'delete/%d', $row['id']), 
+            scholar_oplink(t('edit'), 'people', 'edit/%d', $row['id']),
+            scholar_oplink(t('delete'), 'people', 'delete/%d', $row['id']),
         );
     }
 

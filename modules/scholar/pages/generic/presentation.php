@@ -100,8 +100,8 @@ function _scholar_generics_presentation_list_spec($row = null) // {{{
         substr($row['start_date'], 0, 10),
         check_plain($row['bib_authors']),
         empty($title) ? '<em>' . t('attendance only') . '</em>' : check_plain($title),
-        l(t('edit'),  scholar_admin_path('presentation/edit/' . $row['id'])),
-        l(t('delete'), scholar_admin_path('presentation/delete/' . $row['id'])),
+        scholar_oplink(t('edit'), 'generics.presentation', 'edit/%d', $row['id']),
+        scholar_oplink(t('delete'), 'generics.presentation', 'delete/%d', $row['id']),
     );
 } // }}}
 

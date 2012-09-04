@@ -141,20 +141,20 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
 {
     switch ($table_name) {
         case 'people':
-            $record = scholar_load_record('people', $row_id, scholar_admin_path('people'));
-            return scholar_goto(scholar_admin_path('people/edit/' . $record->id), null, $fragment);
+            $record = scholar_load_record('people', $row_id, scholar_path('people'));
+            return scholar_goto(scholar_path('people', 'edit/%d', $record->id), null, $fragment);
 
         case 'generics':
-            $record = scholar_load_record('generics', $row_id, scholar_admin_path());
-            return scholar_goto(scholar_admin_path($record->subtype . '/edit/' . $record->id), null, $fragment);
+            $record = scholar_load_record('generics', $row_id, scholar_path());
+            return scholar_goto(scholar_path("generics.{$record->subtype}", 'edit/%d', $record->id), null, $fragment);
 
         case 'categories':
-            $record = scholar_load_record('categories', $row_id, scholar_admin_path());
-            return scholar_goto(scholar_admin_path(scholar_category_subpath($record->table_name, $record->subtype, 'edit/' . $record->id)), null, $fragment);
+            $record = scholar_load_record('categories', $row_id, scholar_path());
+            return scholar_goto(scholar_path("categories.{$record->table_name}.{$record->subtype}", 'edit/%d', $record->id), null, $fragment);
 
         case 'pages':
-            $record = scholar_load_record('pages', $row_id, scholar_admin_path('page'));
-            return scholar_goto(scholar_admin_path('page/edit/' . $record->id), null, $fragment);
+            $record = scholar_load_record('pages', $row_id, scholar_path('pages'));
+            return scholar_goto(scholar_path('pages', 'edit/%d', $record->id), null, $fragment);
     }
 } // }}}
 

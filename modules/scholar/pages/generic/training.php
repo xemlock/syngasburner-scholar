@@ -31,7 +31,7 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_list_path('generics.training'),
+        '#value' => scholar_path('generics.training'),
     );
 
     return $form;
@@ -50,10 +50,10 @@ function _scholar_generics_training_list_spec($row = null) // {{{
     return array(
         substr($row['start_date'], 0, 10),
         check_plain($row['title']),
-        scholar_oplink(t('edit'), 'trainings/training/edit/%d', $row['id']),
+        scholar_oplink(t('edit'), 'generics.training', 'edit/%d', $row['id']),
         $row['child_count']
-            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'trainings/training/children/%d/presentation', $row['id'])
+            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'generics.training', 'children/%d/presentation', $row['id'])
             : '',
-        scholar_oplink(t('delete'), 'trainings/training/delete/%d', $row['id']),
+        scholar_oplink(t('delete'), 'generics.training', 'delete/%d', $row['id']),
     );
 } // }}}

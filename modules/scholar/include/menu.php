@@ -1,55 +1,11 @@
 <?php
 
-/* @deprecated
- * function scholar_admin_path($path = '') // {{{
-{
-    $path = ltrim($path, '/');
-
-    if (strlen($path)) {
-        // jezeli podano wiecej niz jeden argument uzyj sprintf do
-        // zamiany symboli zastepczych na kolejno podane argumenty
-        if (func_num_args() > 1) {
-            $args = func_get_args();
-            $path = call_user_func_array('sprintf', $args);
-        }
-
-        $path = '/' . $path;
-    }
-
-    return 'admin/scholar' . $path;
-} // }}}
- */
-
-/**
- * Zwraca ścieżkę do listy kategorii powiązanych z daną tabelą i opcjonalnie
- * rekordami danego podtypu. Reguła tworzenia ścieżki jest następująca:
- * jeżeli podtyp jest pusty, do nazwy tabeli dołączany jest przyrostek 
- * '/category', jeżeli podana została nazwa podtypu, zostaje ona użyta 
- * w miejscu nazwy tabeli (nazwa tabeli - kontenera jest ignorowana).
- * Nazwy tabel i podtypów muszą być więc unikalne.
- *
- * @param string $table_name OPTIONAL   nazwa tabeli
- * @param string $subtype OPTIONAL      nazwa podtypu
- */
-/*
-function scholar_category_subpath($table_name = null, $subtype = null, $page = 'list') // {{{
-{
-    if (null !== $table_name) {
-        $path = (null === $subtype ? $table_name : $subtype) . '/category/' . ltrim($page, '/');
-    } else {
-        $path = '/';
-    }
-
-    return scholar_admin_path($path);
-} // }}}
- */
-
 /**
  * Definicja menu wywoływana i zapamiętywana podczas instalacji modułu.
  * Implementacja hook_menu.
  * @return array
  */
-function _scholar_menu(&$paths = null) // {{{
+function _scholar_menu() // {{{
 {
     $root  = 'admin/scholar';
     $items = array();
@@ -250,18 +206,48 @@ function _scholar_menu(&$paths = null) // {{{
 
     _scholar_menu_add_page_argument_positions($items);
 
-    // jezeli podano argument podczas wywolania funkcji, zapisz do niego
-    // sciezki zdefiniowane w menu (wartosci oznaczone przez @scholar_path)
-    if (func_num_args()) {
-        $paths = array();
-        foreach ($items as $path => $item) {
-            if (isset($item['@scholar_path'])) {
-                $paths[$item['@scholar_path']] = $path;
+    return $items;
+} // }}}
+
+function _scholar_menu_extract_paths($items) // {{{
+{
+    $paths = array();
+
+    foreach ($items as $path => $item) {
+        foreach ($item as $key => $value) {
+            if (strncasecmp($key, '@scholar_path', 13)) {
+                continue;
             }
+
+            // key jest nazwa wlasciwosci, value nazwa sciezki
+
+            // jezeli podano modyfikatory w postaci @scholar_path(f1, f2, f3)
+            // uruchom je na sciezce tego elementu w sposob nastepujacy:
+            // f3(f2(f1($path)))
+
+            // 1. usun przedrostek
+            $key = substr($key, 13);
+
+            // 2. jezeli nawias otwierajacy jest pierwszym, a zamykajacy ostatnim
+            //    znakiem usun je i przejdz do parsowania listy funkcji
+            if ('(' == substr($key, 0, 1) && ')' == substr($key, -1)) {
+                // 3. rozbij liste uzywajac przecinka, i pozbadz sie bialych znakow
+                //    wokol kazdego elementu
+                $modifiers = array_map('trim', explode(',', substr($key, 1, -1)));
+
+                // 4. wywolaj funkcje modyfikujace sciezke
+                foreach ($modifiers as $modifier) {
+                    if (function_exists($modifier)) {
+                        $path = $modifier($path);
+                    }
+                }
+            }
+
+            $paths[$value] = $path;
         }
     }
 
-    return $items;
+    return $paths;
 } // }}}
 
 /**
@@ -271,8 +257,11 @@ function _scholar_menu(&$paths = null) // {{{
  * @param ...
  *     parametry przekazane jako wartości symboli zastępczych umieszczonych
  *     w zmiennej $path
+ * @return
+ *     ścieżka w drzewie odpowiadająca podanej nazwie. Jeżeli ścieżka nie
+ *     istnieje zwrócona zostaje ścieżka o nazwie 'root'.
  */
-function scholar_path($path_name = null, $subpath = '') // {{{
+function scholar_path($path_name, $subpath = '') // {{{
 {
     static $paths = null;
 
@@ -280,16 +269,12 @@ function scholar_path($path_name = null, $subpath = '') // {{{
         $cid = 'scholar_path';
 
         if (!($data = cache_get($cid))) {
-            _scholar_menu($paths);
+            $paths = _scholar_menu_extract_paths(_scholar_menu());
             cache_set($cid, $paths);
 
         } else {
             $paths = $data->data;
         }
-    }
-
-    if (null === $path_name) {
-        return $paths;
     }
 
     if (isset($paths[$path_name])) {
@@ -314,7 +299,7 @@ function scholar_path($path_name = null, $subpath = '') // {{{
     return $paths['root'];
 } // }}}
 
-function scholar_show_schema()
+function scholar_show_schema() // {{{
 {
     $html = '';
 
@@ -331,7 +316,7 @@ function scholar_show_schema()
 
     drupal_set_title('Schema');
     return '<pre><code class="sql">' . $html . '</code></pre>';
-}
+} // }}}
 
 function _scholar_category_menu($root_path, $table_name, $subtype = null, $titles = array()) // {{{
 {
@@ -351,7 +336,12 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
         'weight'            => 5,
-        '@scholar_path'     => "categories.$table_name.$subtype",
+        // ze sciezka kategorii jest tak, ze aby byla ona na tym samym
+        // poziomie co odnosniki do kategoryzowanych rekordow nie moze
+        // istniec element menu o sciezce $root_path/category.
+        // Aby sciezke moc z powodzeniem wykorzystac w scholar_path()
+        // musimy sciezke o katalog wyzej oznaczyc annotacja, stad dirname
+        '@scholar_path(dirname)' => "categories.$table_name.$subtype",
     );
     $items[$root_path . '/category/add'] = array(
         'type'              => MENU_LOCAL_TASK,
