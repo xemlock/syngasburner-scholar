@@ -1,5 +1,39 @@
 <?php
 
+/**
+ * Ustawia albo zwraca wartość sterującą renderingiem węzłów (segmentów).
+ * Jeżeli nie podano żadnego argumentu zwrócona zostanie aktualna
+ * wartość. Jeżeli podano nową, zostanie ona ustawiona, przy czym zwrócona
+ * zostanie poprzednia wartość.
+ *
+ * @param bool $enabled OPTIONAL        true żeby włączyć renderowanie,
+ *                                      false aby wyłączyć
+ * @return bool
+ */
+function _scholar_rendering_enabled($enabled = null) // {{{
+{
+    static $_enabled = true;
+
+    if (null !== $enabled) {
+        $previous = $_enabled;
+        $_enabled = (bool) $enabled;
+
+        return $previous;
+    }
+
+    return $_enabled;
+} // }}}
+
+/**
+ * Funkcja wywoływana po pomyślnym zapisie lub usunięciu rekordów
+ * osób, kategorii i rekordów generycznych oraz przy usuwaniu / zmianie nazwy plików.
+ * Zmiana lub usunięcie wydarzeń i węzłów nie wpływa na rendering. 
+ */
+function scholar_invalidate_rendering() // {{{
+{
+    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
+} // }}}
+
     // rendering: $authors: <a href="$url">$title</a> $details
     // <a href="http://syngasburner.eu/pl/publikacje/monografia-ekoenergetyka">"Eco-energetics - biogas and syngas"</a> (red. A. Cenian, J. Gołaszewski i T. Noch)
     // <a href="http://www.springer.com/physics/classical+continuum+physics/book/978-3-642-03084-0">"Advances in Turbulence XII, Proceedings of the Twelfth European Turbulence Conference, September 7–10, 2009, Marburg, Germany"</a>, Springer Proceedings in Physics, Vol. 132

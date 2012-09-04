@@ -80,40 +80,6 @@ function scholar_admin_page_size() // {{{
 } // }}}
 
 /**
- * Ustawia albo zwraca wartość sterującą renderingiem węzłów (segmentów).
- * Jeżeli nie podano żadnego argumentu zwrócona zostanie aktualna
- * wartość. Jeżeli podano nową, zostanie ona ustawiona, przy czym zwrócona
- * zostanie poprzednia wartość.
- *
- * @param bool $enabled OPTIONAL        true żeby włączyć renderowanie,
- *                                      false aby wyłączyć
- * @return bool
- */
-function _scholar_rendering_enabled($enabled = null) // {{{
-{
-    static $_enabled = true;
-
-    if (null !== $enabled) {
-        $previous = $_enabled;
-        $_enabled = (bool) $enabled;
-
-        return $previous;
-    }
-
-    return $_enabled;
-} // }}}
-
-/**
- * Funkcja wywoływana po pomyślnym zapisie lub usunięciu rekordów
- * osób, kategorii i rekordów generycznych oraz przy usuwaniu / zmianie nazwy plików.
- * Zmiana lub usunięcie wydarzeń i węzłów nie wpływa na rendering. 
- */
-function scholar_invalidate_rendering() // {{{
-{
-    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
-} // }}}
-
-/**
  * Dodaje arkusz ze stylami tego modułu.
  */
 function scholar_add_css() // {{{
@@ -184,7 +150,7 @@ function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
 
         case 'categories':
             $record = scholar_load_record('categories', $row_id, scholar_admin_path());
-            return scholar_goto(scholar_category_path($record->table_name, $record->subtype, 'edit/' . $record->id), null, $fragment);
+            return scholar_goto(scholar_admin_path(scholar_category_subpath($record->table_name, $record->subtype, 'edit/' . $record->id)), null, $fragment);
 
         case 'pages':
             $record = scholar_load_record('pages', $row_id, scholar_admin_path('page'));

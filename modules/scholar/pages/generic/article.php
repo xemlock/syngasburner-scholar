@@ -1,13 +1,7 @@
 <?php
 
-function scholar_article_form(&$form_state, $record = null) // {{{
+function scholar_generics_article_form(&$form_state, $record = null) // {{{
 {
-    if ($record) {
-        // intval konczy na pierwszym niepoprawnym znaku, wiec dostaniemy
-        // poprawna wartosc roku
-        $record->start_date = intval($record->start_date);
-    }
-
     // artykuly moga nalezec do ksiazki (wydawnictwa zwartego)
     $parents = scholar_generic_parent_options('book');
 
@@ -17,8 +11,8 @@ function scholar_article_form(&$form_state, $record = null) // {{{
         ),
         'start_date' => array(
             '#title'       => t('Year'),
-            '#description' => t('Date of publication'),
-            '#maxlength'   => 4,
+            '#description' => t('Date of publication in format YYYY or YYYY-MM (four-digit year with optional month).'),
+            '#maxlength'   => 7,
             '#required'    => true,
         ),
         'authors' => array(
@@ -50,28 +44,20 @@ function scholar_article_form(&$form_state, $record = null) // {{{
     return $form;
 } // }}}
 
-function _scholar_article_form_process_values(&$values) // {{{
+function _scholar_generics_article_form_process_values(&$values) // {{{
 {
-    // nic poza dopelnieniem wartosci start_date z roku do pelnego
-    // typu DATETIME i wykasowanie wartosci end_date
-    $start_date = trim($values['start_date']);
-
-    if (strlen($start_date)) {
-        $start_date = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
-    }
-
-    $values['start_date'] = $start_date;
-    $values['end_date']   = null;
+    // nie ma daty koncowej
+    $values['end_date'] = null;
 } // }}}
 
 /**
  * @return array
  */
-function _scholar_article_list_spec($row = null) // {{{
+function _scholar_generics_article_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('Year'),       'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('Date'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),    'field' => 'bib_authors'),
             array('data' => t('Title'),      'field' => 'title'),
             array('data' => t('Operations'), 'colspan' => '2'),
@@ -79,7 +65,7 @@ function _scholar_article_list_spec($row = null) // {{{
     }
 
     return array(
-        intval($row['start_date']),
+        substr($row['start_date'], 0, intval($row['start_date_len'])),
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
         l(t('edit'),  scholar_admin_path('article/edit/' . $row['id'])),

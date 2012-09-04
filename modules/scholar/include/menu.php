@@ -29,7 +29,7 @@ function scholar_admin_path($path = '') // {{{
  * @param string $table_name OPTIONAL   nazwa tabeli
  * @param string $subtype OPTIONAL      nazwa podtypu
  */
-function scholar_category_path($table_name = null, $subtype = null, $page = 'list') // {{{
+function scholar_category_subpath($table_name = null, $subtype = null, $page = 'list') // {{{
 {
     if (null !== $table_name) {
         $path = (null === $subtype ? $table_name : $subtype) . '/category/' . ltrim($page, '/');

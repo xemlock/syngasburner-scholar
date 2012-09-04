@@ -295,4 +295,21 @@ function scholar_format_date($date) // {{{
     return '';
 } // }}}
 
+/**
+ * @param string $title
+ *     Tytuł hiperłącza
+ * @param string $path
+ *     Ścieżka do strony
+ * @param ...
+ *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $path
+ */
+function scholar_oplink($title, $path) // {{{
+{
+    $args = array_slice(func_get_args(), 1);
+    $path = call_user_func_array('scholar_admin_path', $args);
+
+    return l($title, $path, array('query' => 'destination=' . $_GET['q']));
+} // }}}
+
+
 // vim: fdm=marker

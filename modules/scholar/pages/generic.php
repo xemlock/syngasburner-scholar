@@ -31,7 +31,7 @@ function scholar_generics_list($subtype) // {{{
 
     _scholar_generics_include($subtype);
 
-    $func = '_scholar_' . $subtype . '_list_spec';
+    $func = '_scholar_generics_' . $subtype . '_list_spec';
 
     if (!function_exists($func)) {
         drupal_set_message("Unable to retrieve list: Invalid subtype '$subtype'", 'error');
@@ -63,6 +63,8 @@ function scholar_generics_list($subtype) // {{{
 
     $last_category_name = '';
 
+    $q = array('query' => 'destination=' . $_GET['q']);
+
     while ($row = db_fetch_array($query)) {
         $category_name = trim($row['category_name']);
 
@@ -73,7 +75,7 @@ function scholar_generics_list($subtype) // {{{
             // tylko wtedy, kiedy nazwa kategorii jest niepusta, mamy pewnosc,
             // ze catgegory_id bedzie mialo poprawna wartosc
             $edit_link = ' <span class="region-link">'
-                . l(t('edit'), scholar_category_path('generics', $row['subtype'], 'edit/' . $row['category_id']))
+                . scholar_oplink(t('edit'), scholar_category_subpath('generics', $row['subtype'], 'edit/%d'), $row['category_id'])
                 . '</span>';
 
             $rows[] = array(
@@ -121,7 +123,7 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
 {
     _scholar_generics_include($subtype);
 
-    $func = 'scholar_' . $subtype . '_form';
+    $func = 'scholar_generics_' . $subtype . '_form';
 
     if ($func != __FUNCTION__ && function_exists($func)) {
         if (null === $id) {
@@ -157,7 +159,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
     // jezeli istnieje funkcja do zmodyfikowania danych formularza
     // przed zapisem, uruchom ja
     $subtype = $form['#subtype'];
-    $process = '_scholar_' . $subtype . '_form_process_values';
+    $process = '_scholar_generics_' . $subtype . '_form_process_values';
 
     $values = $form_state['values'];
 
@@ -246,9 +248,11 @@ function scholar_generics_delete_form(&$form_state, $subtype, $id) // {{{
         '#record' => $record,
     );
 
+    $cancel = isset($_GET['destination']) ? $_GET['destination'] : scholar_admin_path($subtype);
+
     $form = confirm_form($form,
         t('Are you sure you want to delete %title?', array('%title' => $record->title)),
-        scholar_admin_path($subtype),
+        $cancel,
         t('All related node and event records will be removed. This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -281,7 +285,7 @@ function scholar_generics_children_list($subtype, $id, $children_subtype) // {{{
 
     $children_subtype = preg_replace('/[^_a-z0-9]/i', '', $children_subtype);
 
-    $func = 'scholar_' . $subtype . '_children_' . $children_subtype . '_list';
+    $func = 'scholar_generics_' . $subtype . '_children_' . $children_subtype . '_list';
 
     if (function_exists($func)) {
         $conds  = array('id' => $id, 'subtype' => $subtype);

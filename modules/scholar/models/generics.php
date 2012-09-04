@@ -15,6 +15,10 @@
  */
 function scholar_load_generics_record(&$record) // {{{
 {
+    // przytnij daty poczatku i konca do zadanej liczby znakow
+    $record->start_date = substr($record->start_date, 0, $record->start_date_len);
+    $record->end_date = substr($record->end_date, 0, $record->end_date_len);
+
     $suppinfo = array();
 
     $query = db_query("SELECT * FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $record->id);
@@ -45,6 +49,27 @@ function scholar_presave_generics_record(&$generic) // {{{
             $generic->prev_parent_id   = $row['parent_id'];
             $generic->prev_category_id = $row['category_id'];
         }
+    }
+
+    // wyznacz liczbe znaczacych znakow w datach, dopelnij niepuste daty
+    // do pelnych wartosci typu DATETIME (YYYY-MM-DD HH:MM:SS),
+    // 1000-01-01 00:00:00 jest minimalna wartoscia dla tego typu
+    // w MySQL.
+    $dates = array(
+        'start_date' => $generic->start_date,
+        'end_date'   => $generic->end_date,
+    );
+
+    foreach ($dates as $key => $date) {
+        $date = substr(trim($date), 0, 19);
+        $len  = strlen($date);
+
+        if ($len) {
+            $date .= substr('1000-01-01 00:00:00', $len);
+        }
+
+        $generic->$key = $date;
+        $generic->{$key . '_len'} = $len;
     }
 } // }}}
 

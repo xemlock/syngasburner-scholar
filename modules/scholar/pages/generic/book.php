@@ -1,6 +1,6 @@
 <?php
 
-function scholar_book_form(&$form_state, $record = null) // {{{
+function scholar_generics_book_form(&$form_state, $record = null) // {{{
 {
     if ($record) {
         $record->start_date = strlen($record->start_date) 
@@ -60,7 +60,7 @@ function scholar_book_form(&$form_state, $record = null) // {{{
     return $form;
 } // }}}
 
-function _scholar_book_form_process_values(&$values) // {{{
+function _scholar_generics_book_form_process_values(&$values) // {{{
 {
     $start_date = trim($values['start_date']);
 
@@ -72,7 +72,7 @@ function _scholar_book_form_process_values(&$values) // {{{
     $values['end_date']   = null;
 } // }}}
 
-function _scholar_book_list_spec($row = null) // {{{
+function _scholar_generics_book_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(

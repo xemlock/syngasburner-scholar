@@ -61,8 +61,9 @@ function scholar_save_record($model, &$record) // {{{
         $success = scholar_db_write_record('scholar_' . $model, $record);
     }
 
-    // zapisz powiazane rekordy
+
     if ($success) {
+        // zapisz powiazane rekordy
         if (isset($record->authors) && is_array($record->authors)) {
             scholar_save_authors($record->id, $model, $record->authors);
         }
@@ -83,6 +84,7 @@ function scholar_save_record($model, &$record) // {{{
         }
 
         _scholar_invoke_record('postsave', $model, $record);
+
         scholar_invalidate_rendering();
     }
 

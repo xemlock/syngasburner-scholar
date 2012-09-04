@@ -1,12 +1,7 @@
 <?php
 
-function scholar_presentation_form(&$form_state, $record = null) // {{{
+function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
 {
-    if ($record) {
-        $record->start_date = substr($record->start_date, 0, 10);
-        $record->end_date   = substr($record->end_date, 0, 10);
-    }
-
     // prezentacje moga nalezec do konferencji
     $parents    = scholar_generic_parent_options('conference');
     $categories = scholar_category_options('generics', 'presentation');
@@ -50,7 +45,7 @@ function scholar_presentation_form(&$form_state, $record = null) // {{{
         ),
     ), $record);
 
-    $form['#validate'][] = 'scholar_presentation_form_validate';
+    $form['#validate'][] = 'scholar_generics_presentation_form_validate';
 
     $form['submit'] = array(
         '#type'  => 'submit',
@@ -64,7 +59,7 @@ function scholar_presentation_form(&$form_state, $record = null) // {{{
     return $form;
 } // }}}
 
-function scholar_presentation_form_validate($form, &$form_state) // {{{
+function scholar_generics_presentation_form_validate($form, &$form_state) // {{{
 {
     $values = $form_state['values'];
 
@@ -76,7 +71,7 @@ function scholar_presentation_form_validate($form, &$form_state) // {{{
     }
 } // }}}
 
-function _scholar_presentation_form_process_values(&$values) // {{{
+function _scholar_generics_presentation_form_process_values(&$values) // {{{
 {
     // jezeli pusty tytul, czyli obecnosc na konferencji bez wystapienia
     // publicznego, usun kategorie
@@ -90,7 +85,7 @@ function _scholar_presentation_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function _scholar_presentation_list_spec($row = null) // {{{
+function _scholar_generics_presentation_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(

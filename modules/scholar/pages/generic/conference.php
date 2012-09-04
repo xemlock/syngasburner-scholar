@@ -3,13 +3,8 @@
 /**
  * @param object &$record
  */
-function scholar_conference_form(&$form_state, $record = null) // {{{
+function scholar_generics_conference_form(&$form_state, $record = null) // {{{
 {
-    if ($record) {
-        $record->start_date = substr($record->start_date, 0, 10);
-        $record->end_date   = substr($record->end_date, 0, 10);
-    }
-
     $categories = scholar_category_options('generics', 'conference');
 
     $form = scholar_generic_form(array(
@@ -28,8 +23,7 @@ function scholar_conference_form(&$form_state, $record = null) // {{{
             '#field_suffix' => ' <label><input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.') . '</label>',
         ),
         'locality' => array(
-            '#required' => true,
-            '#description' => t('In case of virtual conferences enter "internet" (without quotes, case-insensitive) to ignore country.'),
+            '#description' => t('Name of city or village where this conference is held.'),
         ),
         'country',
         'suppinfo' => array(
@@ -75,13 +69,13 @@ function scholar_conference_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('presentation'),
+        '#value' => scholar_admin_path('conference'),
     );
 
     return $form;
 } // }}}
 
-function _scholar_conference_form_process_values(&$values) // {{{
+function _scholar_generics_conference_form_process_values(&$values) // {{{
 {
     // data poczatku i konca maja obcieta czesc zwiazana z czasem,
     // trzeba ja dodac aby byla poprawna wartoscia DATETIME
@@ -111,7 +105,7 @@ function _scholar_conference_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function _scholar_conference_list_spec($row = null) // {{{
+function _scholar_generics_conference_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -139,9 +133,9 @@ function _scholar_conference_list_spec($row = null) // {{{
  *
  * @param object $record
  */
-function scholar_conference_children_presentation_list($record) // {{{
+function scholar_generics_conference_children_presentation_list($record) // {{{
 {
-    return scholar_render_form('scholar_conference_children_presentation_form', $record);
+    return scholar_render_form('scholar_generics_conference_children_presentation_form', $record);
 } // }}}
 
 /**
@@ -151,7 +145,7 @@ function scholar_conference_children_presentation_list($record) // {{{
  * @param array &$form_state
  * @param object $conference
  */
-function scholar_conference_children_presentation_form(&$form_state, $conference) // {{{
+function scholar_generics_conference_children_presentation_form(&$form_state, $conference) // {{{
 {
     drupal_set_title(t('Conference presentations'));
 
@@ -286,7 +280,7 @@ function scholar_conference_children_presentation_form(&$form_state, $conference
     return $form;
 } // }}}
 
-function scholar_conference_children_presentation_form_submit($form, &$form_state) // {{{
+function scholar_generics_conference_children_presentation_form_submit($form, &$form_state) // {{{
 {
     if ($form['#record']) {
         $record = $form['#record'];

@@ -1,12 +1,7 @@
 <?php
 
-function scholar_training_form(&$form_state, $record = null) // {{{
+function scholar_generics_training_form(&$form_state, $record = null) // {{{
 {
-    if ($record) {
-        $record->start_date = substr($record->start_date, 0, 10);
-        $record->end_date   = substr($record->end_date, 0, 10);
-    }
-
     $form = scholar_generic_form(array(
         '#id' => 'scholar-training-form',
         'title' => array(
@@ -30,29 +25,19 @@ function scholar_training_form(&$form_state, $record = null) // {{{
         ),
     ), $record);
 
-    // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
-    drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
-
-    /*
-    $form['vtable']['presentations'] = array(
-        '#type' => 'scholar_element_vtable_row',
-        '#title' => t('Presentations'),
-        '#description' => t('Change the order of presentations'),
-    );*/
-
     $form['submit'] = array(
         '#type'     => 'submit',
         '#value'    => empty($record) ? t('Save') : t('Save changes'),
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('presentation'),
+        '#value' => scholar_admin_path('trainings/training'),
     );
 
     return $form;
 } // }}}
 
-function _scholar_training_list_spec($row = null) // {{{
+function _scholar_generics_training_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -65,8 +50,10 @@ function _scholar_training_list_spec($row = null) // {{{
     return array(
         substr($row['start_date'], 0, 10),
         check_plain($row['title']),
-        l(t('edit'),  scholar_admin_path('training/edit/%d', $row['id'])),
-        $row['child_count'] ? l(t('presentations (!count)', array('!count' => $row['child_count'])),  scholar_admin_path('training/children/%d/presentation', $row['id'])) : '',
-        l(t('delete'), scholar_admin_path('training/delete/%d', $row['id'])),
+        scholar_oplink(t('edit'), 'trainings/training/edit/%d', $row['id']),
+        $row['child_count']
+            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'trainings/training/children/%d/presentation', $row['id'])
+            : '',
+        scholar_oplink(t('delete'), 'trainings/training/delete/%d', $row['id']),
     );
 } // }}}
