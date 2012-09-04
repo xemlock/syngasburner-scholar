@@ -209,7 +209,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         );
 
         $element['#type'] = 'hidden';
-        
+
         $rows[] = array(
             'data' => array(
                 check_plain($row['bib_authors']),
@@ -263,7 +263,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
     );
     $form[] = array(
         '#type' => 'markup',
-        '#value' => 
+        '#value' =>
             '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>' .
             scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
     );

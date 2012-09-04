@@ -11,7 +11,7 @@ function scholar_page_list() // {{{
     // nie tworzy tabow. Menu dla stron zlozone jest z pojedynczego
     // elementu MENU_LOCAL_TASK, i rowniez nie ma zadnych tabow.
     // Dodajemy wiec, by strona wygladala podobnie do innych list.
-    scholar_add_tab(t('list'), scholar_admin_path('page'));
+    scholar_add_tab(t('list'), scholar_path('pages'));
 
     // poniewaz element menu odpowiadajacy tej stronie ma typ
     // MENU_LOCAL_TASK, jego bezposredni tytul nie jest brany pod uwage,
@@ -52,7 +52,7 @@ function scholar_page_list() // {{{
         $rows[] = array(
             t($row['title']),
             $published_html,
-            l(t('edit'), scholar_admin_path('page/edit/' . $row['id'])),
+            scholar_oplink(t('edit'), 'pages', 'edit/%d', $row['id']),
         );
     }
 
@@ -87,10 +87,10 @@ function scholar_page_list() // {{{
  */
 function scholar_page_form(&$form_state, $id) // {{{
 {
-    $page = scholar_load_record('pages', $id, scholar_admin_path('page'));
+    $page = scholar_load_record('pages', $id, scholar_path('pages'));
 
-    scholar_add_tab(t('list'), scholar_admin_path('page'));
-    scholar_add_tab(t('edit'), scholar_admin_path('page/edit/' . $page->id));
+    scholar_add_tab(t('list'), scholar_path('pages'));
+    scholar_add_tab(t('edit'), scholar_path('pages', 'edit/%d'. $page->id));
 
     // wczytaj tlumaczenie tytulu strony, bedzie on uzyty w komunikacie
     // o zaktualizowaniu rekordu.
@@ -111,7 +111,7 @@ function scholar_page_form(&$form_state, $id) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_admin_path('page'),
+        '#value' => scholar_path('pages'),
     );
 
     return $form;
@@ -149,7 +149,7 @@ function scholar_page_form_submit($form, &$form_state) // {{{
 
     if (scholar_save_record('pages', $record)) {
         drupal_set_message(t('%title updated successfully.', array('%title' => t($title))));
-        drupal_goto(scholar_admin_path('page'));
+        drupal_goto(scholar_path('pages'));
     }
 } // }}}
 

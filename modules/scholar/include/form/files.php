@@ -77,8 +77,8 @@ function theme_scholar_element_files($element) // {{{
 
     $settings = array(
         'prefix'        => $element['#name'],
-        'urlFileSelect' => url(scholar_admin_path('file/itempicker')),
-        'urlFileUpload' => url(scholar_admin_path('file/upload'), array('query' => 'dialog=1')),
+        'urlFileSelect' => url(scholar_path('files', 'itempicker')),
+        'urlFileUpload' => url(scholar_path('files', 'upload'), array('query' => 'dialog=1')),
     );
 
     $html = '<p class="help">Each file must be given label in at least one language.

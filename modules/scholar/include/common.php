@@ -298,15 +298,16 @@ function scholar_format_date($date) // {{{
 /**
  * @param string $title
  *     Tytuł hiperłącza
- * @param string $path
- *     Ścieżka do strony
+ * @param string $path_name
+ *     Nazwa ścieżki w menu
+ * @param string $subpath
  * @param ...
- *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $path
+ *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $subpath
  */
-function scholar_oplink($title, $path) // {{{
+function scholar_oplink($title, $path_name, $subpath) // {{{
 {
     $args = array_slice(func_get_args(), 1);
-    $path = call_user_func_array('scholar_admin_path', $args);
+    $path = call_user_func_array('scholar_path', $args);
 
     return l($title, $path, array('query' => 'destination=' . $_GET['q']));
 } // }}}

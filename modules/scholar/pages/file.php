@@ -30,8 +30,8 @@ function scholar_file_list() // {{{
         $rows[] = array(
             check_plain($row['filename']),
             format_size($row['size']),
-            l(t('edit'), scholar_admin_path('file/edit/' . $row['id'])),
-            l(t('delete'), scholar_admin_path('file/delete/' . $row['id'])),
+            scholar_oplink(t('edit'), 'file', 'edit/%d', $row['id']),
+            scholar_oplink(t('delete'), 'file', 'delete/%d', $row['id']),
         );
     }
 
@@ -141,12 +141,12 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
         }
         
         drupal_set_message(t('File uploaded successfully'));
-        drupal_goto(scholar_admin_path('file'));
+        drupal_goto(scholar_path('files'));
     }
 
     // poniewaz w tym miejscu nastapi przeladowanie strony, aby przekazac
     // dalej flage 'dialog' musimy zrobic reczne przeladowanie strony
-    drupal_goto(scholar_admin_path('file/upload'), $dialog ? 'dialog=1' : null, $fragment);
+    drupal_goto(scholar_path('files', 'upload'), $dialog ? 'dialog=1' : '', $fragment);
 } // }}}
 
 /**
@@ -158,7 +158,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
  */
 function scholar_file_edit_form(&$form_state, $file_id) // {{{
 {
-    $file = scholar_fetch_file($file_id, scholar_admin_path('file'));
+    $file = scholar_fetch_file($file_id, scholar_path('files'));
 
     // Zakladamy, ze w file->filename jest nazwa pliku w czystym ASCII,
     // stad uzycie standardowych funkcji do operowania na stringach.
@@ -242,9 +242,9 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
     }
 
     // dodaj taby (dziala jezeli dostepny jest modul tabs)
-    scholar_add_tab(t('list'), scholar_admin_path('file'));
-    scholar_add_tab(t('edit'), scholar_admin_path('file/edit/' . $file->id));
-    scholar_add_tab(t('delete'), scholar_admin_path('file/delete/' . $file->id));
+    scholar_add_tab(t('list'), scholar_path('files'));
+    scholar_add_tab(t('edit'), scholar_path('files', 'edit/%d', $file->id));
+    scholar_add_tab(t('delete'), scholar_path('files', 'delete/%d', $file->id));
 
     return $form;
 } // }}}
@@ -269,7 +269,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
 
         if (scholar_rename_file($file, $dst, $error)) {
             drupal_set_message(t('File %from renamed successfully to %to', array('%from' => $src, '%to' => $file->filename)));
-            return drupal_goto(scholar_admin_path('file/edit/' . $file->id));
+            return drupal_goto(scholar_path('files', 'edit/%d', $file->id));
         }
 
         form_set_error('', $error);
@@ -288,13 +288,13 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
  */
 function scholar_file_delete_form(&$form_state, $file_id) // {{{
 {
-    $file = scholar_fetch_file($file_id, scholar_admin_path('file'));
+    $file = scholar_fetch_file($file_id, scholar_path('files'));
     $refcount = scholar_file_refcount($file->id);
 
     $form = array('#file' => $file);
     $form = confirm_form($form,
         t('Are you sure you want to delete file %filename?', array('%filename' => $file->filename)),
-        scholar_admin_path('file'),
+        scholar_path('files'),
         format_plural($refcount,
             'There is one page referencing this file. This action cannot be undone.',
             'There are %refcount pages referencing this file. This action cannot be undone.',
@@ -320,7 +320,7 @@ function scholar_file_delete_form_submit($form, &$form_state) // {{{
         drupal_set_message(t('File deleted successfully (%filename)', array('%filename' => $file->filename)));
     }
 
-    drupal_goto(scholar_admin_path('file'));
+    drupal_goto(scholar_path('files'));
 } // }}}
 
 // vim: fdm=marker

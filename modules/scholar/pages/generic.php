@@ -8,7 +8,7 @@
  */
 function _scholar_generics_include($subtype) // {{{
 {
-    $file = dirname(__FILE__) . '/generic/' 
+    $file = dirname(__FILE__) . '/generic/'
           . preg_replace('/[^._0-9a-z]/i', '', $subtype) . '.php';
     if (is_file($file)) {
         require_once $file;

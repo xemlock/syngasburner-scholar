@@ -198,7 +198,7 @@ function form_type_scholar_element_events_validate($element, &$form_state) // {{
             // istnieje pole przechowujace date. Komunikat o niepoprawnej dacie
             // poczatku pokaz tylko raz.
             if ($has_start_date && 0 == strlen($event['start_date'])) {
-                $invalid_start_date = true;    
+                $invalid_start_date = true;
             }
 
             // TODO walidacja poprawnosci daty

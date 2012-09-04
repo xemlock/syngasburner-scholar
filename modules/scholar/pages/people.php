@@ -2,7 +2,7 @@
 
 function scholar_people_form(&$form_state, $id = null) // {{{
 {
-    $record = $id ? scholar_load_record('people', $id, scholar_admin_path('people')) : null;
+    $record = $id ? scholar_load_record('people', $id, scholar_path('people')) : null;
 
     $form = scholar_generic_form(array(
         'first_name' => array(
@@ -24,7 +24,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
     );
     $form['cancel'] = array(
         '#type'     => 'scholar_element_cancel',
-        '#value'    => scholar_admin_path('people'),
+        '#value'    => scholar_path('people'),
     );
 
     return $form;
@@ -63,7 +63,7 @@ function scholar_people_form_submit($form, &$form_state) // {{{
         );
     }
 
-    drupal_goto('admin/scholar/people');
+    drupal_goto(scholar_path('people'));
 } // }}}
 
 function scholar_people_form_validate($form, &$form_state) // {{{
@@ -73,7 +73,7 @@ function scholar_people_form_validate($form, &$form_state) // {{{
 
 function scholar_people_delete_form(&$form_state, $id) // {{{
 {
-    $record = scholar_load_record('people', $id, scholar_admin_path('people'));
+    $record = scholar_load_record('people', $id, scholar_path('people'));
 
     $form = array('#record' => $record);
     $form = confirm_form($form,
@@ -83,7 +83,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
                 '%last_name'  => $record->last_name,
             )
         ),
-        scholar_admin_path('people'),
+        scholar_path('people'),
         t('This action cannot be undone.'),
         t('Delete'),
         t('Cancel')
@@ -101,7 +101,7 @@ function scholar_people_delete_form_submit($form, &$form_state) // {{{
         drupal_set_message(t('%name deleted successfully.', array('%name' => $name)));
     }
 
-    drupal_goto('admin/scholar/people');
+    drupal_goto(scholar_path('people'));
 } // }}}
 
 /**
@@ -124,8 +124,8 @@ function scholar_people_list() // {{{
         $rows[] = array(
             check_plain($row['last_name']),
             check_plain($row['first_name']),
-            l(t('edit'),   "admin/scholar/people/edit/{$row['id']}"), 
-            l(t('delete'), "admin/scholar/people/delete/{$row['id']}"),
+            scholar_oplink(t('edit'), 'people', 'edit/%d', $row['id']), 
+            scholar_oplink(t('delete'), 'people', 'delete/%d', $row['id']), 
         );
     }
 
