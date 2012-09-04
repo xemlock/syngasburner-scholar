@@ -239,7 +239,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
         }
 
         // tu zadziala destination
-        drupal_goto(scholar_list_path("generics.$subtype"));
+        drupal_goto(scholar_path("generics.$subtype"));
     }
 } // }}}
 

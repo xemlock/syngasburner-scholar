@@ -57,3 +57,4 @@ function _scholar_generics_training_list_spec($row = null) // {{{
         scholar_oplink(t('delete'), 'generics.training', 'delete/%d', $row['id']),
     );
 } // }}}
+

@@ -69,7 +69,7 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_list_path('generics.conference'),
+        '#value' => scholar_path('generics.conference'),
     );
 
     return $form;
@@ -77,18 +77,10 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
 
 function _scholar_generics_conference_form_process_values(&$values) // {{{
 {
-    // data poczatku i konca maja obcieta czesc zwiazana z czasem,
-    // trzeba ja dodac aby byla poprawna wartoscia DATETIME
-    $values['start_date'] .= ' 00:00:00';
-
     // jezeli zaznaczono, ze konferencja ma nieokreslona date zakonczenia
     // (podano wartosc ujemna), ustaw jej date konca na NULL
     if ($values['end_date'] < 0) {
         $values['end_date'] = null;
-    }
-
-    if (strlen($values['end_date'])) {
-        $values['end_date'] .= ' 00:00:00';
     }
 
     // dodaj czas do eventow
@@ -275,7 +267,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
     );
 
     $query = 'destination=' . scholar_path('generics.conference', 'children/%d/presentation', $conference->id)
-           . '&conference=' . $conference->id;
+           . '&parent_id=' . $conference->id;
     scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
     scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $conference->id));
     scholar_add_tab(t('List'), scholar_path('generics.conference'));

@@ -58,6 +58,12 @@ function scholar_save_record($model, &$record) // {{{
     if ($record->id) {
         $success = scholar_db_write_record('scholar_' . $model, $record, 'id');
     } else {
+        // dodaj identyfikator biezacego uzytkownika i aktualna date
+        global $user;
+
+        $record->user_id = $user->uid;
+        $record->create_time = date('Y-m-d H:i:s');
+
         $success = scholar_db_write_record('scholar_' . $model, $record);
     }
 

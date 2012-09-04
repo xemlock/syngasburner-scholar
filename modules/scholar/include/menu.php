@@ -67,23 +67,29 @@ function _scholar_menu() // {{{
         'file'              => 'pages/people.php',
     );
 
-    $items += _scholar_generic_menu($root . '/conference',
+    $items[$root . '/conferences'] = array(
+        'title'             => t('Conferences'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_goto',
+        'page arguments'    => array($root . '/conferences/conference'),
+    );
+    $items += _scholar_generic_menu($root . '/conferences/conference',
         'conference', 
         t('Conferences'), 
         array('edit' => t('Edit conference'))
     );
-
-    $items += _scholar_category_menu($root . '/conference', 'generics', 'conference', array(
+    $items[$root . '/conferences/conference']['weight'] = -10;
+    $items += _scholar_category_menu($root . '/conferences/conference', 'generics', 'conference', array(
         'edit'   => t('Edit conference category'),
         'delete' => t('Delete conference category'),
     ));
 
-    $items += _scholar_generic_menu($root . '/presentation',
+    $items += _scholar_generic_menu($root . '/conferences/presentation',
         'presentation',
         t('Presentations'), 
         array('edit' => t('Edit presentation'))
     );
-    $items += _scholar_category_menu($root . '/presentation', 'generics', 'presentation', array(
+    $items += _scholar_category_menu($root . '/conferences/presentation', 'generics', 'presentation', array(
         'edit'   => t('Edit presentation category'),
         'delete' => t('Delete presentation category'),
     ));
@@ -122,11 +128,16 @@ function _scholar_menu() // {{{
         t('Trainings'),
         array('edit' => t('Edit training'))
     );
+    $items[$root . '/trainings/training']['weight'] = -10;
     $items += _scholar_generic_menu($root . '/trainings/class',
         'class',
         t('Classes'),
         array('edit' => t('Edit class'))
     );
+    $items += _scholar_category_menu($root . '/trainings/class', 'generics', 'class', array(
+        'edit'   => t('Edit class category'),
+        'delete' => t('Delete class category'),
+    ));
 
     $items[$root . '/file'] = array(
         'title'             => t('Files'),

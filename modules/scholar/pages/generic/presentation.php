@@ -25,7 +25,7 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
             '#description' => t('A conference during which this presentation was given.'),
             // jezeli w adresie strony podano identyfikator konferencji
             // ustaw ja jako domyslna wartosc pola
-            '#default_value' => isset($_GET['conference']) ? intval($_GET['conference']) : null,
+            '#default_value' => isset($_GET['parent_id']) ? intval($_GET['parent_id']) : null,
         ),
         'category_id' => empty($categories) ? false : array(
             '#options'     => $categories,
@@ -51,7 +51,7 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
     );
     $form['cancel'] = array(
         '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_list_path('generics.presentation'),
+        '#value' => scholar_path('generics.presentation'),
     );
 
     return $form;

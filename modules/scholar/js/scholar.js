@@ -1193,7 +1193,7 @@ var Scholar = {
             for (var i = 0, n = buttons.length; i < n; ++i) {
                 var options = buttons[i];
 
-                $('<button/>')
+                $('<button type="button"/>')
                     .html(options.label)
                     .click(options.click)
                     .appendTo(container);

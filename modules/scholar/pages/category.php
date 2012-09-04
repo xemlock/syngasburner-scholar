@@ -118,7 +118,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     );
     $form['cancel'] = array(
         '#type' => 'scholar_element_cancel',
-        '#value' => scholar_path("categories.{$table_name}.{$subtype}"),
+        '#value' => scholar_path("categories.{$table_name}.{$subtype}", 'list'),
     );
 
     return $form;
@@ -160,7 +160,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
             ? t('Category %title added successfully.', array('%title' => $title))
             : t('Category %title updated successfully.', array('%title' => $title))
         );
-        drupal_goto(scholar_path("categories.{$record->table_name}.{$record->subtype}"));
+        drupal_goto(scholar_path("categories.{$record->table_name}.{$record->subtype}", 'list'));
     }
 } // }}}
 

@@ -130,6 +130,14 @@ function scholar_schema() // {{{
                 // REFERENCES image (id)
                 'type'      => 'int',
             ),
+            'user_id' => array(
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'create_time' => array(
+                'type'      => 'datetime',
+                'not null'  => true,
+            ),
         ),
         'primary key'  => array('id'),
         'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
@@ -142,6 +150,14 @@ function scholar_schema() // {{{
             'table_name' => _scholar_schema_type('table_name'),
             'subtype'    => _scholar_schema_type('subtype'),
             'refcount'   => _scholar_schema_type('counter'), // liczba rekordow powiązanych z tą kategorią
+            'user_id' => array(
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'create_time' => array(
+                'type'      => 'datetime',
+                'not null'  => true,
+            ),
         ),
         'primary key'  => array('id'),
     ); // }}}
@@ -227,6 +243,14 @@ function scholar_schema() // {{{
                 'unsigned'    => true,
             ),
             'weight' => _scholar_schema_type('weight'),
+            'user_id' => array(
+                'type'      => 'int',
+                'not null'  => true,
+            ),
+            'create_time' => array(
+                'type'      => 'datetime',
+                'not null'  => true,
+            ),
         ),
         'primary key' => array('id'),
         'indexes' => array(
@@ -314,11 +338,10 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'user_id' => array(
-                'descriptions' => 'Id uzytkownika, ktory wgral plik',
                 'type'      => 'int',
                 'not null'  => true,
             ),
-            'upload_time' => array(
+            'create_time' => array(
                 'type'      => 'datetime',
                 'not null'  => true,
             ),
