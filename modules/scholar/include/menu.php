@@ -440,8 +440,8 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         // brak tytulu, funkcja odpowiedzialna za generowanie strony musi sama
         // go ustawic
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_generics_children_list',
-        'page arguments'    => array($subtype),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_generics_children_form', $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
     );

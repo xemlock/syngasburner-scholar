@@ -283,22 +283,40 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
  * @param int $id
  * @param string $children_subtype
  */
-function scholar_generics_children_list($subtype, $id, $children_subtype) // {{{
+function scholar_generics_children_form(&$form_state, $subtype, $id, $children_subtype) // {{{
 {
     _scholar_generics_include($subtype);
+    _scholar_generics_include($children_subtype);
 
-    $children_subtype = preg_replace('/[^_a-z0-9]/i', '', $children_subtype);
+    $conds  = array('id' => $id, 'subtype' => $subtype);
+    $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
 
-    $func = 'scholar_generics_' . $subtype . '_children_' . $children_subtype . '_list';
+    $func = 'scholar_generics_' . $subtype . '_children_' . $children_subtype . '_form';
 
     if (function_exists($func)) {
-        $conds  = array('id' => $id, 'subtype' => $subtype);
-        $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
-        return $func($record);
+        return $func($form_state, $record);
+    } else {
+        
+
     }
 
     drupal_set_message("Unable to retrieve children list: Invalid parent-children subtype specification: '$subtype' and '$children_subtype'", 'error');
     return '';
 } // }}}
+
+function scholar_generics_children_form_submit($form, &$form_state)
+{
+    if ($form['#record']) {
+        $record = $form['#record'];
+        $values = $form_state['values'];
+
+        if (scholar_generic_update_children_weights($record->id, (array) $values['weight'])) {
+            drupal_set_message(t('Children order updated successfully.'));
+        }
+
+        drupal_goto(scholar_path("generics.{$record->subtype}"));
+    }
+}
+
 
 // vim: fdm=marker

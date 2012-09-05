@@ -13,19 +13,22 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
             '#title' => t('Conference name'),
             '#required' => true
         ),
-        'start_date' => array(
+        'start_date',/* => array(
             '#required' => true,
-        ),
-        // w przeciwienstwie do modulu events, date konca trzeba podac zawsze,
+        ),*/
+        // FIXME NIE NIE NIEw przeciwienstwie do modulu events, date konca trzeba podac zawsze,
         // albo jawnie okreslic, ze wydarzenie nie ma sprecyzowanego konca
-        'end_date' => array(
+        'end_date', /* => array(
             '#required' => true,
             '#field_suffix' => ' <label><input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.') . '</label>',
-        ),
+        ), */
         'locality' => array(
             '#description' => t('Name of city or village where this conference is held.'),
         ),
-        'country',
+        'country' => array(
+            // zezwol na pusta nazwe kraju
+            '#options' => array_merge(array('0' => ''), scholar_countries()),
+        ),
         'suppinfo' => array(
             '#description' => t('Additional details about this conference.'),
         ),
@@ -83,6 +86,10 @@ function _scholar_generics_conference_form_process_values(&$values) // {{{
         $values['end_date'] = null;
     }
 
+    if ($values['country'] == '0') {
+        $values['country'] = 
+    }
+
     // dodaj czas do eventow
     foreach ($values['events'] as $language => &$event) {
         $title = trim($event['title']);
@@ -110,26 +117,14 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
     }
 
     return array(
-        substr($row['start_date'], 0, 10),
+        substr($row['start_date'], 0, (int) $row['start_date_len']), // TODO scholar_format_date
         check_plain($row['title']),
         check_plain($row['country_name']),
         $row['list'] ? t('Yes') : t('No'),
         scholar_oplink(t('edit'), 'generics.conference', 'edit/%d', $row['id']),
-        $row['child_count']
-            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'generics.conference', 'children/%d/presentation', $row['id']) 
-            : '',
+        scholar_oplink($row['child_count'] ? t('presentations (!count)', array('!count' => $row['child_count'])) : t('presentations'), 'generics.conference', 'children/%d/presentation', $row['id']),
         scholar_oplink(t('delete'), 'generics.conference', 'delete/%d', $row['id']),
     );
-} // }}}
-
-/**
- * Wywołuje formularz {@see scholar_conference_children_presentation_form}.
- *
- * @param object $record
- */
-function scholar_generics_conference_children_presentation_list($record) // {{{
-{
-    return scholar_render_form('scholar_generics_conference_children_presentation_form', $record);
 } // }}}
 
 /**
@@ -275,18 +270,5 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
     return $form;
 } // }}}
 
-function scholar_generics_conference_children_presentation_form_submit($form, &$form_state) // {{{
-{
-    if ($form['#record']) {
-        $record = $form['#record'];
-        $values = $form_state['values'];
-
-        if (scholar_generic_update_children_weights($record->id, (array) $values['weight'])) {
-            drupal_set_message(t('Presentation order updated successfully.'));
-        }
-
-        drupal_goto(scholar_path('generics.conference'));
-    }
-} // }}}
 
 

@@ -10,7 +10,7 @@
  *     pustym stringiem.
  * @return string
  */
-function scholar_theme_dl($data, $attributes = array())
+function scholar_theme_dl($data, $attributes = array()) // {{{
 {
     scholar_add_css();
 
@@ -34,9 +34,9 @@ function scholar_theme_dl($data, $attributes = array())
     $output .= '</dl>';
 
     return $output;
-}
+} // }}}
 
-function scholar_theme_table($header, $rows, $attributes = array(), $caption = null)
+function scholar_theme_table($header, $rows, $attributes = array(), $caption = null) // {{{
 {
     scholar_add_css();
 
@@ -47,6 +47,33 @@ function scholar_theme_table($header, $rows, $attributes = array(), $caption = n
     }
 
     return theme_table($header, $rows, $attributes, $caption);
-}
+} // }}}
+
+/**
+ * Generuje kod HTML elementu, ale tylko tego elementu bez zadnych
+ * wrapperow.
+ */
+function scholar_theme_select($element) // {{{
+{
+    $multiple = isset($element['#multiple']) && $element['#multiple'];
+
+    _form_set_class($element, array('form-select'));
+
+    $attrs = isset($element['#attributes']) ? (array) $element['#attributes'] : array();
+    $attrs['id']   = $element['#id'];
+    $attrs['name'] = $element['#name'] . ($multiple ? '[]' : '');
+
+    if ($multiple) {
+        $attrs['multiple'] = 'multiple';
+    }
+
+    $size = isset($element['#size']) ? max(0, $element['#size']) : 0;
+    if ($size) {
+        $attrs['size'] = $size;
+    }
+
+    return '<select' . drupal_attributes($attrs) . '>' . form_select_options($element) . '</select>';
+} // }}}
+
 
 // vim: fdm=marker

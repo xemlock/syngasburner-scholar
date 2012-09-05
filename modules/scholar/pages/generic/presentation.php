@@ -13,7 +13,9 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
         'title' => empty($parents) ? array('#required' => true) : array(
             '#description' => t('Leave empty to mark conference attendance if no public presentation was given. In this case, a conference must be chosen.'),
         ),
-        'start_date',
+        'start_date' => array(
+            '#title'       => t('Date'),
+        ),
         'authors' => array(
             '#title'       => t('Authors'),
             '#required'    => true,

@@ -9,22 +9,25 @@ function scholar_generics_class_form(&$form_state, $record = null)
         'title' => empty($parents) ? array('#required' => true) : array(
             '#required' => true,
         ),
+        array('#type' => 'markup', '#value' => '<table><tr><td valign="top">'),
         'start_date' => array(
             '#maxlength' => 16,
             '#description' => t('Date format: YYYY-MM-DD'),
         ),
-        'hours' => array(
+        array('#type' => 'markup', '#value' => '</td><td width="100%" valign="top">'),
+        'start_time' => array(
             '#title' => t('Hours'),
             '#type' => 'scholar_element_timespan',
-            '#description' => t('Time format: HH:MM'),
         ),
+        array('#type' => 'markup', '#value' => '</td></tr></table>'),
         'authors' => array(
             '#title'       => t('Lecturers'),
         ),
-        'parent_id' => empty($parents) ? false : array(
+        'parent_id' => array(
             '#title'       => t('Training'),
             '#options'     => $parents,
             '#description' => t('A training during which this class is carried out.'),
+            '#required'    => true,
             // jezeli w adresie strony podano identyfikator rodzica
             // ustaw ja jako domyslna wartosc pola
             '#default_value' => isset($_GET['parent_id']) ? intval($_GET['parent_id']) : null,

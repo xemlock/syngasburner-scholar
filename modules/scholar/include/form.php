@@ -83,6 +83,12 @@ function scholar_elements() // {{{
         '#input'            => true,
     );
 
+    $elements['scholar_element_time'] = array(
+        '#input'            => true,
+        '#process'          => array('form_type_scholar_element_time_process'),
+        '#element_validate' => array('form_type_scholar_element_time_validate'),
+    );
+
     $elements['scholar_element_timespan'] = array(
         '#input'            => true,
         '#process'          => array('form_type_scholar_element_timespan_process'),
@@ -131,6 +137,7 @@ function scholar_elements_theme() // {{{
     $theme['scholar_element_files']        = $theme_arguments;
     $theme['scholar_element_langtext']     = $theme_arguments;
     $theme['scholar_element_people']       = $theme_arguments;
+    $theme['scholar_element_time']         = $theme_arguments;
     $theme['scholar_element_timespan']     = $theme_arguments;
     $theme['scholar_element_vtable']       = $theme_arguments;
     $theme['scholar_element_vtable_row']   = $theme_arguments;

@@ -41,19 +41,19 @@ function _scholar_generics_training_list_spec($row = null) // {{{
 {
     if (null === $row) {
         return array(
-            array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
-            array('data' => t('Title'),    'field' => 'title'),
+            array('data' => t('Start date'), 'field' => 'start_date', 'sort' => 'desc'),
+            array('data' => t('End date'),   'field' => 'end_date'),
+            array('data' => t('Title'),      'field' => 'title'),
             array('data' => t('Operations'), 'colspan' => '3'),
         );
     }
 
     return array(
-        substr($row['start_date'], 0, 10),
+        substr($row['start_date'], 0, (int) $row['start_date_len']),
+        substr($row['end_date'], 0, (int) $row['end_date_len']),
         check_plain($row['title']),
         scholar_oplink(t('edit'), 'generics.training', 'edit/%d', $row['id']),
-        $row['child_count']
-            ? scholar_oplink(t('presentations (!count)', array('!count' => $row['child_count'])), 'generics.training', 'children/%d/presentation', $row['id'])
-            : '',
+        scholar_oplink($row['child_count'] ? t('classes (!count)', array('!count' => $row['child_count'])) : t('classes'), 'generics.training', 'children/%d/class', $row['id']),
         scholar_oplink(t('delete'), 'generics.training', 'delete/%d', $row['id']),
     );
 } // }}}
