@@ -100,7 +100,7 @@ function form_type_scholar_element_timespan_process($element) // {{{
     $element['date']  = array(
         '#type'      => 'textfield',
         '#maxlength' => 10,
-        '#size'      => 24,
+        '#size'      => 16,
         '#attributes' => array('class' => 'form-date'),
     );
 
@@ -120,7 +120,7 @@ function form_type_scholar_element_timespan_process($element) // {{{
     return $element;
 } // }}}
 
-function form_type_scholar_element_timespan_value($element, $post = false)
+function form_type_scholar_element_timespan_value($element, $post = false) // {{{
 {
     if (false === $post) {
         $post = isset($element['#default_value'])
@@ -150,7 +150,7 @@ function form_type_scholar_element_timespan_value($element, $post = false)
         'start_time' => $start ? $start['time'] : '',
         'end_time'   => $end ? $end['time'] : '',
     );
-}
+} // }}}
 
 function form_type_scholar_element_timespan_validate($element, &$form_state) // {{{
 {

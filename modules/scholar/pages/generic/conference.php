@@ -75,8 +75,21 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
         '#value' => scholar_path('generics.conference'),
     );
 
+    _scholar_generics_conference_tabs($record);
+
     return $form;
 } // }}}
+
+function _scholar_generics_conference_tabs($record)
+{
+    if ($record) {
+        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $conference->id;
+        scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $record->id), $query);
+        scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
+        scholar_add_tab(t('Presentations'), scholar_path('generics.conference', 'children/%d/presentation', $record->id));
+        scholar_add_tab(t('List'), scholar_path('generics.conference'));
+    }
+}
 
 function _scholar_generics_conference_form_process_values(&$values) // {{{
 {
@@ -229,24 +242,23 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         '#collapsed' => true,
     );
 
-    $location = trim($conference->locality);
-    if (strcasecmp($location, 'internet')) {
-        $country = scholar_countries($conference->country);
-        if ($country) {
-            $location .= ' (' . $country . ')';
-        }
-        $location = check_plain($location);
-    } else {
-        $location = '<em>internet</em>';
+    $location = array();
+
+    if ($locality = $conference->locality) {
+        $location[] = t($locality);
+    }
+
+    if ($country = scholar_countries($conference->country)) {
+        $location[] = $country;
     }
 
     $form['properties'][] = array(
         '#type' => 'markup',
         '#value' => scholar_theme_dl(array(
             t('Title'),      check_plain($conference->title),
-            t('Start date'), scholar_format_date($conference->start_date),
+            t('Start date'), $conference->start_date ? scholar_format_date($conference->start_date) : ('<em>' . t('Not specified') . '</em>'),
             t('End date'),   $conference->end_date ? scholar_format_date($conference->end_date) : ('<em>' . t('Not specified') . '</em>'),
-            t('Location'),   $location,
+            t('Location'),   $location ? check_plain(implode(', ', $location)) : ('<em>' . t('Not specified') . '</em>'),
         )),
     );
     $form[] = array(
@@ -261,11 +273,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         '#value' => t('Save changes'),
     );
 
-    $query = 'destination=' . scholar_path('generics.conference', 'children/%d/presentation', $conference->id)
-           . '&parent_id=' . $conference->id;
-    scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
-    scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $conference->id));
-    scholar_add_tab(t('List'), scholar_path('generics.conference'));
+    _scholar_generics_conference_tabs($conference);
 
     return $form;
 } // }}}

@@ -98,8 +98,10 @@ function scholar_render_people_node($view, $id, $node) // {{{
     // ta osoba (takze te z pustymi tytulami)
     $query = db_query("
         SELECT g.id, g.title, i.suppinfo, g.url, g.parent_id,
-               g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
+               g2.title AS parent_title,
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.start_date END AS parent_start_date,
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.end_date END AS parent_end_date,
+               i2.suppinfo AS parent_suppinfo,
                g2.url AS parent_url, g2.country AS parent_country,
                g2.locality AS parent_locality, c.name AS category_name
         FROM {scholar_authors} a
@@ -319,10 +321,15 @@ function scholar_render_pages_conferences_node($view, $node) // {{{
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
     // country name, locality , kategoria. Wystepienia w obrebie
     // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
+    // Jezeli konferencja ma pusta date poczatku, uzyj daty prezentacji jako
+    // poczatku i konca konferencji --> przydatne gdy mamy konferencje dlugoterminowe
+    // (np. seminaria)
     $query = db_query("
         SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
-               g2.title AS parent_title, g2.start_date AS parent_start_date,
-               g2.end_date AS parent_end_date, i2.suppinfo AS parent_suppinfo,
+               g2.title AS parent_title, 
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.start_date END AS parent_start_date,
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.end_date END AS parent_end_date,
+               i2.suppinfo AS parent_suppinfo,
                g2.url AS parent_url, g2.country AS parent_country,
                g2.locality AS parent_locality, c.name AS category_name
         FROM {scholar_generics} g
