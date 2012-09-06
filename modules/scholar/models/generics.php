@@ -56,16 +56,31 @@ function scholar_presave_generics_record(&$generic) // {{{
     // 1000-01-01 00:00:00 jest minimalna wartoscia dla tego typu
     // w MySQL.
     $dates = array(
-        'start_date' => $generic->start_date,
-        'end_date'   => $generic->end_date,
+        'start_date' => trim($generic->start_date),
+        'end_date'   => trim($generic->end_date),
     );
 
     foreach ($dates as $key => $date) {
-        $date = substr(trim($date), 0, 19);
-        $len  = strlen($date);
+        $parts = preg_split('/\s+/', $date);
 
-        if ($len) {
+        $d = scholar_parse_date($parts[0]);
+        $t = '';
+
+        if (count($parts) > 1) {
+            // jest czas
+            $t = scholar_parse_time($parts[1]);
+        }
+
+        if ($d) {
+            $date = $d['iso'];
+            if ($t) {
+                $date .= ' ' . $t['iso'];
+            }
+            $len  = strlen($date);
             $date .= substr('1000-01-01 00:00:00', $len);
+        } else {
+            $date = null;
+            $len  = 0;
         }
 
         $generic->$key = $date;

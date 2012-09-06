@@ -9,11 +9,16 @@ function scholar_generics_class_form(&$form_state, $record = null)
         'title' => empty($parents) ? array('#required' => true) : array(
             '#required' => true,
         ),
-        'start_time' => array(
+        'time' => array(
             '#title' => t('Date and time'),
             '#type' => 'scholar_element_timespan',
             '#description' => 'Date format: YYYY-MM-DD.',
             '#minhour' => 6, // wczesniej niz o 6. raczej nie ma zajec
+            '#default_value' => empty($record) ? null : array(
+                'date'  => substr($record->start_date, 0, 10),
+                'start' => substr($record->start_date, 11, 5),
+                'end'   => substr($record->end_date, 11, 5),
+            ),
         ),
         'authors' => array(
             '#title'       => t('Speakers / lecturers'),
@@ -53,6 +58,12 @@ function scholar_generics_class_form(&$form_state, $record = null)
 
     return $form;
 }
+
+function _scholar_generics_class_form_process_values(&$values) // {{{
+{
+    $values['start_date'] = $values['time']['date'] . ' ' . $values['time']['start_time'];
+    $values['end_date']   = $values['time']['date'] . ' ' . $values['time']['end_time'];
+} // }}}
 
 function _scholar_generics_class_list_spec($row = null) // {{{
 {

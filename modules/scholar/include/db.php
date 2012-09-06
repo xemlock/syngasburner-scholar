@@ -374,7 +374,7 @@ function scholar_db_write_record($table, &$record, $update = array()) // {{{
             }
 
             $sql = 'UPDATE {' . $table . '} SET ' . implode(', ', $assigns) . ' WHERE ' . scholar_db_where($where);
-
+p($sql);
             if (db_query($sql)) {
                 $success = true;
             }

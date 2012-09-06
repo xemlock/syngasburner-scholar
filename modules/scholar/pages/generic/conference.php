@@ -80,7 +80,7 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     return $form;
 } // }}}
 
-function _scholar_generics_conference_tabs($record)
+function _scholar_generics_conference_tabs($record) // {{{
 {
     if ($record) {
         $query = 'destination=' . $_GET['q'] . '&parent_id=' . $conference->id;
@@ -89,7 +89,7 @@ function _scholar_generics_conference_tabs($record)
         scholar_add_tab(t('Presentations'), scholar_path('generics.conference', 'children/%d/presentation', $record->id));
         scholar_add_tab(t('List'), scholar_path('generics.conference'));
     }
-}
+} // }}}
 
 function _scholar_generics_conference_form_process_values(&$values) // {{{
 {
@@ -144,7 +144,6 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
  * Strona z listą wszystkich prezentacji podpiętych do danej
  * konferencji. Daje możliwość sortowania prezentacji.
  *
- * @param array &$form_state
  * @param object $conference
  */
 function scholar_generics_conference_children_presentation_form(&$form_state, $conference) // {{{
@@ -181,7 +180,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
             $rows[] = array(
                 'data' => array(
                     array(
-                        'data' => $subgroup,
+                        'data' => substr($row['start_date'], 0, 10),
                         'colspan' => 5,
                         'class' => 'region',
                     ),

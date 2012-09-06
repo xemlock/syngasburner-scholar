@@ -58,3 +58,13 @@ function _scholar_generics_training_list_spec($row = null) // {{{
     );
 } // }}}
 
+function scholar_generics_training_children_class_form(&$form_state, $training)
+{
+    $classes = scholar_generic_load_children($training->id, 'class', 'start_date');
+
+
+    $form = array();
+p($classes);
+    return $form;
+}
+

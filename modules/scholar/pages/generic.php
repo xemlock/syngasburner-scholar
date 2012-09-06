@@ -221,7 +221,7 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
 
     // wypelnij rekord danymi z formularza
     scholar_populate_record($record, $values);
-
+p($record);
     // dla pewnosci ustaw odpowiedni podtyp
     $record->subtype = $subtype;
 

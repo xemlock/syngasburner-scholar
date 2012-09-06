@@ -295,44 +295,4 @@ function scholar_format_date($date) // {{{
     return '';
 } // }}}
 
-function scholar_parse_date($date)
-{
-    if (preg_match('/^(\d+)-(\d{1,2})-(\d{1,2})$/', $date, $match)) {
-        list(, $y, $m, $d) = $match;
-        if (checkdate(intval($m), intval($d), intval($y))) {
-            return array(
-                'year'  => $y,
-                'month' => $m,
-                'day'   => $d,
-            );
-        }
-    }
-
-    return false;
-}
-
-/**
- * @param string $time
- *     czas w formacie HH:MM lub HH:MM:SS
- */
-function scholar_parse_time($time)
-{
-    if (preg_match('/^(\d+):(\d+)(:(\d+(\.\d+)?))?$/', $time, $match)) {
-        list(, $h, $m, , $s, ) = $match;
-        if ($h < 24 && $m < 60 && $s < 60) {
-            $is = intval($s);
-            $ms = $s - $is;
-            return array(
-                'hour'   => $h,
-                'minute' => $m,
-                'second' => $is,
-                'millisecond' => round($ms * 1000),
-            );
-        }
-    }
-
-    return false;
-}
-
-
 // vim: fdm=marker
