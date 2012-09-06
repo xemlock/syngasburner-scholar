@@ -57,7 +57,7 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     ), $record);
 
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
-    drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
+    //drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
 
     /*
     $form['vtable']['presentations'] = array(
@@ -87,7 +87,7 @@ function _scholar_generics_conference_form_process_values(&$values) // {{{
     }
 
     if ($values['country'] == '0') {
-        $values['country'] = 
+        $values['country'] = null;
     }
 
     // dodaj czas do eventow

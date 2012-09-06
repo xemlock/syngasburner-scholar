@@ -149,9 +149,9 @@ function scholar_generics_recordset($conds = null, $header = null, $before = nul
 
     foreach ($header as $col) {
         if (isset($col['field']) && 'country_name' == $col['field']) {
-            $cols .= ', CASE LOWER(locality) WHEN \'internet\' THEN NULL ELSE '
+            $cols .= ', '
                    . scholar_db_country_name('g.country', 'scholar_generics')
-                   . ' END AS country_name';
+                   . ' AS country_name';
             break;
         }
     }

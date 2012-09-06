@@ -317,7 +317,7 @@ function scholar_render_pages_conferences_node($view, $node) // {{{
 
     // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
-    // country name, locality (Internet), kategoria. Wystepienia w obrebie
+    // country name, locality , kategoria. Wystepienia w obrebie
     // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
     $query = db_query("
         SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
@@ -482,18 +482,11 @@ function _scholar_publication_details($details) // {{{
 
 function __scholar_prepare_conference_from_parent_fields($row, $language) // {{{
 {
-            $countries = scholar_countries(null, $language);
-            $locality = trim($row['parent_locality']);
+            $countries    = scholar_countries(null, $language);
+            $locality     = trim($row['parent_locality']);
 
-            if (!strcasecmp('internet', $locality)) {
-                // jezeli miejscowosc to internet usun dane lokalizacji
-                $country      = '';
-                $country_name = '';
-                $locality     = '';
-            } else {
-                $country      = $row['parent_country'];
-                $country_name = isset($countries[$country]) ? $countries[$country] : '';
-            }
+            $country      = $row['parent_country'];
+            $country_name = isset($countries[$country]) ? $countries[$country] : '';
 
             $start_date = substr($row['parent_start_date'], 0, 10);
             $end_date   = substr($row['parent_end_date'], 0, 10);
@@ -515,7 +508,7 @@ function __scholar_prepare_conference_from_parent_fields($row, $language) // {{{
                 'date_span'  => $date_span,
                 'suppinfo'   => $row['parent_suppinfo'],
                 'url'        => $row['parent_url'],
-                'locality'   => $locality,
+                'locality'   => t($locality, array(), $language),
                 'country'    => $country,
                 'country_name'  => $country_name,
                 'presentations' => array(),

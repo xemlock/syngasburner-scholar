@@ -162,7 +162,7 @@ function form_type_scholar_element_timespan_validate($element, &$form_state) // 
         $end   = scholar_parse_time($value['end_time']);
 
         if (empty($date)) {
-            form_error($element['date'], t('@name: Invalid date supplied.', array('@name' => $element['#title'])));     
+            form_error($element['date'], t('@name: Invalid date supplied.', array('@name' => $element['#title'])));
         }
 
         if (empty($start)) {
@@ -193,7 +193,7 @@ function theme_scholar_element_timespan($element) // {{{
             . scholar_theme_select($element['start']['hour']) . ':' . scholar_theme_select($element['start']['minute'])
             . ' &ndash; '
             . scholar_theme_select($element['end']['hour']) . ':' . scholar_theme_select($element['end']['minute']);
-    
+
     return theme_form_element($element, $output);
 } // }}}
 
