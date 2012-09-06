@@ -9,19 +9,14 @@ function scholar_generics_class_form(&$form_state, $record = null)
         'title' => empty($parents) ? array('#required' => true) : array(
             '#required' => true,
         ),
-        array('#type' => 'markup', '#value' => '<table><tr><td valign="top">'),
-        'start_date' => array(
-            '#maxlength' => 16,
-            '#description' => t('Date format: YYYY-MM-DD'),
-        ),
-        array('#type' => 'markup', '#value' => '</td><td width="100%" valign="top">'),
         'start_time' => array(
-            '#title' => t('Hours'),
+            '#title' => t('Date and time'),
             '#type' => 'scholar_element_timespan',
+            '#description' => 'Date format: YYYY-MM-DD.',
+            '#minhour' => 6, // wczesniej niz o 6. raczej nie ma zajec
         ),
-        array('#type' => 'markup', '#value' => '</td></tr></table>'),
         'authors' => array(
-            '#title'       => t('Lecturers'),
+            '#title'       => t('Speakers / lecturers'),
         ),
         'parent_id' => array(
             '#title'       => t('Training'),

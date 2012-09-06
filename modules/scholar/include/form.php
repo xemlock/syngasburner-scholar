@@ -380,18 +380,6 @@ function scholar_validate_url($element, &$form_state)
     }
 }
 
-function scholar_validate_date($element, &$form_state)
-{
-    
-}
-
-// zwykle dołączana do elementu end_date
-function scholar_validate_date_range($element, &$form_state)
-{
-    // zaklada, ze data startowa jest poprawna data
-
-}
-
 /**
  * Generator formularzy rekordów generycznych.
  */
@@ -608,6 +596,77 @@ function scholar_element_separator() // {{{
 function scholar_theme_element($element, $content) // {{{
 {
     return theme('form_element', $element, '<div class="scholar-element-wrapper">' . $content . '</div>');
+} // }}}
+
+function scholar_form_required_error($element) // {{{
+{
+    form_error($element, t('!name field is required.', array('!name' => $element['#title'])));
+} // }}}
+
+function scholar_element_attributes($element) // {{{
+{
+    $multiple = isset($element['#multiple']) && $element['#multiple'];
+
+    $attrs = isset($element['#attributes']) ? (array) $element['#attributes'] : array();
+    $attrs['id']   = $element['#id'];
+    $attrs['name'] = $element['#name'] . ($multiple ? '[]' : '');
+
+    if ($multiple) {
+        $attrs['multiple'] = 'multiple';
+    }
+
+    $size = isset($element['#size']) ? max(0, $element['#size']) : 0;
+    if ($size) {
+        $attrs['size'] = $size;
+    }
+
+    $maxlength = isset($element['#maxlength']) ? max(0, $element['#maxlength']) : 0;
+    if ($maxlength) {
+        $attrs['maxlength'] = $maxlength;
+    }
+
+    return $attrs;
+} // }}}
+
+// drupalowy _form_set_class nie dość że jest funkcją wewnętrzną, to
+// jeszcze nieodsluguje zagniezdzenia elementow. Tzn. jak ustawie error
+// dla jakiegos poziomu, to wszystkie potomne tez powinny miec errora.
+// Funkcja przeznaczona dla elementów formularza złożonych z innych pól.
+function scholar_element_set_class(&$element, $class = array()) // {{{
+{
+    $class = (array) $class;
+
+    if ($element['#required']) {
+        $class[] = 'required';
+    }
+
+    // sprawdz, czy pole jest zaznaczone jako error
+    if (scholar_element_get_error($element)) {
+        $class[] = 'error';
+    }
+
+    if (isset($element['#attributes']['class'])) {
+        $class[] = $element['#attributes']['class'];
+    }
+
+    $element['#attributes']['class'] = implode(' ', $class);
+} // }}}
+
+function scholar_element_get_error($element) // {{{
+{
+    if (isset($element['#parents'])) {
+        $errors = form_set_error();
+        $parents = array();
+
+        foreach ((array) $element['#parents'] as $parent) {
+            $parents[] = $parent;
+            $key = implode('][', $parents);
+
+            if (isset($errors[$key])) {
+                return $errors[$key];
+            }
+        }
+    }
 } // }}}
 
 // vim: fdm=marker

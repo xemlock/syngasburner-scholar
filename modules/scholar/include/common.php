@@ -295,22 +295,44 @@ function scholar_format_date($date) // {{{
     return '';
 } // }}}
 
-/**
- * @param string $title
- *     Tytuł hiperłącza
- * @param string $path_name
- *     Nazwa ścieżki w menu
- * @param string $subpath
- * @param ...
- *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $subpath
- */
-function scholar_oplink($title, $path_name, $subpath) // {{{
+function scholar_parse_date($date)
 {
-    $args = array_slice(func_get_args(), 1);
-    $path = call_user_func_array('scholar_path', $args);
+    if (preg_match('/^(\d+)-(\d{1,2})-(\d{1,2})$/', $date, $match)) {
+        list(, $y, $m, $d) = $match;
+        if (checkdate(intval($m), intval($d), intval($y))) {
+            return array(
+                'year'  => $y,
+                'month' => $m,
+                'day'   => $d,
+            );
+        }
+    }
 
-    return l($title, $path, array('query' => 'destination=' . $_GET['q']));
-} // }}}
+    return false;
+}
+
+/**
+ * @param string $time
+ *     czas w formacie HH:MM lub HH:MM:SS
+ */
+function scholar_parse_time($time)
+{
+    if (preg_match('/^(\d+):(\d+)(:(\d+(\.\d+)?))?$/', $time, $match)) {
+        list(, $h, $m, , $s, ) = $match;
+        if ($h < 24 && $m < 60 && $s < 60) {
+            $is = intval($s);
+            $ms = $s - $is;
+            return array(
+                'hour'   => $h,
+                'minute' => $m,
+                'second' => $is,
+                'millisecond' => round($ms * 1000),
+            );
+        }
+    }
+
+    return false;
+}
 
 
 // vim: fdm=marker

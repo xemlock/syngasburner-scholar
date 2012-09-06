@@ -10,8 +10,8 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
     // wystapienia publicznego. Jezeli brak zdefiniowanych konferencji
     // ustaw pole tytulu jako wymagane.
     $form = scholar_generic_form(array(
-        'title' => empty($parents) ? array('#required' => true) : array(
-            '#description' => t('Leave empty to mark conference attendance if no public presentation was given. In this case, a conference must be chosen.'),
+        'title' => array(
+            '#description' => t('Leave empty to mark conference attendance if no public presentation was given.'),
         ),
         'start_date' => array(
             '#title'       => t('Date'),
@@ -21,8 +21,9 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
             '#required'    => true,
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
-        'parent_id' => empty($parents) ? false : array(
+        'parent_id' => array(
             '#title'       => t('Conference'),
+            '#required'    => true,
             '#options'     => $parents,
             '#description' => t('A conference during which this presentation was given.'),
             // jezeli w adresie strony podano identyfikator konferencji

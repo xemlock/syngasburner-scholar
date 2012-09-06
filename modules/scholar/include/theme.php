@@ -55,25 +55,39 @@ function scholar_theme_table($header, $rows, $attributes = array(), $caption = n
  */
 function scholar_theme_select($element) // {{{
 {
-    $multiple = isset($element['#multiple']) && $element['#multiple'];
+    scholar_element_set_class($element, 'form-select');
 
-    _form_set_class($element, array('form-select'));
-
-    $attrs = isset($element['#attributes']) ? (array) $element['#attributes'] : array();
-    $attrs['id']   = $element['#id'];
-    $attrs['name'] = $element['#name'] . ($multiple ? '[]' : '');
-
-    if ($multiple) {
-        $attrs['multiple'] = 'multiple';
-    }
-
-    $size = isset($element['#size']) ? max(0, $element['#size']) : 0;
-    if ($size) {
-        $attrs['size'] = $size;
-    }
+    $attrs = scholar_element_attributes($element);
 
     return '<select' . drupal_attributes($attrs) . '>' . form_select_options($element) . '</select>';
 } // }}}
 
+function scholar_theme_textfield($element) // {{{
+{
+    scholar_element_set_class($element, 'form-text');
+
+    $attrs = scholar_element_attributes($element);
+    $attrs['type'] = 'text';
+    $attrs['value'] = $element['#value'];
+
+    return '<input' . drupal_attributes($attrs) . '/>';
+} // }}}
+
+/**
+ * @param string $title
+ *     Tytuł hiperłącza
+ * @param string $path_name
+ *     Nazwa ścieżki w menu
+ * @param string $subpath
+ * @param ...
+ *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $subpath
+ */
+function scholar_oplink($title, $path_name, $subpath) // {{{
+{
+    $args = array_slice(func_get_args(), 1);
+    $path = call_user_func_array('scholar_path', $args);
+
+    return l($title, $path, array('query' => 'destination=' . $_GET['q']));
+} // }}}
 
 // vim: fdm=marker
