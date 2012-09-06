@@ -56,34 +56,35 @@ function scholar_presave_generics_record(&$generic) // {{{
     // 1000-01-01 00:00:00 jest minimalna wartoscia dla tego typu
     // w MySQL.
     $dates = array(
-        'start_date' => trim($generic->start_date),
-        'end_date'   => trim($generic->end_date),
+        'start_date' => $generic->start_date,
+        'end_date'   => $generic->end_date,
     );
 
-    foreach ($dates as $key => $date) {
-        $parts = preg_split('/\s+/', $date);
+    foreach ($dates as $key => $value) {
+        $parts = preg_split('/\s+/', trim($value));
 
-        $d = scholar_parse_date($parts[0]);
-        $t = '';
+        $date = scholar_parse_date($parts[0]);
+        $time = '';
 
         if (count($parts) > 1) {
             // jest czas
-            $t = scholar_parse_time($parts[1]);
+            $time = scholar_parse_time($parts[1]);
         }
 
-        if ($d) {
-            $date = $d['iso'];
-            if ($t) {
-                $date .= ' ' . $t['iso'];
+        if ($date) {
+            $datetime = $date['iso'];
+            if ($time) {
+                $datetime .= ' ' . $time['iso'];
             }
-            $len  = strlen($date);
-            $date .= substr('1000-01-01 00:00:00', $len);
+            $len = strlen($datetime);
+            // dopelnij brakujace znaki do pelnej wartosci typu DATETIME
+            $datetime .= substr('1000-01-01 00:00:00', $len);
         } else {
-            $date = null;
+            $datetime = null;
             $len  = 0;
         }
 
-        $generic->$key = $date;
+        $generic->$key = $datetime;
         $generic->{$key . '_len'} = $len;
     }
 } // }}}
