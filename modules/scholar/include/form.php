@@ -55,12 +55,6 @@ function scholar_elements() // {{{
         '#yearonly'         => false,
     );
 
-    $elements['scholar_element_cancel'] = array(
-        '#input'            => false,
-        '#title'            => t('Cancel'),
-        '#value'            => '',
-    );
-
     $elements['scholar_element_events'] = array(
         '#input'            => true,
         '#fields'           => null,
@@ -132,7 +126,6 @@ function scholar_elements_theme() // {{{
     $theme['scholar_date']                 = $theme_arguments;
     $theme['scholar_textarea']             = $theme_arguments;
     $theme['scholar_checkboxed_container'] = $theme_arguments;
-    $theme['scholar_element_cancel']       = $theme_arguments;
     $theme['scholar_element_events']       = $theme_arguments;
     $theme['scholar_element_files']        = $theme_arguments;
     $theme['scholar_element_langtext']     = $theme_arguments;
@@ -169,11 +162,6 @@ function theme_scholar_textarea($element) // {{{
 
     $textarea = theme_textarea($element);
     return $textarea;
-} // }}}
-
-function theme_scholar_element_cancel($element) // {{{
-{
-    return l($element['#title'], $element['#value'], array('attributes' => array('class' => 'scholar-cancel')));
 } // }}}
 
 /**
@@ -364,7 +352,7 @@ function scholar_populate_record(&$record, $values) // {{{
     return $count;
 } // }}}
 
-function scholar_validate_url($element, &$form_state)
+function scholar_validate_url($element, &$form_state) // {{{
 {
     $value = (string) $element['#value'];
 
@@ -378,7 +366,7 @@ function scholar_validate_url($element, &$form_state)
             form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.'));
         }
     }
-}
+} // }}}
 
 /**
  * Generator formularzy rekordów generycznych.
@@ -482,6 +470,9 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     // wartosci, ktorych klucze rozpoczynaja sie od #
     $form = array();
 
+    // przechowuje informacje o polu submit, jezeli zostalo podane
+    $submit = null;
+
     foreach ($fields as $key => $value) {
         // jezeli podano nazwe formularza jako wartosc, z numerycznym
         // kluczem, uzyj tej nazwy do pobrania definicji pola
@@ -542,6 +533,14 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                 }
                 break;
 
+            case 'submit':
+                if (is_array($value)) {
+                    $submit = scholar_element_submit($value);
+                } else {
+                    $submit = scholar_element_submit();
+                }
+                break;
+
             default:
                 if (isset($record_fields[$key])) {
                     // jezeli podano false zamiast specyfikacji elementu,
@@ -573,6 +572,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     // dodaj do formularza powiazany rekord, oraz pola w vtable
     $form['#record'] = $record;
     $form['vtable']  = $vtable;
+    $form['submit']  = $submit;
 
     if ($record) {
         scholar_populate_form($form, $record);
@@ -609,6 +609,8 @@ function scholar_element_attributes($element) // {{{
     $multiple = isset($element['#multiple']) && $element['#multiple'];
     $parents  = isset($element['#parents']) ? (array) $element['#parents'] : array();
 
+    // jezeli element nie ma podanego id lub name sprobuj wyznaczyc je
+    // na podstawie zawartosci tablicy #parents (o ile zostala podana).
     if (isset($element['#id'])) {
         $id = $element['#id'];
     } else {

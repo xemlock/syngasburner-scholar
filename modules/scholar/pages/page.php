@@ -104,20 +104,15 @@ function scholar_page_form(&$form_state, $id) // {{{
         ),
         'nodes',
         'files',
+        'submit' => array(
+            'title'  => t('Save changes'),
+            'cancel' => scholar_path('pages'),
+        ),
     ), $page);
 
     // po wygenerowaniu formularza przywroc oryginalny tytul, poniewaz
     // moze on byc potrzebny podczas zapisywania danych z formularza
     $page->title = $title;
-
-    $form['submit'] = array(
-        '#type'  => 'submit',
-        '#value' => t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path('pages'),
-    );
 
     return $form;
 } // }}}

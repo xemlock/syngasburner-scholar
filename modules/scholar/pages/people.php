@@ -16,16 +16,11 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         ),
         'files',
         'nodes',
+        'submit' => array(
+            'title' => empty($record) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path('people'),
+        ),
     ), $record);
-
-    $form['submit'] = array(
-        '#type'     => 'submit',
-        '#value'    => t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'     => 'scholar_element_cancel',
-        '#value'    => scholar_path('people'),
-    );
 
     return $form;
 } // }}}

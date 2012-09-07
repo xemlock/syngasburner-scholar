@@ -23,16 +23,11 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
             'start_date' => false,
             'end_date'   => false,
         ),
+        'submit' => array(
+            'title' => empty($record) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path('generics.training'),
+        ),
     ), $record);
-
-    $form['submit'] = array(
-        '#type'     => 'submit',
-        '#value'    => empty($record) ? t('Save') : t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path('generics.training'),
-    );
 
     _scholar_generics_training_tabs($record);
 
@@ -116,7 +111,8 @@ function scholar_generics_training_children_class_form(&$form_state, $record)
             'data' => array(
                 scholar_tabledrag_handle(),
                 $start_time . ($end_time ? ' &ndash; ' . $end_time : ''),
-                _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
+                _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title'])
+                . ($row['category_name'] ? ' (' . $row['category_name'] . ')' : ''),
                 scholar_theme_select(array(
                     '#parents'    => array('weight', $row['id']),
                     '#value'      => $row['weight'],
@@ -161,10 +157,9 @@ function scholar_generics_training_children_class_form(&$form_state, $record)
         '#type' => 'markup',
         '#value' => $html,
     );
-    $form[] = array(
-        '#type' => 'submit',
-        '#value' => t('Save changes'),
-    );
+    $form[] = scholar_element_submit(array(
+        'title' => t('Save changes'),
+    ));
 
     drupal_add_tabledrag('scholar-training-classes', 'order', 'sibling', 'tr-weight');
     _scholar_generics_training_tabs($record);

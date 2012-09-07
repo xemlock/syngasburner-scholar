@@ -178,7 +178,7 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_generics'] = array( // {{{
-        'description' => 'Table for storing generic records: articles, books (article containers), presentations, conferences (presentation containers), etc.',
+        'description' => 'Table for storing generic records: articles, journale (article containers), presentations, conferences (presentation containers), etc.',
         'fields' => array(
             'id'          => _scholar_schema_type('id'),
             'subtype'     => _scholar_schema_type('subtype'),
@@ -227,7 +227,7 @@ function scholar_schema() // {{{
                 'length'      => 255,
             ),
             'bib_details' => array(
-                'description' => 'bibliographic details (applies to books and articles)',
+                'description' => 'bibliographic details (applies to journals and articles)',
                 'type'        => 'varchar',
                 'length'      => 255,
             ),
@@ -300,7 +300,7 @@ function scholar_schema() // {{{
     ); // }}}
 
     $schema['scholar_authors'] = array( // {{{
-        'description' => 'authors / contributors to articles, books, presentations',
+        'description' => 'authors / contributors to articles, presentations',
         'fields' => array(
             'table_name' => _scholar_schema_type('table_name'),
             'row_id'     => _scholar_schema_type('id_ref'), // REFERENCES scholar_generics (id)

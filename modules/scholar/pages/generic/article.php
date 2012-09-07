@@ -3,7 +3,7 @@
 function scholar_generics_article_form(&$form_state, $record = null) // {{{
 {
     // artykuly moga nalezec do ksiazki (wydawnictwa zwartego)
-    $parents = scholar_generic_parent_options('book');
+    $parents = scholar_generic_parent_options('journal');
 
     $form = scholar_generic_form(array(
         'title' => array(
@@ -19,6 +19,7 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
         'parent_id' => empty($parents) ? false : array(
+            '#title'       => t('Journal'),
             '#options'     => $parents,
         ),
         'bib_details' => array(
@@ -30,16 +31,11 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
             'end_date'     => false,
         ),
+        'submit' => array(
+            'title'        => $record ? t('Save changes') : t('Add article'),
+            'cancel'       => scholar_path('generics.article'),
+        ),
     ), $record);
-
-    $form['submit'] = array(
-        '#type'  => 'submit',
-        '#value' => $record ? t('Save changes') : t('Add article'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path('generics.article'),
-    );
 
     return $form;
 } // }}}

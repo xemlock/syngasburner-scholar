@@ -58,12 +58,12 @@ function scholar_render_people_node($view, $id, $node) // {{{
         JOIN {scholar_generics} g 
             ON (a.row_id = g.id AND g.subtype = 'article')
         LEFT JOIN {scholar_generics} g2
-            ON (g.parent_id = g2.id AND g2.subtype = 'book')
+            ON (g.parent_id = g2.id AND g2.subtype = 'journal')
         LEFT JOIN {scholar_generic_suppinfo} i
             ON (g.id = i.generic_id AND i.language = '%s')
         WHERE a.person_id = %d
             AND a.table_name = 'generics'
-        ORDER BY g.start_date DESC
+        ORDER BY g.start_date DESC, g.weight
     ", $language, $person->id);
 
     $articles = scholar_db_fetch_all($query);
@@ -225,21 +225,21 @@ function scholar_render_pages_publications_node($view, $node) // {{{
                c.name AS category_name
             FROM {scholar_generics} g
             LEFT JOIN {scholar_generics} g2
-                ON (g.parent_id = g2.id AND g2.subtype = 'book')
+                ON (g.parent_id = g2.id AND g2.subtype = 'journal')
             LEFT JOIN {scholar_category_names} c
                 ON (g2.category_id = c.category_id AND c.language = '%s')
             LEFT JOIN {scholar_generic_suppinfo} i
                 ON (g.id = i.generic_id AND i.language = '%s')
             WHERE
                 g.subtype = 'article'
-        ORDER BY g.start_date DESC
+        ORDER BY g.start_date DESC, g.weight
     ", $language, $language);
 
     // Reviewed papers / Publikacje w czasopismach recenzowanych
     $articles = array();
 
     // artykuly wchodzace w sklad ksiazek lub prac zbiorowych
-    $book_articles = array();
+    $journal_articles = array();
 
     while ($row = db_fetch_array($query)) {
         $category = trim($row['category_name']);
@@ -265,8 +265,8 @@ function scholar_render_pages_publications_node($view, $node) // {{{
         $title = $row['parent_title'];
         $year  = intval(substr($row['parent_start_date'], 0, 4));
 
-        if (!isset($book_articles[$category][$title])) {
-            $book_articles[$category][$title] = array(
+        if (!isset($journal_articles[$category][$title])) {
+            $journal_articles[$category][$title] = array(
                 'id'          => $row['parent_id'],
                 'title'       => $title,
                 'year'        => $year ? $year : '',
@@ -280,7 +280,7 @@ function scholar_render_pages_publications_node($view, $node) // {{{
         _scholar_page_unset_parent_keys($row);
         $row['bib_details'] = _scholar_publication_details($row['bib_details']);
 
-        $book_articles[$category][$title]['articles'][] = $row;
+        $journal_articles[$category][$title]['articles'][] = $row;
     }
 
     // przypisz URLe do stron artykulow i ksiazek oraz autorow
@@ -297,10 +297,10 @@ function scholar_render_pages_publications_node($view, $node) // {{{
         }
     }
 
-    foreach ($book_articles as $category => &$books) {
-        foreach ($books as &$book) {
-            _scholar_page_augment_record($book, $book['id'], 'generics', $language);
-            foreach ($book['articles'] as &$article) {
+    foreach ($journal_articles as $category => &$journals) {
+        foreach ($journals as &$journal) {
+            _scholar_page_augment_record($journal, $journal['id'], 'generics', $language);
+            foreach ($journal['articles'] as &$article) {
                 _scholar_page_augment_record($article, $article['id'], 'generics', $language);
             }
         }
@@ -309,7 +309,7 @@ function scholar_render_pages_publications_node($view, $node) // {{{
     return $view
         ->assign('section_title', t('Reviewed papers', array(), $language))
         ->assign('articles', $articles)
-        ->assign('book_articles', $book_articles)
+        ->assign('journal_articles', $journal_articles)
         ->render('publications.tpl');
 } // }}}
 
@@ -396,8 +396,7 @@ function scholar_render_categories_node($view, $id, $node) // {{{
 // wszystkie konferencje w danej kategorii, np. lista szkoleń
 function scholar_render_categories_generics_conference_node($view, $category, $node)
 {
-    $query = db_query("SELECT * FROM ");
-    p(__FUNCTION__);
+
 }
 
 /**

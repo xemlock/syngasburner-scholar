@@ -62,20 +62,16 @@ function theme_scholar_element_langtext($element) // {{{
     foreach (scholar_languages() as $language => $name) {
         $id = $element['#id'] . '-' . $language;
 
-        $parents = $element['#parents'];
-        $parents[] = $language;
-
         $textfield = array(
             '#name'      => $element['#name'] . '[' . $language . ']',
             '#id'        => $id,
             '#value'     => $element['#default_value'][$language],
-            '#parents'   => $parents,
             '#maxlength' => $element['#element_maxlength'] ? $element['#element_maxlength'] : null,
         );
-        
+
         $output .= '<tr>'
                 .  '<td>' . scholar_language_label($language, $name . ':') . '</td>'
-                .  '<td width="100%">' . theme('textfield', $textfield) . '</td>'
+                .  '<td width="100%">' . scholar_theme_textfield($textfield) . '</td>'
                 .  '<td><span class="scholar-character-countdown" data-id="' . $id . '" title="' . t('Number of characters remaining') . '"></span></td>'
                 .  '</tr>';
     }

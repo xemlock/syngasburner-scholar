@@ -98,6 +98,10 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
         ),
         // 'files',
         // 'nodes',
+        'submit' => array(
+            'title'  => empty($record->id) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path("categories.{$table_name}.{$subtype}", 'list'),
+        ),
     );
 
     // dodaj dodatkowe pola zwiazane z kategoriami rekordow konkretnych typow
@@ -111,15 +115,6 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     }
 
     $form = scholar_generic_form($fields, $record);
-
-    $form['submit'] = array(
-        '#type' => 'submit',
-        '#value' => empty($record->id) ? t('Save') : t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type' => 'scholar_element_cancel',
-        '#value' => scholar_path("categories.{$table_name}.{$subtype}", 'list'),
-    );
 
     return $form;
 } // }}}

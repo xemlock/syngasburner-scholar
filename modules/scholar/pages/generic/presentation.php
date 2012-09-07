@@ -45,16 +45,11 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
             ),
             'end_date'   => false,
         ),
+        'submit' => array(
+            'title'  => empty($record) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path('generics.presentation'),
+        ),
     ), $record);
-
-    $form['submit'] = array(
-        '#type'  => 'submit',
-        '#value' => empty($record) ? t('Save') : t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path('generics.presentation'),
-    );
 
     return $form;
 } // }}}

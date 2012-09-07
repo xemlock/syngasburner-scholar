@@ -102,14 +102,14 @@ function _scholar_menu() // {{{
             'edit' => t('Edit article'),
         )
     );
-    $items += _scholar_generic_menu($root . '/book',
-        'book',
-        t('Books'),
-        array('edit' => t('Edit book'))
+    $items += _scholar_generic_menu($root . '/journal',
+        'journal',
+        t('Journals'),
+        array('edit' => t('Edit journal'))
     );
-    $items += _scholar_category_menu($root . '/book', 'generics', 'book', array(
-        'edit'   => t('Edit book category'),
-        'delete' => t('Delete book category'),
+    $items += _scholar_category_menu($root . '/journal', 'generics', 'journal', array(
+        'edit'   => t('Edit journal category'),
+        'delete' => t('Delete journal category'),
     ));
 
     // zeby byly taby pierwszego poziomu w elementach w trainings/
@@ -244,11 +244,11 @@ function _scholar_menu_extract_paths($items) // {{{
             // 1. usun przedrostek
             $key = substr($key, 13);
 
-            // 2. jezeli nawias otwierajacy jest pierwszym, a zamykajacy ostatnim
-            //    znakiem usun je i przejdz do parsowania listy funkcji
+            // 2. jezeli nawias otwierajacy jest pierwszym, a zamykajacy 
+            //    ostatnim znakiem usun je i przejdz do parsowania listy funkcji
             if ('(' == substr($key, 0, 1) && ')' == substr($key, -1)) {
-                // 3. rozbij liste uzywajac przecinka, i pozbadz sie bialych znakow
-                //    wokol kazdego elementu
+                // 3. rozbij liste uzywajac przecinka, i pozbadz sie bialych
+                //    znakow wokol kazdego elementu
                 $modifiers = array_map('trim', explode(',', substr($key, 1, -1)));
 
                 // 4. wywolaj funkcje modyfikujace sciezke
@@ -277,7 +277,7 @@ function _scholar_menu_extract_paths($items) // {{{
  *     ścieżka w drzewie odpowiadająca podanej nazwie. Jeżeli ścieżka nie
  *     istnieje zwrócona zostaje ścieżka o nazwie 'root'.
  */
-function scholar_path($path_name, $subpath = '') // {{{
+function scholar_path($path_name = null, $subpath = '') // {{{
 {
     static $paths = null;
 

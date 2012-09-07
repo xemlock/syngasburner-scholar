@@ -5,15 +5,15 @@
       include dirname(__FILE__) . '/_articles.tpl' ?>
 [/section]
 
-<?php foreach ($this->book_articles as $category => $books) { ?>
+<?php foreach ($this->journal_articles as $category => $journals) { ?>
 [section="<?php $this->displayAttr($category) ?>"]
-<?php   foreach ($books as $book) { ?>
-[block="<?php $this->displayAttr($book['year']) ?>"]
-  [__tag="div" class="hCite book"]
-    [__tag="cite" class="title"][url="<?php $this->displayAttr($book['url']) ?>"]<?php $this->display($book['title']) ?>[/url][/__tag]<?php $this->display($book['bib_details']) ?>
+<?php   foreach ($journals as $journal) { ?>
+[block="<?php $this->displayAttr($journal['year']) ?>"]
+  [__tag="div" class="hCite journal"]
+    [__tag="cite" class="title"][url="<?php $this->displayAttr($journal['url']) ?>"]<?php $this->display($journal['title']) ?>[/url][/__tag]<?php $this->display($journal['bib_details']) ?>
   [/__tag]
   [list]
-<?php     foreach ($book['articles'] as $article) { ?>
+<?php     foreach ($journal['articles'] as $article) { ?>
     [__tag="li"]
       [__tag="div" class="hCite article"]
         [__tag="span" class="authors"]

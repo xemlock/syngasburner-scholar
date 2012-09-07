@@ -54,6 +54,10 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
             'start_date' => false,
             'end_date'   => false,
         ),
+        'submit' => array(
+            'title'  => empty($record) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path('generics.conference'),
+        ),
     ), $record);
 
     // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
@@ -65,15 +69,6 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
         '#title' => t('Presentations'),
         '#description' => t('Change the order of presentations'),
     );*/
-
-    $form['submit'] = array(
-        '#type'     => 'submit',
-        '#value'    => empty($record) ? t('Save') : t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path('generics.conference'),
-    );
 
     _scholar_generics_conference_tabs($record);
 
@@ -247,10 +242,9 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
             scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
     );
 
-    $form[] = array(
-        '#type' => 'submit',
-        '#value' => t('Save changes'),
-    );
+    $form[] = scholar_element_submit(array(
+        'title' => t('Save changes'),
+    ));
 
     _scholar_generics_conference_tabs($conference);
 

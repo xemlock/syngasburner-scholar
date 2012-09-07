@@ -44,16 +44,11 @@ function scholar_generics_class_form(&$form_state, $record = null)
             'start_date' => false,
             'end_date'   => false,
         ),
+        'submit' => array(
+            'title'  => empty($record) ? t('Save') : t('Save changes'),
+            'cancel' => scholar_path('generics.training'),
+        ),
     ), $record);
-
-    $form['submit'] = array(
-        '#type'  => 'submit',
-        '#value' => empty($record) ? t('Save') : t('Save changes'),
-    );
-    $form['cancel'] = array(
-        '#type'  => 'scholar_element_cancel',
-        '#value' => scholar_path("generics.training"),
-    );
 
     return $form;
 }
