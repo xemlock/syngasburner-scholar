@@ -2,7 +2,6 @@
 
 function scholar_generics_class_form(&$form_state, $record = null)
 {
-    $parents    = scholar_generic_parent_options('training');
     $categories = scholar_category_options('generics', 'class');
 
     $form = scholar_generic_form(array(
@@ -25,7 +24,7 @@ function scholar_generics_class_form(&$form_state, $record = null)
         ),
         'parent_id' => array(
             '#title'       => t('Training'),
-            '#options'     => $parents,
+            '#options'     => scholar_generic_parent_options('training', true),
             '#description' => t('A training during which this class is carried out.'),
             '#required'    => true,
             // jezeli w adresie strony podano identyfikator rodzica
@@ -77,7 +76,7 @@ function _scholar_generics_class_list_spec($row = null) // {{{
 
     return array(
         substr($row['start_date'], 0, (int) $row['start_date_len']),
-        check_plain($row['title']),
+        _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
         scholar_oplink(t('edit'), 'generics.class', 'edit/%d', $row['id']),
         scholar_oplink(t('delete'), 'generics.class', 'delete/%d', $row['id']),
     );

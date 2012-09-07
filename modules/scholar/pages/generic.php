@@ -56,10 +56,7 @@ function scholar_generics_list($subtype) // {{{
     $rows  = array();
 
     // liczba kolumn w tabeli
-    $colspan = 0;
-    foreach ($header as $col) {
-        $colspan += isset($col['colspan']) ? max(1, $col['colspan']) : 1;
-    }
+    $colspan = scholar_table_colspan($header);
 
     $last_category_name = '';
 
@@ -95,12 +92,6 @@ function scholar_generics_list($subtype) // {{{
         }
 
         $rows[] = call_user_func($func, $row);
-    }
-
-    if (empty($rows)) {
-        $rows[] = array(
-            array('data' => t('No records'), 'colspan' => $colspan),
-        );
     }
 
     $html = scholar_theme_table($header, $rows);
@@ -304,19 +295,45 @@ function scholar_generics_children_form(&$form_state, $subtype, $id, $children_s
     return '';
 } // }}}
 
-function scholar_generics_children_form_submit($form, &$form_state)
+/**
+ * Zapisuje wagi rekordów potomnych.
+ */
+function scholar_generics_children_form_submit($form, &$form_state) // {{{
 {
     if ($form['#record']) {
         $record = $form['#record'];
         $values = $form_state['values'];
 
-        if (scholar_generic_update_children_weights($record->id, (array) $values['weight'])) {
+        if (isset($values['weight']) && scholar_generic_update_children_weights($record->id, (array) $values['weight'])) {
             drupal_set_message(t('Children order updated successfully.'));
         }
 
         drupal_goto(scholar_path("generics.{$record->subtype}"));
     }
-}
+} // }}}
 
+/**
+ * @param string $bib_authors
+ *     lista nazwisk osób oddzielonych przecinkami
+ * @param string $suffix
+ *     przyrostek, który zostanie dodany tylko wtedy, gdy lista nazwisk jest niepusta
+ * @return string
+ *     lista osób z wytłuszczonymi nazwiskami osób
+ */
+function _scholar_generics_theme_bib_authors($bib_authors, $suffix = '') // {{{
+{
+    if (strlen($bib_authors)) {
+        // usun et al. z listy autorow, zapamietaj czy zostal usuniety,
+        // jezeli tak, zostanie dodany na samym koncu po przetworzeniu
+        // listy.
+        $bib_authors = str_ireplace('et al.', '', $bib_authors, $etal);
+        $bib_authors = array_map('trim', explode(',', $bib_authors));
+        $bib_authors = array_map('check_plain', $bib_authors);
+        $bib_authors = '<b>' . implode('</b>, <b>', $bib_authors) . '</b>'
+                     . ($etal ? ' <b><em>et al.</em></b>' : '');
+    }
+
+    return strlen($bib_authors) ? ($bib_authors . $suffix) : '';
+} // }}}
 
 // vim: fdm=marker

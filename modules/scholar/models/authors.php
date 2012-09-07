@@ -70,11 +70,11 @@ function scholar_bib_authors($names) // {{{
             break;
 
         case 3:
-            $bib = $names[0] . ', ' . $names[1] . ' & ' . $names[2];
+            $bib = $names[0] . ', ' . $names[1] . ', ' . $names[2];
             break;
 
         case 2:
-            $bib = $names[0] . ' & ' . $names[1];
+            $bib = $names[0] . ', ' . $names[1];
             break;
 
         case 1:

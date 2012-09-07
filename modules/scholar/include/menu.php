@@ -129,6 +129,11 @@ function _scholar_menu() // {{{
         array('edit' => t('Edit training'))
     );
     $items[$root . '/trainings/training']['weight'] = -10;
+    $items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
+        'edit'   => t('Edit training category'),
+        'delete' => t('Delete training category'),
+    ));
+
     $items += _scholar_generic_menu($root . '/trainings/class',
         'class',
         t('Classes'),

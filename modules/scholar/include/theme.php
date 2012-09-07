@@ -36,6 +36,26 @@ function scholar_theme_dl($data, $attributes = array()) // {{{
     return $output;
 } // }}}
 
+/**
+ * Zwraca liczbę kolumn w tabeli na podstawie definicji nagłówka.
+ *
+ * @param array $header
+ * @param array $rows
+ *     jeżeli puste do tabeli zostanie dodany wiersz z informacją
+ *     o braku rekordów
+ * @param array $attributes
+ *     jeżeli podano regions - tabela ustawi wszystkie niezbędne dane
+ * @return int
+ */
+function scholar_table_colspan($header) // {{{
+{
+    $colspan = 0;
+    foreach ($header as $col) {
+        $colspan += isset($col['colspan']) ? max(1, $col['colspan']) : 1;
+    }
+    return $colspan;
+} // }}}
+
 function scholar_theme_table($header, $rows, $attributes = array(), $caption = null) // {{{
 {
     scholar_add_css();
@@ -46,7 +66,49 @@ function scholar_theme_table($header, $rows, $attributes = array(), $caption = n
         $attributes['class'] = 'scholar-table';
     }
 
+    if (isset($attributes['regions'])) {
+        $regions = (bool) $attributes['regions'];
+        unset($attributes['regions']);
+    } else {
+        $regions = false;
+    }
+
+    $colspan = scholar_table_colspan($header);
+
+    if (empty($rows)) {
+        $rows[] = array(
+            array('data' => t('No records'), 'colspan' => $colspan),
+        );
+    }
+
+    // przeksztalc regiony w poprawne wiersze tabeli
+    foreach ($rows as &$row) {
+        if (is_array($row) && array_key_exists('region', $row)) {
+            $row = array(
+                'data' => array(
+                    array(
+                        'data'    => $row['region'],
+                        'colspan' => $colspan,
+                        'class'   => 'region',
+                    ),
+                ),
+                'class' => 'region',
+            );
+        }
+    }
+    unset($row);
+
     return theme_table($header, $rows, $attributes, $caption);
+} // }}}
+
+/**
+ * Definicja komórki tabeli która przechowuje (lub odpowiada, w przypadku
+ * nagłówka tabeli) uchwyt do przenoszenia wierszy.
+ */
+function scholar_tabledrag_handle() // {{{
+{
+    static $handle = array('class' => 'tabledrag-handle');
+    return $handle;
 } // }}}
 
 /**

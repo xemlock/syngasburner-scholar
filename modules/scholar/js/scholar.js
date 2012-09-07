@@ -1719,11 +1719,18 @@ $(function() {
      */
     function enhanceTableDrag()
     {
+        function _log(x) {
+            return;
+            console && console.log(x);
+        }
+
         var originalTableDrag = Drupal.tableDrag.prototype.dragRow,
-            currentRegion = null; // element TR.region wlasciwy dla chwyconego wiersza tabeli
+            activeRegion = null, // element TR.region wlasciwy dla chwyconego wiersza tabeli
+            baseRegion = document.createElement('TR'); // pierwszy region (jezeli tabela nie rozpoczyna sie regionem)
+        // $(baseRegion).attr('id' , 'VIRTUAL');
 
         Drupal.tableDrag.prototype.dragRow = function(event, self) {
-            if (!currentRegion) {
+            if (!activeRegion) {
                 return originalTableDrag.apply(this, [event, self]);
             }
 
@@ -1734,13 +1741,23 @@ $(function() {
                     y = currentMouseCoords.y - self.dragObject.initMouseOffset.y;
 
                 var currentRow = self.findDropTargetRow(x, y);
-                var outsideCurrentRegion = true;
 
                 if (currentRow) {
-                    //console && console.log('currentRegion: ' + $(currentRegion).attr('id'));
-                    //console && console.log('currentRow: ' + $(currentRow).attr('id'));
-                    //console && console.log('currentRowRegion: ' + $($(currentRow).prevAll('tr.region').get(0)).attr('id'));
-                    //console && console.log('----------');
+                    var currentRegion;
+
+                    // jQuery.fn.hasClass jest zbyt kosztowne
+                    if ((' ' + currentRow.className + ' ').indexOf(' region ') != -1) {
+                        // aktualny wiersz jest regionem, zablokuj przenoszenie, w przeciwnym
+                        // razie przenoszony wiersz moze sie wskutek pozycjonowania nagle znalezc
+                        // przed regionem, ktorego pilnujemy.
+                    } else {
+                        currentRegion = $(currentRow).prevAll('tr.region').get(0) || baseRegion;
+                    }
+
+                    _log('activeRegion:  ' + $(activeRegion).attr('id'));
+                    _log('currentRow:    ' + $(currentRow).attr('id'));
+                    _log('currentRegion: ' + $(currentRegion).attr('id'));
+                    _log('----------');
                     // currentRow to wiersz tabeli nad ktorym sie znajdujemy podczas
                     // przeciagania
 
@@ -1751,7 +1768,8 @@ $(function() {
                     // Jezeli currentRow jest naglowkiem regionu, nie mozemy zezwolic
                     // na zmiane polozenia, w przeciwnym razie nastapi przeniesienie
                     // wiersza do innego regionu.
-                    if ($(currentRow).filter(':not(.region)').prevAll('tr.region').get(0) === currentRegion) {
+
+                    if (currentRegion === activeRegion) {
                         originalTableDrag.apply(this, [event, self]);
                     }
                 }
@@ -1770,7 +1788,7 @@ $(function() {
         // po upuszczeniu wiersza przywroc oryginalne ustawienia zezwalajace
         // na zmiane regionow
         $(document).bind('mouseup', function() {
-            currentRegion = null;
+            activeRegion = null;
         });
 
         // dodaj do wszystkich uchwytow do przenoszenia wiersza umieszczonych
@@ -1778,8 +1796,8 @@ $(function() {
         $('table.region-locked > tbody').find('.tabledrag-handle').mousedown(function() {
             // wyznacz region wlasciwy dla tego wiersza tabeli
             var tr = $($(this).parents('tr').get(0));
-            currentRegion = tr.prevAll('tr.region').get(0);
-            //console && console.log('currentRegion: ' + $(currentRegion).attr('id'));
+            activeRegion = tr.prevAll('tr.region').get(0) || baseRegion;
+            _log('currentRegion: ' + $(activeRegion).attr('id'));
         });
     }
 

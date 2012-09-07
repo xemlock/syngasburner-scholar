@@ -1,52 +1,23 @@
 <?php
 
-function form_type_scholar_element_time_process($element) // {{{
-{
-    static $format = null;
-
-    if (null === $format) {
-        $format = create_function('$x', 'return sprintf("%02d", $x);');
-    }
-
-    $minhour = 0;
-    $maxhour = 23;
-
-    if (isset($element['#minhour'])) {
-        $minhour = max(0, $element['#minhour']);
-    }
-
-    if (isset($element['#maxhour'])) {
-        $maxhour = max(0, min(23, $element['#maxhour']));
-    }
-
-    $hour = array('' => 'HH') + drupal_map_assoc(range($minhour, $maxhour), $format);
-    $mins  = array('' => 'MM') + drupal_map_assoc(range(0, 59, 5), $format);
-
-    $element['hour'] = array(
-        '#type'    => 'select',
-        '#options' => $hour,
-    );
-
-    $element['minute'] = array(
-        '#type'    => 'select',
-        '#options' => $mins,
-    );
-
-    return $element;
-} // }}}
-
 function form_type_scholar_element_time_value($element, $post = false) // {{{
 {
     $hour   = '';
     $minute = '';
 
-    if (false === $post) {
-        if (isset($element['#default_value'])) {
-            $parts = explode(':', (string) $element['#default_value']);
-            $hour = (string) array_shift($parts);
-            $minute = (string) array_shift($parts);
+    if (false === $post && isset($element['#default_value'])) {
+        if (is_string($element['#default_value'])) {
+            $parts = explode(':', $element['#default_value']);
+            $post = array(
+                'hour'   => array_shift($parts),
+                'minute' => array_shift($parts),
+            );
+        } else if (is_array($element['#default_value'])) {
+            $post = $element['#default_value'];
         }
-    } else if (is_array($post)) {
+    }
+
+    if ($post) {
         if (isset($post['hour'])) {
             $hour = (string) $post['hour'];
         }
@@ -66,6 +37,48 @@ function form_type_scholar_element_time_value($element, $post = false) // {{{
     }
 
     return array();
+} // }}}
+
+/**
+ * Process jest uruchamiany po _value. includes/form.inc _form_builder_handle_input_element()
+ */
+function form_type_scholar_element_time_process($element) // {{{
+{
+    static $format = null;
+
+    if (null === $format) {
+        $format = create_function('$x', 'return sprintf("%02d", $x);');
+    }
+
+    $minhour = 0;
+    $maxhour = 23;
+
+    if (isset($element['#minhour'])) {
+        $minhour = max(0, $element['#minhour']);
+    }
+
+    if (isset($element['#maxhour'])) {
+        $maxhour = max(0, min(23, $element['#maxhour']));
+    }
+
+    $hour = array('' => 'HH') + drupal_map_assoc(array_map($format, range($minhour, $maxhour)));
+    $mins  = array('' => 'MM') + drupal_map_assoc(array_map($format, range(0, 59, 5)));
+
+    $value = (array) $element['#value'];
+
+    $element['hour'] = array(
+        '#type'    => 'select',
+        '#options' => $hour,
+        '#value'   => isset($value['hour']) ? $value['hour'] : null,
+    );
+
+    $element['minute'] = array(
+        '#type'    => 'select',
+        '#options' => $mins,
+        '#value'   => isset($value['minute']) ? $value['minute'] : null,
+    );
+
+    return $element;
 } // }}}
 
 function form_type_scholar_element_time_validate($element, &$form_state) // {{{
@@ -96,12 +109,15 @@ function theme_scholar_element_time($element) // {{{
 
 function form_type_scholar_element_timespan_process($element) // {{{
 {
+    $default_value = isset($element['#default_value']) ? (array) $element['#default_value'] : array();
+
     $element['#tree'] = true;
     $element['date']  = array(
         '#type'      => 'textfield',
         '#maxlength' => 10,
         '#size'      => 16,
         '#attributes' => array('class' => 'form-date'),
+        '#default_value' => isset($default_value['date']) ? $default_value['date'] : null,
     );
 
     $minhour = isset($element['#minhour']) ? $element['#minhour'] : null;
@@ -111,11 +127,13 @@ function form_type_scholar_element_timespan_process($element) // {{{
         '#type' => 'scholar_element_time',
         '#minhour' => $minhour,
         '#maxhour' => $maxhour,
+        '#default_value' => isset($default_value['start']) ? $default_value['start'] : null,
     );
     $element['end']   = array(
         '#type' => 'scholar_element_time',
         '#minhour' => $minhour,
         '#maxhour' => $maxhour,
+        '#default_value' => isset($default_value['end']) ? $default_value['end'] : null,
     );
     return $element;
 } // }}}

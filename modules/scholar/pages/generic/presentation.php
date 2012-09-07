@@ -3,7 +3,6 @@
 function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
 {
     // prezentacje moga nalezec do konferencji
-    $parents    = scholar_generic_parent_options('conference');
     $categories = scholar_category_options('generics', 'presentation');
 
     // pusty tytul oznacza uczestnictwo w konferencji bez zadnego
@@ -24,7 +23,7 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
         'parent_id' => array(
             '#title'       => t('Conference'),
             '#required'    => true,
-            '#options'     => $parents,
+            '#options'     => scholar_generic_parent_options('conference', true),
             '#description' => t('A conference during which this presentation was given.'),
             // jezeli w adresie strony podano identyfikator konferencji
             // ustaw ja jako domyslna wartosc pola

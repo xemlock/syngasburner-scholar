@@ -94,10 +94,14 @@ function scholar_postsave_generics_record(&$generic) // {{{
     scholar_category_dec_refcount($generic->prev_category_id);
     scholar_category_inc_refcount($generic->category_id);
 
+    // zaktualizuj liczbe rekordow potomnych u rekordu rodzica
     scholar_generic_update_child_count($generic->prev_parent_id);
     if ($generic->parent_id != $generic->prev_parent_id) {
         scholar_generic_update_child_count($generic->parent_id);
     }
+
+    // zaktualizuj liczbe rekordow potomnych dla tego rekordu
+    scholar_generic_update_child_count($generic->id);
 
     // zaktualizuj informacje dodatkowe
     db_query("DELETE FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $generic->id);
@@ -186,9 +190,12 @@ function scholar_generics_recordset($conds = null, $header = null, $before = nul
  * odpowiadajaca pustemu (niewybranemu) rekordowi rodzica.
  *
  * @param string $subtype OPTIONAL
+ * @param bool $required
+ *     jeżeli nie podano lub jest false pierwszą opcją będzie wartość 0
+ *     odpowiadająca pustej opcji.
  * @return array
  */
-function scholar_generic_parent_options($subtype = null) // {{{
+function scholar_generic_parent_options($subtype = null, $required = false) // {{{
 {
     global $language;
 
@@ -200,9 +207,13 @@ function scholar_generic_parent_options($subtype = null) // {{{
 
     $query = db_query("SELECT g.id, g.title, n.name AS category_name FROM {scholar_generics} g LEFT JOIN {scholar_category_names} n ON (g.category_id = n.category_id AND n.language = '%s') " . $where . " ORDER BY n.name, g.title", $language->language);
 
-    $options = array(
-        0 => '', // pusty rodzic
-    );
+    if ($required) {
+        $options = array();
+    } else {
+        $options = array(
+            0 => '', // pusty rodzic
+        );
+    }
 
     while ($row = db_fetch_array($query)) {
         $category_name = $row['category_name'];
@@ -212,6 +223,10 @@ function scholar_generic_parent_options($subtype = null) // {{{
         }
 
         $options[$category_name][$row['id']] = $row['title'];
+    }
+
+    if ($required) {
+        return $options;
     }
 
     return count($options) > 1 ? $options : array();

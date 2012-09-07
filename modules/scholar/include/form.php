@@ -605,11 +605,29 @@ function scholar_form_required_error($element) // {{{
 
 function scholar_element_attributes($element) // {{{
 {
+    $attrs    = isset($element['#attributes']) ? (array) $element['#attributes'] : array();
     $multiple = isset($element['#multiple']) && $element['#multiple'];
+    $parents  = isset($element['#parents']) ? (array) $element['#parents'] : array();
 
-    $attrs = isset($element['#attributes']) ? (array) $element['#attributes'] : array();
-    $attrs['id']   = $element['#id'];
-    $attrs['name'] = $element['#name'] . ($multiple ? '[]' : '');
+    if (isset($element['#id'])) {
+        $id = $element['#id'];
+    } else {
+        $id = $parents ? implode('-', $element['#parents']) : '';
+    }
+
+    if (isset($element['#name'])) {
+        $name = $element['#name'];
+    } else if ($parents) {
+        $name = array_shift($parents);
+        if ($parents) {
+            $name .= '[' . implode('][', $parents) . ']';
+        }
+    } else {
+        $name = '';
+    }
+
+    $attrs['id']   = $id;
+    $attrs['name'] = $name . ($multiple ? '[]' : '');
 
     if ($multiple) {
         $attrs['multiple'] = 'multiple';

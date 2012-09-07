@@ -6,7 +6,9 @@
  */
 function scholar_parse_date($date) // {{{
 {
-    if (preg_match('/^\s*(?P<year>\d+)(?>-(?P<month>\d{1,2}))?(?>-(?P<day>\d{1,2}))?\s*$/', $date, $match)) {
+    '/^\s*(?P<year>\d+)(?>-(?P<month>\d{1,2}))?(?>-(?P<day>\d{1,2}))?\s*$/';
+
+    if (preg_match('/^\s*(?>(?P<year>\d+)(?>-(?P<month>\d{1,2})(?>-(?P<day>\d{1,2}))?)?)\s*$/', $date, $match)) {
         $y = intval($match['year']);
         $m = isset($match['month']) ? intval($match['month']) : null;
         $d = isset($match['day']) ? intval($match['day']) : null;
@@ -44,24 +46,19 @@ function scholar_parse_date($date) // {{{
  */
 function scholar_parse_time($time) // {{{
 {
-    if (preg_match('/^\s*(?P<hour>\d+)(?>:(?P<minute>\d+))?(?>:(?P<second>\d+(\.\d*)?))?\s*$/', $time, $match)) {
+    '/^\s*(?P<hour>\d+)(?>:(?P<minute>\d+))?(?>:(?P<second>\d+(\.\d*)?))?\s*$/';
+
+    if (preg_match('/^\s*(?>(?P<hour>\d+)(?>:(?P<minute>\d+)(?>:(?P<second>\d+)(?P<millis>\.\d*)?)?)?)\s*$/', $time, $match)) {
         $h = intval($match['hour']);
         $m = isset($match['minute']) ? intval($match['minute']) : null;
-        $s = isset($match['second']) ? floatval($match['second']) : null;
+        $s = isset($match['second']) ? intval($match['second']) : null;
+        $ms = isset($match['millis']) ? intval(round(floatval($match['millis']) * 1000)) : null;
 
         if ($h < 24 && (null === $m || $m < 60) && (null === $s || $s < 60)) {
-            if (null === $s) {
-                $is = null;
-                $ms = null;
-            } else {
-                $is = intval($s);
-                $ms = round(($s - $is) * 1000);
-            }
-
             return array(
                 'hour'   => $h,
                 'minute' => $m,
-                'second' => $is,
+                'second' => $s,
                 'millis' => $ms,
                 'iso'    => null === $m
                     ? sprintf('%02d', $h)

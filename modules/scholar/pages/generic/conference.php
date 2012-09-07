@@ -83,7 +83,7 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
 function _scholar_generics_conference_tabs($record) // {{{
 {
     if ($record) {
-        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $conference->id;
+        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
         scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $record->id), $query);
         scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
         scholar_add_tab(t('Presentations'), scholar_path('generics.conference', 'children/%d/presentation', $record->id));
@@ -153,81 +153,52 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
     $presentations = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
 
     $form = array(
-        'weight' => array(
-            '#tree' => true,
-        ),
+        'weight' => array('#tree' => true),
     );
 
-    $weight_options = array();
     $delta = 10;
-    for ($i = -$delta; $i <= $delta; ++$i) {
-        $weight_options[$i] = $i;
-    }
+    $weight_options = drupal_map_assoc(range(-$delta, $delta));
 
-    $subgroups = array();
+    $header = array(
+        scholar_tabledrag_handle(),
+        t('Title'),
+        t('Weight'),
+        array('data' => t('Operations'), 'colspan' => 2),
+    );
 
-    $tbody[] = array();
     $last_region = ''; // pierwszy region to ten bez daty
     foreach ($presentations as $row) {
+        $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
+
+        if ($subgroup !== $last_region) {
+            $rows[] = array(
+                'region' => substr($row['start_date'], 0, 10),
+            );
+            $last_region = $subgroup;
+        }
+
         $form['weight'][$row['id']] = array(
             '#type' => 'hidden',
             '#default_value' => $row['weight'],
         );
 
-        $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
-
-        if ($subgroup !== $last_region) {
-            $rows[] = array(
-                'data' => array(
-                    array(
-                        'data' => substr($row['start_date'], 0, 10),
-                        'colspan' => 5,
-                        'class' => 'region',
-                    ),
-                ),
-                'class' => 'region',
-            );
-            $last_region = $subgroup;
-        }
-
-        if (strlen($subgroup)) {
-            $subgroup = 'scholar-tbody-' . $subgroup;
-        } else {
-            $subgroup = 'scholar-tbody';
-        }
-
-        $subgroups[$subgroup] = true;
-
-        $element = array(
-            '#type' => 'select',
-            '#attributes' => array('class' => 'tr-weight'),
-            '#options' => $weight_options,
-            '#parents' => array('weight', $row['id']),
-            '#value' => $row['weight'],
-            '#name' => 'weight[' . $row['id'] . ']',
-            '#id' => 'weight-' . $row['id'],
-        );
-
-        $element['#type'] = 'hidden';
-
         $rows[] = array(
             'data' => array(
-                check_plain($row['bib_authors']),
-                check_plain($row['title']),
-                theme_select($element),
+                scholar_tabledrag_handle(), // miejsce na uchwyt tabledraga
+                // daty nie trzeba pokazywac, bo jest w regionie
+                _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
+                scholar_theme_select(array(
+                    '#attributes' => array('class' => 'tr-weight'),
+                    '#options'    => $weight_options,
+                    '#parents'    => array('weight', $row['id']),
+                    '#value'      => $row['weight'],
+                )),
                 scholar_oplink(t('edit'), 'generics.presentation', 'edit/%d', $row['id']),
                 scholar_oplink(t('delete'), 'generics.presentation', 'delete/%d', $row['id']),
             ),
             'class' => 'draggable',
         );
     }
-
-    $header = array(
-        t('Authors'),
-        t('Title'),
-        t('Weight'),
-        array('data' => t('Operations'), 'colspan' => 2),
-    );
 
     // tabledrag totalnie nie dziala gdy jest wiecej niz jedno tbody
     drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
@@ -238,7 +209,7 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         '#title' => t('Conference properties'),
         '#attributes' => array('class' => 'scholar'),
         '#collapsible' => true,
-        '#collapsed' => true,
+        '#collapsed' => false,
     );
 
     $location = array();
@@ -251,14 +222,23 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
         $location[] = $country;
     }
 
+    $no_value = '<em>' . t('Not specified') . '</em>';
+
+    $dl = array(
+        t('Title'),      check_plain($conference->title),
+        t('Start date'), $conference->start_date ? scholar_format_date($conference->start_date) : $no_value,
+        t('End date'),   $conference->end_date ? scholar_format_date($conference->end_date) : $no_value,
+        t('Location'),   $location ? check_plain(implode(', ', $location)) : $no_value,
+    );
+
+    if ($conference->url) {
+        $dl[] = t('Website');
+        $dl[] = l($conference->url, $conference->url);
+    }
+
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => scholar_theme_dl(array(
-            t('Title'),      check_plain($conference->title),
-            t('Start date'), $conference->start_date ? scholar_format_date($conference->start_date) : ('<em>' . t('Not specified') . '</em>'),
-            t('End date'),   $conference->end_date ? scholar_format_date($conference->end_date) : ('<em>' . t('Not specified') . '</em>'),
-            t('Location'),   $location ? check_plain(implode(', ', $location)) : ('<em>' . t('Not specified') . '</em>'),
-        )),
+        '#value' => scholar_theme_dl($dl),
     );
     $form[] = array(
         '#type' => 'markup',
