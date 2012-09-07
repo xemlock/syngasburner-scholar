@@ -135,6 +135,32 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
     );
 } // }}}
 
+function _scholar_generics_conference_children_presentation_row($row) // {{{
+{
+    if (empty($row)) {
+        return array(
+            scholar_tabledrag_handle(),
+            t('Title'),
+            t('Weight'),
+            array('data' => t('Operations'), 'colspan' => 2),
+        );
+    }
+
+    $region =substr($row['start_date'], 0, 10);
+
+    return array(
+        'region' => $region,
+        'data' => array(
+            scholar_tabledrag_handle(), // miejsce na uchwyt tabledraga
+            // daty nie trzeba pokazywac, bo jest w regionie
+            _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
+            '@weight',
+            scholar_oplink(t('edit'), 'generics.presentation', 'edit/%d', $row['id']),
+            scholar_oplink(t('delete'), 'generics.presentation', 'delete/%d', $row['id']),
+        ),
+    );
+} // }}}
+
 /**
  * Strona z listą wszystkich prezentacji podpiętych do danej
  * konferencji. Daje możliwość sortowania prezentacji.
@@ -143,62 +169,12 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
  */
 function scholar_generics_conference_children_presentation_form(&$form_state, $conference) // {{{
 {
-    drupal_set_title(t('Conference presentations'));
-
-    $presentations = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
+    $children = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
 
     $form = array(
-        'weight' => array('#tree' => true),
+        '#record' => $conference,
     );
 
-    $delta = 10;
-    $weight_options = drupal_map_assoc(range(-$delta, $delta));
-
-    $header = array(
-        scholar_tabledrag_handle(),
-        t('Title'),
-        t('Weight'),
-        array('data' => t('Operations'), 'colspan' => 2),
-    );
-
-    $last_region = ''; // pierwszy region to ten bez daty
-    foreach ($presentations as $row) {
-        $subgroup = str_replace('-', '', substr($row['start_date'], 0, 10));
-
-        if ($subgroup !== $last_region) {
-            $rows[] = array(
-                'region' => substr($row['start_date'], 0, 10),
-            );
-            $last_region = $subgroup;
-        }
-
-        $form['weight'][$row['id']] = array(
-            '#type' => 'hidden',
-            '#default_value' => $row['weight'],
-        );
-
-        $rows[] = array(
-            'data' => array(
-                scholar_tabledrag_handle(), // miejsce na uchwyt tabledraga
-                // daty nie trzeba pokazywac, bo jest w regionie
-                _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
-                scholar_theme_select(array(
-                    '#attributes' => array('class' => 'tr-weight'),
-                    '#options'    => $weight_options,
-                    '#parents'    => array('weight', $row['id']),
-                    '#value'      => $row['weight'],
-                )),
-                scholar_oplink(t('edit'), 'generics.presentation', 'edit/%d', $row['id']),
-                scholar_oplink(t('delete'), 'generics.presentation', 'delete/%d', $row['id']),
-            ),
-            'class' => 'draggable',
-        );
-    }
-
-    // tabledrag totalnie nie dziala gdy jest wiecej niz jedno tbody
-    drupal_add_tabledrag('scholar-conference-presentations', 'order', 'sibling', 'tr-weight');
-
-    $form['#record'] = $conference;
     $form['properties'] = array(
         '#type' => 'fieldset',
         '#title' => t('Conference properties'),
@@ -233,23 +209,20 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
 
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => scholar_theme_dl($dl),
+        '#value' => scholar_theme_dl($dl) 
     );
     $form[] = array(
-        '#type' => 'markup',
-        '#value' =>
-            '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>' .
-            scholar_theme_table($header, $rows, array('id' => 'scholar-conference-presentations', 'class' => 'region-locked')),
+        '#type'  => 'markup',
+        '#value' => '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>',
     );
 
-    $form[] = scholar_element_submit(array(
-        'title' => t('Save changes'),
-    ));
+    scholar_generics_weight_form($form, 
+        $children, '_scholar_generics_conference_children_presentation_row', true);
 
     _scholar_generics_conference_tabs($conference);
+    drupal_set_title(t('Conference'));
 
     return $form;
 } // }}}
 
-
-
+// vim: fdm=marker

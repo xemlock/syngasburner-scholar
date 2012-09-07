@@ -55,6 +55,39 @@ function _scholar_generics_training_list_spec($row = null) // {{{
     );
 } // }}}
 
+function _scholar_generics_training_children_class_form($row) // {{{
+{
+    if (empty($row)) {
+        return array(
+            scholar_tabledrag_handle(), // uchwyt tabledraga
+            t('Time'),
+            t('Title'),
+            t('Weight'),
+            array('data' => t('Operations'), 'colspan' => 2),
+        );
+    }
+
+    $region = substr($row['start_date'], 0, 10);
+
+    $start_date = substr($row['start_date'], 0, (int) $row['start_date_len']);
+    $start_time = substr($start_date, 11, 5);
+    $end_date = substr($row['end_date'], 0, (int) $row['end_date_len']);
+    $end_time = substr($end_date, 11, 5);    
+    
+    return array(
+        'region' => $region,
+        'data' => array(
+            scholar_tabledrag_handle(),
+            $start_time . ($end_time ? ' &ndash; ' . $end_time : ''),
+            _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title'])
+                . ($row['category_name'] ? ' (' . $row['category_name'] . ')' : ''),
+            $start_time ? '' : '@weight',
+            scholar_oplink(t('edit'), 'generics.class', 'edit/%d', $row['id']),
+            scholar_oplink(t('delete'), 'generics.class', 'delete/%d', $row['id']),
+        ),
+    );
+} // }}}
+
 /**
  * Lista zajęć w obrębie szkolenia, pogrupowanych w/g dnia, posortowanych
  * rosnąco po czasie, bez możliwości zmian wagi.
@@ -63,68 +96,9 @@ function _scholar_generics_training_list_spec($row = null) // {{{
  *     obiekt reprezentujący rekord szkolenia
  * @return array
  */
-function scholar_generics_training_children_class_form(&$form_state, $record)
+function scholar_generics_training_children_class_form(&$form_state, $record) // {{{
 {
-    $form = array(
-        '#record' => $record,
-        'weight' => array('#tree' => true),
-    );
-
-    $classes = scholar_generic_load_children($record->id, 'class', 'start_date');
-
-    $header = array(
-        scholar_tabledrag_handle(), // uchwyt tabledraga
-        t('Time'),
-        t('Title'),
-        t('Weight'),
-        array('data' => t('Operations'), 'colspan' => 2),
-    );
-
-    $delta = 10;
-    $weight_options = drupal_map_assoc(range(-$delta, $delta));
-
-    $last_region = '';
-    foreach ($classes as $row) {
-        $form['weight'][$row['id']] = array(
-            '#type' => 'hidden',
-            '#default_value' => $row['weight'],
-        );
-
-        $region = str_replace('-', '', substr($row['start_date'], 0, 10));
-
-        if ($region !== $last_region) {
-            $rows[] = array(
-                'region' => substr($row['start_date'], 0, 10),
-            );
-            $last_region = $region;
-        }
-
-        $start_date = substr($row['start_date'], 0, (int) $row['start_date_len']);
-        $start_time = substr($start_date, 11, 5);
-        $end_date = substr($row['end_date'], 0, (int) $row['end_date_len']);
-        $end_time = substr($end_date, 11, 5);
-
-
-
-        // jezeli jest podany czas poczatku nie zezwalaj na przenoszenie
-        $rows[] = array(
-            'data' => array(
-                scholar_tabledrag_handle(),
-                $start_time . ($end_time ? ' &ndash; ' . $end_time : ''),
-                _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title'])
-                . ($row['category_name'] ? ' (' . $row['category_name'] . ')' : ''),
-                scholar_theme_select(array(
-                    '#parents'    => array('weight', $row['id']),
-                    '#value'      => $row['weight'],
-                    '#options'    => $weight_options,
-                    '#attributes' => array('class' => 'tr-weight'),
-                )),
-                scholar_oplink(t('edit'), 'generics.class', 'edit/%d', $row['id']),
-                scholar_oplink(t('delete'), 'generics.class', 'delete/%d', $row['id']),
-            ),
-            'class' => $start_time ? '' : 'draggable',
-        );
-    }
+    $form = array('#record' => $record);
 
     $no_value = '<em>' . t('Not specified') . '</em>';
 
@@ -139,9 +113,6 @@ function scholar_generics_training_children_class_form(&$form_state, $record)
         $dl[] = l($conference->url, $conference->url);
     }
 
-    $html = '<div class="help">' . t('Here you can change the order of classes in this training. You can move classes by dragging-and-dropping them to a new location. Only classes without specified start time can be moved.') . '</div>'
-          . scholar_theme_table($header, $rows, array('id' => 'scholar-training-classes', 'class' => 'region-locked'));
-
     $form[] = array(
         '#type'        => 'fieldset',
         '#title'       => t('Training properties'),
@@ -155,18 +126,18 @@ function scholar_generics_training_children_class_form(&$form_state, $record)
     );
     $form[] = array(
         '#type' => 'markup',
-        '#value' => $html,
+        '#value' => '<div class="help">' . t('Here you can change the order of classes in this training. You can move classes by dragging-and-dropping them to a new location. Only classes without specified start time are movable.') . '</div>',
     );
-    $form[] = scholar_element_submit(array(
-        'title' => t('Save changes'),
-    ));
 
-    drupal_add_tabledrag('scholar-training-classes', 'order', 'sibling', 'tr-weight');
+    $children = scholar_generic_load_children($record->id, 'class', 'start_date, weight');
+    scholar_generics_weight_form($form,
+        $children, '_scholar_generics_training_children_class_form', true);
+
     _scholar_generics_training_tabs($record);
-
     drupal_set_title(t('Training'));
+
     return $form;
-}
+} // }}}
 
 function _scholar_generics_training_tabs($record) // {{{
 {
@@ -179,3 +150,4 @@ function _scholar_generics_training_tabs($record) // {{{
     }
 } // }}}
 
+// vim: fdm=marker

@@ -14,16 +14,16 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
             '#required'    => true,
         ),
         'start_date' => array(
-            '#title'       => t('Year'),
+            '#title'       => t('Year'), // Rok wydania
             '#maxlength'   => 4,
-            '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza lub czasopismo.',
+            '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza lub czasopismo. Wpisz jeżeli jest to książka lub inne wydawnictwo zwarte.',
         ),
         'bib_details' => array(
             '#description' => t('Information about editors, series, publisher etc.'),
         ),
         'authors' => array(
             '#title' => t('Authors'),
-            '#description' => 'Wypełnij jeżeli książka. Informacje o redakcji umieść w polu \'szczegóły\'.',
+            '#description' => 'Wypełnij jeżeli książka. W przypadku pracy zbiorowej informacje o redaktorach umieść w polu \'szczegóły\'.',
         ),
         scholar_element_separator(),
         'category_id' => empty($categories) ? false : array(
@@ -42,15 +42,6 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
             'cancel' => scholar_path('generics.journal'),
         ),
     ), $record);
-
-    array_unshift($form, array(
-        '#type' => 'fieldset',
-        '#title' => 'Pomoc',
-        array(
-            '#type' => 'markup',
-            '#value' => 'To niekoniecznie musi być książka, może to też być czasopismo (jako seria wydawnicza, a nie pojedynczy numer).',
-        ),
-    ));
 
     return $form;
 } // }}}
@@ -92,6 +83,66 @@ function _scholar_generics_journal_list_spec($row = null) // {{{
         scholar_oplink($row['child_count'] ? t('articles (!count)', array('!count' => $row['child_count'])) : t('articles'), 'generics.journal', 'children/%d/article', $row['id']),
         scholar_oplink(t('delete'), 'generics.journal', 'delete/%d', $row['id']),
     );
+} // }}}
+
+    // jezeli podano date wydania, wtedy czasopismo staje sie ksiazka,
+    // dla artykulow w czasopismach informacje o konkretnych wydaniach
+// nalezy podawac w bib_details
+
+function _scholar_generics_journal_children_article_row($row = null) // {{{
+{
+    if (empty($row)) {
+        return array(
+            scholar_tabledrag_handle(), // uchwyt tabledraga
+            t('Year'),
+            t('Title'),
+            t('Weight'),
+            array('data' => t('Operations'), 'colspan' => 2),
+        );
+    }
+
+    return array(
+        scholar_tabledrag_handle(),
+        substr($row['start_date'], 0, (int) $row['start_date_len']),
+        _scholar_generics_theme_bib_authors($row['bib_authors'], ': ') . check_plain($row['title']),
+        '@weight',
+        scholar_oplink(t('edit'), 'generics.article', 'edit/%d', $row['id']),
+        scholar_oplink(t('delete'), 'generics.article', 'delete/%d', $row['id']),
+    );
+} // }}}
+
+function scholar_generics_journal_children_article_form(&$form_state, $record) // {{{
+{
+    // reguly sortowania - nie ma ograniczen, daty artykulow sa ignorowane,
+    // brane sa pod uwage tylko jesli nie ma rekordu nadrzednego
+    // sortowanie w raportach:
+    //     CASE WHEN parent_start_date IS NULL THEN start_date ELSE parent_start_date END DESC), weight ASC
+    $form = array(
+        '#record' => $record,
+
+    );
+
+    $children = scholar_generic_load_children($record->id, 'article', 'weight');
+
+    scholar_generics_weight_form($form, $children,
+        '_scholar_generics_journal_children_article_row');
+
+    _scholar_generics_journal_tabs($record);
+
+    drupal_set_title(t('Journal'));
+
+    return $form;
+} // }}}
+
+function _scholar_generics_journal_tabs($record) // {{{
+{
+    if ($record) {
+        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
+        scholar_add_tab(t('Edit'), scholar_path('generics.journal', 'edit/%d', $record->id), $query);
+        scholar_add_tab(t('Add article'), scholar_path('generics.article', 'add'), $query);
+        scholar_add_tab(t('Articles'), scholar_path('generics.journal', 'children/%d/article', $record->id));
+        scholar_add_tab(t('Back to journal list'), scholar_path('generics.journal'));
+    }
 } // }}}
 
 // vim: fdm=marker

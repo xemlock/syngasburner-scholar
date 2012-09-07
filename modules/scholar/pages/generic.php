@@ -316,7 +316,8 @@ function scholar_generics_children_form_submit($form, &$form_state) // {{{
  * @param string $bib_authors
  *     lista nazwisk osób oddzielonych przecinkami
  * @param string $suffix
- *     przyrostek, który zostanie dodany tylko wtedy, gdy lista nazwisk jest niepusta
+ *     przyrostek, który zostanie dodany tylko wtedy, gdy lista nazwisk
+ *     jest niepusta
  * @return string
  *     lista osób z wytłuszczonymi nazwiskami osób
  */
@@ -334,6 +335,130 @@ function _scholar_generics_theme_bib_authors($bib_authors, $suffix = '') // {{{
     }
 
     return strlen($bib_authors) ? ($bib_authors . $suffix) : '';
+} // }}}
+
+/**
+ * Formularz do zmiany wagi rekordów metodą "przeciągnij i upuść".
+ *
+ * @param array &$form
+ *     tablica, w której umieszczone zostaną elementy wymagane do działania
+ *     formularza zmiany wagi.
+ * @param array $records
+ *     lista elementów, na podstawie których wygenerowane zostaną wiersze
+ *     tabeli
+ * @param callback $callback
+ *     funkcja przekształcająca rekord w definicję wiersza tabeli. Jeżeli
+ *     otrzyma jako parametr pustą wartość musi zwrócić definicję nagłówka
+ *     tabeli.
+ * @param bool $region_locked
+ *     czy wiersze można przenosić pomiędzy regionami.
+ * @return &array
+ *     referencja do tablicy przekazanej jako pierwszy parametr funkcji
+ */
+function scholar_generics_weight_form(&$form, $records, $callback, $region_locked = false) // {{{
+{
+    if (!is_callable($callback)) {
+        drupal_set_message('Invalid table row generator callback', 'error');
+        return;
+    }
+
+    if (!is_array($form)) {
+        $form = array();
+    }
+
+    $form['weight'] = array('#tree' => true);
+
+    $delta = 10;
+    $weight_options = drupal_map_assoc(range(-$delta, $delta));
+
+    $header  = call_user_func($callback, null);
+    $colspan = scholar_table_colspan($header);
+    $rows    = array();
+
+    $tabledrag = false;
+    $last_region = '';
+
+    foreach ($records as $row) {
+        // wywolaj funkcje budujaca wiersz tabeli
+        $tr = (array) call_user_func($callback, $row);
+
+        // sprawdz, czy podano region dla tego wiersza...
+        if (isset($tr['region'])) {
+            $region = (string) $tr['region'];
+            unset($tr['region']);
+        } else {
+            $region = '';
+        }
+
+        // ...jezeli tak, i jest on rozny od poprzedniego dodaj do tabeli 
+        // wiersz rozpoczynajacy region, scholar_theme_table przeksztalci
+        // to na postac zrozumiala dla theme_table
+        if ($region != $last_region) {
+            $rows[] = array('region' => $region);
+            $last_region = $region;
+        }
+
+        // znormalizuj wiersz tabeli tak, by mozna bylo dodac do niego klase
+        if (!isset($tr['data'])) {
+            $tr = array('data' => $tr);
+        }
+
+        // sprawdz wszystkie kolumny, jezeli ktoras z nich zawiera @weight,
+        // ustaw klase draggable, oraz zamien kolumne na pole wyboru wagi
+        $draggable = false;
+
+        foreach ($tr['data'] as &$cell) {
+            if ($cell === '@weight') {
+                // dodaj ukryte pole do formularza
+                $form['weight'][$row['id']] = array(
+                    '#type' => 'hidden',
+                    '#default_value' => $row['weight'],
+                );
+
+                // zastap zawartosc komorki elementem SELECT z wyborem wagi
+                $cell = scholar_theme_select(array(
+                    '#parents'    => array('weight', $row['id']),
+                    '#value'      => $row['weight'],
+                    '#options'    => $weight_options,
+                    '#attributes' => array('class' => 'tr-weight'),
+                ));
+
+                $draggable = true;
+                $tabledrag = true;
+                break;
+            }
+        }
+
+        if ($draggable) {
+            if (isset($tr['class'])) {
+                $tr['class'] .= ' draggable';
+            } else {
+                $tr['class'] = 'draggable';
+            }
+        }
+
+        $rows[] = $tr;
+    }
+
+    $table_id = 'scholar-generics-weight-list';
+    $attrs = array('id' => $table_id);
+    if ($region_locked) {
+        $attrs['class'] = 'region-locked';
+    }
+
+    $html = scholar_theme_table($header, $rows, $attrs);
+
+    if ($tabledrag) {
+        drupal_add_tabledrag($table_id, 'order', 'sibling', 'tr-weight', null, null, false);
+    }
+
+    $form[] = array(
+        '#type' => 'markup',
+        '#value' => $html,
+    );
+    $form[] = scholar_element_submit(array(
+        'title' => t('Save changes'),
+    ));
 } // }}}
 
 // vim: fdm=marker
