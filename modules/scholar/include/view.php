@@ -152,6 +152,13 @@ abstract class scholar_view_abstract
         return $this;
     }
 
+    public function assignFromArray($array)
+    {
+        foreach ($array as $key => $value) {
+            $this->assign($key, $value);
+        }
+    }
+
     // wypisuje eskejpowana zawartosc zmiennej
     public function escape($value)
     {
