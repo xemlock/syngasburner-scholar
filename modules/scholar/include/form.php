@@ -352,22 +352,6 @@ function scholar_populate_record(&$record, $values) // {{{
     return $count;
 } // }}}
 
-function scholar_validate_url($element, &$form_state) // {{{
-{
-    $value = (string) $element['#value'];
-
-    if (strlen($value)) {
-        $scheme = '(ftp|http)s?:\/\/';
-        $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
-        $port = '(:\d+)?';
-        $path = '(\/[^\s]*)*';
-
-        if (!preg_match("/^$scheme$host$port$path$/i", $value)) {
-            form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.'));
-        }
-    }
-} // }}}
-
 /**
  * Generator formularzy rekordów generycznych.
  */
@@ -401,8 +385,8 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
         'start_date' => array(
             '#type'      => 'textfield',
             '#title'     => t('Start date'),
-            '#maxlength' => 10, // YYYY-MM_DD
-            '#size' => 32,
+            '#maxlength' => 10, // YYYY-MM-DD
+            '#size'      => 24,
             '#description' => t('Date format: YYYY-MM-DD.'),
             '#attributes' => array('class' => 'form-date'),
         ),
@@ -410,7 +394,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#type'      => 'textfield',
             '#title'     => t('End date'),
             '#maxlength' => 10,
-            '#size' => 32,
+            '#size'      => 24,
             '#description' => t('Date format: YYYY-MM-DD.'),
             '#attributes' => array('class' => 'form-date'),
         ),
@@ -433,7 +417,7 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#title'     => t('URL'),
             '#maxlength' => 255,
             '#description' => t('Adres URL zewnętrznej strony ze szczegółowymi informacjami (musi zaczynać się od http:// lub https://).'),
-            '#element_validate' => array('scholar_validate_url'),
+            '#element_validate' => array('scholar_form_validate_url'),
         ),
         'parent_id' => array(
             '#type'     => 'select',
@@ -472,6 +456,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 
     // przechowuje informacje o polu submit, jezeli zostalo podane
     $submit = null;
+
+    // jezeli 2 wtedy zostanie automatycznie dodany walidator dat
+    // poczatku i konca
+    $date_range = 0;
 
     foreach ($fields as $key => $value) {
         // jezeli podano nazwe formularza jako wartosc, z numerycznym
@@ -562,6 +550,12 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
                         ? array_merge($record_fields[$key], $value)
                         : $record_fields[$key];
 
+                    if ('start_date' == $key) {
+                        $date_range = 1;
+                    } elseif ('end_date' == $key) {
+                        $date_range = 2;
+                    }
+
                 } elseif (is_array($value)) {
                     // niestandardowe pole formularza, dodaj je do sekcji record
                     $vtable['record'][$key] = $value;
@@ -574,6 +568,12 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     $form['vtable']  = $vtable;
     $form['submit']  = $submit;
 
+    // jezeli w formularzu sa predefiniowane pola poczatku i konca daty
+    // dodaj walidacje zakresu dat
+    if (2 == $date_range) {
+        $form['#validate'][] = 'scholar_generic_form_validate_date_range';
+    }
+
     if ($record) {
         scholar_populate_form($form, $record);
     }
@@ -581,22 +581,69 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     return $form;
 } // }}}
 
+function scholar_generic_form_validate_date_range($form, &$form_state) // {{{
+{
+    $range = scholar_form_validate_date_range(
+        $form['vtable']['record']['start_date'],
+        $form['vtable']['record']['end_date']
+    );
+
+    // validate date range zwraca czasy uniksowe poczatku i konca przedzialu
+    // dat, o ile podane dane sa poprawne
+    if ($range) {
+        // walidacja dat dopuszcza podanie tylko roku, wtedy miesiac
+        // i dzien ustawiane sa na 1 stycznia. Poniewaz w bazie trzeba zapisac
+        // pelne daty musimy je przygotowac.
+        $form_state['values']['start_date'] = date('Y-m-d', $range[0]);
+        $form_state['values']['end_date']   = date('Y-m-d', $range[1]);
+    }
+} // }}}
+
+
 function scholar_element_separator() // {{{
 {
     return array('#type' => 'markup', '#value' => '<div style="width:95%;margin:2em 0 1em"><hr/></div>');
 } // }}}
 
 /**
- * Owija zawartość elementu w DIV.scholar-element-wrapper.
+ * Otwiera tabelę i rozpoczyna pierwszą komórkę.
  *
- * @param array $element
- * @param string $content
- * @return string
+ * @return array
  */
-function scholar_theme_element($element, $content) // {{{
+function scholar_form_tablerow_open() // {{{
 {
-    return theme('form_element', $element, '<div class="scholar-element-wrapper">' . $content . '</div>');
+    return array(
+        '#type' => 'markup',
+        '#value' => '<table border="0" cellpadding="0" cellspacing="0" style="width:auto;border:none"><tbody style="border:none"><tr style="border:none"><td style="border:none;padding:0">',
+    );
 } // }}}
+
+/**
+ * Zamyka otwartą komórkę tabeli i rozpoczyna nową.
+ *
+ * @return array
+ */
+function scholar_form_tablerow_next() // {{{
+{
+    return array(
+        '#type' => 'markup',
+        '#value' => '</td><td style="border:none;padding:0 0 0 0.75em">',
+    );
+} // }}}
+
+/**
+ * Zamyka otwartą komórkę tabeli i zamyka tabelę.
+ *
+ * @return array
+ */
+function scholar_form_tablerow_close() // {{{
+{
+    return array(
+        '#type' => 'markup',
+        '#value' => '</td></tr></tbody></table>',
+    );
+} // }}}
+
 
 function scholar_form_required_error($element) // {{{
 {

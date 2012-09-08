@@ -8,20 +8,22 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     $categories = scholar_category_options('generics', 'conference');
 
     $form = scholar_generic_form(array(
-        '#id' => 'scholar-conference-form',
         'title' => array(
             '#title' => t('Conference name'),
             '#required' => true
         ),
+        scholar_form_tablerow_open(),
         'start_date',/* => array(
             '#required' => true,
         ),*/
+        scholar_form_tablerow_next(),
         // FIXME NIE NIE NIEw przeciwienstwie do modulu events, date konca trzeba podac zawsze,
         // albo jawnie okreslic, ze wydarzenie nie ma sprecyzowanego konca
         'end_date', /* => array(
             '#required' => true,
             '#field_suffix' => ' <label><input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.') . '</label>',
         ), */
+        scholar_form_tablerow_close(),
         'locality' => array(
             '#description' => t('Name of city or village where this conference is held.'),
         ),
@@ -60,16 +62,6 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
         ),
     ), $record);
 
-    // dodaj wylaczanie pola country jezeli w miejsce miejscowosci podano 'internet'
-    //drupal_add_js("$(function(){var f=$('#scholar-conference-form'),l=f.find('input[name=\"locality\"]'),c=f.find('select[name=\"country\"]'),d=function(){c[$.trim(l.val())=='internet'?'attr':'removeAttr']('disabled',true)};l.keyup(d);d()})", 'inline');
-
-    /*
-    $form['vtable']['presentations'] = array(
-        '#type' => 'scholar_element_vtable_row',
-        '#title' => t('Presentations'),
-        '#description' => t('Change the order of presentations'),
-    );*/
-
     _scholar_generics_conference_tabs($record);
 
     return $form;
@@ -81,7 +73,7 @@ function _scholar_generics_conference_tabs($record) // {{{
         $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
         scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $record->id), $query);
         scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
-        scholar_add_tab(t('Presentations'), scholar_path('generics.conference', 'children/%d/presentation', $record->id));
+        scholar_add_tab(t('Details'), scholar_path('generics.conference', 'details/%d', $record->id));
         scholar_add_tab(t('List'), scholar_path('generics.conference'));
     }
 } // }}}

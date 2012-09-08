@@ -136,6 +136,18 @@ function scholar_theme_textfield($element) // {{{
 } // }}}
 
 /**
+ * Owija zawartość elementu w DIV.scholar-element-wrapper.
+ *
+ * @param array $element
+ * @param string $content
+ * @return string
+ */
+function scholar_theme_element($element, $content) // {{{
+{
+    return theme('form_element', $element, '<div class="scholar-element-wrapper">' . $content . '</div>');
+} // }}}
+
+/**
  * @param string $title
  *     Tytuł hiperłącza
  * @param string $path_name

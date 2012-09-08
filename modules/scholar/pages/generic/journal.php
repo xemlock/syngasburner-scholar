@@ -194,7 +194,7 @@ function _scholar_generics_journal_tabs($record) // {{{
         $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
         scholar_add_tab(t('Edit'), scholar_path('generics.journal', 'edit/%d', $record->id), $query);
         scholar_add_tab(t('Add article'), scholar_path('generics.article', 'add'), $query);
-        scholar_add_tab(t('Articles'), scholar_path('generics.journal', 'children/%d/article', $record->id));
+        scholar_add_tab(t('Details'), scholar_path('generics.journal', 'details/%d', $record->id));
         scholar_add_tab(t('Back to journal list'), scholar_path('generics.journal'));
     }
 } // }}}

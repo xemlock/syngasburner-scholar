@@ -14,6 +14,7 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
             '#description' => t('Date of publication in format YYYY or YYYY-MM (four-digit year with optional month).'),
             '#maxlength'   => 7,
             '#required'    => true,
+            '#element_validate' => array('scholar_form_validate_publication_date'),
         ),
         'authors' => array(
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),

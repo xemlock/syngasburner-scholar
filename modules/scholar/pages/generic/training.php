@@ -3,13 +3,15 @@
 function scholar_generics_training_form(&$form_state, $record = null) // {{{
 {
     $form = scholar_generic_form(array(
-        '#id' => 'scholar-training-form',
         'title' => array(
             '#title' => t('Training title'),
             '#required' => true
         ),
+        scholar_form_tablerow_open(),
         'start_date',
+        scholar_form_tablerow_next(),
         'end_date',
+        scholar_form_tablerow_close(),
         'suppinfo' => array(
             '#description' => t('Additional details about this training.'),
         ),
@@ -155,8 +157,8 @@ function _scholar_generics_training_tabs($record) // {{{
         $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
         scholar_add_tab(t('Edit'), scholar_path('generics.training', 'edit/%d', $record->id), $query);
         scholar_add_tab(t('Add class'), scholar_path('generics.class', 'add'), $query);
-        scholar_add_tab(t('Classes'), scholar_path('generics.training', 'children/%d/class', $record->id));
-        scholar_add_tab(t('List'), scholar_path('generics.training'));
+        scholar_add_tab(t('Details'), scholar_path('generics.training', 'details/%d', $record->id));
+        scholar_add_tab(t('Back to training list'), scholar_path('generics.training'));
     }
 } // }}}
 

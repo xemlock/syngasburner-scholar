@@ -3,12 +3,19 @@
 /**
  * @param string $date
  *     data w formacie YYYY, YYYY-MM lub YYYY-MM-DD (ISO 8601)
+ * @return array
+ *     tablica z kluczami year, month, day, iso, time. Pierwszy jest liczbą
+ *     całkowitą, dwa następne liczbami całkowitymi albo nullami (jeżeli
+ *     nie zostały podane), zaś iso jest reprezentacją tekstową podanej
+ *     daty. Ostatni jest liczbą sekund od epoki Uniksa - jeżeli nie podano
+ *     miesiąca zostaje obrany styczeń, jeżeli nie podano dnia, obrany zostaje
+ *     pierwszy dzień miesiąca.
  */
 function scholar_parse_date($date) // {{{
 {
-    '/^\s*(?P<year>\d+)(?>-(?P<month>\d{1,2}))?(?>-(?P<day>\d{1,2}))?\s*$/';
-
-    if (preg_match('/^\s*(?>(?P<year>\d+)(?>-(?P<month>\d{1,2})(?>-(?P<day>\d{1,2}))?)?)\s*$/', $date, $match)) {
+    if (preg_match('/^\s*(?>(?P<year>\d{4})(?>-(?P<month>\d{1,2})(?>-(?P<day>\d{1,2}))?)?)\s*$/', $date, $match)) {
+        // rok musi skladac sie z czterech cyfr, wiecej cyfr nie miesci sie
+        // w typie DATETIME w MySQL.
         $y = intval($match['year']);
         $m = isset($match['month']) ? intval($match['month']) : null;
         $d = isset($match['day']) ? intval($match['day']) : null;
@@ -32,6 +39,7 @@ function scholar_parse_date($date) // {{{
                         ? sprintf('%04d-%02d', $y, $m)
                         : sprintf('%04d-%02d-%02d', $y, $m, $d)
                     ),
+                'time'  => mktime(0, 0, 0, isset($m) ? $m : 1, isset($d) ? $d : 1, $y),
             );
         }
     }
@@ -46,8 +54,6 @@ function scholar_parse_date($date) // {{{
  */
 function scholar_parse_time($time) // {{{
 {
-    '/^\s*(?P<hour>\d+)(?>:(?P<minute>\d+))?(?>:(?P<second>\d+(\.\d*)?))?\s*$/';
-
     if (preg_match('/^\s*(?>(?P<hour>\d+)(?>:(?P<minute>\d+)(?>:(?P<second>\d+)(?P<millis>\.\d*)?)?)?)\s*$/', $time, $match)) {
         $h = intval($match['hour']);
         $m = isset($match['minute']) ? intval($match['minute']) : null;
