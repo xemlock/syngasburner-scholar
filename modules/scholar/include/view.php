@@ -157,6 +157,7 @@ abstract class scholar_view_abstract
         foreach ($array as $key => $value) {
             $this->assign($key, $value);
         }
+        return $this;
     }
 
     // wypisuje eskejpowana zawartosc zmiennej

@@ -17,6 +17,7 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
             '#element_validate' => array('scholar_form_validate_publication_date'),
         ),
         'authors' => array(
+            '#required'    => true,
             '#description' => t('Remember about correct order, if there is more than one author or contributor.'),
         ),
         'parent_id' => empty($parents) ? false : array(

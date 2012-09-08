@@ -123,8 +123,28 @@ function scholar_report_person($id, $language) // {{{
     );
 } // }}}
 
-function scholar_report_publications($language)
+function scholar_report_publications($language) // {{{
 {
+    // sortowanie:
+    // 1. ksiazki w/g nazwy kategorii rosnaco
+    // 2. ksiazki i czasopisma malejaco po czasie: g2.start_date DESC
+    // 3. - dla artykulow w obrebie czasopisma
+    //      (g2.parent_id IS NOT NULL AND g2.start_date IS NULL) wedlug weight ASC
+    //    - dla artykulow w obrebie ksiazki
+    //      (g2.parent_id IS NOT NULL AND g2.start_date IS NOT NULL) wedlug weight ASC
+    //    - dla artykulow samotnych (g2.parent_id IS NULL) wedlug g.start_date DESC
+    //
+    // g2.start_date wspolne dla wszystkich, samotne artykuly i te w czasopismach beda
+    // grupowane razem (bo dla nich g2.start_date IS NULL). Artykuly w ksiazkach beda
+    // grupowane osobno w/g roku wydania, malejaco.
+    //
+    // Tricky part jest dla wagi i daty wydania artykulu. Zeby sortowac po wadze rosnaco
+    // gdy kolumna jest sortowana malejaco, trzeba przemnozyc wage przez -1 
+    // (weight ASC === -weight DESC)
+    //
+    // Podsumowujac:
+    //   ORDER BY g2.start_date DESC, CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE -g.weight END DESC
+
     $query = db_query("
         SELECT g.id, g.title, g.start_date, g.bib_details AS bib_details, g.url,
                i.suppinfo, g.parent_id, g2.title AS parent_title,
@@ -140,7 +160,10 @@ function scholar_report_publications($language)
                 ON (g.id = i.generic_id AND i.language = '%s')
             WHERE
                 g.subtype = 'article'
-        ORDER BY g.start_date DESC, g.weight
+        ORDER BY
+            CASE WHEN g2.start_date IS NULL THEN NULL ELSE c.name END ASC,
+            g2.start_date DESC,
+            CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE -g.weight END DESC
     ", $language, $language);
 
     // Reviewed papers / Publikacje w czasopismach recenzowanych
@@ -149,16 +172,18 @@ function scholar_report_publications($language)
     // artykuly wchodzace w sklad ksiazek lub prac zbiorowych
     $journal_articles = array();
 
+    // kategoria dla wydawnictw, ktore nie sa czasopismami (nie maja podanej
+    // daty wydania), ale nie sa skategoryzowane. Ta kategoria bedzie pierwsza
+    // (pusty ciag znakow bedzie na poczatku przy sortowaniu po category_names.name)
+    $empty_category = t('Uncategorized non-serial publications', array(), $language);
+
     while ($row = db_fetch_array($query)) {
         $category = trim($row['category_name']);
-
         // nazwa kategorii nie bedzie juz potrzebna temu rekordowi
         unset($row['category_name']);
 
-        // artykuly bez parenta, lub te, dla ktorych parent ma pusty rok,
-        // lub o nieskategoryzowanym parencie. Zakladamy wtedy, ze parent
-        // (istniejacy lub nie) to seria wydawnicza lub czasopismo.
-        if (empty($row['parent_id']) || empty($row['parent_start_date']) || !strlen($category)) {
+        // artykuly bez parenta, lub te, dla ktorych parent ma pusty rok (jest czasopismem)
+        if (empty($row['parent_id']) || empty($row['parent_start_date'])) {
             $year  = intval(substr($row['start_date'], 0, 4));
             $row['year']    = $year ? $year : '';
             $row['bib_details'] = _scholar_publication_details($row['bib_details']);
@@ -169,7 +194,11 @@ function scholar_report_publications($language)
             continue;
         }
 
-        // ksiazki pogrupuj w kategorie
+        if (empty($category)) {
+            $category = $empty_category;
+        }
+
+        // wydawnictwa pogrupuj w kategorie
         $title = $row['parent_title'];
         $year  = intval(substr($row['parent_start_date'], 0, 4));
 
@@ -219,8 +248,67 @@ function scholar_report_publications($language)
         'articles'         => $articles,
         'journal_articles' => $journal_articles,
     );
-}
+} // }}}
 
+function scholar_report_conferences($language)
+{
+    // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
+    // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server).
+    // Wystepienia w obrebie
+    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
+    // Jezeli konferencja ma pusta date poczatku, uzyj daty prezentacji jako
+    // poczatku i konca konferencji --> przydatne gdy mamy konferencje dlugoterminowe
+    // (np. seminaria)
+    $query = db_query("
+        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
+               g2.title AS parent_title, 
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.start_date END AS parent_start_date,
+               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.end_date END AS parent_end_date,
+               i2.suppinfo AS parent_suppinfo,
+               g2.url AS parent_url, g2.country AS parent_country,
+               g2.locality AS parent_locality, c.name AS category_name
+        FROM {scholar_generics} g
+        JOIN {scholar_generics} g2
+            ON g.parent_id = g2.id
+        LEFT JOIN {scholar_category_names} c
+            ON (g.category_id = c.category_id AND c.language = '%s')
+        LEFT JOIN {scholar_generic_suppinfo} i
+            ON (i.generic_id = g.id AND i.language = '%s')
+        LEFT JOIN {scholar_generic_suppinfo} i2
+            ON (i2.generic_id = g2.id AND i2.language = '%s')
+        WHERE g2.list <> 0
+            AND g.subtype = 'presentation'
+            AND g2.subtype = 'conference'
+            AND LENGTH(g.title) > 0
+        ORDER BY g2.start_date DESC, g.start_date, g.weight
+    ", $language, $language, $language);
+
+    $year_conferences = array();
+
+    while ($row = db_fetch_array($query)) {
+        $parent_id = $row['parent_id'];
+        $year = intval(substr($row['parent_start_date'], 0, 4));
+
+        if (!isset($year_conferences[$year][$parent_id])) {
+            $year_conferences[$year][$parent_id] = __scholar_prepare_conference_from_parent_fields($row, $language);
+        }
+
+        _scholar_page_unset_parent_keys($row);
+        $year_conferences[$year][$parent_id]['presentations'][] = $row;
+    }
+
+    // dodaj URL do stron z konferencjami i prezentacjami oraz
+    // autorow prezentacji
+    foreach ($year_conferences as &$conferences) {
+        foreach ($conferences as &$conference) {
+            _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
+            foreach ($conference['presentations'] as &$presentation) {
+                _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
+            }
+        }
+    }
+    return array('year_conferences' => $year_conferences);
+}
 
 /**
  * Funkcja pomocnicza usuwająca z tabeli reprezentującej pobrany

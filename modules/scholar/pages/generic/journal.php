@@ -58,9 +58,9 @@ function _scholar_generics_journal_form_process_values(&$values) // {{{
     $values['end_date'] = null;
 } // }}}
 
-function _scholar_generics_journal_list_row($row = null) // {{{
+function _scholar_generics_journal_list_row($row) // {{{
 {
-    if (null === $row) {
+    if (empty($row)) {
         return array(
             array('data' => t('Year'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),    'field' => 'bib_authors'),
@@ -85,7 +85,7 @@ function _scholar_generics_journal_list_row($row = null) // {{{
     );
 } // }}}
 
-function _scholar_generics_journal_details_row($row = null) // {{{
+function _scholar_generics_journal_details_row($row) // {{{
 {
     if (empty($row)) {
         return array(
@@ -173,7 +173,7 @@ function scholar_generics_journal_details_form(&$form_state, $record) // {{{
     if ($children) {
         $form[] = array(
             '#type' => 'markup',
-            '#value' => '<div class="help">' . t('Here you can change the order of articles in this publication. You can move articles by dragging-and-dropping them to a new position.') . '</div>',
+            '#value' => '<div class="help">' . t('Here you can change the order of articles in this publication. You can move articles by dragging-and-dropping them to a new position. Article ordering is taken into account only for books or other non-serial publications.') . '</div>',
         );
         scholar_generics_weight_form($form, $children,
             '_scholar_generics_journal_details_row');

@@ -122,66 +122,14 @@ function scholar_render_pages_publications_node($view, $node) // {{{
 
 function scholar_render_pages_conferences_node($view, $node) // {{{
 {
-    $language = $node->language;
+    $vars = scholar_report_publications($node->language);
 
-    // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
-    // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server)
-    // country name, locality , kategoria. Wystepienia w obrebie
-    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
-    // Jezeli konferencja ma pusta date poczatku, uzyj daty prezentacji jako
-    // poczatku i konca konferencji --> przydatne gdy mamy konferencje dlugoterminowe
-    // (np. seminaria)
-    $query = db_query("
-        SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
-               g2.title AS parent_title, 
-               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.start_date END AS parent_start_date,
-               CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE g2.end_date END AS parent_end_date,
-               i2.suppinfo AS parent_suppinfo,
-               g2.url AS parent_url, g2.country AS parent_country,
-               g2.locality AS parent_locality, c.name AS category_name
-        FROM {scholar_generics} g
-        JOIN {scholar_generics} g2
-            ON g.parent_id = g2.id
-        LEFT JOIN {scholar_category_names} c
-            ON (g.category_id = c.category_id AND c.language = '%s')
-        LEFT JOIN {scholar_generic_suppinfo} i
-            ON (i.generic_id = g.id AND i.language = '%s')
-        LEFT JOIN {scholar_generic_suppinfo} i2
-            ON (i2.generic_id = g2.id AND i2.language = '%s')
-        WHERE g2.list <> 0
-            AND g.subtype = 'presentation'
-            AND g2.subtype = 'conference'
-            AND LENGTH(g.title) > 0
-        ORDER BY g2.start_date DESC, g.start_date, g.weight
-    ", $language, $language, $language);
-
-    $year_conferences = array();
-
-    while ($row = db_fetch_array($query)) {
-        $parent_id = $row['parent_id'];
-        $year = intval(substr($row['parent_start_date'], 0, 4));
-
-        if (!isset($year_conferences[$year][$parent_id])) {
-            $year_conferences[$year][$parent_id] = __scholar_prepare_conference_from_parent_fields($row, $language);
-        }
-
-        _scholar_page_unset_parent_keys($row);
-        $year_conferences[$year][$parent_id]['presentations'][] = $row;
-    }
-
-    // dodaj URL do stron z konferencjami i prezentacjami oraz
-    // autorow prezentacji
-    foreach ($year_conferences as &$conferences) {
-        foreach ($conferences as &$conference) {
-            _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
-            foreach ($conference['presentations'] as &$presentation) {
-                _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
-            }
-        }
+    if (empty($vars)) {
+        return '';
     }
 
     return $view
-        ->assign('year_conferences', $year_conferences)
+        ->assignFromArray($vars)
         ->render('conferences.tpl');
 } // }}}
 
