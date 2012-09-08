@@ -4,30 +4,34 @@
  * Zwraca wypełniony obiekt reprezentujący rekord tabeli generyków.
  *
  * @param int $id
- *     identyfikator rekordu
- * @param string $subtype
- *     podtyp rekordu, jeżeli nie został podany lub gdy podano dowolną pustą
- *     wartość, podtyp nie będzie uwzględniony podczas wyszukiwania
- * @param string $redirect
- *     OPTIONAL jeśli podany nastąpi przekierowanie do podanej strony
- *     z komunikatem o nieprawidłowym identyfikatorze rekordu
+ *     identyfikator rekordu lub warunki wyszukiwania
  * @return false|object
  */
-function scholar_load_generics_record(&$record) // {{{
+function scholar_load_generics_record($id) // {{{
 {
-    // przytnij daty poczatku i konca do zadanej liczby znakow
-    $record->start_date = substr($record->start_date, 0, $record->start_date_len);
-    $record->end_date = substr($record->end_date, 0, $record->end_date_len);
+    global $language;
 
-    $suppinfo = array();
+    $conds = is_array($id) ? $id : array('id' => $id);
+    $query = db_query("SELECT g.*, c.name AS category_name FROM {scholar_generics} g LEFT JOIN {scholar_category_names} c ON (g.category_id = c.category_id AND c.language = '%s') WHERE " . scholar_db_where($conds), $language->language);
 
-    $query = db_query("SELECT * FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $record->id);
+    $record = db_fetch_object($query);
 
-    while ($row = db_fetch_array($query)) {
-        $suppinfo[$row['language']] = $row['suppinfo'];
+    if ($record) {
+        // przytnij daty poczatku i konca do zadanej liczby znakow
+        $record->start_date = substr($record->start_date, 0, $record->start_date_len);
+        $record->end_date = substr($record->end_date, 0, $record->end_date_len);
+
+        $suppinfo = array();
+
+        $query = db_query("SELECT * FROM {scholar_generic_suppinfo} WHERE generic_id = %d", $record->id);
+        while ($row = db_fetch_array($query)) {
+            $suppinfo[$row['language']] = $row['suppinfo'];
+        }
+
+        $record->suppinfo = $suppinfo;
     }
 
-    $record->suppinfo = $suppinfo;
+    return $record;
 } // }}}
 
 /**

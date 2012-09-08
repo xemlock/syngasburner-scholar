@@ -3,7 +3,7 @@
 /**
  * @param object &$recor
  */
-function scholar_load_categories_record(&$record) // {{{
+function scholar_postload_categories_record(&$record) // {{{
 {
     $names = array();
 

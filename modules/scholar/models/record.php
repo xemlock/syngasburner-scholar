@@ -19,10 +19,27 @@
  */
 function scholar_load_record($model, $id, $redirect = false) // {{{
 {
-    $where = is_array($id) ? $id : array('id' => $id);
-    $query = db_query("SELECT * FROM {scholar_{$model}} WHERE " . scholar_db_where($where));
+    $record = null;
 
-    $record = db_fetch_object($query);
+    // sprobuj wywolac funkcje pobierajaca rekord z bazy danych,
+    // przydatna, gdy potrzebna jest dodatkowa logika, np. zwiazana
+    // z pobieraniem zaleznych rekordow z wiecej niz jednej tabeli.
+    $func = "scholar_load_{$model}_record";
+
+    if (function_exists($func)) {
+        $tmp = call_user_func($func, $id);
+        if (is_object($tmp)) {
+            $record = &$tmp;
+        }
+        unset($tmp);
+    }
+
+    // jezeli to sie nie uda pobierz rekord z podanej tabeli
+    if (empty($record)) {
+        $where = is_array($id) ? $id : array('id' => $id);
+        $query = db_query("SELECT * FROM {scholar_{$model}} WHERE " . scholar_db_where($where));
+        $record = db_fetch_object($query);
+    }
 
     if ($record) {
         $record->authors = scholar_load_authors($record->id, $model);
@@ -30,7 +47,7 @@ function scholar_load_record($model, $id, $redirect = false) // {{{
         $record->nodes   = scholar_load_nodes($record->id, $model);
         $record->events  = scholar_load_events($record->id, $model);
 
-        _scholar_invoke_record('load', $model, $record);
+        _scholar_invoke_record('postload', $model, $record);
 
     } else if ($redirect) {
         if (isset($where['id'])) {
@@ -134,7 +151,7 @@ function _scholar_invoke_record($hook, $model, &$record) // {{{
     $func = "scholar_{$hook}_{$model}_record";
 
     if (function_exists($func)) {
-        call_user_func_array($func, array(&$record));
+        return call_user_func_array($func, array(&$record));
     }
 } // }}}
 
