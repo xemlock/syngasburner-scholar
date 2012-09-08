@@ -1,6 +1,6 @@
 <?php
 
-function scholar_generics_class_form(&$form_state, $record = null)
+function scholar_generics_class_form(&$form_state, $record = null) // {{{
 {
     $categories = scholar_category_options('generics', 'class');
 
@@ -51,7 +51,7 @@ function scholar_generics_class_form(&$form_state, $record = null)
     ), $record);
 
     return $form;
-}
+} // }}}
 
 function _scholar_generics_class_form_process_values(&$values) // {{{
 {
@@ -59,9 +59,9 @@ function _scholar_generics_class_form_process_values(&$values) // {{{
     $values['end_date']   = $values['time']['date'] . ' ' . $values['time']['end_time'];
 } // }}}
 
-function _scholar_generics_class_list_spec($row = null) // {{{
+function _scholar_generics_class_list_row($row) // {{{
 {
-    if (null === $row) {
+    if (empty($row)) {
         return array(
             array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'),    'field' => 'title'),

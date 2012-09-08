@@ -74,9 +74,12 @@ function _scholar_menu() // {{{
         'page arguments'    => array($root . '/conferences/conference'),
     );
     $items += _scholar_generic_menu($root . '/conferences/conference',
-        'conference', 
-        t('Conferences'), 
-        array('edit' => t('Edit conference'))
+        'conference',
+        t('Conferences'),
+        array(
+            'edit' => t('Edit conference'),
+            'details' => t('Conference details'),
+        )
     );
     $items[$root . '/conferences/conference']['weight'] = -10;
     $items += _scholar_category_menu($root . '/conferences/conference', 'generics', 'conference', array(
@@ -86,7 +89,7 @@ function _scholar_menu() // {{{
 
     $items += _scholar_generic_menu($root . '/conferences/presentation',
         'presentation',
-        t('Presentations'), 
+        t('Presentations'),
         array('edit' => t('Edit presentation'))
     );
     $items += _scholar_category_menu($root . '/conferences/presentation', 'generics', 'presentation', array(
@@ -105,7 +108,10 @@ function _scholar_menu() // {{{
     $items += _scholar_generic_menu($root . '/journal',
         'journal',
         t('Journals'),
-        array('edit' => t('Edit journal'))
+        array(
+            'edit' => t('Edit journal'),
+            'details' => t('Journal details'),
+        )
     );
     $items += _scholar_category_menu($root . '/journal', 'generics', 'journal', array(
         'edit'   => t('Edit journal category'),
@@ -126,7 +132,10 @@ function _scholar_menu() // {{{
     $items += _scholar_generic_menu($root . '/trainings/training',
         'training',
         t('Trainings'),
-        array('edit' => t('Edit training'))
+        array(
+            'edit' => t('Edit training'),
+            'details' => t('Training details'),
+        )
     );
     $items[$root . '/trainings/training']['weight'] = -10;
     $items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
@@ -396,6 +405,7 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'add'        => t('Add'),
         'edit'       => t('Edit'),
         'delete'     => t('Delete'),
+        'details'    => t('Details'),
     ), $titles);
 
     $items[$root_path] = array(
@@ -440,13 +450,12 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
     );
-    $items[$root_path . '/children/%/%'] = array(
+    $items[$root_path . '/details/%'] = array(
         'type'              => MENU_CALLBACK,
-        // brak tytulu, funkcja odpowiedzialna za generowanie strony musi sama
-        // go ustawic
+        'title'             => $titles['details'],
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_generics_children_form', $subtype),
+        'page arguments'    => array('scholar_generics_details_form', $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
     );

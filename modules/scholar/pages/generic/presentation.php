@@ -80,9 +80,9 @@ function _scholar_generics_presentation_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function _scholar_generics_presentation_list_spec($row = null) // {{{
+function _scholar_generics_presentation_list_row($row) // {{{
 {
-    if (null === $row) {
+    if (empty($row)) {
         return array(
             array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),  'field' => 'bib_authors'),
@@ -102,3 +102,4 @@ function _scholar_generics_presentation_list_spec($row = null) // {{{
     );
 } // }}}
 
+// vim: fdm=marker

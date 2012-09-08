@@ -43,6 +43,8 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
         ),
     ), $record);
 
+    _scholar_generics_journal_tabs($record);
+
     return $form;
 } // }}}
 
@@ -58,7 +60,7 @@ function _scholar_generics_journal_form_process_values(&$values) // {{{
     $values['end_date']   = null;
 } // }}}
 
-function _scholar_generics_journal_list_spec($row = null) // {{{
+function _scholar_generics_journal_list_row($row = null) // {{{
 {
     if (null === $row) {
         return array(
@@ -80,16 +82,12 @@ function _scholar_generics_journal_list_spec($row = null) // {{{
         str_replace(' et al.', ' <em>et al.</em>', check_plain($row['bib_authors'])),
         check_plain($row['title']),
         scholar_oplink(t('edit'), 'generics.journal', 'edit/%d', $row['id']),
-        scholar_oplink($row['child_count'] ? t('articles (!count)', array('!count' => $row['child_count'])) : t('articles'), 'generics.journal', 'children/%d/article', $row['id']),
+        scholar_oplink($row['child_count'] ? t('details (!count)', array('!count' => $row['child_count'])) : t('details'), 'generics.journal', 'details/%d?', $row['id']),
         scholar_oplink(t('delete'), 'generics.journal', 'delete/%d', $row['id']),
     );
 } // }}}
 
-    // jezeli podano date wydania, wtedy czasopismo staje sie ksiazka,
-    // dla artykulow w czasopismach informacje o konkretnych wydaniach
-// nalezy podawac w bib_details
-
-function _scholar_generics_journal_children_article_row($row = null) // {{{
+function _scholar_generics_journal_details_row($row = null) // {{{
 {
     if (empty($row)) {
         return array(
@@ -111,21 +109,77 @@ function _scholar_generics_journal_children_article_row($row = null) // {{{
     );
 } // }}}
 
-function scholar_generics_journal_children_article_form(&$form_state, $record) // {{{
+function scholar_generics_journal_details_form(&$form_state, $record) // {{{
 {
+    // jezeli podano date wydania, wtedy czasopismo staje sie ksiazka,
+    // dla artykulow w czasopismach informacje o konkretnych wydaniach
+    // nalezy podawac w bib_details
+
+    // typ publikacji zalezy od tego czy jest wpisana data publikacji
+    // czy nie. Jezeli tak uznajemy wydawnictwo za ksiazke.
+    $pub_year = substr($record->start_date, 0, 4);
+    $pub_type = $pub_year
+                ? t('Book or non-serial publication')
+                : t('Journal or serial publication');
+    if ($record->category_name) {
+        $pub_type .= ' (' . $record->category_name . ')';
+    }
+
+    $dl = array(
+        t('Title'), check_plain($record->title),
+        t('Publication type'), check_plain($pub_type),
+    );
+
+    if ($record->bib_details) {
+        $dl[] = t('Bibliographic details');
+        $dl[] = check_plain($record->bib_details);
+    }
+
+    if ($pub_year) {
+        $dl[] = t('Year of publication');
+        $dl[] = $pub_year;
+    }
+
+    if ($record->url) {
+        $dl[] = t('Website');
+        $dl[] = l($record->url, $record->url);
+    }
+
+    $user = user_load((int) $record->user_id);
+    $dl[] = t('Created');
+    $dl[] = t('!time, by !user', array(
+                '!time' => $record->create_time,
+                '!user' => '<em>' . ($user ? l($user->name, 'user/' . $user->uid) : t('unknown user')) . '</em>',
+            ));
+
     // reguly sortowania - nie ma ograniczen, daty artykulow sa ignorowane,
     // brane sa pod uwage tylko jesli nie ma rekordu nadrzednego
     // sortowanie w raportach:
     //     CASE WHEN parent_start_date IS NULL THEN start_date ELSE parent_start_date END DESC), weight ASC
     $form = array(
         '#record' => $record,
-
+        array(
+            '#type' => 'fieldset',
+            '#title' => t('Journal details'),
+            '#collapsible' => true,
+            '#collapsed' => false,
+            array(
+                '#type' => 'markup',
+                '#value' => scholar_theme_dl($dl),
+            ),
+        ),
     );
 
     $children = scholar_generic_load_children($record->id, 'article', 'weight');
 
-    scholar_generics_weight_form($form, $children,
-        '_scholar_generics_journal_children_article_row');
+    if ($children) {
+        $form[] = array(
+            '#type' => 'markup',
+            '#value' => '<div class="help">' . t('Here you can change the order of articles in this publication. You can move articles by dragging-and-dropping them to a new position.') . '</div>',
+        );
+        scholar_generics_weight_form($form, $children,
+            '_scholar_generics_journal_details_row');
+    }
 
     _scholar_generics_journal_tabs($record);
 

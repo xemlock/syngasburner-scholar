@@ -49,9 +49,9 @@ function _scholar_generics_article_form_process_values(&$values) // {{{
 /**
  * @return array
  */
-function _scholar_generics_article_list_spec($row = null) // {{{
+function _scholar_generics_article_list_row($row) // {{{
 {
-    if (null === $row) {
+    if (empty($row)) {
         return array(
             array('data' => t('Date'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Authors'),    'field' => 'bib_authors'),
@@ -69,3 +69,4 @@ function _scholar_generics_article_list_spec($row = null) // {{{
     );
 } // }}}
 
+// vim: fdm=marker

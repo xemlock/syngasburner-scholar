@@ -137,24 +137,24 @@ function scholar_referer() // {{{
  * @param string $table_name
  * @param string $fragment
  */
-function scholar_redirect_to_form($row_id, $table_name, $fragment = null) // {{{
+function scholar_redirect_to_form($row_id, $table_name, $query = null, $fragment = null) // {{{
 {
     switch ($table_name) {
         case 'people':
             $record = scholar_load_record('people', $row_id, scholar_path('people'));
-            return scholar_goto(scholar_path('people', 'edit/%d', $record->id), null, $fragment);
+            return scholar_goto(scholar_path('people', 'edit/%d', $record->id), $query, $fragment);
 
         case 'generics':
             $record = scholar_load_record('generics', $row_id, scholar_path());
-            return scholar_goto(scholar_path("generics.{$record->subtype}", 'edit/%d', $record->id), null, $fragment);
+            return scholar_goto(scholar_path("generics.{$record->subtype}", 'edit/%d', $record->id), $query, $fragment);
 
         case 'categories':
             $record = scholar_load_record('categories', $row_id, scholar_path());
-            return scholar_goto(scholar_path("categories.{$record->table_name}.{$record->subtype}", 'edit/%d', $record->id), null, $fragment);
+            return scholar_goto(scholar_path("categories.{$record->table_name}.{$record->subtype}", 'edit/%d', $record->id), $query, $fragment);
 
         case 'pages':
             $record = scholar_load_record('pages', $row_id, scholar_path('pages'));
-            return scholar_goto(scholar_path('pages', 'edit/%d', $record->id), null, $fragment);
+            return scholar_goto(scholar_path('pages', 'edit/%d', $record->id), $query, $fragment);
     }
 } // }}}
 
@@ -171,7 +171,8 @@ function scholar_node_form(&$form_state, $node) // {{{
     // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
     // strony z formularzem edycji tegoz rekordu
     if ($info = scholar_node_owner_info($node->nid)) {
-        scholar_redirect_to_form($info['row_id'], $info['table_name'], '!scholar-form-vtable-nodes');
+        // po edycji wroc to strony z podgladem wezla
+        scholar_redirect_to_form($info['row_id'], $info['table_name'], 'destination=node/' . $node->nid, '!scholar-form-vtable-nodes');
 
     } else {
 	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
@@ -183,7 +184,7 @@ function scholar_eventapi(&$event, $op) // {{{
     switch ($op) {
         case 'prepare':
             if ($info = scholar_event_owner_info($event->id)) {
-                return scholar_redirect_to_form($info['row_id'], $info['table_name'], '!scholar-form-vtable-events');
+                return scholar_redirect_to_form($info['row_id'], $info['table_name'], 'destination=admin/content/events', '!scholar-form-vtable-events');
             }
             break;
 

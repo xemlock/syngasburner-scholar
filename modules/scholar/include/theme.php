@@ -149,7 +149,17 @@ function scholar_oplink($title, $path_name, $subpath) // {{{
     $args = array_slice(func_get_args(), 1);
     $path = call_user_func_array('scholar_path', $args);
 
-    return l($title, $path, array('query' => 'destination=' . $_GET['q']));
+    // jezeli w sciezce znajduje sie znak zapytania, oznacza to, ze podano
+    // sciezke wyszukiwania (query). Uzyj jej zamiast domyslnej zawierajacej
+    // zmienna destination wskazujaca na biezaca sciezke Drupala.
+    if (false !== ($pos = strpos($path, '?'))) {
+        $query = substr($path, $pos + 1);
+        $path  = substr($path, 0, $pos);
+    } else {
+        $query = 'destination=' . $_GET['q'];
+    }
+
+    return l($title, $path, array('query' => $query));
 } // }}}
 
 // vim: fdm=marker

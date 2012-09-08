@@ -112,9 +112,9 @@ function _scholar_generics_conference_form_process_values(&$values) // {{{
     }
 } // }}}
 
-function _scholar_generics_conference_list_spec($row = null) // {{{
+function _scholar_generics_conference_list_row($row) // {{{
 {
-    if (null === $row) {
+    if (empty($row)) {
         return array(
             array('data' => t('Date'),     'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'),    'field' => 'title'),
@@ -130,12 +130,12 @@ function _scholar_generics_conference_list_spec($row = null) // {{{
         check_plain($row['country_name']),
         $row['list'] ? t('Yes') : t('No'),
         scholar_oplink(t('edit'), 'generics.conference', 'edit/%d', $row['id']),
-        scholar_oplink($row['child_count'] ? t('presentations (!count)', array('!count' => $row['child_count'])) : t('presentations'), 'generics.conference', 'children/%d/presentation', $row['id']),
+        scholar_oplink($row['child_count'] ? t('details (!count)', array('!count' => $row['child_count'])) : t('details'), 'generics.conference', 'details/%d?', $row['id']),
         scholar_oplink(t('delete'), 'generics.conference', 'delete/%d', $row['id']),
     );
 } // }}}
 
-function _scholar_generics_conference_children_presentation_row($row) // {{{
+function _scholar_generics_conference_details_row($row) // {{{
 {
     if (empty($row)) {
         return array(
@@ -165,14 +165,14 @@ function _scholar_generics_conference_children_presentation_row($row) // {{{
  * Strona z listą wszystkich prezentacji podpiętych do danej
  * konferencji. Daje możliwość sortowania prezentacji.
  *
- * @param object $conference
+ * @param object $record
  */
-function scholar_generics_conference_children_presentation_form(&$form_state, $conference) // {{{
+function scholar_generics_conference_details_form(&$form_state, $record) // {{{
 {
-    $children = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
+    $children = scholar_generic_load_children($record->id, 'presentation', 'start_date, weight');
 
     $form = array(
-        '#record' => $conference,
+        '#record' => $record,
     );
 
     $form['properties'] = array(
@@ -185,42 +185,51 @@ function scholar_generics_conference_children_presentation_form(&$form_state, $c
 
     $location = array();
 
-    if ($locality = $conference->locality) {
+    if ($locality = $record->locality) {
         $location[] = t($locality);
     }
 
-    if ($country = scholar_countries($conference->country)) {
+    if ($country = scholar_countries($record->country)) {
         $location[] = $country;
     }
 
     $no_value = '<em>' . t('Not specified') . '</em>';
 
     $dl = array(
-        t('Title'),      check_plain($conference->title),
-        t('Start date'), $conference->start_date ? scholar_format_date($conference->start_date) : $no_value,
-        t('End date'),   $conference->end_date ? scholar_format_date($conference->end_date) : $no_value,
+        t('Title'),      check_plain($record->title),
+        t('Start date'), $record->start_date ? scholar_format_date($record->start_date) : $no_value,
+        t('End date'),   $record->end_date ? scholar_format_date($record->end_date) : $no_value,
         t('Location'),   $location ? check_plain(implode(', ', $location)) : $no_value,
     );
 
-    if ($conference->url) {
+    if ($record->url) {
         $dl[] = t('Website');
-        $dl[] = l($conference->url, $conference->url);
+        $dl[] = l($record->url, $record->url);
     }
+
+    $user = user_load((int) $record->user_id);
+    $dl[] = t('Created');
+    $dl[] = t('!time, by !user', array(
+                '!time' => $record->create_time,
+                '!user' => '<em>' . ($user ? l($user->name, 'user/' . $user->uid) : t('unknown user')) . '</em>',
+            ));
+
 
     $form['properties'][] = array(
         '#type' => 'markup',
         '#value' => scholar_theme_dl($dl) 
     );
-    $form[] = array(
-        '#type'  => 'markup',
-        '#value' => '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new location.') . '</div>',
-    );
 
-    scholar_generics_weight_form($form, 
-        $children, '_scholar_generics_conference_children_presentation_row', true);
+    if ($children) {
+        $form[] = array(
+            '#type'  => 'markup',
+            '#value' => '<div class="help">' . t('Here you can change the order of presentations in this conference. You can move presentations by dragging-and-dropping them to a new position.') . '</div>',
+        );
+        scholar_generics_weight_form($form,
+            $children, '_scholar_generics_conference_details_row', true);
+    }
 
-    _scholar_generics_conference_tabs($conference);
-    drupal_set_title(t('Conference'));
+    _scholar_generics_conference_tabs($record);
 
     return $form;
 } // }}}

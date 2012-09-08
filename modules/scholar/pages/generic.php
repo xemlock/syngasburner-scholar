@@ -31,7 +31,7 @@ function scholar_generics_list($subtype) // {{{
 
     _scholar_generics_include($subtype);
 
-    $func = '_scholar_generics_' . $subtype . '_list_spec';
+    $func = '_scholar_generics_' . $subtype . '_list_row';
 
     if (!function_exists($func)) {
         drupal_set_message("Unable to retrieve list: Invalid subtype '$subtype'", 'error');
@@ -39,7 +39,7 @@ function scholar_generics_list($subtype) // {{{
     }
 
     // funkcja ma zwracac naglowek tabeli, jezeli nie podano wiersza
-    $header = call_user_func($func);
+    $header = call_user_func($func, null);
 
     // bierzemy pod uwage tylko rekordy o podanym podtypie
     $conds  = array('subtype' => $subtype);
@@ -274,31 +274,28 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
  * @param int $id
  * @param string $children_subtype
  */
-function scholar_generics_children_form(&$form_state, $subtype, $id, $children_subtype) // {{{
+function scholar_generics_details_form(&$form_state, $subtype, $id) // {{{
 {
     _scholar_generics_include($subtype);
-    _scholar_generics_include($children_subtype);
 
     $conds  = array('id' => $id, 'subtype' => $subtype);
     $record = scholar_load_record('generics', $conds, scholar_path("generics.$subtype"));
 
-    $func = 'scholar_generics_' . $subtype . '_children_' . $children_subtype . '_form';
+    $func = 'scholar_generics_' . $subtype . '_details_form';
 
     if (function_exists($func)) {
-        return $func($form_state, $record);
-    } else {
-        
-
+        $form = $func($form_state, $record);
+        return $form;
     }
 
-    drupal_set_message("Unable to retrieve children list: Invalid parent-children subtype specification: '$subtype' and '$children_subtype'", 'error');
+    drupal_set_message("Unable to retrieve details form for subtype: '$subtype'", 'error');
     return '';
 } // }}}
 
 /**
  * Zapisuje wagi rekordów potomnych.
  */
-function scholar_generics_children_form_submit($form, &$form_state) // {{{
+function scholar_generics_details_form_submit($form, &$form_state) // {{{
 {
     if ($form['#record']) {
         $record = $form['#record'];
@@ -308,7 +305,8 @@ function scholar_generics_children_form_submit($form, &$form_state) // {{{
             drupal_set_message(t('Children order updated successfully.'));
         }
 
-        drupal_goto(scholar_path("generics.{$record->subtype}"));
+        // przeladowujemy biezaca strone z lista dzieci
+        drupal_goto($_GET['q']);
     }
 } // }}}
 
@@ -449,7 +447,7 @@ function scholar_generics_weight_form(&$form, $records, $callback, $region_locke
     $html = scholar_theme_table($header, $rows, $attrs);
 
     if ($tabledrag) {
-        drupal_add_tabledrag($table_id, 'order', 'sibling', 'tr-weight', null, null, false);
+        drupal_add_tabledrag($table_id, 'order', 'sibling', 'tr-weight', null, null, true);
     }
 
     $form[] = array(
