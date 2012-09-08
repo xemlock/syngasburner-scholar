@@ -43,6 +43,9 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
 
 function _scholar_generics_article_form_process_values(&$values) // {{{
 {
+    // data poczatku ma co najwyzej 7 znakow (YYYY-MM)
+    $values['start_date'] = substr(trim($values['start_date']), 0, 7);
+
     // nie ma daty koncowej
     $values['end_date'] = null;
 } // }}}

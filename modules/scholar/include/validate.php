@@ -14,14 +14,18 @@ function scholar_validate_publication_date($value) // {{{
     $date = scholar_parse_date($value);
 
     if ($date) {
-        $time = $date['time'];
+        // dopelniamy wartosc do pelnej daty YYYY-MM-DD
+        $time = $date['iso'] . substr('0001-01-01', strlen($date['iso']));
 
         // 6 marca 1665, data wydania pierwszego numeru
         // Philosophical Transactions of the Royal Society
-        $min = -9619261200;
-        $max = time();
+        $min = '1665-03-06';
+        $max = date('Y-m-d');
 
-        if (($min <= $time) && ($time <= $max)) {
+        // nie korzystamy z mktime, poniewaz nie potrafi on pod Windowsami
+        // obsluzyc dat sprzed 1970-01-01, patrz:
+        // http://php.net/manual/en/function.mktime.php
+        if (strcmp($min, $time) <= 0 && strcmp($time, $max) <= 0) {
             return true;
         }
     }

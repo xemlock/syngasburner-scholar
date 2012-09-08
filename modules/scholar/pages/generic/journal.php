@@ -17,6 +17,7 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
             '#title'       => t('Year'), // Rok wydania
             '#maxlength'   => 4,
             '#description' => 'Pozostaw puste jeżeli jest to seria wydawnicza lub czasopismo. Wpisz jeżeli jest to książka lub inne wydawnictwo zwarte.',
+            '#element_validate' => array('scholar_form_validate_publication_date'),
         ),
         'bib_details' => array(
             '#description' => t('Information about editors, series, publisher etc.'),
@@ -50,14 +51,11 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
 
 function _scholar_generics_journal_form_process_values(&$values) // {{{
 {
-    $start_date = trim($values['start_date']);
+    // data poczatku (rok publikacji) ma co najwyzej 4 cyfry
+    $values['start_date'] = substr(trim($values['start_date']), 0, 4);
 
-    if (strlen($start_date)) {
-        $start_date = sprintf("%04d", $values['start_date']) . '-01-01 00:00:00';
-    }
-
-    $values['start_date'] = $start_date;
-    $values['end_date']   = null;
+    // nie ma daty koncowej
+    $values['end_date'] = null;
 } // }}}
 
 function _scholar_generics_journal_list_row($row = null) // {{{

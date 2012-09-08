@@ -591,14 +591,10 @@ function scholar_generic_form_validate_date_range($form, &$form_state) // {{{
     // validate date range zwraca czasy uniksowe poczatku i konca przedzialu
     // dat, o ile podane dane sa poprawne
     if ($range) {
-        // walidacja dat dopuszcza podanie tylko roku, wtedy miesiac
-        // i dzien ustawiane sa na 1 stycznia. Poniewaz w bazie trzeba zapisac
-        // pelne daty musimy je przygotowac.
-        $form_state['values']['start_date'] = date('Y-m-d', $range[0]);
-        $form_state['values']['end_date']   = date('Y-m-d', $range[1]);
+        $form_state['values']['start_date'] = $range[0];
+        $form_state['values']['end_date']   = $range[1];
     }
 } // }}}
-
 
 function scholar_element_separator() // {{{
 {

@@ -32,8 +32,7 @@ function scholar_form_validate_publication_date($element, &$form_state) // {{{
  * @param array $element2
  * @return false|array
  *     jeżeli walidacja się powiedzie zwrócona zostaje tablica dwuelementowa
- *     zawierająca odpowiednio czas uniksowy pierwszej daty i czas uniksowy
- *     drugiej daty.
+ *     zawierająca odpowiednio datę początku i datę końca w formacie YYYY-MM-DD>
  */
 function scholar_form_validate_date_range($element1, $element2)
 {
@@ -60,15 +59,19 @@ function scholar_form_validate_date_range($element1, $element2)
         }
 
         // podano poprawne daty konca i poczatku, trzeba sprawdzic, czy
-        // poczatek jest mniejszy rowny dacie konca
-        if ($date2['time'] < $date1['time']) {
+        // poczatek jest mniejszy rowny dacie konca.
+        // Dopelniamy daty do pelnego formatu YYYY-MM-DD
+        $time1 = $date1['iso'] . substr('0001-01-01', strlen($date1['iso']));
+        $time2 = $date2['iso'] . substr('0001-01-01', strlen($date2['iso']));
+
+        if (strcmp($time1, $time2) > 0) {
             // poniewaz data poczatku jest poprawna data, zaznacz jako niepoprawny
             // element zawierajacy date konca
             form_error($element2, t('Invalid date range specified. Start date must be earlier than end date.'));
             return false;
         }
 
-        return array($date1['time'], $date2['time']);
+        return array($time1, $time2);
     }
 
     return false;

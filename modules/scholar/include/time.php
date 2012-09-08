@@ -7,9 +7,7 @@
  *     tablica z kluczami year, month, day, iso, time. Pierwszy jest liczbą
  *     całkowitą, dwa następne liczbami całkowitymi albo nullami (jeżeli
  *     nie zostały podane), zaś iso jest reprezentacją tekstową podanej
- *     daty. Ostatni jest liczbą sekund od epoki Uniksa - jeżeli nie podano
- *     miesiąca zostaje obrany styczeń, jeżeli nie podano dnia, obrany zostaje
- *     pierwszy dzień miesiąca.
+ *     daty.
  */
 function scholar_parse_date($date) // {{{
 {
@@ -39,7 +37,6 @@ function scholar_parse_date($date) // {{{
                         ? sprintf('%04d-%02d', $y, $m)
                         : sprintf('%04d-%02d-%02d', $y, $m, $d)
                     ),
-                'time'  => mktime(0, 0, 0, isset($m) ? $m : 1, isset($d) ? $d : 1, $y),
             );
         }
     }
