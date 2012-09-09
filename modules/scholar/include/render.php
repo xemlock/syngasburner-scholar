@@ -43,7 +43,7 @@ function scholar_render_people_node($view, $id, $node) // {{{
     }
 
     return $view
-        ->assignFromVars($vars)
+        ->assignFromArray($vars)
         ->render('person.tpl');
 } // }}}
 

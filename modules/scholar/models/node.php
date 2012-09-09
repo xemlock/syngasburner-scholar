@@ -26,27 +26,25 @@ function _scholar_url_alias_exists() // {{{
 
 /**
  * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
- * Jeżeli nie podano języka cache nie jest używany do odczytu, ale jego
- * wynik juz bedzie zapisany do cacheu.
  * @param int $row_id
  * @param string $table_name
- * @param string $language OPTIONAL     jeżeli nie podany zostaną pobrane
- *                                      wiązania dla wszystkich języków
- * @return false|array                  false jeżeli podano język, pusta
- *                                      tablica jeżeli go nie podano
+ *     nazwa tabeli. Jeżeli jej nie podano, nastąpi wyszukiwanie wiąznia
+ *     względem identyfikatora węzła równemu wartości parametru $row_id.
+ * @param string $language OPTIONAL
+ *     jeżeli nie podany zostaną pobrane wiązania dla wszystkich języków
+ * @return false|array
+ *     false jeżeli podano język, pusta tablica jeżeli go nie podano
  */
-function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // {{{
+function _scholar_fetch_node_binding($row_id, $table_name = null, $language = null) // {{{
 {
-    static $_bindings = array();
+    // jezeli nie podano nazwy tabeli szukaj wedlug wezla
+    if (null === $table_name) {
+        $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $row_id);
+        return db_fetch_array($query);
+    }
 
     // upewnij sie, ze identfikator rekordu jest liczba calkowita
     $row_id = intval($row_id);
-
-    if (null !== $language) {
-        if (isset($_bindings[$table_name][$row_id][$language])) {
-            return $_bindings[$table_name][$row_id][$language];
-        }
-    }
 
     $sql = sprintf(
         "SELECT * FROM {scholar_nodes} WHERE table_name = '%s' AND row_id = %d",
@@ -59,14 +57,12 @@ function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // 
 
         while ($row = db_fetch_array($query)) {
             $result[] = $row;
-            $_bindings[$table_name][$row_id][$row['language']] = $row;
         }
 
     } else {
         $sql .= sprintf(" AND language = '%s'", db_escape_string($language));
         $query  = db_query($sql);
         $result = db_fetch_array($query);
-        $_bindings[$table_name][$row_id][$language] = $result;
     }
 
     return $result;
@@ -101,8 +97,8 @@ function _scholar_bind_node(&$node, $row_id, $table_name, $body = '') // {{{
     );
 
     db_query(
-        "INSERT INTO {scholar_nodes} (table_name, row_id, node_id, language, status, menu_link_id, path_id, last_rendered, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s')",
-        $table_name, $row_id, $node->nid, $node->language, $node->status, $mlid, $body
+        "INSERT INTO {scholar_nodes} (table_name, row_id, node_id, language, status, menu_link_id, path_id, last_rendered, title, body) VALUES ('%s', %d, %d, '%s', %d, %s, NULL, NULL, '%s', '%s')",
+        $table_name, $row_id, $node->nid, $node->language, $node->status, $mlid, $node->title, $body
     );
 
     // obejscie problemu z aliasami i wielojezykowoscia, poprzez wymuszenie
@@ -141,7 +137,10 @@ function _scholar_populate_node(&$node, $binding) // {{{
     $node->menu = null; // menu_link
     $node->path = null; // url_alias path dst
     $node->pid  = null; // url_alias path id
-    $node->body = $binding['body']; // nieprzetworzona tresc wezla
+    $node->title    = $binding['title'];
+    $node->body     = $binding['body']; // nieprzetworzona tresc wezla
+    $node->status   = $binding['status'];
+    $node->language = $binding['language'];
 
     // Dociagamy menu link i url alias zgodne z danymi w binding
     // a nie tymi dostarczonymi przez nodeapi
@@ -172,6 +171,28 @@ function _scholar_populate_node(&$node, $binding) // {{{
 } // }}}
 
 /**
+ * Pobiera z bazy węzeł należący do podanego wiązania i zwraca reprezentujący
+ * go obiekt. Jeżeli węzeł nie został znaleziony zostaje zwrócony obiekt zawierający
+ * dane z wiązania, jednakże o pustym identyfikatorze (nid ma wartość NULL). 
+ * Ładowanie węzła odbywa się poprzez Node API.
+ *
+ * @param array $binding
+ * @return object
+ */
+function _scholar_node_load($binding) // {{{
+{
+    $node = node_load($binding['node_id']);
+
+    if (empty($node)) {
+        $node = scholar_create_node();
+    }
+
+    _scholar_populate_node($node, $binding);
+
+    return $node;
+} // }}}
+
+/**
  * Pobiera z bazy rekord węzła przypisany do rekordu z danej tabeli,
  * z nieprzetworzoną treścią, z wypełnionymi polami menu i path.
  *
@@ -189,10 +210,7 @@ function scholar_fetch_node($row_id, $table_name, $language) // {{{
         // hooka nodeapi, poniewaz dostep do tego wezla ma byc jedynie 
         // dla modulu scholar.
         $rendering = _scholar_rendering_enabled(false);
-
-        if ($node = node_load($binding['node_id'])) {
-            _scholar_populate_node($node, $binding);
-        }
+        $node = _scholar_node_load($binding);
 
         _scholar_rendering_enabled($rendering);
     }
@@ -211,10 +229,8 @@ function scholar_load_nodes($row_id, $table_name) // {{{
     $rendering = _scholar_rendering_enabled(false);
 
     foreach (_scholar_fetch_node_binding($row_id, $table_name) as $binding) {
-        if ($node = node_load($binding['node_id'])) {
-            _scholar_populate_node($node, $binding);
-            $nodes[$node->language] = $node;
-        }
+        $node = _scholar_node_load($binding);
+        $nodes[$node->language] = $node;
     }
 
     _scholar_rendering_enabled($rendering);
@@ -234,14 +250,11 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
         $node = scholar_fetch_node($row_id, $table_name, $language);
         $status = intval($node_data['status']) ? 1 : 0;
 
-        if (empty($node)) {
+        if (empty($node->nid)) {
             // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
             if (!$status) {
                 continue;
             }
-
-            // status niezerowy, utworz nowy wezel
-            $node = scholar_create_node();
         }
 
         foreach ($node_data as $key => $value) {
@@ -291,6 +304,7 @@ function scholar_create_node($values = array()) // {{{
     $node->language = '';
     $node->revision = null;
 
+    $node->nid      = null;
     $node->menu     = null;
     $node->path     = null;
     $node->pid      = null;
@@ -392,19 +406,6 @@ function scholar_delete_nodes($row_id, $table_name) // {{{
 } // }}}
 
 /**
- * Zwraca informacje o rekordzie będącym właścicielem węzła
- * (segmentu) o podanym identyfikatorze.
- *
- * @param int $node_id
- * @return false|array
- */
-function scholar_node_owner_info($node_id) // {{{
-{
-    $query = db_query("SELECT * FROM {scholar_nodes} WHERE node_id = %d", $node_id);
-    return db_fetch_array($query);
-} // }}}
-
-/**
  * Zwraca adres URL prowadzący do węzła przypisanego do rekordu
  * z podanej tabeli.
  *
@@ -415,53 +416,101 @@ function scholar_node_owner_info($node_id) // {{{
  */
 function scholar_node_url($row_id, $table_name, $language) // {{{
 {
-    static $_cache = array();
+    $link = scholar_node_link($row_id, $table_name, $language);
 
-    // language musi byc zrzutowany do stringa, bo gdyby podano
-    // null to dostalibysmy wszystkie bindingi
-    $language = (string) $language;
-
-    if (!isset($_cache[$table_name][$row_id][$language])) {
-        $path    = false;
-        $binding = _scholar_fetch_node_binding($row_id, $table_name, $language);
-
-        if ($binding && $binding['status']) {
-            if (_scholar_url_alias_exists()) {
-                $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
-                $row   = db_fetch_array($query);
-                $alias = $row ? $row['dst'] : false;
-            }
-            $path = $alias ? $alias : 'node/' . $binding['node_id'];
-        }
-
-        if ($path) {
-            $path = url($path, array('absolute' => true));
-        }
-
-        $_cache[$table_name][$row_id][$language] = $path;
-    }
-
-    return $_cache[$table_name][$row_id][$language];
+    return $link
+        ? url($link['path'], array('absolute' => true))
+        : false;
 } // }}}
 
 /**
- * 
+ * Funkcja pomocnicza szukająca w bazie opublikowanego węzła o podanym
+ * identyfikatorze i zwracająca informacje o odnośniku do niego.
+ *
+ * @param int $node_id
+ * @return array
  */
-function scholar_node_l($node_id, $table_name = null)
+function _scholar_node_link_node($node_id) // {{{
 {
-    if (null === $table_name) {
-        $query = db_query("SELECT title FROM {node} WHERE nid = %d AND status <> 0", $node_id);
-        $node = db_fetch_array($query);
+    $query = db_query("SELECT title FROM {node} WHERE nid = %d AND status <> 0", $node_id);
 
-        if ($node) {
-            // pobierz ewentualny alias
-            
+    if ($node = db_fetch_array($query)) {
+        $alias = false;
+
+        // pobierz ewentualny alias
+        if (_scholar_url_alias_exists()) {
+            $query = db_query("SELECT dst FROM {url_alias} WHERE src = 'node/%d'", $node_id);
+            if ($row = db_fetch_array($query)) {
+                $alias = $row['dst'];
+            }
         }
 
-        return false;
+        $path = $alias ? $alias : sprintf('node/%d', $node_id);
+
+        return array('node_id' => $node_id, 'title' => $node['title'], 'path' => $path);
     }
 
-    // binding, node_id, alias
-}
+    return false;
+} // }}}
+
+/**
+ * Funkcja pomocnicza szukająca w bazie wiązania rekordu o podanym identyfikatorze
+ * znajdującym się w podanej tabeli z opublikowanym węzłem w danym języku, i zwracająca
+ * informacje o odnośniku do tego węzła.
+ *
+ * @param int $row_id
+ * @param string $table_name
+ * @param string $language
+ * @return array
+ */
+function _scholar_node_link_record($row_id, $table_name, $language) // {{{
+{
+    $binding = _scholar_fetch_node_binding($row_id, $table_name, (string) $language);
+
+    if ($binding && $binding['status']) {
+        $alias = false;
+
+        if (_scholar_url_alias_exists()) {
+            $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
+            if ($row = db_fetch_array($query)) {
+                $alias = $row['dst'];
+            }
+        }
+
+        $path = $alias ? $alias : ('node/' . $binding['node_id']);
+
+        return array('node_id' => $binding['node_id'], 'title' => $binding['title'], 'path' => $path);
+    }
+
+    return false;
+} // }}}
+
+
+/**
+ * @return false|array
+ */
+function scholar_node_link($row_id, $table_name = null, $language = null) // {{{
+{
+    static $links = array();
+
+    $row_id     = (int) $row_id;
+    $table_name = (string) $table_name;
+    $language   = (string) $language;
+
+    // jezeli nie podano jezyka, uzyj domyslnego
+    if (!strlen($language)) {
+        $language = scholar_language();
+    }
+
+    $key = "{$row_id}_{$table_name}_{$language}";
+
+    if (!isset($links[$key])) {
+        $links[$key] = strlen($table_name)
+            ? _scholar_node_link_record($row_id, $table_name, $language)
+            : _scholar_node_link_node($row_id);
+    }
+
+    return $links[$key];
+} // }}}
 
 // vim: fdm=marker

@@ -313,9 +313,9 @@ function scholar_report_conferences($language) // {{{
     // autorow prezentacji
     foreach ($year_conferences as &$conferences) {
         foreach ($conferences as &$conference) {
-            _scholar_page_augment_record($conference, $conference['id'], 'generics', $node->language);
+            _scholar_page_augment_record($conference, $conference['id'], 'generics', $language);
             foreach ($conference['presentations'] as &$presentation) {
-                _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $node->language);
+                _scholar_page_augment_record($presentation, $presentation['id'], 'generics', $language);
             }
         }
     }

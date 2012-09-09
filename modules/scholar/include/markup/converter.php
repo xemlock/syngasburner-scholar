@@ -130,53 +130,14 @@ class scholar_markup_converter_asset implements scholar_markup_converter // {{{
     }
 } // }}}
 
-/*
-class scholar_markup_converter_node implements scholar_markup_converter
+class scholar_markup_converter_t implements scholar_markup_converter // {{{
 {
     public function convert($token, $contents)
     {
-        global $language;
-
-        $parts = explode('.', $token->getAttribute('node'));
-        $nid = null;
-        $url = null;
-
-        if (1 == count($parts)) {
-            // tylko id wezla, nieelegancko odpytywac baze danych w tym miejscu,
-            // ale za bardzo nie ma wyboru
-            $nid = intval($parts[0]);
-
-            if (db_table_exists('url_alias')) {
-            $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
-                $row   = db_fetch_array($query);
-            $alias = $row ? $row['dst'] : false;
-
-        } else {
-            $model = null;
-            $subtype = null;
-
-            switch ($parts[0]) {
-                case 'person':
-                    $model = 'people';
-                    break;
-
-                case 'category':
-                    $model = 'categories';
-                    break;
-
-                case 'article':
-                case 'class':
-                case 'conference':
-                case 'journal':
-                case 'presentation':
-                case 'training':
-                    $model = 'generics';
-                    $subtype = $parts[0];
-                    break;
-            }
-        }
+        $language = scholar_markup_converter___language::getLanguage();
+        return t($contents, array(), $language);
     }
-    }*/
+}  // }}}
 
 // wewnetrzny konwerter nie do dokumentacji
 class scholar_markup_converter___tag implements scholar_markup_converter // {{{
@@ -205,13 +166,13 @@ class scholar_markup_converter___tag implements scholar_markup_converter // {{{
 /**
  * Konwerter przechowujący / ustawiający wartość języka w przetwarzanym
  * dokumencie. Niektóre tagi mogą korzystać z udostępnianej przez niego
- * funkcjonalności.
+ * funkcjonalności, np. {@see scholar_markup_converter_t}.
  */
 class scholar_markup_converter___language implements scholar_markup_converter // {{{
 {
     protected static $_language;
 
-    public static function language()
+    public static function getLanguage()
     {
         return self::$_language;
     }
@@ -222,11 +183,67 @@ class scholar_markup_converter___language implements scholar_markup_converter //
         self::$_language = $language->language;
     }
 
+    /**
+     * Ustawia aktualny język na ten podany w głównym atrybucie tagu.
+     */
     public function convert($token, $contents)
     {
         self::$_language = (string) $token->getAttribute('__language');
-        p('LANGUAGE SET TO: ' . self::$_language);
     }
 } // }}}
+
+class scholar_markup_converter_node implements scholar_markup_converter
+{
+    public function convert($token, $contents)
+    {
+        $language = scholar_markup_converter___language::getLanguage();
+        $contents = trim($contents);
+
+        $parts = explode('.', $token->getAttribute('node'));
+        $link  = false;
+
+        // [node="person.1"][/node]
+        // [node="person.1"]Kierownik projektu[/node]
+        // [node="25"][/node]
+
+        // jezeli link nie zostal znaleziony zostaje wyrenderowany
+        // <del title="Broken link">$contents</del>
+        if (count($parts) > 1) {
+            $table   = null;
+            $subtype = null;
+
+            // wyznacz nazwe tabeli w bazie danych
+            switch ($parts[0]) {
+                case 'category':
+                    $table = 'categories';
+                    break;
+
+                case 'person':
+                    $table = 'people';
+                    break;
+
+                case 'article':
+                case 'class':
+                case 'conference':
+                case 'journal':
+                case 'presentation':
+                case 'training':
+                    $table   = 'generics';
+                    $subtype = $parts[0];
+                    break;
+            }
+            if ($table) {
+                $link = scholar_node_link($parts[1], $table, $language);
+            }
+
+        } else {
+            $link = scholar_node_link($parts[0]);
+        }
+
+        return $link
+            ? l(strlen($contents) ? $contents : $link['title'], $link['path'], array('absolute' => true))
+            : ('<del title="' . t('Broken link', array(), $language) . '">' . $contents . '</del>');
+    }
+}
 
 // vim: fdm=marker

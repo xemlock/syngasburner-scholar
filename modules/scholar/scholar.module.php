@@ -170,9 +170,9 @@ function scholar_node_form(&$form_state, $node) // {{{
 {
     // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
     // strony z formularzem edycji tegoz rekordu
-    if ($info = scholar_node_owner_info($node->nid)) {
+    if ($binding = _scholar_fetch_node_binding($node->nid)) {
         // po edycji wroc to strony z podgladem wezla
-        scholar_redirect_to_form($info['row_id'], $info['table_name'], 'destination=node/' . $node->nid, '!scholar-form-vtable-nodes');
+        scholar_redirect_to_form($binding['row_id'], $binding['table_name'], 'destination=node/' . $node->nid, '!scholar-form-vtable-nodes');
 
     } else {
 	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
@@ -199,26 +199,27 @@ function scholar_eventapi(&$event, $op) // {{{
 function scholar_nodeapi(&$node, $op)
 {
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
-        $info = scholar_node_owner_info($node->nid);
+        $binding = _scholar_fetch_node_binding($node->nid);
 
-        if (empty($info)) {
+        if (empty($binding)) {
             $node->body = '';
             return;
         }
+
 scholar_add_css();
-        if (empty($info['last_rendered']) || $info['last_rendered'] < variable_get('scholar_last_change', 0)) {
-            $func = 'scholar_render_' . $info['table_name'] . '_node';
+        if (empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
+            $func = 'scholar_render_' . $binding['table_name'] . '_node';
             $body = '';
 
             $view = new scholar_view('_scholar_render_escape');
             $view->setTemplateDir(dirname(__FILE__) . '/templates');
 
             if (function_exists($func)) {
-                $body = $func($view, $info['row_id'], $node);
+                $body = $func($view, $binding['row_id'], $node);
             }
             global $language;
             $bbcode = '[__language="' . $language->language . '"]'
-                    . $body . $info['body'];
+                    . $body . $binding['body'];
 
             // $node->body = $bbcode; return;
 

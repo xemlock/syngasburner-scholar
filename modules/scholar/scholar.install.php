@@ -100,6 +100,11 @@ function scholar_schema() // {{{
             'last_rendered' => array(
                 'type'      => 'int', // timestamp
             ),
+            'title' => array(
+                'type'      => 'varchar',
+                'length'    => 255,
+                'not null'  => true,
+            ),
             'body' => array(
                 'description' => 'User-generated content that will be included in automatically generated node content.',
                 'type'      => 'text',

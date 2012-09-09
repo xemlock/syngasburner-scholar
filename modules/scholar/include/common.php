@@ -93,6 +93,19 @@ function scholar_languages($language = null, $default = null) // {{{
     return isset($languages[$language]) ? $languages[$language] : '';
 } // }}}
 
+/**
+ * Zwraca kod aktualnie używanego języka. Funkcja istnieje ze względu
+ * na konflikt nazw zmiennych, globalnej i zmiennej zwykle używanej jako
+ * argument funkcji.
+ *
+ * @return string
+ */
+function scholar_language() // {{{
+{
+    global $language;
+    return (string) $language->language;
+} // }}}
+
 function _scholar_detect_locale($language) // {{{
 {
     static $territories = null;
