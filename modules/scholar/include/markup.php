@@ -9,7 +9,7 @@ function scholar_markup_parser() // {{{
     return $parser;
 } // }}}
 
-function scholar_markup_renderer()
+function scholar_markup_renderer() // {{{
 {
     $renderer = new scholar_markup_renderer(array('brInCode' => true));
     $renderer->addConverter('preface', new scholar_markup_converter_preface)
@@ -25,6 +25,6 @@ function scholar_markup_renderer()
              ->addConverter('__language', new scholar_markup_converter___language);
 
     return $renderer;
-}
+} // }}}
 
 // vim: fdm=marker

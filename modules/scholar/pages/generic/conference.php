@@ -13,16 +13,9 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
             '#required' => true
         ),
         scholar_form_tablerow_open(),
-        'start_date',/* => array(
-            '#required' => true,
-        ),*/
+        'start_date',
         scholar_form_tablerow_next(),
-        // FIXME NIE NIE NIEw przeciwienstwie do modulu events, date konca trzeba podac zawsze,
-        // albo jawnie okreslic, ze wydarzenie nie ma sprecyzowanego konca
-        'end_date', /* => array(
-            '#required' => true,
-            '#field_suffix' => ' <label><input type="checkbox" name="end_date" value="-1" ' . ($record && empty($record->end_date) ? ' checked="checked"' : '') . ' /> ' . t('It is a long-term event with an unspecified ending date.') . '</label>',
-        ), */
+        'end_date',
         scholar_form_tablerow_close(),
         'locality' => array(
             '#description' => t('Name of city or village where this conference is held.'),
@@ -66,12 +59,6 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
 
     return $form;
 } // }}}
-
-function scholar_generics_conference_form_validate($form, &$form_state)
-{
-// TODO: albo podano date poczatku i konca, albo nie podano zadnej daty
-    $values['start_date'] = trim($values['start_date']);
-}
 
 function _scholar_generics_conference_form_process_values(&$values) // {{{
 {

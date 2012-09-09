@@ -164,6 +164,19 @@ function scholar_render_pages_conferences_node($view, $node) // {{{
         ->render('conferences.tpl');
 } // }}}
 
+function scholar_render_pages_trainings_node($view, $node)
+{
+    $vars = scholar_report_trainings($node->language);
+
+    if (empty($vars)) {
+        return '';
+    }
+
+    return $view
+        ->assignFromArray($vars)
+        ->render('trainings.tpl');
+}
+
 /**
  * Funkcja pomocnicza wywołująca funkcję odpowiedzialną za listowanie rekordów
  * należących do kategorii o podanym identyfikatorze. Wywoływana funkcja

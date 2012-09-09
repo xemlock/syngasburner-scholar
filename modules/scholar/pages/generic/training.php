@@ -15,6 +15,13 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
         'suppinfo' => array(
             '#description' => t('Additional details about this training.'),
         ),
+        'list' => array(
+            '#type' => 'checkbox',
+            '#title' => t('Include this training in auto-generated lists'),
+            // Ustawienie to dotyczy stron osób oraz strony z wystąpieniami na konferencjach.
+            '#description' => t('This setting applies to trainings page.'),
+            '#default_value' => true,
+        ),
         scholar_element_separator(),
         'image_id',
         'files',

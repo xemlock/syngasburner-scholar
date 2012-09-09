@@ -368,10 +368,20 @@ function scholar_report_conference($id, $language) // {{{
  */
 function scholar_report_trainings($language)
 {
-    $query = db_query("
-        SELECT * FROM {scholar_generics} g
+    $query = db_query("SELECT * FROM {scholar_generics} g LEFT JOIN {scholar_generic_suppinfo} i ON (i.generic_id = g.id AND i.language = '%s') WHERE g.subtype = 'training' AND g.list <> 0 ORDER BY start_date DESC", $language);
 
-    ");
+    // szkolenia podzielone na lata
+    $year_trainings = array();
+
+    while ($row = db_fetch_array($query)) {
+        $year = (string) substr($row['start_date'], 0, 4);
+        $row['url'] = scholar_node_url($row['id'], 'generics', $language);
+        $year_trainings[$year][] = $row;
+    }
+
+    return array(
+        'year_trainings' => $year_trainings,
+    );
 }
 
 /**
