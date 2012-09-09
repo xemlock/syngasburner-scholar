@@ -216,7 +216,9 @@ scholar_add_css();
             if (function_exists($func)) {
                 $body = $func($view, $info['row_id'], $node);
             }
-            $bbcode = $body . $info['body'];
+            global $language;
+            $bbcode = '[__language="' . $language->language . '"]'
+                    . $body . $info['body'];
 
             // $node->body = $bbcode; return;
 
@@ -245,7 +247,9 @@ scholar_add_css();
 
                 // niestety dodaje tez paragrafy, ale to mozna obejsc ustawiajac odpowiednie marginesy.
 
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+            p($e);
+            }
 //p($bbcode); exit;
             $node->body = '<div class="scholar-rendering">' . $rendering . '</div>';
             // $node->body = $markup;

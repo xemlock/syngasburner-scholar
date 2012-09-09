@@ -3,6 +3,8 @@
 function scholar_markup_parser() // {{{
 {
     $parser = new scholar_markup_parser;
+    $parser->addTag('__language', array('single' => true));
+
     return $parser;
 } // }}}
 
@@ -16,7 +18,9 @@ function scholar_markup_renderer()
              ->addConverter('box',     new scholar_markup_converter_box)
              ->addConverter('asset',   new scholar_markup_converter_asset)
              ->addConverter('youtube', new scholar_markup_converter_youtube)
-             ->addConverter('__tag',   new scholar_markup_converter___tag);
+             // ->addConverter('t',       new scholar_markup_converter_t)
+             ->addConverter('__tag',      new scholar_markup_converter___tag)
+             ->addConverter('__language', new scholar_markup_converter___language);
 
     return $renderer;
 }

@@ -19,8 +19,8 @@ class scholar_markup_converter_youtube implements scholar_markup_converter // {{
         $youtube = $contents;
 
         if (preg_match('/^[-_a-z0-9]{11}$/i', $youtube)) {
-            $width  = max(0, $token->getAttribute('width'));
-            $height = max(0, $token->getAttribute('height'));
+            $width  = min(640, max(0, $token->getAttribute('width')));
+            $height = min(360, max(0, $token->getAttribute('height')));
 
             if (0 == $width * $height) {
                 // domyslna rozdzielczosc 360p
@@ -130,15 +130,53 @@ class scholar_markup_converter_asset implements scholar_markup_converter // {{{
     }
 } // }}}
 
+/*
 class scholar_markup_converter_node implements scholar_markup_converter
 {
     public function convert($token, $contents)
     {
-        $node = explode('.', $token->getAttribute('node'));
+        global $language;
 
-        
+        $parts = explode('.', $token->getAttribute('node'));
+        $nid = null;
+        $url = null;
+
+        if (1 == count($parts)) {
+            // tylko id wezla, nieelegancko odpytywac baze danych w tym miejscu,
+            // ale za bardzo nie ma wyboru
+            $nid = intval($parts[0]);
+
+            if (db_table_exists('url_alias')) {
+            $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
+                $row   = db_fetch_array($query);
+            $alias = $row ? $row['dst'] : false;
+
+        } else {
+            $model = null;
+            $subtype = null;
+
+            switch ($parts[0]) {
+                case 'person':
+                    $model = 'people';
+                    break;
+
+                case 'category':
+                    $model = 'categories';
+                    break;
+
+                case 'article':
+                case 'class':
+                case 'conference':
+                case 'journal':
+                case 'presentation':
+                case 'training':
+                    $model = 'generics';
+                    $subtype = $parts[0];
+                    break;
+            }
+        }
     }
-}
+    }*/
 
 // wewnetrzny konwerter nie do dokumentacji
 class scholar_markup_converter___tag implements scholar_markup_converter // {{{
@@ -164,5 +202,31 @@ class scholar_markup_converter___tag implements scholar_markup_converter // {{{
     }
 } // }}}
 
+/**
+ * Konwerter przechowujący / ustawiający wartość języka w przetwarzanym
+ * dokumencie. Niektóre tagi mogą korzystać z udostępnianej przez niego
+ * funkcjonalności.
+ */
+class scholar_markup_converter___language implements scholar_markup_converter // {{{
+{
+    protected static $_language;
+
+    public static function language()
+    {
+        return self::$_language;
+    }
+
+    public function __construct()
+    {
+        global $language;
+        self::$_language = $language->language;
+    }
+
+    public function convert($token, $contents)
+    {
+        self::$_language = (string) $token->getAttribute('__language');
+        p('LANGUAGE SET TO: ' . self::$_language);
+    }
+} // }}}
 
 // vim: fdm=marker

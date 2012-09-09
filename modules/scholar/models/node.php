@@ -8,6 +8,23 @@
  */
 
 /**
+ * Sprawdza czy tabela url_alias stworzona przez moduł path jest
+ * dostępna.
+ *
+ * @return bool
+ */
+function _scholar_url_alias_exists() // {{{
+{
+    static $exists = null;
+
+    if (null === $exists) {
+        $exists = db_table_exists('url_alias');
+    }
+
+    return $exists;
+} // }}}
+
+/**
  * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
  * Jeżeli nie podano języka cache nie jest używany do odczytu, ale jego
  * wynik juz bedzie zapisany do cacheu.
@@ -21,6 +38,9 @@
 function _scholar_fetch_node_binding($row_id, $table_name, $language = null) // {{{
 {
     static $_bindings = array();
+
+    // upewnij sie, ze identfikator rekordu jest liczba calkowita
+    $row_id = intval($row_id);
 
     if (null !== $language) {
         if (isset($_bindings[$table_name][$row_id][$language])) {
@@ -89,7 +109,7 @@ function _scholar_bind_node(&$node, $row_id, $table_name, $body = '') // {{{
     // neutralnosci jezykowej aliasu, patrz http://drupal.org/node/347265
     // (URL aliases not working for content not in default language)
 
-    if (module_exists('path') && isset($node->path)) {
+    if (_scholar_url_alias_exists() && isset($node->path)) {
         $path = trim($node->path);
 
         // wyeliminuj aktualne aliasy dla tej sciezki
@@ -135,7 +155,7 @@ function _scholar_populate_node(&$node, $binding) // {{{
         }
     }
 
-    if (db_table_exists('url_alias')) {
+    if (_scholar_url_alias_exists()) {
         $query = db_query("SELECT * FROM {url_alias} WHERE pid = %d", $binding['path_id']);
 
         if ($row = db_fetch_array($query)) {
@@ -332,7 +352,7 @@ function scholar_delete_nodes($row_id, $table_name) // {{{
     $messages = drupal_get_messages();
 
     $bindings  = _scholar_fetch_node_binding($row_id, $table_name);
-    $url_alias = db_table_exists('url_alias');
+    $url_alias = _scholar_url_alias_exists();
 
     foreach ($bindings as $binding) {
         // Dla absolutnej pewnosci usun powiazane linki menu i aliasy.
@@ -406,7 +426,7 @@ function scholar_node_url($row_id, $table_name, $language) // {{{
         $binding = _scholar_fetch_node_binding($row_id, $table_name, $language);
 
         if ($binding && $binding['status']) {
-            if (db_table_exists('url_alias')) {
+            if (_scholar_url_alias_exists()) {
                 $query = db_query("SELECT dst FROM {url_alias} WHERE pid = %d", $binding['path_id']);
                 $row   = db_fetch_array($query);
                 $alias = $row ? $row['dst'] : false;
@@ -423,5 +443,25 @@ function scholar_node_url($row_id, $table_name, $language) // {{{
 
     return $_cache[$table_name][$row_id][$language];
 } // }}}
+
+/**
+ * 
+ */
+function scholar_node_l($node_id, $table_name = null)
+{
+    if (null === $table_name) {
+        $query = db_query("SELECT title FROM {node} WHERE nid = %d AND status <> 0", $node_id);
+        $node = db_fetch_array($query);
+
+        if ($node) {
+            // pobierz ewentualny alias
+            
+        }
+
+        return false;
+    }
+
+    // binding, node_id, alias
+}
 
 // vim: fdm=marker
