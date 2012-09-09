@@ -34,12 +34,6 @@ function scholar_invalidate_rendering() // {{{
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
 
-    // rendering: $authors: <a href="$url">$title</a> $details
-    // <a href="http://syngasburner.eu/pl/publikacje/monografia-ekoenergetyka">"Eco-energetics - biogas and syngas"</a> (red. A. Cenian, J. Gołaszewski i T. Noch)
-    // <a href="http://www.springer.com/physics/classical+continuum+physics/book/978-3-642-03084-0">"Advances in Turbulence XII, Proceedings of the Twelfth European Turbulence Conference, September 7–10, 2009, Marburg, Germany"</a>, Springer Proceedings in Physics, Vol. 132
-    // jezeli pierwszym znakiem jest nawias otwierajacy <{[( dodaj details za " "
-// w przeciwnym razie dodaj ", "
-
 function scholar_render_people_node($view, $id, $node) // {{{
 {
     $vars = scholar_report_person($id, $node->language);
@@ -66,32 +60,12 @@ function scholar_render_generics_node($view, $id, $node) // {{{
 
 function scholar_render_generics_conference_node($view, $conference, $node) // {{{
 {
-    // wszystkie wystapienia w obrebie konferencji, sortowane wg. dnia, i wagi.
-    // Tytul wystapienia musi byc niepusty
-    $year_date_presentations = array();
+    $vars = scholar_report_conference($conference->id, $node->language);
 
-    $children = scholar_generic_load_children($conference->id, 'presentation', 'start_date, weight');
-
-    foreach ($children as &$row) {
-        // tylko rekordy, ktore maja niepusty tytul sa brane pod uwage
-        // jako wystapienia na konferencji
-        if (!strlen($row['title'])) {
-            continue;
-        }
-
-        // pogrupuj wzgledem roku i dnia, rzutowanie na string, w przeciwnym
-        // razie false bedace wynikiem substr zostanie skonwertowane do 0
-        $row['start_date'] = (string) substr($row['start_date'], 0, 10);
-        $year = (string) substr($row['start_date'], 0, 4);
-
-        _scholar_page_augment_record($row, $row['id'], 'generics', $node->language);
-        $year_date_presentations[$year][$row['start_date']][] = $row;
-    }
-    unset($row, $children);
-
-    return $view->assign('conference', $conference)
-                ->assign('year_date_presentations', $year_date_presentations)
-                ->render('conference.tpl');
+    return $view
+        ->assign('conference', (array) $conference)
+        ->assign('year_date_presentations', $year_date_presentations)
+        ->render('conference.tpl');
 } // }}}
 
 function scholar_render_pages_node($view, $id, $node) // {{{
@@ -122,7 +96,7 @@ function scholar_render_pages_publications_node($view, $node) // {{{
 
 function scholar_render_pages_conferences_node($view, $node) // {{{
 {
-    $vars = scholar_report_publications($node->language);
+    $vars = scholar_report_conferences($node->language);
 
     if (empty($vars)) {
         return '';
@@ -133,11 +107,18 @@ function scholar_render_pages_conferences_node($view, $node) // {{{
         ->render('conferences.tpl');
 } // }}}
 
-// wywołuje odpowiednią funkcję odpowiedzialną za listowanie rekordów
-// w danej kategorii.
+/**
+ * Wywołuje funkcję odpowiedzialną za listowanie rekordów należących do
+ * kategorii o podanym identyfikatorze.
+ *
+ * @param scholar_view $view
+ * @param int $id
+ * @param object $node
+ */
 function scholar_render_categories_node($view, $id, $node) // {{{
 {
     $category = scholar_load_record('categories', $id);
+
     if ($category) {
         $func = 'scholar_render_categories_' . $category->table_name
               . ($category->subtype ? '_' . $category->subtype : '')
@@ -147,11 +128,5 @@ function scholar_render_categories_node($view, $id, $node) // {{{
         }
     }
 } // }}}
-
-// wszystkie konferencje w danej kategorii, np. lista szkoleń
-function scholar_render_categories_generics_conference_node($view, $category, $node)
-{
-
-}
 
 // vim: fdm=marker

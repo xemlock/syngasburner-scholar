@@ -123,6 +123,12 @@ function scholar_report_person($id, $language) // {{{
     );
 } // }}}
 
+/**
+ * Wykaz publikacji.
+ *
+ * @param string $language
+ * @return false|array
+ */
 function scholar_report_publications($language) // {{{
 {
     // sortowanie:
@@ -250,15 +256,21 @@ function scholar_report_publications($language) // {{{
     );
 } // }}}
 
-function scholar_report_conferences($language)
+/**
+ * Wykaz wystąpień na konferencjach.
+ *
+ * @param string $language
+ * @return false|array
+ */
+function scholar_report_conferences($language) // {{{
 {
     // pobierz tylko te  prezentacje, ktore naleza do konferencji (INNER JOIN),
     // oraz maja niepusty tytul (LENGTH dostepna jest wszedzie poza MSSQL Server).
-    // Wystepienia w obrebie
-    // konferencji posortowane sa alfabetycznie po nazwisku pierwszego autora.
+    // Wystepienia w obrebie konferencji posortowane sa wedlug wagi.
+
     // Jezeli konferencja ma pusta date poczatku, uzyj daty prezentacji jako
-    // poczatku i konca konferencji --> przydatne gdy mamy konferencje dlugoterminowe
-    // (np. seminaria)
+    // poczatku i konca konferencji (prezentacje maja pusta date konca). Jest to
+    // szczegolnie uzyteczne w przypadku konferencji dlugoterminowych (np. seminaria).
     $query = db_query("
         SELECT g.id, g.title, i.suppinfo AS suppinfo, g.url, g.parent_id,
                g2.title AS parent_title, 
@@ -280,7 +292,7 @@ function scholar_report_conferences($language)
             AND g.subtype = 'presentation'
             AND g2.subtype = 'conference'
             AND LENGTH(g.title) > 0
-        ORDER BY g2.start_date DESC, g.start_date, g.weight
+        ORDER BY parent_start_date DESC, g.weight
     ", $language, $language, $language);
 
     $year_conferences = array();
@@ -307,8 +319,71 @@ function scholar_report_conferences($language)
             }
         }
     }
+
     return array('year_conferences' => $year_conferences);
+} // }}}
+
+/**
+ * Wykaz prezentacji w obrębie jednej konferencji. Ponieważ konferencja może
+ * ciągnąć się przez wiele lat (wiele edycji, np. seminarium), prezentacje
+ * pogrupowane są względem roku.
+ */
+function scholar_report_conference($id, $language) // {{{
+{
+    // Wszystkie wystapienia w obrebie konferencji, sortowane wg. dnia, i wagi.
+    // Tytul wystapienia musi byc niepusty, w przeciwnym razie prezentacja
+    // jest zaznaczeniem biernej obecności, co jest bez znaczenia dla
+    // przebiegu konferencji.
+    $year_date_presentations = array();
+
+    $children = scholar_generic_load_children($id, 'presentation', 'start_date, weight');
+
+    foreach ($children as &$row) {
+        // tylko rekordy, ktore maja niepusty tytul sa brane pod uwage
+        // jako wystapienia na konferencji
+        if (!strlen($row['title'])) {
+            continue;
+        }
+
+        // pogrupuj wzgledem roku i dnia, rzutowanie na string, w przeciwnym
+        // razie wartosci false, ktore moga byc wynikiem substr, zostana
+        // skonwertowane do 0
+        $row['start_date'] = (string) substr($row['start_date'], 0, 10);
+        $year = (string) substr($row['start_date'], 0, 4);
+
+        _scholar_page_augment_record($row, $row['id'], 'generics', $language);
+        $year_date_presentations[$year][$row['start_date']][] = $row;
+    }
+    unset($row, $children);
+
+    return array(
+        'year_date_presentations' => $year_date_presentations,
+    );
+} // }}}
+
+/**
+ * Wykaz szkoleń, które mają podane daty trwania.
+ *
+ * @param string $language
+ */
+function scholar_report_trainings($language)
+{
+    $query = db_query("
+        SELECT * FROM {scholar_generics} g
+
+    ");
 }
+
+/**
+ * Lista wszystkich zajęć w obrębie szkolenia o podanym identyfikatorze,
+ * pogrupowanych według dnia.
+ *
+ * @param int $id
+ * @param string $language
+ */
+function scholar_report_training($id, $language)
+{}
+
 
 /**
  * Funkcja pomocnicza usuwająca z tabeli reprezentującej pobrany
@@ -432,7 +507,8 @@ function __scholar_prepare_conference_from_parent_fields($row, $language) // {{{
             );    
 } // }}}
 
-
+// jezeli pierwszym znakiem jest nawias otwierajacy <{[( dodaj details za " "
+// w przeciwnym razie dodaj ", "
 
 function scholar_records_conferences_in_category()
 {

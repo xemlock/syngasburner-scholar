@@ -3,9 +3,6 @@
 function scholar_markup_parser() // {{{
 {
     $parser = new scholar_markup_parser;
-    $parser->addTag('chapter')
-           ->addTag('section');
-
     return $parser;
 } // }}}
 

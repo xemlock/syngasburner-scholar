@@ -111,9 +111,14 @@ function scholar_generics_training_details_form(&$form_state, $record) // {{{
         t('End date'),   $record->end_date ? scholar_format_date($record->end_date) : $no_value,
     );
 
-    if ($conference->url) {
+    if ($record->url) {
         $dl[] = t('Website');
-        $dl[] = l($conference->url, $conference->url);
+        $dl[] = l($record->url, $record->url);
+    }
+
+    if ($record->nodes) {
+        $dl[] = t('Tag');
+        $dl[] = '<code>[node="training.' . $record->id . '"][/node]</code>';
     }
 
     $user = user_load((int) $record->user_id);

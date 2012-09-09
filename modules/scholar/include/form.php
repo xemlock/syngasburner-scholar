@@ -588,8 +588,8 @@ function scholar_generic_form_validate_date_range($form, &$form_state) // {{{
         $form['vtable']['record']['end_date']
     );
 
-    // validate date range zwraca czasy uniksowe poczatku i konca przedzialu
-    // dat, o ile podane dane sa poprawne
+    // validate_date_range, jezeli podano poprawne daty, zwraca czasy poczatku
+    // i konca przedzialu dat w formacie YYYY-MM-DD.
     if ($range) {
         $form_state['values']['start_date'] = $range[0];
         $form_state['values']['end_date']   = $range[1];

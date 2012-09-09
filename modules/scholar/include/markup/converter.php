@@ -5,6 +5,42 @@ interface scholar_markup_converter // {{{
     public function convert($token, $contents);
 } // }}}
 
+class scholar_markup_converter_youtube implements scholar_markup_converter // {{{
+{
+    public function convert($token, $contents)
+    {
+        // Format identyfikatora filmu, na podstawie wiadomosci z listy
+        // com.googlegroups.youtube-api-gdata napisana przez YouTube API Guide
+        // (yout...@youtube.com), wiecej szczegolow:
+        // http://markmail.org/message/jb6nsveqs7hya5la
+        //      If you just want to do a quick sanity check, this regex
+        //      basically covers the format: [a-zA-Z0-9_-]{11}
+
+        $youtube = $contents;
+
+        if (preg_match('/^[-_a-z0-9]{11}$/i', $youtube)) {
+            $width  = max(0, $token->getAttribute('width'));
+            $height = max(0, $token->getAttribute('height'));
+
+            if (0 == $width * $height) {
+                // domyslna rozdzielczosc 360p
+                $width = 640;
+                $height = 360;
+            }
+
+            $attrs = array(
+                'src'    => 'http://www.youtube.com/embed/' . $youtube,
+                'width'  => $width,
+                'height' => $height,
+                'frameborder'     => 0,
+                'allowfullscreen' => 1,
+            );
+
+            return '<iframe' . drupal_attributes($attrs) . '></iframe>';
+        }
+    }
+} // }}}
+
 class scholar_markup_converter_preface implements scholar_markup_converter // {{{
 {
     protected $_prefaces = array();
@@ -94,41 +130,15 @@ class scholar_markup_converter_asset implements scholar_markup_converter // {{{
     }
 } // }}}
 
-class scholar_markup_converter_youtube implements scholar_markup_converter // {{{
+class scholar_markup_converter_node implements scholar_markup_converter
 {
     public function convert($token, $contents)
     {
-        // Format identyfikatora filmu, na podstawie wiadomosci z listy
-        // com.googlegroups.youtube-api-gdata napisana przez YouTube API Guide
-        // (yout...@youtube.com), wiecej szczegolow:
-        // http://markmail.org/message/jb6nsveqs7hya5la
-        //      If you just want to do a quick sanity check, this regex
-        //      basically covers the format: [a-zA-Z0-9_-]{11}
+        $node = explode('.', $token->getAttribute('node'));
 
-        $youtube = $contents;
-
-        if (preg_match('/^[-_a-z0-9]{11}$/i', $youtube)) {
-            $width  = max(0, $token->getAttribute('width'));
-            $height = max(0, $token->getAttribute('height'));
-
-            if (0 == $width * $height) {
-                // domyslna rozdzielczosc 360p
-                $width = 640;
-                $height = 360;
-            }
-
-            $attrs = array(
-                'src'    => 'http://www.youtube.com/embed/' . $youtube,
-                'width'  => $width,
-                'height' => $height,
-                'frameborder'     => 0,
-                'allowfullscreen' => 1,
-            );
-
-            return '<iframe' . drupal_attributes($attrs) . '></iframe>';
-        }
+        
     }
-} // }}}
+}
 
 // wewnetrzny konwerter nie do dokumentacji
 class scholar_markup_converter___tag implements scholar_markup_converter // {{{

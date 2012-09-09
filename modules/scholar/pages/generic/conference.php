@@ -67,16 +67,11 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
     return $form;
 } // }}}
 
-function _scholar_generics_conference_tabs($record) // {{{
+function scholar_generics_conference_form_validate($form, &$form_state)
 {
-    if ($record) {
-        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
-        scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $record->id), $query);
-        scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
-        scholar_add_tab(t('Details'), scholar_path('generics.conference', 'details/%d', $record->id));
-        scholar_add_tab(t('List'), scholar_path('generics.conference'));
-    }
-} // }}}
+// TODO: albo podano date poczatku i konca, albo nie podano zadnej daty
+    $values['start_date'] = trim($values['start_date']);
+}
 
 function _scholar_generics_conference_form_process_values(&$values) // {{{
 {
@@ -224,6 +219,17 @@ function scholar_generics_conference_details_form(&$form_state, $record) // {{{
     _scholar_generics_conference_tabs($record);
 
     return $form;
+} // }}}
+
+function _scholar_generics_conference_tabs($record) // {{{
+{
+    if ($record) {
+        $query = 'destination=' . $_GET['q'] . '&parent_id=' . $record->id;
+        scholar_add_tab(t('Edit'), scholar_path('generics.conference', 'edit/%d', $record->id), $query);
+        scholar_add_tab(t('Add presentation'), scholar_path('generics.presentation', 'add'), $query);
+        scholar_add_tab(t('Details'), scholar_path('generics.conference', 'details/%d', $record->id));
+        scholar_add_tab(t('List'), scholar_path('generics.conference'));
+    }
 } // }}}
 
 // vim: fdm=marker
