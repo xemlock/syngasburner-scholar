@@ -373,13 +373,23 @@ function scholar_report_trainings($language)
     // szkolenia podzielone na lata
     $year_trainings = array();
 
-    // TODO pobrac liste osob
-    while ($row = db_fetch_array($query)) {
+    $rows = scholar_db_fetch_all($query);
+
+    foreach ($rows as $row) {
         $year = (string) substr($row['start_date'], 0, 4);
 
         $row['start_date'] = substr($row['start_date'], 0, 10);
         $row['end_date']   = substr($row['end_date'], 0, 10);
         $row['url'] = scholar_node_url($row['id'], 'generics', $language);
+
+        // pobierz liste wszystkich prowadzacych posortowana w/g nazwiska
+        $query = db_query("SELECT * FROM {scholar_people} WHERE id IN (SELECT DISTINCT a.person_id FROM {scholar_generics} g JOIN {scholar_authors} a ON (a.table_name = 'generics' AND a.row_id = g.id) WHERE g.subtype='class' AND g.parent_id = %d) ORDER BY last_name, first_name", $row['id']);
+        $authors = scholar_db_fetch_all($query);
+        _scholar_page_augment_collection($authors);
+        foreach ($authors as &$author) {
+            $author['url'] = scholar_node_url($author['id'], 'people', $language);
+        }
+        $row['authors'] = $authors;
 
         $year_trainings[$year][] = $row;
     }

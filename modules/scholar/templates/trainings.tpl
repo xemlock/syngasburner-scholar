@@ -13,7 +13,9 @@
 <?php     } ?>
 <?php     if ($training['authors']) { ?>
   [__tag="div" class="speakers"]
-    [t]Speakers[/t] 
+  [t]Speakers[/t]: <?php 
+            $authors = $training['authors'];
+            include dirname(__FILE__) . '/_authors.tpl'; ?>
   [/__tag]
 <?php     } ?>
 [/__tag]

@@ -21,6 +21,7 @@ function scholar_generics_class_form(&$form_state, $record = null) // {{{
         ),
         'authors' => array(
             '#title'       => t('Speakers / lecturers'),
+            '#required'    => true,
         ),
         'parent_id' => array(
             '#title'       => t('Training'),
