@@ -373,9 +373,14 @@ function scholar_report_trainings($language)
     // szkolenia podzielone na lata
     $year_trainings = array();
 
+    // TODO pobrac liste osob
     while ($row = db_fetch_array($query)) {
         $year = (string) substr($row['start_date'], 0, 4);
+
+        $row['start_date'] = substr($row['start_date'], 0, 10);
+        $row['end_date']   = substr($row['end_date'], 0, 10);
         $row['url'] = scholar_node_url($row['id'], 'generics', $language);
+
         $year_trainings[$year][] = $row;
     }
 
@@ -392,7 +397,24 @@ function scholar_report_trainings($language)
  * @param string $language
  */
 function scholar_report_training($id, $language)
-{}
+{
+    $children = scholar_generic_load_children($id, 'class', 'start_date, weight');
+
+    $date_classes = array();
+
+    // zajecia sa dzielone wg dnia
+    foreach ($children as $row) {
+        $date = (string) substr($row['start_date'], 0, 10);
+        _scholar_page_augment_record($row, $row['id'], 'generics', $language);
+        $row['start_time'] = substr($row['start_date'], 11, 5);
+        $row['end_time']   = substr($row['end_date'], 11, 5);
+        $date_classes[$date][] = $row;
+    }
+
+    return array(
+        'date_classes' => $date_classes,
+    );
+}
 
 
 /**

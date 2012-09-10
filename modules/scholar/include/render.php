@@ -94,10 +94,21 @@ function scholar_render_generics_conference_node($view, $conference, $node) // {
     $vars = scholar_report_conference($conference->id, $node->language);
 
     return $view
+        ->assignFromArray($vars)
         ->assign('conference', (array) $conference)
-        ->assign('year_date_presentations', $year_date_presentations)
         ->render('conference.tpl');
 } // }}}
+
+function scholar_render_generics_training_node($view, $training, $node) // {{{
+{
+    $vars = scholar_report_training($training->id, $node->language);
+
+    return $view
+        ->assignFromArray($vars)
+        ->assign('training', (array) $training)
+        ->render('training.tpl');
+} // }}}
+
 
 /**
  * Funkcja pomocnicza wywołująca funkcję odpowiedzialną za generowanie kodu
