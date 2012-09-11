@@ -6,39 +6,8 @@ class scholar_markup_renderer
     protected $_rawTags = array();
     protected $_forbiddenTags = array();
 
-    protected $_converters = array( // {{{
-    ); // }}}
-
-    protected $_markup = array( // {{{
-        's' => array(
-            'start' => '<span style="text-decoration:line-through">',
-            'end'   => '</span>',
-        ),
-        'u' => array(
-            'start' => '<span style="text-decoration:underline">',
-            'end'   => '</span>',
-        ),
-        'i' => array(
-            'start' => '<span style="font-style:italic">',
-            'end'   => '</span>',
-        ),
-        'b' => array(
-            'start' => '<span style="font-weight:bold">',
-            'end'   => '</span>',
-        ),
-        'quote' => arraY(
-            'start' => '<blockquote>',
-            'end'   => '</blockquote>',
-        ),
-        'sub' => array(
-            'start' => '<sub>',
-            'end'   => '</sub>',
-        ),
-        'sup' => array(
-            'start' => '<sup>',
-            'end'   => '</sup>',
-        ),
-    ); // }}}
+    protected $_defaultConverter;
+    protected $_converters = array();
 
     public function __construct($options = array()) // {{{
     {
@@ -75,6 +44,17 @@ class scholar_markup_renderer
         return $this;
     } // }}}
 
+    protected function _tagList($array) // {{{
+    {
+        $tags = array();
+
+        foreach ((array) $array as $value) {
+            $tags[strtolower($value)] = true;
+        }
+
+        return $tags;
+    } // }}}
+    
     /**
      * Set tags that will be included directly (with no processing)
      * in the rendering result.
@@ -83,7 +63,7 @@ class scholar_markup_renderer
      */
     public function setRawTags($tags) // {{{
     {
-        $this->_rawTags = array_map('strtolower', (array) $tags);
+        $this->_rawTags = $this->_tagList($tags);
         return $this;
     } // }}}
 
@@ -94,18 +74,18 @@ class scholar_markup_renderer
      */
     public function setForbiddenTags($tags) // {{{
     {
-        $this->_forbiddenTags = array_map('strtolower', (array) $tags);
+        $this->_forbiddenTags = $this->_tagList($tags);
         return $this;
     } // }}}
 
     public function isRawTag($tag) // {{{
     {
-        return in_array(strtolower($tag), $this->_rawTags);
+        return isset($this->_rawTags[strtolower($tag)]);
     } // }}}
 
     public function isForbiddenTag($tag) // {{{
     {
-        return in_array(strtolower($tag), $this->_forbiddenTags);
+        return isset($this->_forbiddenTags[strtolower($tag)]);
     } // }}}
 
     /**
@@ -133,7 +113,7 @@ class scholar_markup_renderer
             $type = $token->getType();
 
             if (Zend_Markup_Token::TYPE_TAG == $type) {
-                $tagName  = strtolower($token->getName());
+                $tagName = strtolower($token->getName());
 
                 if ($this->isForbiddenTag($tagName)) {
                     // ignore this tag, but try to render its contents
@@ -151,48 +131,34 @@ class scholar_markup_renderer
                     continue;
                 }
 
-                $contents = $token->hasChildren() 
-                          ? $this->_render($token->getChildren(), $depth + 1) 
-                          : null;
+                switch ($tagName) {
+                    case 'ldelim':
+                        $result[] = '[';
+                        break;
 
-                // check for available tag renderers
-                if (isset($this->_converters[$tagName])) {
-                    $result[] = $this->_converters[$tagName]->convert($token, $contents);
+                    case 'rdelim':
+                        $result[] = ']';
+                        break;
 
-                } elseif (is_callable(array($this, $method = 'convert' . $tagName))) {
-                    $result[] = $this->$method($token, $contents);
+                    default:
+                        $contents = $token->hasChildren() 
+                            ? $this->_render($token->getChildren(), $depth + 1) 
+                            : '';
 
-                } else {
-                    switch ($tagName) {
-                        case 'ldelim':
-                            $result[] = '[';
-                            break;
+                        $converter = $this->getConverter($tagName);
 
-                        case 'rdelim':
-                            $result[] = ']';
-                            break;
+                        // run converter on this tag
+                        if (is_callable($converter)) {
+                            $result[] = (string) call_user_func($converter, $token, $contents);
 
-                        case 'br':
-                            $result[] = "<br/>";
-                            break;
+                        } else if (is_object($converter) && is_callable($converter, 'convert')) {
+                            $result[] = (string) $converter->convert($token, $contents);
 
-                        case 'rule':
-                            $result[] = "<hr/>";
-                            break;
+                        } else {
+                            $result[] = $contents;
+                        }
 
-                        case 'item':
-                        case '*':
-                            $result[] = '<li>' . trim($contents) . '</li>';
-                            break;
-
-                        default:
-                            if (isset($this->_markup[$tagName])) {
-                                $result[] = $this->_markup[$tagName]['start']
-                                          . $contents
-                                          . $this->_markup[$tagName]['end'];
-                            }
-                            break;
-                    }
+                        break;
                 }
 
             } else if (Zend_Markup_Token::TYPE_NONE == $type) {
@@ -214,23 +180,48 @@ class scholar_markup_renderer
         return implode('', $result);
     } // }}}
 
-    /**
-     * Adds token converter.
-     */
-    public function addConverter($tag, $converter) // {{{
+    protected function _checkConverter($converter) // {{{
     {
-        if (!is_callable(array($converter, 'convert'))) {
-            throw new Exception('Token converter object must implement method "convert"');
+        if (!(is_callable($converter) || (is_object($converter) && is_callable($converter, 'convert')))) {
+            throw new Exception("Token converter must be a valid callback or an object implementing the 'convert' method");
+        }
+    } // }}}
+
+    /**
+     * @param null|callable $converter
+     */
+    public function setDefaultConverter($converter) // {{{
+    {
+        if (null !== $converter) {
+            $this->_checkConverter($converter);
+        }
+        $this->_defaultConverter = $converter;
+        return $this;
+    } // }}}
+
+    /**
+     * Adds token converter to handle given tags.
+     *
+     * @param string $tags
+     * @param callback $converter
+     */
+    public function addConverter($tags, $converter) // {{{
+    {
+        $this->_checkConverter($converter);        
+
+        foreach (explode(' ', $tags) as $tag) {
+            if (strlen($tag)) {
+                $this->_converters[strtolower($tag)] = $converter;
+            }
         }
 
-        $this->_converters[strtolower($tag)] = $converter;
         return $this;
     } // }}}
 
     public function getConverter($tag) // {{{
     {
         $tag = strtolower($tag);
-        return isset($this->_converters[$tag]) ? $this->_converters[$tag] : null;
+        return isset($this->_converters[$tag]) ? $this->_converters[$tag] : $this->_defaultConverter;
     } // }}}
 
     public function removeConverter($tag) // {{{
@@ -243,143 +234,7 @@ class scholar_markup_renderer
 
         return $this;
     } // }}}
-
-    /**
-     * Get value of an attribute with given name, case-insensitive.
-     *
-     * @param Zend_Markup_Token $token
-     *     syntax tree node
-     * @param null|string $name
-     *     attribute name, if null the name of an attribute with the
-     *     same as token name is returned
-     * @return null|string
-     *     null if not attribute was found
-     */
-    public static function getTokenAttribute(Zend_Markup_Token $token, $name = null) // {{{
-    {
-        if (null == $name) {
-            $name = $token->getName();
-        }
-
-        // case sensitive attribute match
-        $attr = $token->getAttribute($name);
-        if (null !== $attr) {
-            return $attr;
-        }
-
-        // case insensitive attribute match
-        $attrs = $token->getAttributes();
-        foreach ($attrs as $key => $value) {
-            if (!strcasecmp($key, $name)) {
-                return $value;
-            }
-        }
-
-        return null;
-    } // }}}
-
-    public static function validateUrl($url) // {{{
-    {
-        $url = (string) $url;
-
-        $scheme = '(ftp|https?):\/\/';
-        $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
-        $port = '(:\d+)?';
-        $path = '(\/[^\s]*)*';
-
-        if (preg_match("/^$scheme$host$port$path$/i", $url)) {
-            return $url;
-        }
-
-        return null;
-    } // }}}
-
-    public static function validateColor($color) { // {{{
-        // trim white spaces (white spaces are ignored in CSS)
-        $color = trim(strtolower($color));
-
-        // CSS 2: extended color list
-        $colors = array(
-            'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
-            'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet',
-            'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
-            'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
-            'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen',
-            'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen',
-            'darkorange', 'darkorchid', 'darkred', 'darksalmon',
-            'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey',
-            'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
-            'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite',
-            'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold',
-            'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew',
-            'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
-            'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue',
-            'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray',
-            'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
-            'lightseagreen', 'lightskyblue', 'lightslategray',
-            'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime',
-            'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine',
-            'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen',
-            'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
-            'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose',
-            'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab',
-            'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
-            'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
-            'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown',
-            'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
-            'seashell', 'sienna', 'silver', 'skyblue', 'slateblue',
-            'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
-            'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat',
-            'white', 'whitesmoke', 'yellow', 'yellowgreen',
-        );
-
-        if (in_array($color, $colors)) {
-            return $color;
-        }
-
-        // #rrggbb
-        if (preg_match('/^\#[0-9a-f]{6}$/i', $color)) {
-            return $color;
-        }
-
-        // #rgb
-        if (preg_match('/^\#[0-9a-f]{3}$/i', $color)) {
-            // From CSS level 1 spec: the three-digit RGB notation (#rgb)
-            // is converted into six-digit form (#rrggbb) by replicating digits
-            $r = substr($color, 1, 1);
-            $g = substr($color, 2, 1);
-            $b = substr($color, 3, 1);
-            return "#$r$r$g$g$b$b";
-        }
-
-        // rgb(r,g,b), each part can be an integer or a precentage value
-        $part_re = '\s*(\d+%?)\s*';
-        if (preg_match('/^rgb\(' . $part_re . ',' . $part_re . ',' . $part_re . '\)$/i', $color, $matches)) {
-            // first element containing the whole match is now useless, and
-            // can safely be used as a storage for hash character
-            $matches[0] = '#'; 
-            for ($i = 1, $n = count($matches); $i < $n; ++$i) {
-                $part = $matches[$i];
-                if (substr($part, -1) == '%') {
-                    $part = round(substr($part, 0, -1) * 255 / 100.);
-                }
-                // From CSS level 1 spec: Values outside the numerical ranges
-                // should be clipped.
-                $part = dechex(min($part, 255));
-                if (strlen($part) < 2) {
-                    $part = '0' . $part;
-                }
-                $matches[$i] = $part;
-            }
-            return implode('', $matches);
-        }
-
-        // no rgba support for compatibility with older browsers
-
-        // unable to normalize
-        return null;
-    } // }}}
- 
+    
     public function rawTag(Zend_Markup_Token $token) // {{{
     {
         switch ($token->getType()) {
@@ -432,103 +287,6 @@ class scholar_markup_renderer
                 // content of a text token is stored in its _tag property
                 return $token->getTag();
         }
-    } // }}}
-
-    public function convertCode(Zend_Markup_Token $token, $contents) // {{{
-    {
-        // class name is for code highlighting, it is
-        // compatible with default highlight.js settings
-        $code = $token->getAttribute('code');
-        $code = preg_replace('/[^_a-z0-9]/i', '', $code);
-
-        // convert all BR tags to newlines
-        $contents = preg_replace('/<br\s*\/?>/i', "\n", $contents);
-        $contents = htmlspecialchars($contents);
-
-        if ($this->_brInPre) {
-            $contents = nl2br($contents);
-        }
-
-        return '<pre><code' . ($code ? ' class="' . $code . '"' : '') . '>'
-             . $contents . '</code></pre>';
-    } // }}}
-
-    public function convertColor(Zend_Markup_Token $token, $contents) // {{{
-    {
-        $color = $token->getAttribute('color');
-        $color = self::validateColor($color);
-
-        if ($color) {
-            return '<span style="color:' . $color . '">' . $contents . '</span>';
-        }
-
-        return $contents;
-    } // }}}
-
-    public function convertImg(Zend_Markup_Token $token, $contents) // {{{
-    {
-        // [img]{url}[/img]
-        // [img width={width} height={height}]{url}[/img]
-
-        $width  = intval($token->getAttribute('width'));
-        $height = intval($token->getAttribute('height'));
-
-        if ($width <= 0 || $height <= 0) {
-            $width  = 0;
-            $height = 0;
-        }
-
-        $attrs = ' src="' . htmlspecialchars($contents) . '"'
-               . ' alt="' . htmlspecialchars($token->getAttribute('alt')) . '"';
-
-        if ($width && $height) {
-            $attrs .= ' width="' . $width . '" height="' . $height . '"';
-        }
-
-        return '<img' . $attrs . '/>';
-    } // }}}
-
-    public function convertList(Zend_Markup_Token $token, $contents) // {{{
-    {
-        $contents = trim($contents);
-
-        // make sure list contents are LI tags only
-        if (preg_match('/^<li[ >]/i', $contents) && preg_match('/<\/li>$/i', $contents)) {
-            if ($type = $token->getAttribute('list')) {
-                if (is_numeric($type)) {
-                    return '<ol start="' . $type . '">' . $contents . '</ol>';                
-                } else {
-                    return '<ol type="' . $type . '">' . $contents . '</ol>';
-                }
-            } else {
-                return '<ul>' . $contents . '</ul>';
-            }
-        }
-
-        return '';
-    } // }}}
-
-    public function convertUrl(Zend_Markup_Token $token, $contents) // {{{
-    {
-        $url = $token->getAttribute('url');
-
-        if (empty($url)) {
-            $url = $contents;
-        }
-
-        $url = self::validateUrl($url);
-
-        if ($url) {
-            if ('_self' == $token->getAttribute('target')) {
-                $target = '_self';
-            } else {
-                $target = '_blank';
-            }
-
-            return '<a href="' . $url . '" target="' . $target . '">' . $contents . '</a>';
-        }
-
-        return $contents;
     } // }}}
 }
 

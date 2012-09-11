@@ -49,4 +49,96 @@ function scholar_validate_url($value) // {{{
     return preg_match("/^$scheme$host$port$path$/i", $value);
 } // }}}
 
+/**
+ * Sprawdza poprawność podanej wartości pod kątem bycia poprawnym kolorem CSS.
+ *
+ * @return false|string
+ */
+function scholar_validate_color($color) { // {{{
+    // trim white spaces (white spaces are ignored in CSS)
+    $color = trim(strtolower($color));
+
+    // CSS 2: extended color list
+    $colors = array(
+        'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+        'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet',
+        'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
+        'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+        'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen',
+        'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen',
+        'darkorange', 'darkorchid', 'darkred', 'darksalmon',
+        'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey',
+        'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue',
+        'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite',
+        'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold',
+        'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew',
+        'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
+        'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue',
+        'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray',
+        'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
+        'lightseagreen', 'lightskyblue', 'lightslategray',
+        'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime',
+        'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine',
+        'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen',
+        'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
+        'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose',
+        'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab',
+        'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+        'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
+        'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown',
+        'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen',
+        'seashell', 'sienna', 'silver', 'skyblue', 'slateblue',
+        'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
+        'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat',
+        'white', 'whitesmoke', 'yellow', 'yellowgreen',
+    );
+
+    if (in_array($color, $colors)) {
+        return $color;
+    }
+
+    // #rrggbb
+    if (preg_match('/^\#[0-9a-f]{6}$/i', $color)) {
+        return $color;
+    }
+
+    // #rgb
+    if (preg_match('/^\#[0-9a-f]{3}$/i', $color)) {
+        // From CSS level 1 spec: the three-digit RGB notation (#rgb)
+        // is converted into six-digit form (#rrggbb) by replicating digits
+        $r = substr($color, 1, 1);
+        $g = substr($color, 2, 1);
+        $b = substr($color, 3, 1);
+        return "#$r$r$g$g$b$b";
+    }
+
+    // rgb(r,g,b), each part can be an integer or a precentage value
+    $part_re = '\s*(\d+%?)\s*';
+    if (preg_match('/^rgb\(' . $part_re . ',' . $part_re . ',' . $part_re . '\)$/i', $color, $matches)) {
+        // first element containing the whole match is now useless, and
+        // can safely be used as a storage for hash character
+        $matches[0] = '#'; 
+        for ($i = 1, $n = count($matches); $i < $n; ++$i) {
+            $part = $matches[$i];
+            if (substr($part, -1) == '%') {
+                $part = round(substr($part, 0, -1) * 255 / 100.);
+            }
+            // From CSS level 1 spec: Values outside the numerical ranges
+            // should be clipped.
+            $part = dechex(min($part, 255));
+            if (strlen($part) < 2) {
+                $part = '0' . $part;
+            }
+            $matches[$i] = $part;
+        }
+        return implode('', $matches);
+    }
+
+    // no rgba support for compatibility with older browsers
+
+    // unable to normalize
+    return false;
+} // }}}
+
+
 // vim: fdm=marker
