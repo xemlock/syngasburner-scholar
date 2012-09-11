@@ -68,12 +68,6 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents)
         return call_user_func($callback, $token, $contents);
     }
 
-    static $converters = array();
-
-    // jezeli konwerter jest obiektem, przechowuj po jednej instancji
-    // dla typu
-
-
     return $contents;
 }
 
@@ -268,12 +262,19 @@ function scholar_markup_converter_section(Zend_Markup_Token $token, $contents) /
 
 function scholar_markup_converter_block(Zend_Markup_Token $token, $contents) // {{{
 {
-    $date = $token->getAttribute('block');
+    if ($date = $token->getAttribute('date')) {
     $result = '';
     if ($date) {
+        $date = explode(' - ', $date);
         $date = str_replace('--', ' &ndash; ', $date);
         $result .= '<div class="tm">' . trim($date) . '</div>';
     }
+    } else if ($time = $token->getAttribute('time')) {
+        $time = explode(' - ', $time);
+    } else {
+        
+    }
+
     $result .= '<div class="details">' . trim($contents) . '</div>';
     return '<div class="scholar-block">' . $result . '</div>';
 } // }}}
