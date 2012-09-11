@@ -429,7 +429,7 @@ function scholar_save_upload($source) // {{{
             $file->mimetype = $file->filemime;
             $file->size     = $file->filesize;
             $file->user_id  = $file->uid;
-            $file->create_time = date('Y-m-d H:i:s', $file->timestamp);
+            $file->create_time = $file->timestamp;
 
             $success = scholar_db_write_record('scholar_files', $file);
         }
@@ -459,5 +459,29 @@ function scholar_files_recordset($conds = null, $header = null, $before = null, 
     return scholar_recordset_query($sql, $header, $before, $pager);
 } // }}}
 
+/**
+ * @param array $file
+ * @return object
+ */
+function scholar_drupalize_file($file)
+{
+    $object = new stdClass;
+
+    $object->fid = null;
+    $object->nid = null;
+    $object->vid = null;
+    $object->uid = $file['user_id'];
+    $object->timestamp   = time();
+    $object->filename    = $file['filename'];
+    $object->filepath    = scholar_file_path($file['filename']);
+    $object->filemime    = $file['mimetype'];
+    $object->filesize    = $file['size'];
+    $object->status      = 1;
+    $object->description = $file['label'];
+    $object->list        = 1;
+    $object->weight      = $file['weight'];
+
+    return $object;
+}
 
 // vim: fdm=marker

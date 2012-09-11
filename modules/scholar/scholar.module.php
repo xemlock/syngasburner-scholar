@@ -196,25 +196,6 @@ function scholar_eventapi(&$event, $op) // {{{
     }
 } // }}}
 
-function scholar_drupalize_file($file)
-{
-    $f = new stdClass;
-    $f->fid = null;
-    $f->uid = $file['user_id'];
-    $f->filename = $file['filename'];
-    $f->filepath = scholar_file_path($file['filename']);
-    $f->filemime = $file['mimetype'];
-    $f->filesize = $file['size'];
-    $f->status   = 1;
-    $f->timestamp = time();
-    $f->nid = null;
-    $f->vid = null;
-    $f->description = $file['label'];
-    $f->list = 1;
-    $f->weight = $file['weight'];
-    return $f;
-}
-
 function scholar_nodeapi(&$node, $op)
 {
     // dolacz pliki

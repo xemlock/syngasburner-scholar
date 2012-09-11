@@ -79,7 +79,7 @@ function scholar_save_record($model, &$record) // {{{
         global $user;
 
         $record->user_id = $user->uid;
-        $record->create_time = date('Y-m-d H:i:s');
+        $record->create_time = time();
 
         $success = scholar_db_write_record('scholar_' . $model, $record);
     }

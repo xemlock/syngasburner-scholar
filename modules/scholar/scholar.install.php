@@ -141,7 +141,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'create_time' => array(
-                'type'      => 'datetime',
+                'type'      => 'int',
                 'not null'  => true,
             ),
         ),
@@ -161,7 +161,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'create_time' => array(
-                'type'      => 'datetime',
+                'type'      => 'int',
                 'not null'  => true,
             ),
         ),
@@ -254,7 +254,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'create_time' => array(
-                'type'      => 'datetime',
+                'type'      => 'int',
                 'not null'  => true,
             ),
         ),
@@ -348,7 +348,7 @@ function scholar_schema() // {{{
                 'not null'  => true,
             ),
             'create_time' => array(
-                'type'      => 'datetime',
+                'type'      => 'int',
                 'not null'  => true,
             ),
         ),
