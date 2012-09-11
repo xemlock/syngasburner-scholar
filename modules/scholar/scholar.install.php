@@ -131,6 +131,7 @@ function scholar_schema() // {{{
                 'length'    => 255,
                 'not null'  => true,
             ),
+            'category_id' => _scholar_schema_type('optional_id_ref'),
             'image_id'   => array(
                 // REFERENCES image (id)
                 'type'      => 'int',

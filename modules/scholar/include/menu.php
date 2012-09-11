@@ -66,6 +66,12 @@ function _scholar_menu() // {{{
         'parent'            => $root . '/people',
         'file'              => 'pages/people.php',
     );
+    $items += _scholar_category_menu($root . '/people', 'people', null, array(
+        'list' => t('Affiliations'),
+        'add'  => t('Add affiliation'),
+        'edit' => t('Edit affiliation'),
+        'delete' => t('Delete affiliation'),
+    ), 'affiliation');
 
     $items[$root . '/conferences'] = array(
         'title'             => t('Conferences'),
@@ -343,7 +349,7 @@ function scholar_show_schema() // {{{
     return '<pre><code class="sql">' . $html . '</code></pre>';
 } // }}}
 
-function _scholar_category_menu($root_path, $table_name, $subtype = null, $titles = array()) // {{{
+function _scholar_category_menu($root_path, $table_name, $subtype = null, $titles = array(), $block = 'category') // {{{
 {
     $titles = array_merge(array(
         'list'   => t('Categories'),
@@ -352,7 +358,9 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'delete' => t('Delete category'),
     ), $titles);
 
-    $items[$root_path . '/category/list'] = array(
+    $root_path = rtrim($root_path, '/') . '/' . $block;
+
+    $items[$root_path . '/list'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => $titles['list'],
         'access arguments'  => array('administer scholar'),
@@ -368,7 +376,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         // musimy sciezke o katalog wyzej oznaczyc annotacja, stad dirname
         '@scholar_path(dirname)' => "categories.$table_name.$subtype",
     );
-    $items[$root_path . '/category/add'] = array(
+    $items[$root_path . '/add'] = array(
         'type'              => MENU_LOCAL_TASK,
         'title'             => $titles['add'],
         'access arguments'  => array('administer scholar'),
@@ -378,7 +386,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'file'              => 'pages/category.php',
         'weight'            => 10,
     );
-    $items[$root_path . '/category/edit/%'] = array(
+    $items[$root_path . '/edit/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => $titles['edit'],
         'access arguments'  => array('administer scholar'),
@@ -386,7 +394,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'page arguments'    => array('scholar_category_form', $table_name, $subtype),
         'file'              => 'pages/category.php',
     );
-    $items[$root_path . '/category/delete/%'] = array(
+    $items[$root_path . '/delete/%'] = array(
         'type'              => MENU_CALLBACK,
         'title'             => $titles['delete'],
         'access arguments'  => array('administer scholar'),

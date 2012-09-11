@@ -11,6 +11,11 @@ function scholar_people_form(&$form_state, $id = null) // {{{
         'last_name' => array(
             '#required' => true,
         ),
+        'category_id' => array(
+            '#title' => t('Affiliation'),
+            '#options' => scholar_category_options('people'),
+            '#description' => t('Name of a scientific institution this person is primarily affiliated with.'),
+        ),
         'image_id' => array(
             '#title' => t('Photo'),
         ),
@@ -107,9 +112,9 @@ function scholar_people_delete_form_submit($form, &$form_state) // {{{
 function scholar_people_list() // {{{
 {
     $header = array(
-        array('data' => t('Last name'), 'field' => 'last_name', 'sort' => 'asc'),
-        array('data' => t('First name'), 'field' => 'first_name'),
-        array('data' => t('Operations'), 'colspan' => '2')
+        array('data' => t('Name'),        'field' => 'last_name', 'sort' => 'asc'),
+        array('data' => t('Affiliation'), 'field' => 'category_name'),
+        array('data' => t('Operations'),  'colspan' => '2')
     );
 
     $query = scholar_people_recordset(null, $header);
@@ -117,8 +122,8 @@ function scholar_people_list() // {{{
 
     while ($row = db_fetch_array($query)) {
         $rows[] = array(
-            check_plain($row['last_name']),
-            check_plain($row['first_name']),
+            check_plain($row['last_name'] . ' ' . $row['first_name']),
+            check_plain($row['category_name']),
             scholar_oplink(t('edit'), 'people', 'edit/%d', $row['id']),
             scholar_oplink(t('delete'), 'people', 'delete/%d', $row['id']),
         );

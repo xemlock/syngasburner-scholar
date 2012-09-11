@@ -49,6 +49,7 @@ function _scholar_generics_training_list_row($row) // {{{
         return array(
             array('data' => t('Date'),       'field' => 'start_date', 'sort' => 'desc'),
             array('data' => t('Title'),      'field' => 'title'),
+            array('data' => t('Listed'),     'field' => 'list'),
             array('data' => t('Operations'), 'colspan' => '3'),
         );
     }
@@ -59,6 +60,7 @@ function _scholar_generics_training_list_row($row) // {{{
     return array(
         $start_date . ($end_date ? ' &ndash; ' . $end_date : ''),
         check_plain($row['title']),
+        intval($row['list']) ? t('Yes') : t('No'),
         scholar_oplink(t('edit'), 'generics.training', 'edit/%d', $row['id']),
         scholar_oplink($row['child_count'] ? t('details (!count)', array('!count' => $row['child_count'])) : t('details'), 'generics.training', 'details/%d?', $row['id']),
         scholar_oplink(t('delete'), 'generics.training', 'delete/%d', $row['id']),

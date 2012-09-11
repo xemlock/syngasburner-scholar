@@ -54,7 +54,10 @@ function _scholar_invoke_author_update($person_id) // {{{
 
 function scholar_people_recordset($conds = null, $header = array(), $before = null, $pager = null) // {{{
 {
-    $sql = "SELECT * FROM {scholar_people} WHERE " . scholar_db_where($conds);
+    $language = scholar_db_quote(scholar_language());
+    $where    = scholar_db_where($conds);
+
+    $sql = "SELECT p.*, c.name AS category_name FROM {scholar_people} p LEFT JOIN {scholar_category_names} c ON (p.category_id = c.category_id AND c.language = $language) WHERE $where";
 
     return scholar_recordset_query($sql, $header, $before, $pager);
 } // }}}

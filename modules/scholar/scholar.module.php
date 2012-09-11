@@ -175,7 +175,7 @@ function scholar_node_form(&$form_state, $node) // {{{
         scholar_redirect_to_form($binding['row_id'], $binding['table_name'], 'destination=node/' . $node->nid, '!scholar-form-vtable-nodes');
 
     } else {
-	drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
+	    drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
     }
 } // }}}
 
@@ -196,8 +196,38 @@ function scholar_eventapi(&$event, $op) // {{{
     }
 } // }}}
 
+function scholar_drupalize_file($file)
+{
+    $f = new stdClass;
+    $f->fid = null;
+    $f->uid = $file['user_id'];
+    $f->filename = $file['filename'];
+    $f->filepath = scholar_file_path($file['filename']);
+    $f->filemime = $file['mimetype'];
+    $f->filesize = $file['size'];
+    $f->status   = 1;
+    $f->timestamp = time();
+    $f->nid = null;
+    $f->vid = null;
+    $f->description = $file['label'];
+    $f->list = 1;
+    $f->weight = $file['weight'];
+    return $f;
+}
+
 function scholar_nodeapi(&$node, $op)
 {
+    // dolacz pliki
+    if ($op == 'view' && $node->type == 'scholar') {
+        $binding = _scholar_fetch_node_binding($node->nid);
+        if ($binding) {
+            $files = scholar_load_files($binding['row_id'], $binding['table_name'], scholar_language());
+            foreach ($files as $file) {
+                $node->files[] = scholar_drupalize_file($file);
+            }
+        }
+    }
+
     if ($op == 'load' && $node->type == 'scholar' && _scholar_rendering_enabled()) {
         $binding = _scholar_fetch_node_binding($node->nid);
 

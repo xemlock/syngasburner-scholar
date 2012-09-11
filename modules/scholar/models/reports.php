@@ -383,7 +383,8 @@ function scholar_report_trainings($language)
         $row['url'] = scholar_node_url($row['id'], 'generics', $language);
 
         // pobierz liste wszystkich prowadzacych posortowana w/g nazwiska
-        $query = db_query("SELECT * FROM {scholar_people} WHERE id IN (SELECT DISTINCT a.person_id FROM {scholar_generics} g JOIN {scholar_authors} a ON (a.table_name = 'generics' AND a.row_id = g.id) WHERE g.subtype='class' AND g.parent_id = %d) ORDER BY last_name, first_name", $row['id']);
+        $query = db_query("SELECT p.*, c.name AS category_name FROM {scholar_people} p LEFT JOIN {scholar_category_names} c ON (p.category_id = c.category_id AND c.language = '%s') WHERE id IN (SELECT DISTINCT a.person_id FROM {scholar_generics} g JOIN {scholar_authors} a ON (a.table_name = 'generics' AND a.row_id = g.id) WHERE g.subtype='class' AND g.parent_id = %d) ORDER BY last_name, first_name", $language, $row['id']);
+
         $authors = scholar_db_fetch_all($query);
         _scholar_page_augment_collection($authors);
         foreach ($authors as &$author) {
@@ -548,16 +549,6 @@ function __scholar_prepare_conference_from_parent_fields($row, $language) // {{{
                 'presentations' => array(),
             );    
 } // }}}
-
-// jezeli pierwszym znakiem jest nawias otwierajacy <{[( dodaj details za " "
-// w przeciwnym razie dodaj ", "
-
-function scholar_records_conferences_in_category()
-{
-    
-
-}
-
 
 
 // vim: fdm=marker

@@ -5,7 +5,7 @@
  */
 function scholar_load_authors($row_id, $table_name) // {{{
 {
-    $query = db_query("SELECT p.id, p.first_name, p.last_name, a.weight FROM {scholar_authors} a JOIN {scholar_people} p ON a.person_id = p.id WHERE a.table_name = '%s' AND a.row_id = %d ORDER BY a.weight", $table_name, $row_id);
+    $query = db_query("SELECT p.id, p.first_name, p.last_name, c.name AS category_name, a.weight FROM {scholar_authors} a JOIN {scholar_people} p ON (a.person_id = p.id) LEFT JOIN {scholar_category_names} c ON (p.category_id = c.category_id AND c.language = '%s') WHERE a.table_name = '%s' AND a.row_id = %d ORDER BY a.weight", scholar_language(), $table_name, $row_id);
     return scholar_db_fetch_all($query);
 } // }}}
 
