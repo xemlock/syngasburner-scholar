@@ -4,7 +4,7 @@ function scholar_form_validate_url($element, &$form_state) // {{{
 {
     $value = (string) $element['#value'];
 
-    if (strlen($value) && !scholar_validate_url($value)) {
+    if (strlen($value) && !valid_url($value, true)) {
        form_error($element, t('Please enter a valid absolute URL. Only HTTP and FTP protocols are allowed.')); 
     }
 } // }}}

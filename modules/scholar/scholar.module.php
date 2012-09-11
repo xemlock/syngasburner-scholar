@@ -266,7 +266,7 @@ scholar_add_css();
                 $tree = scholar_markup_parser()->parse($bbcode);
                 $renderer = scholar_markup_renderer();
                 $rendering = $renderer->render($tree);
-                $preface   = $renderer->getConverter('preface')->render();
+                $preface   = scholar_markup_converter_preface();
                 if ($preface) {
                     $rendering = $preface . $rendering;
                 }

@@ -34,22 +34,6 @@ function scholar_validate_publication_date($value) // {{{
 } // }}}
 
 /**
- * Sprawdza poprawność wartości pod kątem bycia poprawnym absolutnym adresem
- * URL. Dopuszczalne są jedynie protokoły HTTP(s) i FTP(s).
- *
- * @return bool
- */
-function scholar_validate_url($value) // {{{
-{
-    $scheme = '(ftp|http)s?:\/\/';
-    $host = '[a-z0-9](\.?[a-z0-9\-]*[a-z0-9])*';
-    $port = '(:\d+)?';
-    $path = '(\/[^\s]*)*';
-
-    return preg_match("/^$scheme$host$port$path$/i", $value);
-} // }}}
-
-/**
  * Sprawdza poprawność podanej wartości pod kątem bycia poprawnym kolorem CSS.
  *
  * @return false|string
