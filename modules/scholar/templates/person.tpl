@@ -1,3 +1,4 @@
+[nonl2br]
 <?php if ($this->person['image_id']) { ?>
 [preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->person['image_id']) ?>[/gallery-img][/__tag][/preface]
 <?php } ?>
@@ -22,4 +23,5 @@
 <?php   } ?>
 <?php } ?>
 [/__tag]
+[/nonl2br]
 <?php // vim: ft=php

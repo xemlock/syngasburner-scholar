@@ -1,3 +1,4 @@
+[nonl2br]
 <?php if ($this->conference['image_id']) { ?>
 [preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->conference['image_id']) ?>[/gallery-img][/__tag][/preface]
 <?php } ?>
@@ -17,4 +18,5 @@
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>
 [/__tag]
+[/nonl2br]
 <?php // vim: ft=php

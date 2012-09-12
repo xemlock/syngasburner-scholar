@@ -243,6 +243,13 @@ function scholar_markup_converter_size(Zend_Markup_Token $token, $contents) // {
     return $contents;
 } // }}}
 
+// Tag nonl2br był propozycją do vBulletin 4, niestety zignorowaną.
+// https://www.vbulletin.com/forum/archive/index.php/t-197474.html
+function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents)
+{
+    return '<div style="border:4px solid red">' . str_replace(array("\r\n", "\n", "\r"), ' ', $contents) . '</div>';
+}
+
 // tagi scholara
 
 // formatuje dane wedlug aktualnych ustawien formatu

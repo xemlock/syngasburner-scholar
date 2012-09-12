@@ -10,6 +10,12 @@
  */
 function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
 {
+    if ('node_type_form' == $form_id && isset($form['#node_type']) && $form['#node_type']->type == 'scholar') {
+        // nie mozna modyfikowac
+        drupal_set_message(t('Modification of the Scholar content type is not allowed.'), 'error');
+        scholar_goto(scholar_path());
+    }
+
     if (0 === strncmp($form_id, 'scholar_', 8)) {
         // callback #submit o nazwie takiej jak nazwa formularza
         // z przyrostkiem _submit jest automaycznie dodawany przez

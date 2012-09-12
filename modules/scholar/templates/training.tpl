@@ -1,3 +1,4 @@
+[nonl2br]
 <?php if ($this->training['image_id']) { ?>
 [preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->training['image_id']) ?>[/gallery-img][/__tag][/preface]
 <?php } ?>
@@ -30,4 +31,5 @@
 <?php   } ?>
 <?php } ?>
 [/__tag]
+[/nonl2br]
 <?php // vim: ft=php

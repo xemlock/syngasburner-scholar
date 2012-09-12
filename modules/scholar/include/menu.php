@@ -10,6 +10,14 @@ function _scholar_menu() // {{{
     $root  = 'admin/scholar';
     $items = array();
 
+    $items['admin/settings/scholar'] = array(
+        'title'             => t('Scholar settings'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_render_form',
+        'page arguments'    => array('scholar_settings_form'),
+        'file'              => 'pages/settings.php',
+    );
+
     $items[$root] = array(
         'title'             => t('Scholar'),
         'access arguments'  => array('administer scholar'),

@@ -1,3 +1,4 @@
+[nonl2br]
 [__tag="div" class="scholar-conferences"]
 <?php $sections = count($this->year_conferences) > 1; 
       $first = true; ?>
@@ -16,4 +17,5 @@
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>
 [/__tag]
+[/nonl2br]
 <?php // vim: ft=php

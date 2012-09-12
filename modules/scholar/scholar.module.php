@@ -168,6 +168,11 @@ function scholar_redirect_to_form($row_id, $table_name, $query = null, $fragment
  */
 function scholar_node_form(&$form_state, $node) // {{{
 {
+    if (empty($node->nid)) {
+        drupal_set_message(t('Node of the Scholar content type cannot be directly created.'), 'error');
+        return scholar_goto(scholar_path());
+    }
+
     // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
     // strony z formularzem edycji tegoz rekordu
     if ($binding = _scholar_fetch_node_binding($node->nid)) {
@@ -195,6 +200,18 @@ function scholar_eventapi(&$event, $op) // {{{
             break;
     }
 } // }}}
+
+function scholar_node_info() {
+    return array(
+        'scholar' => array(
+            'name' => 'Scholar',
+            'module' => 'scholar',
+            'description' => t('Internal content type used by Scholar module. Do not create content of this type, as it will not work.'),
+            'locked' => true,
+        ),
+    );
+}
+
 
 function scholar_nodeapi(&$node, $op)
 {

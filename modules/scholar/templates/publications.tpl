@@ -1,3 +1,4 @@
+[nonl2br]
 [__tag="div" class="scholar-publications"]
 
 [section][t]Reviewed papers[/t][/section]
@@ -34,4 +35,5 @@
 <?php   } ?>
 <?php } ?>
 [/__tag]
+[/nonl2br]
 <?php // vim: ft=php
