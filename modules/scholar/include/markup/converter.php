@@ -395,7 +395,7 @@ function scholar_markup_converter_t(Zend_Markup_Token $token, $contents) // {{{
 
 function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {{{
 {
-    $language = scholar_markup_converter___language::getLanguage();
+    $language = scholar_markup_converter___language();
     $contents = trim($contents);
 
     $parts = explode('.', $token->getAttribute('node'));
