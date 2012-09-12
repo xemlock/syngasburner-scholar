@@ -9,20 +9,15 @@ class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
 {
     public function __construct() // {{{
     {
+        // no constructor in the parent class
+        // parent::__construct();
+
         // add tags for left and right square brackets. It is a shame that
         // there is no other way to do this, than adding tags in overloaded
         // constructor.
-        $this->_tags['ldelim'] = array(
-            'type'     => self::TYPE_SINGLE,
-            'stoppers' => array(),
-        );
-        $this->_tags['rdelim'] = array(
-            'type'     => self::TYPE_SINGLE,
-            'stoppers' => array(),
-        );
-
-        // no constructor in the parent class
-        // parent::__construct();
+        $this->addTag('ldelim', array('single' => true));
+        $this->addTag('rdelim', array('single' => true));
+        $this->addTag('noparse', array('parse_inside' => false));
     } // }}}
 
     /**
@@ -30,8 +25,8 @@ class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
      */
     public function addTag($name, $properties = array()) // {{{
     {
-        if (preg_match('/[^_a-z0-9]/i', $name)) {
-            throw new Zend_Markup_Parser_Exception('Tag name contains invalid characters. Only alphanumeric characters are allowed.');
+        if (preg_match('/[^-_a-z0-9]/i', $name)) {
+            throw new Zend_Markup_Parser_Exception('Tag name contains invalid characters. Only alphanumeric, dash and underscore characters are allowed.');
         }
 
         if (isset($properties['type'])) {

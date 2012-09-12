@@ -48,14 +48,21 @@ function scholar_invalidate_rendering() // {{{
  */
 function scholar_render_people_node($view, $id, $node) // {{{
 {
+    $person = scholar_load_record('people', $id);
+
+    if (empty($person)) {
+        return;
+    }
+    
     $vars = scholar_report_person($id, $node->language);
 
     if (empty($vars)) {
-        return '';
+        return;
     }
 
     return $view
         ->assignFromArray($vars)
+        ->assign('person', (array) $person)
         ->render('person.tpl');
 } // }}}
 
@@ -146,7 +153,7 @@ function scholar_render_pages_publications_node($view, $node) // {{{
     $vars = scholar_report_publications($node->language);
 
     if (empty($vars)) {
-        return '';
+        return;
     }
 
     return $view

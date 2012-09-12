@@ -1,12 +1,11 @@
 [__tag="div" class="scholar-publications"]
 
-[section="<?php $this->displayAttr($this->section_title) ?>"]
+[section][t]Reviewed papers[/t][/section]
 <?php $articles = $this->articles;
       include dirname(__FILE__) . '/_articles.tpl' ?>
-[/section]
 
 <?php foreach ($this->journal_articles as $category => $journals) { ?>
-[section="<?php $this->displayAttr($category) ?>"]
+[section]<?php $this->display($category) ?>[/section]
 <?php   foreach ($journals as $journal) { ?>
 [block="<?php $this->displayAttr($journal['year']) ?>"]
   [__tag="div" class="hCite journal"]
@@ -33,8 +32,6 @@
 <?php     } ?>
 [/block]
 <?php   } ?>
-[/section]
 <?php } ?>
-
 [/__tag]
 <?php // vim: ft=php

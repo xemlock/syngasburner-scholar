@@ -1,9 +1,11 @@
 [__tag="div" class="scholar-trainings"]
-<?php $sections = count($this->year_trainings) > 1; ?>
+<?php $sections = count($this->year_trainings) > 1;
+      $first = true; ?>
 <?php foreach ($this->year_trainings as $year => $trainings) { ?>
-<?php   if ($sections) { ?>
-[section="<?php $this->displayAttr($year) ?>" collapsible="<?php echo intval($year < date('Y')) ?>" collapsed="1"]
-<?php   } ?>
+<?php   if ($sections) {
+          if ($first) { $first = false; ?>[collapsible="0" title="<?php $this->displayAttr($year) ?>"]<?php }
+          else { ?>[collapsible collapsed="1" title="<?php $this->displayAttr($year) ?>"]<?php }
+        } ?>
 <?php   foreach ($trainings as $training) { ?>
 [block="<?php $this->displayAttr($training['start_date'] . ' &ndash; ' . $training['end_date']) ?>"]
 [__tag="div" class="training"]
@@ -21,7 +23,7 @@
 [/__tag]
 [/block]
 <?php   } ?>
-<?php   if ($sections) { ?>[/section]<?php } ?>
+<?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>
 [/__tag]
 <?php // vim: ft=php

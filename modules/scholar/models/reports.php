@@ -14,10 +14,6 @@
  */
 function scholar_report_person($id, $language) // {{{
 {
-    if (!($person = scholar_load_record('people', $id))) {
-        return false;
-    }
-
     // pobierz wszystkie artykuly (razem z tytulami wydawnictw), wsrod ktorych
     // autorow znajduje sie ta osoba
     $query = db_query("
@@ -32,7 +28,7 @@ function scholar_report_person($id, $language) // {{{
         WHERE a.person_id = %d
             AND a.table_name = 'generics'
         ORDER BY g.start_date DESC, g.weight
-    ", $language, $person->id);
+    ", $language, $id);
 
     $articles = scholar_db_fetch_all($query);
     foreach ($articles as &$article) {
@@ -52,7 +48,7 @@ function scholar_report_person($id, $language) // {{{
         // teraz musimy usunac wszystkie urle prowadzace do strony tej osoby
         // (czyli do strony, ktora w tej chwili generujemy)
         foreach ($article['authors'] as &$author) {
-            if ($author['id'] == $person->id) {
+            if ($author['id'] == $id) {
                 $author['url'] = null;
             }
         }
@@ -88,7 +84,7 @@ function scholar_report_person($id, $language) // {{{
             AND a.person_id = %d
             AND a.table_name = 'generics'
         ORDER BY g2.start_date DESC, g.start_date, g.weight
-    ", $language, $language, $language, $person->id);
+    ", $language, $language, $language, $id);
 
     $presentations = scholar_db_fetch_all($query);
 
@@ -116,8 +112,6 @@ function scholar_report_person($id, $language) // {{{
     unset($presentation, $presentations);
 
     return array(
-        'publications_title' => t('Publications', array(), $language),
-        'conferences_title'  => t('Conferences, seminars, workshops', array(), $language),
         'articles'    => $articles,
         'conferences' => $conferences,
     );
@@ -250,7 +244,6 @@ function scholar_report_publications($language) // {{{
     }
 
     return array(
-        'section_title'    => t('Reviewed papers', array(), $language),
         'articles'         => $articles,
         'journal_articles' => $journal_articles,
     );

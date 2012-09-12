@@ -76,4 +76,26 @@ function scholar_parse_time($time) // {{{
     return false;
 } // }}}
 
+/**
+ * Wartość true zwracana jest dla następujących ciągów znaków: '1', 'y',
+ * 'yes', 't', 'true'. Wartości false odpowiadają '0', 'n', 'no', 'f',
+ * 'false'. Dla wszystkie innych wartości zwracany jest null.
+ *
+ * @param string $value
+ * @return null|bool
+ */
+function scholar_parse_bool($value) // {{{
+{
+    switch (strtolower(trim($value)))
+    {
+        case '1': case 'y': case 'yes': case 't': case 'true':
+            return true;
+
+        case '0': case 'n': case 'no':  case 'f': case 'false':
+            return false;
+    }
+
+    return null;
+} // }}}
+
 // vim: fdm=marker

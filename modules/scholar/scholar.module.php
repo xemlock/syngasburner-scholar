@@ -84,7 +84,7 @@ function scholar_admin_page_size() // {{{
  */
 function scholar_add_css() // {{{
 {
-    drupal_add_css(drupal_get_path('module', 'scholar') . '/css/scholar.css', 'module', 'all');
+    drupal_add_css(drupal_get_path('module', 'scholar') . '/css/scholar.admin.css', 'module', 'all');
 } // }}}
 
 /**
@@ -92,7 +92,7 @@ function scholar_add_css() // {{{
  */
 function scholar_add_js() // {{{
 {
-    drupal_add_js(drupal_get_path('module', 'scholar') . '/js/scholar.js', 'module', 'header');
+    drupal_add_js(drupal_get_path('module', 'scholar') . '/js/scholar.admin.js', 'module', 'header');
 } // }}}
 
 
@@ -200,6 +200,9 @@ function scholar_nodeapi(&$node, $op)
 {
     // dolacz pliki
     if ($op == 'view' && $node->type == 'scholar') {
+        drupal_add_js(drupal_get_path('module', 'scholar') . '/js/scholar.js', 'module', 'header');
+        drupal_add_css(drupal_get_path('module', 'scholar') . '/css/scholar.css', 'module', 'all');
+
         $binding = _scholar_fetch_node_binding($node->nid);
         if ($binding) {
             $files = scholar_load_files($binding['row_id'], $binding['table_name'], scholar_language());
@@ -217,7 +220,7 @@ function scholar_nodeapi(&$node, $op)
             return;
         }
 
-scholar_add_css();
+        scholar_add_css();
         if (empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
             $func = 'scholar_render_' . $binding['table_name'] . '_node';
             $body = '';
@@ -230,6 +233,7 @@ scholar_add_css();
             }
             global $language;
             $bbcode = '[__language="' . $language->language . '"]'
+                    
                     . $body . $binding['body'];
 
             // $node->body = $bbcode; return;
@@ -256,7 +260,7 @@ scholar_add_css();
                 // przeksztalcane na znaczniki BR, zamien je na spacje. Znaki nowego wiersza
                 // wewnatrz PRE sa zamienione na BR przez renderer.
                 $rendering = str_replace(array("\r\n", "\n", "\r"), ' ', $rendering);
-
+//echo($rendering); exit;
                 // niestety dodaje tez paragrafy, ale to mozna obejsc ustawiajac odpowiednie marginesy.
 
             } catch (Exception $e) {

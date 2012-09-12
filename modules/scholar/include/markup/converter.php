@@ -5,7 +5,7 @@
  * @param string $contents
  * @return string
  */
-function scholar_markup_converter(Zend_Markup_Token $token, $contents)
+function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
 {
     $tagName = strtolower($token->getName());
 
@@ -27,10 +27,6 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents)
             'start' => '<span style="font-weight:bold">',
             'end'   => '</span>',
         ),
-        'quote' => arraY(
-            'start' => '<blockquote>',
-            'end'   => '</blockquote>',
-        ),
         'sub' => array(
             'start' => '<sub>',
             'end'   => '</sub>',
@@ -41,6 +37,9 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents)
         ),
         'br' => array(
             'start' => '<br/>',
+        ),
+        'hr' => array(
+            'start' => '<hr/>',
         ),
         'rule' => array(
             'start' => '<hr/>',
@@ -62,14 +61,14 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents)
         return $markup[$tagName]['start'] . $contents . $markup[$tagName]['end'];
     }
 
-    $callback = 'scholar_markup_converter_' . $tagName;
+    $callback = 'scholar_markup_converter_' . preg_replace('/[^_a-z0-9]/i', '_', $tagName);
 
     if (function_exists($callback)) {
         return call_user_func($callback, $token, $contents);
     }
 
     return $contents;
-}
+} // }}}
 
 // standardowe tagi
 
@@ -81,8 +80,10 @@ function scholar_markup_converter_code(Zend_Markup_Token $token, $contents) // {
     $contents = htmlspecialchars($contents);
     $contents = nl2br($contents);
 
-    return '<pre><code' . ($code ? ' class="' . $code . '"' : '') . '>'
-         . $contents . '</code></pre>';
+    $output = '<code' . ($code ? ' class="' . $code . '"' : '') . '>' . $contents . '</code>';
+    $inline = scholar_parse_bool($token->getAttribute('inline'));
+
+    return !$inline ? '<pre>' . $output . '</pre>' : $output;
 } // }}}
 
 function scholar_markup_converter_color(Zend_Markup_Token $token, $contents) // {{{
@@ -111,10 +112,15 @@ function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{
         $height = 0;
     }
 
+    $title = $token->getAttribute('title');
     $attrs = array(
-        'src' => $contents,
-        'alt' => $token->getAttribute('alt'),
+        'src'   => $contents,
+        'alt'   => $title,
     );
+
+    if (strlen($title)) {
+        $attrs['title'] = $title;
+    }
 
     // atrybut align jest przestarzaly w HTML 5. Trudno.
     switch (strtolower($token->getAttribute('align'))) {
@@ -239,25 +245,91 @@ function scholar_markup_converter_size(Zend_Markup_Token $token, $contents) // {
 
 // tagi scholara
 
+// formatuje dane wedlug aktualnych ustawien formatu
+function scholar_markup_converter_date(Zend_Markup_Token $token, $contents) // {{{
+{
+    $date = scholar_parse_date($contents);
+    if ($date) {
+        return 'DATE(' . $date['iso'] . ')';
+    }
+    return '0000-00-00';
+} // }}}
+
 function scholar_markup_converter_preface(Zend_Markup_Token $token = null, $contents = null) // {{{
 {
     static $prefaces = array();
 
     if (null === $token) {
-        return implode('', $prefaces);
+        // tag [preface] dziala w trybie zamiany znakow konca linii na tagi BR,
+        // czyli tak, jakby jego zawartosc nie byla owinieta w zaden tag
+        return '<div class="scholar-preface">' . nl2br(implode('', $prefaces)) . '</div>';
     }
 
-    $prefaces[] = $contents;
+    if ('__unshift' === $token->getAttribute('preface')) {
+        // specjalna wartosc glownego atrybutu mowiaca, zeby dodac zawartosc
+        // tego taga na poczatek listy
+        array_unshift($prefaces, $contents);
+
+    } else {
+        $prefaces[] = $contents;
+    }
 } // }}}
 
-function scholar_markup_converter_chapter(Zend_Markup_Token $token, $contents) // {{{
+/**
+ * <code>[collapsible title="Tytuł bloku"]Treść[/collapsible]</code>
+ * <code>[collapsible title="Tytuł bloku" collapsed="no"]Treść[/collapsible]</code>
+ * <code>[collapsible="no" title="Tytuł bloku" collapsed="no"]Treść[/collapsible]</code>
+ * atrybuty collapsible i collapsed mogą przyjąć następujące wartości logiczne: 0, no, false
+ * 1, yes, true.
+ * Tytuł musi być niepusty, aby zwijanie działało.
+ */
+function scholar_markup_converter_collapsible(Zend_Markup_Token $token, $contents) // {{{
 {
-    return '<div class="scholar-chapter"><h1>' . str_replace("''", '"', $token->getAttribute('chapter')) . '</h1>' . trim($contents) . '</div>';
+    $collapsible = scholar_parse_bool($token->getAttribute('collapsible'));
+
+    if (null === $collapsible) {
+        // domyslnie blok jest zwijalny
+        $collapsible = true;
+    }
+
+    $collapsed = scholar_parse_bool($token->getAttribute('collapsed'));
+
+    if (null === $collapsed) {
+        // domyslnie blok jest rozwiniety
+        $collapsed = false;
+    }
+
+    $class = 'scholar-collapsible';
+    $title = trim(str_replace("''", '"', $token->getAttribute('title')));
+
+    if (!strlen($title)) {
+        // jezeli tytul jest pusty, nie zezwalaj na zwijanie, w przeciwnym razie
+        // zwinientego kontentu nie bedzie mozna rozwinac
+        $collapsible = false;
+    }
+
+    if ($collapsible) {
+        if ($collapsed) {
+            $class .= ' scholar-collapsible-collapsed';
+        }
+    } else {
+        $class .= ' scholar-collapsible-disabled';
+    }
+
+    return '<div class="' . $class . '">'
+         . '<h3 class="scholar-collapsible-heading">' . htmlspecialchars($title) . '</h3>'
+         . '<div class="scholar-collapsible-content">' . $contents . '</div>'
+         . '</div>';
 } // }}}
 
 function scholar_markup_converter_section(Zend_Markup_Token $token, $contents) // {{{
 {
-    return '<div class="scholar-section"><h2>' . str_replace("''", '"', $token->getAttribute('section')) . '</h2>' . trim($contents) . '</div>';
+    return '<h2 class="scholar-section">' . $contents . '</h2>';
+} // }}}
+
+function scholar_markup_converter_subsection(Zend_Markup_Token $token, $contents) // {{{
+{
+    return '<h3 class="scholar-subsection">' . $contents . '</h3>';
 } // }}}
 
 function scholar_markup_converter_block(Zend_Markup_Token $token, $contents) // {{{
@@ -371,6 +443,41 @@ function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {
         ? l(strlen($contents) ? $contents : $link['title'], $link['path'], array('absolute' => true))
         : ('<del title="' . t('Broken link', array(), $language) . '">' . $contents . '</del>');
 } // }}}
+
+// takie same atrybuty jak w przypadku 
+function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $contents)
+{
+    if (module_exists('gallery')) {
+        $settings = array();
+
+        $width = intval($token->getAttribute('width'));
+        if ($width > 0) {
+            $settings['width'] = $width;
+        }
+
+        $height = intval($token->getAttribute('height'));
+        if ($height > 0) {
+            $settings['height'] = $height;
+        }
+
+        // TODO domyslne ustawienia wielkosci obrazow
+        if (empty($settings)) {
+
+        }
+
+        $image = gallery_get_image(intval($contents), true);
+
+        if ($image && ($url = gallery_thumb_url($image, $settings))) {
+            // tutaj troche brzydko, bo modyfikujemy renderowany token
+            if (!$token->getAttribute('title')) {
+                $token->addAttribute('title', $image['title']);
+            }
+            // owin to w link do obrazu
+            $u = gallery_image_url($image);
+            return '<a href="' . $u . '" rel="lightbox">' . scholar_markup_converter_img($token, $url) . '</a>';
+        }
+    }
+}
 
 // wewnetrzne nieudokumentowane konwertery
 

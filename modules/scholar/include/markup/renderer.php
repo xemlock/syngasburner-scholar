@@ -88,23 +88,6 @@ class scholar_markup_renderer
         return isset($this->_forbiddenTags[strtolower($tag)]);
     } // }}}
 
-    /**
-     * Whether all newlines inside PRE tag should be converted to BR tags,
-     * or vice-versa. This setting is used by {@see renderCode} method.
-     *
-     * @param bool $flag
-     */ 
-    public function setBrInPre($flag = true) // {{{
-    {
-        $this->_brInPre = (bool) $flag;
-        return $this;
-    } // }}}
-
-    public function getBrInPre() // {{{
-    {
-        return $this->_brInPre;
-    } // }}}
-
     protected function _render(Zend_Markup_TokenList $tree, $depth = 0) // {{{
     {
         $result = array();
