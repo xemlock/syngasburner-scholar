@@ -8,7 +8,7 @@
           else { ?>[collapsible collapsed="1" title="<?php $this->displayAttr($year) ?>"]<?php }
         } ?>
 <?php   foreach ($trainings as $training) { ?>
-[block="<?php $this->displayAttr($training['start_date'] . ' &ndash; ' . $training['end_date']) ?>"]
+[entry date="<?php $this->displayAttr($training['start_date'] . '/' . $training['end_date']) ?>"]
 [__tag="div" class="training"]
   [__tag="cite" class="title"][url="<?php $this->displayAttr($training['url']) ?>" target="_self"]<?php $this->display($training['title']) ?>[/url][/__tag]
 <?php     if ($training['suppinfo']) { ?>
@@ -22,7 +22,7 @@
   [/__tag]
 <?php     } ?>
 [/__tag]
-[/block]
+[/entry]
 <?php   } ?>
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>

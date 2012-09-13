@@ -127,7 +127,7 @@ function scholar_settings_form(&$form_state)
     return $form;
 }
 
-function scholar_settings_form_validate($form, &$form_state)
+function scholar_settings_form_validate($form, &$form_state) // {{{
 {
     $values = &$form_state['values'];
 
@@ -139,7 +139,13 @@ function scholar_settings_form_validate($form, &$form_state)
     } else {
         $values[$image_width_name] = $image_width;
     }
-}
+} // }}}
+
+function scholar_settings_form_submit($form, &$form_state) // {{{
+{
+    // kazda zmiana ustawien uniewaznia rendering
+    scholar_invalidate_rendering();
+} // }}}
 
 function scholar_settings_dateformat()
 {

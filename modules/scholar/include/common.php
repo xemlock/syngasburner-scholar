@@ -336,7 +336,7 @@ function scholar_date($format, $date, $language = null) // {{{
         'm' => sprintf('%02d', $date['month']),
         'M' => t($months[$date['month']], array(), $language),
         'n' => $date['month'],
-        'Y' => $date['year'],
+        'Y' => sprintf('%04d', $date['year']),
     ));
 } // }}}
 
@@ -350,56 +350,67 @@ function scholar_format_date($date, $language = null) // {{{
         $language = scholar_language();    
     }
 
-    if (is_int($date)) {
+    if (is_int($date) || ctype_digit($date)) {
         // unix timestamp
-        $date = array(date('Y-m-d', $date));
+        $parts = array(date('Y-m-d', $date));
     } else {
         // podziel ewentualny zakres dat na date poczatku i konca
-        $date = array_map('trim', explode('/', $date, 2));
+        $parts = array_map('trim', explode('/', $date, 2));
     }
 
-    switch (count($date)) {
+    switch (count($parts)) {
         case 2:
             // zakres dat
-            $l0 = strlen($date[0]);
-            $l1 = strlen($date[1]);
-            if ($l1 + $l0) {
+            $start_date_len = strlen($parts[0]);
+            $end_date_len   = strlen($parts[1]);
+
+            if ($start_date_len || $end_date_len) {
                 // przynajmniej jedna z dat jest niepusta
-                if (0 == $l0) {
-                    if ($d1 = scholar_parse_date($date[1])) {
+
+                if (0 == $start_date_len) {
+                    // nie ma daty poczatkowej, jest data koncowa
+                    if ($end_date = scholar_parse_date($parts[1])) {
                         $format = scholar_setting('format_date', $language);
-                        $formatted = scholar_date($format, $d1, $language);
-                        if ($formatted) {
-                            return '… – ' . $formatted;
-                        }
+                        return '… – ' . scholar_date($format, $end_date, $language);
                     }
-                } else if (0 == $l1) {
-                    if ($d0 = scholar_parse_date($date[0])) {
+
+                } else if (0 == $end_date_len) {
+                    // jest data poczatkowa, nie ma daty koncowej
+                    if ($start_date = scholar_parse_date($parts[0])) {
                         $format = scholar_setting('format_date', $language);
-                        $formatted = scholar_date($format, $d0, $language);
-                        if ($formatted) {
-                            return $formatted . ' – …';
-                        }
+                        return scholar_date($format, $start_date, $language) . ' – …';
                     }
+
                 } else {
-                    $d0 = scholar_parse_date($date[0]);
-                    $d1 = scholar_parse_date($date[1]);
-                    if ($d0 && $d1) {
-                        if ($d0['year'] != $d1['year']) {
+                    $start_date = scholar_parse_date($parts[0]);
+                    $end_date   = scholar_parse_date($parts[1]);
+
+                    if ($start_date && $end_date) {
+                        if ($start_date['year'] != $end_date['year']) {
+                            // rozne lata
                             $format = scholar_setting('format_date', $language);
                             $format = array(
                                 'start_date' => $format,
                                 'end_date'   => $format,
                             );
-                        } else if ($d0['month'] != $d1['month']) {
+
+                        } else if ($start_date['month'] != $end_date['month']) {
+                            // ten sam rok, rozne miesiace
                             $format = scholar_setting('format_daterange_same_year', $language);
-                        } else {
+
+                        } else if ($start_date['day'] != $end_date['day']) {
+                            // ten sam rok, ten sam miesiac, rozny dzien
                             $format = scholar_setting('format_daterange_same_month', $language);
+
+                        } else {
+                            // ta sama data
+                            $format = scholar_setting('format_date', $language);
+                            return scholar_date($format, $start_date, $language);
                         }
 
-                        return scholar_date($format['start_date'], $d0, $language)
+                        return scholar_date($format['start_date'], $start_date, $language)
                              . ' – '
-                             . scholar_date($format['end_date'], $d1, $language); 
+                             . scholar_date($format['end_date'], $end_date, $language); 
                     }
                 }
             }
@@ -407,7 +418,10 @@ function scholar_format_date($date, $language = null) // {{{
 
         case 1:
             $format = scholar_setting('format_date', $language);
-            return scholar_date($format, $date[0], $language);
+            if ($date = scholar_parse_date($parts[0])) {
+                return scholar_date($format, $date, $language);
+            }
+            break;
     }
 
     return false;

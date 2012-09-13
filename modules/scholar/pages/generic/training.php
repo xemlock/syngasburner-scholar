@@ -133,7 +133,7 @@ function scholar_generics_training_details_form(&$form_state, $record) // {{{
     $user = user_load((int) $record->user_id);
     $dl[] = t('Created');
     $dl[] = t('!time, by !user', array(
-                '!time' => $record->create_time,
+                '!time' => date('Y-m-d H:i:s', $record->create_time),
                 '!user' => '<em>' . ($user ? l($user->name, 'user/' . $user->uid) : t('unknown user')) . '</em>',
             ));
 

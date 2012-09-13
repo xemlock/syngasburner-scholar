@@ -186,7 +186,7 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
             t('MD5 checksum'), check_plain($file->md5sum),
             t('File URL'),     l($url, $url, array('attributes' => array('target' => '_blank'))),
             t('Uploaded'),     t('!time, by !user', array(
-                '!time' => $file->create_time,
+                '!time' => date('Y-m-d H:i:s', $file->create_time),
                 '!user' => '<em>' . ($uploader ? l($uploader->name, 'user/' . $uploader->uid) : t('unknown user')) . '</em>'
             )),
         )),

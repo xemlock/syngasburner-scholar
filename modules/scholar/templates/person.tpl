@@ -10,14 +10,14 @@
 <?php if ($this->conferences) { ?>
 [section][t]Conferences, seminars, workshops[/t][/section]
 <?php   foreach ($this->conferences as $conference) { ?>
-[block="<?php $this->displayAttr($conference['date_span']) ?>"]
+[entry date="<?php $this->displayAttr($conference['start_date'] . '/' . $conference['end_date']) ?>"]
 <?php     include dirname(__FILE__) . '/_conference.tpl'; ?>
   [list]
 <?php     foreach ($conference['presentations'] as $presentation) { ?>
     [__tag="li"]<?php include dirname(__FILE__) . '/_presentation.tpl'; ?>[/__tag]  
 <?php	  } ?>
   [/list]
-[/block]
+[/entry]
 <?php   } ?>
 <?php } ?>
 [/__tag]

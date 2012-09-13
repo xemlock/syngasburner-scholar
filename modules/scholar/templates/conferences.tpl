@@ -8,11 +8,11 @@
           else { ?>[collapsible collapsed="1" title="<?php $this->displayAttr($year) ?>"]<?php }
         } ?>
 <?php   foreach ($conferences as $conference) { ?>
-[block="<?php $this->displayAttr($conference['date_span']) ?>"]
+[entry date="<?php $this->displayAttr($conference['start_date'] . '/' . $conference['end_date']) ?>"]
 <?php     include dirname(__FILE__) . '/_conference.tpl'; ?>
 <?php     $presentations = $conference['presentations']; 
           include dirname(__FILE__) . '/_presentations.tpl'; ?>
-[/block]
+[/entry]
 <?php   } ?>
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>

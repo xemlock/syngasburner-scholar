@@ -9,9 +9,9 @@
           else { ?>[collapsible collapsed="1" title="<?php $this->displayAttr($year) ?>"]<?php }
         } ?>
 <?php   foreach ($date_presentations as $date => $presentations) { ?>
-[block="<?php $this->displayAttr($date) ?>"]<?php 
+[entry date="<?php $this->displayAttr($date) ?>"]<?php 
           include dirname(__FILE__) . '/_presentations.tpl'; ?>
-[/block]
+[/entry]
 <?php   } ?>
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>
 <?php } ?>

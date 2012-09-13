@@ -107,7 +107,7 @@ function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{
 
     $title = trim($token->getAttribute('title'));
     $attrs = array(
-        'src'   => $src,
+        'src'   => $contents,
         'alt'   => $title,
     );
 
@@ -251,7 +251,7 @@ function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents) /
 // formatuje dane wedlug aktualnych ustawien formatu
 function scholar_markup_converter_date(Zend_Markup_Token $token, $contents) // {{{
 {
-    return scholar_format_date($contents);
+    return scholar_format_date($contents, scholar_markup_converter___language());
 } // }}}
 
 function scholar_markup_converter_preface($token = null, $contents = null, $first = false) // {{{
@@ -441,7 +441,7 @@ function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {
         : ('<del title="' . t('Broken link', array(), $language) . '">' . $contents . '</del>');
 } // }}}
 
-function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $contents)
+function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $contents) // {{{
 {
     if (strlen($contents) && ctype_digit($contents)) {
         $width  = max(0, $token->getAttribute('width'));
@@ -490,7 +490,7 @@ function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $content
             return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . '/></a>';
         }
     }
-}
+} // }}}
 
 // wewnetrzne nieudokumentowane konwertery
 
@@ -537,7 +537,7 @@ function scholar_markup_converter___language($token = null, $contents = null) //
 function scholar_markup_converter___image(Zend_Markup_Token $token, $contents) // {{{
 {
     // trzeba pobrac szerokosc obrazu z ustawien
-    $token->addAttribute('width', 200);
+    $token->addAttribute('width', scholar_setting('image_width'));
     $token->addAttribute('height', 0);
     $output = scholar_markup_converter_gallery_img($token, $contents);
 

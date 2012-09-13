@@ -519,21 +519,11 @@ function __scholar_prepare_conference_from_parent_fields($row, $language) // {{{
             $start_date = substr($row['parent_start_date'], 0, 10);
             $end_date   = substr($row['parent_end_date'], 0, 10);
 
-            $date_span = $start_date;
-            if ($end_date) {
-                if ($end_date != $start_date) {
-                    $date_span .= ' – ' . $end_date;
-                }
-            } else {
-                $date_span .= ' – …';
-            }
-
             return array(
                 'id'         => $row['parent_id'],
                 'title'      => $row['parent_title'],
                 'start_date' => $start_date,
                 'end_date'   => $end_date,
-                'date_span'  => $date_span,
                 'suppinfo'   => $row['parent_suppinfo'],
                 'url'        => $row['parent_url'],
                 'locality'   => t($locality, array(), $language),

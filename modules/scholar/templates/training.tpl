@@ -6,7 +6,7 @@
 <?php   foreach ($this->date_classes as $date => $classes) { ?>
 [subsection][date]<?php $this->display($date) ?>[/date][/subsection]
 <?php     foreach ($classes as $class) { ?>
-[block="<?php $this->displayAttr($class['start_time'] . ' &ndash; ' . $class['end_time']) ?>"]
+[entry="<?php if ($class['start_time']) { $this->displayAttr($class['start_time'] . ' &ndash; ' . $class['end_time']); } ?>"]
 [__tag="div" class="class"]
   [__tag="div" class="headline"]
     [__tag="cite" class="title"][url="<?php $this->displayAttr($class['url']) ?>"]<?php $this->display($class['title']) ?>[/url][/__tag]<?php
@@ -24,7 +24,7 @@
               include dirname(__FILE__) . '/_files.tpl'; ?>[/__tag]
 <?php       } ?>
 [/__tag]
-[/block]
+[/entry]
 <?php     } ?>
 <?php   } ?>
 <?php } ?>

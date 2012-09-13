@@ -8,7 +8,7 @@
 <?php foreach ($this->journal_articles as $category => $journals) { ?>
 [section]<?php $this->display($category) ?>[/section]
 <?php   foreach ($journals as $journal) { ?>
-[block="<?php $this->displayAttr($journal['year']) ?>"]
+[entry="<?php $this->displayAttr($journal['year']) ?>"]
   [__tag="div" class="hCite journal"]
     [__tag="cite" class="title"][url="<?php $this->displayAttr($journal['url']) ?>"]<?php $this->display($journal['title']) ?>[/url][/__tag]<?php $this->display($journal['bib_details']) ?>
   [/__tag]
@@ -31,7 +31,7 @@
     [/__tag]
   [/list]
 <?php     } ?>
-[/block]
+[/entry]
 <?php   } ?>
 <?php } ?>
 [/__tag]
