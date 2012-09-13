@@ -1,18 +1,35 @@
 <?php
 
 /**
- * Interfejs do pobierania wartości zmiennych konfiguracyjnych.
+ * Interfejs do pobierania wartości zmiennych konfiguracyjnych,
+ * zapisuje raz pobrane wartości do pamięci podręcznej.
  */
 function scholar_setting($name, $language = null)
 {
     static $settings = array();
 
-    $varname = scholar_setting_name($name, $language);
+    // jezeli nie podano jezyka, ustawienie bedzie brane dla biezacego
+    if (null === $language) {
+        $language = scholar_language();
+    }
 
+    $func = 'scholar_setting_' . $name;
+    $key  = $func . ':' . $language;
+
+    if (!array_key_exists($key, $settings)) {
+        $settings[$key] = function_exists($func)
+            ? call_user_func($func, $language)
+            : null;
+    }
+p($settings);
+    return $settings[$key];
 }
 
 /**
  * Zwraca nazwę zmiennej konfiguracyjnej.
+ *
+ * @param string $name
+ * @param string $language
  */
 function scholar_setting_name($name, $language = null)
 {
@@ -26,12 +43,14 @@ function scholar_setting_name($name, $language = null)
 }
 
 /**
- * Domyślna szerokość obrazów to 150px.
+ * Domyślna, minimalna szerokość obrazów to 150px. Ustawienie jest niezależne
+ * od języka.
+ *
  * @return int
  */
 function scholar_setting_image_width()
 {
-    return max(150, variable_get(scholar_setting_name('image_width'), null));
+    return max(150, variable_get(scholar_setting_name('image_width'), 0));
 }
 
 /**

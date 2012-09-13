@@ -9,9 +9,10 @@ function scholar_settings_form(&$form_state)
         '#type'        => 'textfield',
         '#field_suffix' => 'px',
         '#maxlength'   => 3,
-        '#description' => t('Width of images shown in the preface of auto-generated pages.'),
+        '#description' => t('Width of images shown in the preface of auto-generated pages. Minimum width is 150px.'),
         '#size' => 24,
         '#required' => true,
+        '#default_value' => scholar_setting('image_width'),
     );
 
     $form[] = array(
@@ -33,9 +34,10 @@ function scholar_settings_form(&$form_state)
             '#size' => 24,
             '#required' => true,
             '#description' => t('Format for displaying a single date.'),
-            '#default_value' => scholar_setting_format_date($language),
+            '#default_value' => scholar_setting('format_date', $language),
         );
 
+        $format = scholar_setting('format_daterange_same_month', $language);
         $fieldset[scholar_setting_name('format_daterange_same_month', $language)] = array(
             '#tree' => true,
             scholar_form_tablerow_open(array(
@@ -45,9 +47,11 @@ function scholar_settings_form(&$form_state)
                 '#type' => 'textfield',
                 '#required' => true,
                 '#size' => 24,
+                '#maxlength' => 16,
                 '#theme' => 'scholar_textfield',
                 '#attributes' => array('title' => t('Start date format')),
                 '#title' => t('Same month start date format'), // Format daty początkowej pojedynczego miesiąca
+                '#default_value' => $format['start_date'],
             ),
             scholar_form_tablerow_next(),
             array('#type' => 'markup', '#value' => '&ndash;'),
@@ -56,9 +60,11 @@ function scholar_settings_form(&$form_state)
                 '#type' => 'textfield',
                 '#required' => true,
                 '#size' => 24,
+                '#maxlength' => 16,
                 '#theme' => 'scholar_textfield',
                 '#attributes' => array('title' => t('End date format')),
                 '#title' => t('Same month end date format'),
+                '#default_value' => $format['end_date'],
             ),
             scholar_form_tablerow_next(),
             array('#type' => 'markup', '#value' => '<!-- format preview -->'),
@@ -67,6 +73,7 @@ function scholar_settings_form(&$form_state)
             )),
         );
 
+        $format = scholar_setting('format_daterange_same_year', $language);
         $fieldset[scholar_setting_name('format_daterange_same_year', $language)] = array(
             '#tree' => true,
             scholar_form_tablerow_open(array(
@@ -76,9 +83,11 @@ function scholar_settings_form(&$form_state)
                 '#type' => 'textfield',
                 '#required' => true,
                 '#size' => 24,
+                '#maxlength' => 16,
                 '#theme' => 'scholar_textfield',
                 '#attributes' => array('title' => t('Start date format')),
                 '#title' => t('Same year start date format'), // Format daty początkowej tego samego roku
+                '#default_value' => $format['start_date'],
             ),
             scholar_form_tablerow_next(),
             array('#type' => 'markup', '#value' => '&ndash;'),
@@ -87,9 +96,11 @@ function scholar_settings_form(&$form_state)
                 '#type' => 'textfield',
                 '#required' => true,
                 '#size' => 24,
+                '#maxlength' => 16,
                 '#theme' => 'scholar_textfield',
                 '#attributes' => array('title' => t('End date format')),
                 '#title' => t('Same year end date format'),
+                '#default_value' => $format['end_date'],
             ),
             scholar_form_tablerow_next(),
             array('#type' => 'markup', '#value' => '<!-- format preview -->'),
@@ -107,6 +118,12 @@ function scholar_settings_form(&$form_state)
     $form['buttons']['#prefix'] = '<div class="scholar-buttons">';
     $form['buttons']['#suffix'] = '</div>';
 
+    // TODO preview
+    $form[] = array(
+        '#type' => 'markup',
+        '#value' => '',
+    );
+
     return $form;
 }
 
@@ -114,17 +131,14 @@ function scholar_settings_form_validate($form, &$form_state)
 {
     $values = &$form_state['values'];
 
-    if (!ctype_digit($values['scholar_img_width'])) {
-        form_error($form['scholar_img_width'], t('Image width must be a positive integer value.'));
+    $image_width_name = scholar_setting_name('image_width');
+    $image_width = intval($values[$image_width_name]);
+
+    if ($image_width < 150) {
+        form_error($form[$image_width_name], t('Image width must be an integer value greater than or equal to 150px.'));
     } else {
-        $values['scholar_img_width'] = intval($values['scholar_img_width']);
+        $values[$image_width_name] = $image_width;
     }
-p($values);
-}
-
-function scholar_settings_form_submit($form, &$form_state)
-{
-
 }
 
 function scholar_settings_dateformat()
