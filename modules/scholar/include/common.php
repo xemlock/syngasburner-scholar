@@ -308,4 +308,48 @@ function scholar_format_date($date) // {{{
     return '';
 } // }}}
 
+/**
+ * Pobiera z bazy dane obrazu o podanym identyfikatorze, jednocześnie
+ * wymuszając utworzenie miniatury o podanych rozmiarach. Tablica
+ * z danymi obrazu jest wzbogacona o dwa pola: image_url i thumb_url
+ * zawierające odpowiednio adres URL obrazu i adres URL miniatury obrazu.
+ *
+ * @param int $image_id
+ * @param int $width
+ * @param int $height
+ * @return array
+ */
+function scholar_gallery_image($image_id, $width = null, $height = null) // {{{
+{
+    if (module_exists('gallery')) {
+        $image_id = intval($image_id);
+        $settings = array();
+
+        $width = max(0, $width);
+        if ($width) {
+            $settings['width'] = $width;
+        }
+
+        $height = max(0, $height);
+        if ($height) {
+            $settings['height'] = $height;
+        }
+
+        $image = gallery_get_image($image_id, true);
+
+        if ($image 
+            && ($thumb_url = gallery_thumb_url($image, $settings))
+            && ($image_url = gallery_image_url($image)))
+        {
+            $image['image_url'] = $image_url;
+            $image['thumb_url'] = $thumb_url;
+            return $image;
+        }
+    }
+
+    return false;
+} // }}}
+
+
+
 // vim: fdm=marker

@@ -1,7 +1,5 @@
 [nonl2br]
-<?php if ($this->person['image_id']) { ?>
-[preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->person['image_id']) ?>[/gallery-img][/__tag][/preface]
-<?php } ?>
+[__image]<?php $this->display($this->person['image_id']) ?>[/__image]
 [__tag="div" class="scholar-person"]
 <?php if ($this->articles) { ?>
 [section][t]Publications[/t][/section]

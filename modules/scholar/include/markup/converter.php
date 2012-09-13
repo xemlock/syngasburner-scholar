@@ -101,28 +101,29 @@ function scholar_markup_converter_color(Zend_Markup_Token $token, $contents) // 
 function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{{
 {
     // [img]{url}[/img]
-    // [img width={width} height={height}]{url}[/img]
-    // align=left|right
+    // [img width={width} height={height} align={left|right} title={title}]{url}[/img]
+    $width  = max(0, $token->getAttribute('width'));
+    $height = max(0, $token->getAttribute('height'));
 
-    $width  = intval($token->getAttribute('width'));
-    $height = intval($token->getAttribute('height'));
-
-    if ($width <= 0 || $height <= 0) {
-        $width  = 0;
-        $height = 0;
-    }
-
-    $title = $token->getAttribute('title');
+    $title = trim($token->getAttribute('title'));
     $attrs = array(
-        'src'   => $contents,
+        'src'   => $src,
         'alt'   => $title,
     );
+
+    if ($width) {
+        $attrs['width'] = $width;
+    }
+
+    if ($height) {
+        $attrs['height'] = $height;
+    }
 
     if (strlen($title)) {
         $attrs['title'] = $title;
     }
 
-    // atrybut align jest przestarzaly w HTML 5. Trudno.
+    // atrybut align jest przestarzaly w HTML 5
     switch (strtolower($token->getAttribute('align'))) {
         case 'left':
             $attrs['style'] = 'float:left';
@@ -131,11 +132,6 @@ function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{
         case 'right':
             $attrs['style'] = 'float:right';
             break;
-    }
-
-    if ($width && $height) {
-        $attrs['width'] = $widht;
-        $attrs['height'] = $height;
     }
 
     return '<img' . drupal_attributes($attrs) . '/>';
@@ -245,36 +241,30 @@ function scholar_markup_converter_size(Zend_Markup_Token $token, $contents) // {
 
 // Tag nonl2br był propozycją do vBulletin 4, niestety zignorowaną.
 // https://www.vbulletin.com/forum/archive/index.php/t-197474.html
-function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents)
+function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents) // {{{
 {
-    return '<div style="border:4px solid red">' . str_replace(array("\r\n", "\n", "\r"), ' ', $contents) . '</div>';
-}
+    return '<div style="border:4px solid #999">' . str_replace(array("\r\n", "\n", "\r"), ' ', $contents) . '</div>';
+} // }}}
 
 // tagi scholara
 
 // formatuje dane wedlug aktualnych ustawien formatu
 function scholar_markup_converter_date(Zend_Markup_Token $token, $contents) // {{{
 {
-    $date = scholar_parse_date($contents);
-    if ($date) {
-        return 'DATE(' . $date['iso'] . ')';
-    }
-    return '0000-00-00';
+    return 'DATE(' . scholar_format_date($contents) . ')';
 } // }}}
 
-function scholar_markup_converter_preface(Zend_Markup_Token $token = null, $contents = null) // {{{
+function scholar_markup_converter_preface($token = null, $contents = null, $first = false) // {{{
 {
     static $prefaces = array();
 
     if (null === $token) {
         // tag [preface] dziala w trybie zamiany znakow konca linii na tagi BR,
         // czyli tak, jakby jego zawartosc nie byla owinieta w zaden tag
-        return '<div class="scholar-preface">' . nl2br(implode('', $prefaces)) . '</div>';
+        return '<div class="scholar-preface">' . trim(implode('', $prefaces)) . '</div>';
     }
 
-    if ('__unshift' === $token->getAttribute('preface')) {
-        // specjalna wartosc glownego atrybutu mowiaca, zeby dodac zawartosc
-        // tego taga na poczatek listy
+    if ($first) {
         array_unshift($prefaces, $contents);
 
     } else {
@@ -325,7 +315,7 @@ function scholar_markup_converter_collapsible(Zend_Markup_Token $token, $content
 
     return '<div class="' . $class . '">'
          . '<h3 class="scholar-collapsible-heading">' . htmlspecialchars($title) . '</h3>'
-         . '<div class="scholar-collapsible-content">' . $contents . '</div>'
+         . '<div class="scholar-collapsible-content">' . trim($contents) . '</div>'
          . '</div>';
 } // }}}
 
@@ -451,37 +441,53 @@ function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {
         : ('<del title="' . t('Broken link', array(), $language) . '">' . $contents . '</del>');
 } // }}}
 
-// takie same atrybuty jak w przypadku 
 function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $contents)
 {
-    if (module_exists('gallery')) {
-        $settings = array();
+    if (strlen($contents) && ctype_digit($contents)) {
+        $width  = max(0, $token->getAttribute('width'));
+        $height = max(0, $token->getAttribute('height'));
+        $image  = scholar_gallery_image($contents, $width, $height);
 
-        $width = intval($token->getAttribute('width'));
-        if ($width > 0) {
-            $settings['width'] = $width;
-        }
+        if ($image) {
+            $title = trim($token->getAttribute('title'));
 
-        $height = intval($token->getAttribute('height'));
-        if ($height > 0) {
-            $settings['height'] = $height;
-        }
-
-        // TODO domyslne ustawienia wielkosci obrazow
-        if (empty($settings)) {
-
-        }
-
-        $image = gallery_get_image(intval($contents), true);
-
-        if ($image && ($url = gallery_thumb_url($image, $settings))) {
-            // tutaj troche brzydko, bo modyfikujemy renderowany token
-            if (!$token->getAttribute('title')) {
-                $token->addAttribute('title', $image['title']);
+            // jezeli nie podano tytulu uzyj tytulu obrazu z bazy danych
+            if (!strlen($title)) {
+                $title = trim($image['title']);
             }
-            // owin to w link do obrazu
-            $u = gallery_image_url($image);
-            return '<a href="' . $u . '" rel="lightbox">' . scholar_markup_converter_img($token, $url) . '</a>';
+
+            $img = array(
+                'src' => $image['thumb_url'],
+                'alt' => $title, // (X)HTML: atrybut alt musi byc obecny
+            );
+
+            if (strlen($title)) {
+                $img['title'] = $title;
+            }
+
+            if ($width) {
+                $img['width'] = $width;
+            }
+
+            if ($height) {
+                $img['height'] = $height;
+            }
+
+            $a = array(
+                'href' => $image['image_url'],
+            );
+
+            switch (strtolower($token->getAttribute('align'))) {
+                case 'left':
+                    $a['style'] = 'float:left';
+                    break;
+
+                case 'right':
+                    $a['style'] = 'float:right';
+                    break;
+            }
+
+            return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . '/></a>';
         }
     }
 }
@@ -507,7 +513,7 @@ function scholar_markup_converter___tag(Zend_Markup_Token $token, $contents) // 
  * dokumencie. Niektóre tagi mogą korzystać z udostępnianej przez niego
  * funkcjonalności, np. {@see scholar_markup_converter_t}.
  */
-function scholar_markup_converter___language(Zend_Markup_Token $token = null, $contents = null) // {{{
+function scholar_markup_converter___language($token = null, $contents = null) // {{{
 {
     static $language = null;
 
@@ -523,6 +529,21 @@ function scholar_markup_converter___language(Zend_Markup_Token $token = null, $c
 
     // ustawia nowy jezyk
     $language = (string) $token->getAttribute('__language');
+} // }}}
+
+/**
+ * Obraz umieszczany w preambule strony.
+ */
+function scholar_markup_converter___image(Zend_Markup_Token $token, $contents) // {{{
+{
+    // trzeba pobrac szerokosc obrazu z ustawien
+    $token->addAttribute('width', 200);
+    $token->addAttribute('height', 0);
+    $output = scholar_markup_converter_gallery_img($token, $contents);
+
+    if (strlen($output)) {
+        scholar_markup_converter_preface($token, '<div class="scholar-image">' . $output . '</div>', true);
+    }
 } // }}}
 
 // vim: fdm=marker

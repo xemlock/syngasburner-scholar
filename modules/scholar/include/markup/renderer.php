@@ -20,7 +20,7 @@ class scholar_markup_renderer
      * Przekształca drzewo dokumentu BBCode na odpowiadający mu dokument HTML.
      *
      * @param Zend_Markup_TokenList $tree
-     *     drzewo dukumentu do przetworzenia
+     *     drzewo dokumentu do przetworzenia
      * @param array $no_render
      *     tagi, które nie będą przekształcane, a ich zawartość zostanie dodana
      *     bez zmian do wynikowego kodu
@@ -28,6 +28,7 @@ class scholar_markup_renderer
     public function render(Zend_Markup_TokenList $tree) // {{{
     {
         $html = $this->_render($tree);
+        $html = nl2br($html);
         return $html;
     } // }}}
 
@@ -123,6 +124,14 @@ class scholar_markup_renderer
                         $result[] = ']';
                         break;
 
+                    case 'noparse':
+                        if ($token->hasChildren()) {
+                            foreach ($token->getChildren() as $child) {
+                                $result[] = $this->rawTag($child);
+                            }
+                        }
+                        break;
+
                     default:
                         $contents = $token->hasChildren() 
                             ? $this->_render($token->getChildren(), $depth + 1) 
@@ -152,10 +161,7 @@ class scholar_markup_renderer
                     $result[] = $this->_render($token->getChildren(), 0);
 
                 } else {
-                    $contents = htmlspecialchars($token->getTag());
-
-                    // convert newlines to BR if outside any tag
-                    $result[] = !$depth ? nl2br($contents) : $contents;
+                    $result[] = htmlspecialchars($token->getTag());
                 }
             }
         }
@@ -217,7 +223,7 @@ class scholar_markup_renderer
 
         return $this;
     } // }}}
-    
+
     public function rawTag(Zend_Markup_Token $token) // {{{
     {
         switch ($token->getType()) {

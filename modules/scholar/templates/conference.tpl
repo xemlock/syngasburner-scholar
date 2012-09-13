@@ -1,7 +1,5 @@
 [nonl2br]
-<?php if ($this->conference['image_id']) { ?>
-[preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->conference['image_id']) ?>[/gallery-img][/__tag][/preface]
-<?php } ?>
+[__image]<?php $this->display($this->conference['image_id']) ?>[/__image]
 [__tag="div" class="scholar-conference"]
 <?php $sections = count($this->year_date_presentations) > 1; 
       $first = true; ?>

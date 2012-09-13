@@ -1,7 +1,5 @@
 [nonl2br]
-<?php if ($this->training['image_id']) { ?>
-[preface="__unshift"][__tag="div" class="scholar-image"][gallery-img]<?php $this->display($this->training['image_id']) ?>[/gallery-img][/__tag][/preface]
-<?php } ?>
+[__image]<?php $this->display($this->conference['image_id']) ?>[/__image]
 [__tag="div" class="scholar-training"]
 <?php if ($this->date_classes) { ?>
 [section][t]Training program[/t][/section]
@@ -18,7 +16,7 @@
 <?php       if ($class['authors']) { ?>
   [__tag="div" class="speakers"]<?php
               $authors = $class['authors'];
-              include dirname(__FILE__) . '/_authors.tpl'; ?>[/__tag]
+              include dirname(__FILE__) . '/_training_authors.tpl'; ?>[/__tag]
 <?php       } ?>
 <?php       if ($class['files']) { ?>
   [__tag="div" class="files"]<?php
