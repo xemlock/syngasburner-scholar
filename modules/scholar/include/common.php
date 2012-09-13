@@ -292,11 +292,64 @@ function scholar_countries($code = null, $language_code = null) // {{{
 } // }}}
 
 /**
+ * Funkcja mimo, że wolniejsza od odpowiednika, przyjmuje datę w formacie ISO 8601.
+ * Nie ma ograniczenia na dolną wartość (np. pod Windowsami ujemne timestampy
+ * nie są obsługiwane).
+ * 
+ * Obsługiwane symbole zastępcze:
+ * d 	Day of the month, 2 digits with leading zeros               01 to 31
+ * j 	Day of the month without leading zeros                      1 to 31
+ * m 	Numeric representation of a month, with leading zeros       01 through 12
+ * M	A short textual representation of a month, three letters    Jan through Dec
+ * n 	Numeric representation of a month, without leading zeros    1 through 12
+ * Y 	A full numeric representation of a year, 4 digits           Examples: 1999 or 2003
+ */
+function scholar_date($format, $date, $language = null) // {{{
+{
+    if (null === $language) {
+        $language = scholar_language();
+    }
+
+    $months = array('',
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    );
+
+    $date = (array) $date;
+
+    if (empty($date['year'])) {
+        // nie powinno nigdy sie zdarzyc, jezeli podano poprawna date
+        $date['year'] = 1;
+    }
+
+    if (empty($date['month'])) {
+        $date['month'] = 1;
+    }
+
+    if (empty($date['day'])) {
+        $date['day'] = 1;
+    }
+
+    return strtr($format, array(
+        'd' => sprintf('%02d', $date['day']),
+        'j' => $date['day'],
+        'm' => sprintf('%02d', $date['month']),
+        'M' => t($months[$date['month']], array(), $language),
+        'n' => $date['month'],
+        'Y' => $date['year'],
+    ));
+} // }}}
+
+/**
  * Formatuje datę lub zakres dat w postaci ODRF (Open Date Range Format).
  * Więcej {@see http://www.ukoln.ac.uk/metadata/dcmi/date-dccd-odrf/}.
  */
-function scholar_format_date($date) // {{{
+function scholar_format_date($date, $language = null) // {{{
 {
+    if (null === $language) {
+        $language = scholar_language();    
+    }
+
     if (is_int($date)) {
         // unix timestamp
         $date = array(date('Y-m-d', $date));
@@ -305,28 +358,59 @@ function scholar_format_date($date) // {{{
         $date = array_map('trim', explode('/', $date, 2));
     }
 
-    if (2 == count($date)) {
-        // zakres dat
-        if (strlen($date[0]) + strlen($date[1])) {
-            // przynajmniej jedna z dat jest niepusta
-            if (!strlen($date[0])) {
-                $date[0] = '…';
-                // single date [1]
-            } else if (!strlen($date[1])) {
-                $date[1] = '…';
-                // single date [2]
-            } else {
-                // fullparse -> 
+    switch (count($date)) {
+        case 2:
+            // zakres dat
+            $l0 = strlen($date[0]);
+            $l1 = strlen($date[1]);
+            if ($l1 + $l0) {
+                // przynajmniej jedna z dat jest niepusta
+                if (0 == $l0) {
+                    if ($d1 = scholar_parse_date($date[1])) {
+                        $format = scholar_setting('format_date', $language);
+                        $formatted = scholar_date($format, $d1, $language);
+                        if ($formatted) {
+                            return '… – ' . $formatted;
+                        }
+                    }
+                } else if (0 == $l1) {
+                    if ($d0 = scholar_parse_date($date[0])) {
+                        $format = scholar_setting('format_date', $language);
+                        $formatted = scholar_date($format, $d0, $language);
+                        if ($formatted) {
+                            return $formatted . ' – …';
+                        }
+                    }
+                } else {
+                    $d0 = scholar_parse_date($date[0]);
+                    $d1 = scholar_parse_date($date[1]);
+                    if ($d0 && $d1) {
+                        if ($d0['year'] != $d1['year']) {
+                            $format = scholar_setting('format_date', $language);
+                            $format = array(
+                                'start_date' => $format,
+                                'end_date'   => $format,
+                            );
+                        } else if ($d0['month'] != $d1['month']) {
+                            $format = scholar_setting('format_daterange_same_year', $language);
+                        } else {
+                            $format = scholar_setting('format_daterange_same_month', $language);
+                        }
+
+                        return scholar_date($format['start_date'], $d0, $language)
+                             . ' – '
+                             . scholar_date($format['end_date'], $d1, $language); 
+                    }
+                }
             }
-        }
-    }
-    '–';
+            break;
 
-    if (strlen($date)) {
-        return '[' . $date . ']';
+        case 1:
+            $format = scholar_setting('format_date', $language);
+            return scholar_date($format, $date[0], $language);
     }
 
-    return '0000-00-00';
+    return false;
 } // }}}
 
 /**

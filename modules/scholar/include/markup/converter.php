@@ -331,21 +331,21 @@ function scholar_markup_converter_subsection(Zend_Markup_Token $token, $contents
 
 function scholar_markup_converter_entry(Zend_Markup_Token $token, $contents) // {{{
 {
+    $language = scholar_markup_converter___language();
+    $output = '';
+
     if ($date = $token->getAttribute('date')) {
-    $result = '';
-    if ($date) {
-        $date = explode(' - ', $date);
-        $date = str_replace('--', ' &ndash; ', $date);
-        $result .= '<div class="tm">' . trim($date) . '</div>';
-    }
-    } else if ($time = $token->getAttribute('time')) {
-        $time = explode(' - ', $time);
-    } else {
-        
+        if ($formatted_date = scholar_format_date($date, $language)) {
+            $output .= '<div class="scholar-entry-heading"><span class="tm">' . $formatted_date . '</span></div>';
+        }
+    } else if ($entry = $token->getAttribute('entry')) {
+        $entry = str_replace(array('--', '...'), array('&ndash;', '&hellip;'), trim($entry));
+        $output .= '<div class="scholar-entry-heading">' . $entry . '</div>';
     }
 
-    $result .= '<div class="details">' . trim($contents) . '</div>';
-    return '<div class="scholar-block">' . $result . '</div>';
+    $output .= '<div class="scholar-entry-content">' . trim($contents) . '</div>';
+
+    return '<div class="scholar-entry">' . $output . '</div>';
 } // }}}
 
 function scholar_markup_converter_box(Zend_Markup_Token $token, $contents) // {{{

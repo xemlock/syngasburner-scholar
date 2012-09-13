@@ -4,7 +4,7 @@
  * Interfejs do pobierania wartości zmiennych konfiguracyjnych,
  * zapisuje raz pobrane wartości do pamięci podręcznej.
  */
-function scholar_setting($name, $language = null)
+function scholar_setting($name, $language = null) // {{{
 {
     static $settings = array();
 
@@ -21,9 +21,9 @@ function scholar_setting($name, $language = null)
             ? call_user_func($func, $language)
             : null;
     }
-p($settings);
+
     return $settings[$key];
-}
+} // }}}
 
 /**
  * Zwraca nazwę zmiennej konfiguracyjnej.
@@ -31,7 +31,7 @@ p($settings);
  * @param string $name
  * @param string $language
  */
-function scholar_setting_name($name, $language = null)
+function scholar_setting_name($name, $language = null) // {{{
 {
     $varname = 'scholar_' . $name;
 
@@ -40,7 +40,7 @@ function scholar_setting_name($name, $language = null)
     }
 
     return $varname;
-}
+} // }}}
 
 /**
  * Domyślna, minimalna szerokość obrazów to 150px. Ustawienie jest niezależne
@@ -48,24 +48,24 @@ function scholar_setting_name($name, $language = null)
  *
  * @return int
  */
-function scholar_setting_image_width()
+function scholar_setting_image_width() // {{{
 {
     return max(150, variable_get(scholar_setting_name('image_width'), 0));
-}
+} // }}}
 
 /**
  * @return string
  */
-function scholar_setting_format_date($language)
+function scholar_setting_format_date($language) // {{{
 {
     // domyslnie pelna data w formacie ISO 8601 (YYYY-MM-DD)
     return variable_get(scholar_setting_name('format_date', $language), 'Y-m-d');
-}
+} // }}}
 
 /**
  * @return array
  */
-function scholar_setting_format_daterange_same_month($language)
+function scholar_setting_format_daterange_same_month($language) // {{{
 {
     $format = variable_get(scholar_setting_name('format_daterange_same_month', $language), null);
 
@@ -77,12 +77,12 @@ function scholar_setting_format_daterange_same_month($language)
     }
 
     return $format;
-}
+} // }}}
 
 /**
  * @return array
  */
-function scholar_setting_format_daterange_same_year($language = null)
+function scholar_setting_format_daterange_same_year($language = null) // {{{
 {
     $format = variable_get(scholar_setting_name('format_daterange_same_year', $language), null);
 
@@ -94,6 +94,6 @@ function scholar_setting_format_daterange_same_year($language = null)
     }
 
     return $format;
-}
+} // }}}
 
 // vim: fdm=marker
