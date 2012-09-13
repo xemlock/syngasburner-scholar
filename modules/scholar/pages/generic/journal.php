@@ -163,7 +163,7 @@ function scholar_generics_journal_details_form(&$form_state, $record) // {{{
             '#collapsed' => false,
             array(
                 '#type' => 'markup',
-                '#value' => scholar_theme_dl($dl),
+                '#value' => theme_scholar_dl($dl),
             ),
         ),
     );

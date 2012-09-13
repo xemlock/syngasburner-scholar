@@ -13,17 +13,20 @@ function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
     if ('node_type_form' == $form_id && isset($form['#node_type']) && $form['#node_type']->type == 'scholar') {
         // nie mozna modyfikowac
         drupal_set_message(t('Modification of the Scholar content type is not allowed.'), 'error');
-        scholar_goto(scholar_path());
+        scholar_goto('admin/content/types');
     }
 
-    if (0 === strncmp($form_id, 'scholar_', 8)) {
+    if (0 == strncmp($form_id, 'scholar_', 8)) {
         // callback #submit o nazwie takiej jak nazwa formularza
         // z przyrostkiem _submit jest automaycznie dodawany przez
         // drupal_prepare_form() wywolywana przez drupal_get_form().
 
-        $form['#validate'] = isset($form['#validate']) ? (array) $form['#validate'] : array();
+        $form['#validate'] = isset($form['#validate'])
+            ? array_map('strtolower', (array) $form['#validate'])
+            : array();
+
         $validate_callback = $form_id . '_validate';
-        if (function_exists($validate_callback)) {
+        if (function_exists($validate_callback) && !in_array($validate_callback, $form['#validate'])) {
             $form['#validate'][] = $validate_callback;
         }
 
@@ -237,29 +240,6 @@ function form_type_scholar_checkboxed_container_value($element, $post = false) /
     return array(
         $checkbox_name => intval($value)
     );
-} // }}}
-
-function scholar_language_label($language, $label = null) // {{{
-{
-    static $have_languageicons = null;
-
-    if (null === $have_languageicons) {
-        $have_languageicons = module_exists('languageicons');
-    }
-
-    $name = scholar_languages($language);
-
-    if ($have_languageicons) {
-        $dummy = new stdClass;
-        $dummy->language = $language;
-
-        $label = theme('languageicons_icon', $dummy, $name) . ' ' . $label;
-
-    } else {
-        $label = '[' . $name . '] ' . $label;
-    }
-
-    return '<span class="scholar-language-label">' . $label . '</span>';
 } // }}}
 
 /**
@@ -612,11 +592,13 @@ function scholar_element_separator() // {{{
  *
  * @return array
  */
-function scholar_form_tablerow_open() // {{{
+function scholar_form_tablerow_open($options = array()) // {{{
 {
+    $options += array('#prefix' => '');
+
     return array(
         '#type' => 'markup',
-        '#value' => '<table border="0" cellpadding="0" cellspacing="0" style="width:auto;border:none"><tbody style="border:none"><tr style="border:none"><td style="border:none;padding:0">',
+        '#value' => '<div class="form-item">' . $options['#prefix'] . '<table border="0" cellpadding="0" cellspacing="0" style="width:auto;border:none;margin:0"><tbody style="border:none"><tr style="border:none"><td style="border:none;padding:0">',
     );
 } // }}}
 
@@ -638,11 +620,13 @@ function scholar_form_tablerow_next() // {{{
  *
  * @return array
  */
-function scholar_form_tablerow_close() // {{{
+function scholar_form_tablerow_close($options = array()) // {{{
 {
+    $options += array('#suffix' => '');
+
     return array(
         '#type' => 'markup',
-        '#value' => '</td></tr></tbody></table>',
+        '#value' => '</td></tr></tbody></table>' . $options['#suffix'] . '</div>',
     );
 } // }}}
 

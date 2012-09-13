@@ -251,7 +251,7 @@ function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents) /
 // formatuje dane wedlug aktualnych ustawien formatu
 function scholar_markup_converter_date(Zend_Markup_Token $token, $contents) // {{{
 {
-    return 'DATE(' . scholar_format_date($contents) . ')';
+    return scholar_format_date($contents);
 } // }}}
 
 function scholar_markup_converter_preface($token = null, $contents = null, $first = false) // {{{
@@ -329,7 +329,7 @@ function scholar_markup_converter_subsection(Zend_Markup_Token $token, $contents
     return '<h3 class="scholar-subsection">' . $contents . '</h3>';
 } // }}}
 
-function scholar_markup_converter_block(Zend_Markup_Token $token, $contents) // {{{
+function scholar_markup_converter_entry(Zend_Markup_Token $token, $contents) // {{{
 {
     if ($date = $token->getAttribute('date')) {
     $result = '';

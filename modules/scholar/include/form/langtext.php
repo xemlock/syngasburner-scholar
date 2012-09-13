@@ -71,7 +71,7 @@ function theme_scholar_element_langtext($element) // {{{
 
         $output .= '<tr>'
                 .  '<td>' . scholar_language_label($language, $name . ':') . '</td>'
-                .  '<td width="100%">' . scholar_theme_textfield($textfield) . '</td>'
+                .  '<td width="100%">' . theme_scholar_textfield($textfield) . '</td>'
                 .  '<td><span class="scholar-character-countdown" data-id="' . $id . '" title="' . t('Number of characters remaining') . '"></span></td>'
                 .  '</tr>';
     }

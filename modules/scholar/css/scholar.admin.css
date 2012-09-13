@@ -276,6 +276,16 @@ form.scholar .form-text:focus {
   margin-left: 4px;
 }
 
+html form.scholar fieldset.collapsed legend a * {
+  display: inline;
+}
+
+html form.scholar fieldset.collapsible legend a {
+  padding-left: 18px; /* po co w emach, skoro grafika ma rozmiary w px! */
+  padding-right: 6px;
+}
+
+
 /* modal {{{ */
 .dialog {
   background: #f6f6f6;

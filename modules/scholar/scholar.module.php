@@ -170,7 +170,7 @@ function scholar_node_form(&$form_state, $node) // {{{
 {
     if (empty($node->nid)) {
         drupal_set_message(t('Node of the Scholar content type cannot be directly created.'), 'error');
-        return scholar_goto(scholar_path());
+        return scholar_goto('node/add');
     }
 
     // Jezeli wezel jest podpiety do rekordu modulu scholar przekieruj do
@@ -382,7 +382,17 @@ function scholar_theme() // {{{
     // jawnego wywolania tej funkcji.
     __scholar_init();
 
-    return scholar_elements_theme();
+    $theme = array();
+
+    $theme += scholar_elements_theme();
+
+    $theme['scholar_textfield']   = array('arguments' => array('element' => null));
+    $theme['scholar_select']      = array('arguments' => array('element' => null));
+//  $theme['scholar_label']       = array('arguments' => array('title' => null, 'required' => null));
+//  $theme['scholar_description'] = array('arguments' => array('description' => null));
+//  $theme['scholar_dl']          = array('arguments' => array('data' => null, 'attributes' => null));
+
+    return $theme;
 } // }}}
 
 function __scholar_init() // {{{

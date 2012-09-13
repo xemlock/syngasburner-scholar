@@ -191,7 +191,7 @@ function scholar_generics_conference_details_form(&$form_state, $record) // {{{
 
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => scholar_theme_dl($dl) 
+        '#value' => theme_scholar_dl($dl) 
     );
 
     if ($children) {

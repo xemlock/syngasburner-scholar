@@ -26,8 +26,7 @@ function form_type_scholar_element_time_value($element, $post = false) // {{{
         }
     }
 
-    // nadaj wartosc poszczegolnym czesciom tylko jezeli podano godziny i minuty,
-    // w przeciwnym razie uznaj, ze pole nie ma nadanej wartosci
+    // nadaj wartosc poszczegolnym czesciom jezeli podano godziny lub minuty
     if (strlen($minute) || strlen($hour)) {
         return array(
             'hour'   => $hour,
@@ -40,7 +39,12 @@ function form_type_scholar_element_time_value($element, $post = false) // {{{
 } // }}}
 
 /**
- * Process jest uruchamiany po _value. includes/form.inc _form_builder_handle_input_element()
+ * Process jest uruchamiany po _value. Dzięki temu w $element['#value']
+ * w przypadku poprawnej daty mamy dostępne przesłane jej części składowe
+ * - hour i minute.
+ * includes/form.inc _form_builder_handle_input_element()
+ *
+ * @return array
  */
 function form_type_scholar_element_time_process($element) // {{{
 {
@@ -87,10 +91,10 @@ function form_type_scholar_element_time_validate($element, &$form_state) // {{{
 
     if (count($value)) {
         $hour = isset($value['hour']) ? strval($value['hour']) : '';
-        $mins  = isset($value['minute']) ? strval($value['minute']) : '';
+        $mins = isset($value['minute']) ? strval($value['minute']) : '';
 
         $valid_hour = strlen($hour) && ctype_digit($hour) && $hour < 24;
-        $valid_mins  = strlen($mins) && ctype_digit($mins) && $mins < 60;
+        $valid_mins = strlen($mins) && ctype_digit($mins) && $mins < 60;
 
         if (!$valid_hour || !$valid_mins) {
             form_error($element, t('Specified time is invalid.'));
@@ -100,8 +104,8 @@ function form_type_scholar_element_time_validate($element, &$form_state) // {{{
 
 function theme_scholar_element_time($element) // {{{
 {
-    $value = scholar_theme_select($element['hour']) . ':'
-           . scholar_theme_select($element['minute']);
+    $value = theme_scholar_select($element['hour']) . ':'
+           . theme_scholar_select($element['minute']);
 
     return theme_form_element($element, $value);
 } // }}}
@@ -206,11 +210,11 @@ function form_type_scholar_element_timespan_validate($element, &$form_state) // 
 
 function theme_scholar_element_timespan($element) // {{{
 {
-    $output = scholar_theme_textfield($element['date'])
+    $output = theme_scholar_textfield($element['date'])
             . ' &nbsp; '
-            . scholar_theme_select($element['start']['hour']) . ':' . scholar_theme_select($element['start']['minute'])
+            . theme_scholar_select($element['start']['hour']) . ':' . theme_scholar_select($element['start']['minute'])
             . ' &ndash; '
-            . scholar_theme_select($element['end']['hour']) . ':' . scholar_theme_select($element['end']['minute']);
+            . theme_scholar_select($element['end']['hour']) . ':' . theme_scholar_select($element['end']['minute']);
 
     return theme_form_element($element, $output);
 } // }}}

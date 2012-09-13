@@ -10,7 +10,7 @@
  *     pustym stringiem.
  * @return string
  */
-function scholar_theme_dl($data, $attributes = array()) // {{{
+function theme_scholar_dl($data, $attributes = array()) // {{{
 {
     scholar_add_css();
 
@@ -115,7 +115,7 @@ function scholar_tabledrag_handle() // {{{
  * Generuje kod HTML elementu, ale tylko tego elementu bez zadnych
  * wrapperow.
  */
-function scholar_theme_select($element) // {{{
+function theme_scholar_select($element) // {{{
 {
     scholar_element_set_class($element, 'form-select');
 
@@ -124,7 +124,7 @@ function scholar_theme_select($element) // {{{
     return '<select' . drupal_attributes($attrs) . '>' . form_select_options($element) . '</select>';
 } // }}}
 
-function scholar_theme_textfield($element) // {{{
+function theme_scholar_textfield($element) // {{{
 {
     scholar_element_set_class($element, 'form-text');
 
@@ -133,6 +133,19 @@ function scholar_theme_textfield($element) // {{{
     $attrs['value'] = $element['#value'];
 
     return '<input' . drupal_attributes($attrs) . '/>';
+} // }}}
+
+function theme_scholar_label($title, $required = false) // {{{
+{
+    $title    = filter_xss_admin($title);
+    $required = $required ? '<span class="form-required" title="' . t('This field is required.') . '">*</span>' : '';
+
+    return '<label>' . t('!title: !required', array('!title' => $title, '!required' => $required)) . '</label>';
+} // }}}
+
+function theme_scholar_description($description) // {{{
+{
+    return '<div class="description">' . $description . '</div>';
 } // }}}
 
 /**
@@ -172,6 +185,29 @@ function scholar_oplink($title, $path_name, $subpath) // {{{
     }
 
     return l($title, $path, array('query' => $query));
+} // }}}
+
+function scholar_language_label($language, $label = null) // {{{
+{
+    static $have_languageicons = null;
+
+    if (null === $have_languageicons) {
+        $have_languageicons = module_exists('languageicons');
+    }
+
+    $name = scholar_languages($language);
+
+    if ($have_languageicons) {
+        $dummy = new stdClass;
+        $dummy->language = $language;
+
+        $label = theme('languageicons_icon', $dummy, $name) . ' ' . $label;
+
+    } else {
+        $label = '[' . $name . '] ' . $label;
+    }
+
+    return '<span class="scholar-language-label">' . $label . '</span>';
 } // }}}
 
 // vim: fdm=marker

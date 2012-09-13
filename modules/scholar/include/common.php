@@ -291,21 +291,42 @@ function scholar_countries($code = null, $language_code = null) // {{{
     return isset($_cache[$language_code][$code]) ? $_cache[$language_code][$code] : null;
 } // }}}
 
+/**
+ * Formatuje datę lub zakres dat w postaci ODRF (Open Date Range Format).
+ * Więcej {@see http://www.ukoln.ac.uk/metadata/dcmi/date-dccd-odrf/}.
+ */
 function scholar_format_date($date) // {{{
 {
     if (is_int($date)) {
         // unix timestamp
-        $date = date('Y-m-d', $date);
+        $date = array(date('Y-m-d', $date));
     } else {
-        // jezeli datetime wez tylko date i usun czas
-        $date = substr(trim($date), 0, 10);
+        // podziel ewentualny zakres dat na date poczatku i konca
+        $date = array_map('trim', explode('/', $date, 2));
     }
+
+    if (2 == count($date)) {
+        // zakres dat
+        if (strlen($date[0]) + strlen($date[1])) {
+            // przynajmniej jedna z dat jest niepusta
+            if (!strlen($date[0])) {
+                $date[0] = '…';
+                // single date [1]
+            } else if (!strlen($date[1])) {
+                $date[1] = '…';
+                // single date [2]
+            } else {
+                // fullparse -> 
+            }
+        }
+    }
+    '–';
 
     if (strlen($date)) {
         return '[' . $date . ']';
     }
 
-    return '';
+    return '0000-00-00';
 } // }}}
 
 /**

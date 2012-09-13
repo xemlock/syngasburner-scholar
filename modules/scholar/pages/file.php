@@ -180,7 +180,7 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
 
     $form['properties'][] = array(
         '#type' => 'markup',
-        '#value' => scholar_theme_dl(array(
+        '#value' => theme_scholar_dl(array(
             t('Size'),         format_size($file->size),
             t('MIME type'),    check_plain($file->mimetype),
             t('MD5 checksum'), check_plain($file->md5sum),
