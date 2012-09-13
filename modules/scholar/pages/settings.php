@@ -4,7 +4,7 @@ function scholar_settings_form(&$form_state)
 {
     $form = array();
 
-    $form['scholar_img_width'] = array(
+    $form[scholar_setting_name('image_width')] = array(
         '#title' => 'Image width',
         '#type'        => 'textfield',
         '#field_suffix' => 'px',
@@ -19,23 +19,24 @@ function scholar_settings_form(&$form_state)
         '#value' => "<p>Date formats use the same notation as the <a href=\"http://www.php.net/manual/en/function.date.php\" target=\"_blank\">PHP date function</a>.</p>",
     );
 
-    foreach (scholar_languages() as $code => $name) {
+    foreach (scholar_languages() as $language => $name) {
         $fieldset = array(
             '#type' => 'fieldset',
-            '#title' => scholar_language_label($code, $name),
+            '#title' => scholar_language_label($language, $name),
             '#collapsible' => true,
-            '#collapsed' => $code != scholar_language(),
+            '#collapsed' => $language != scholar_language(),
         );
 
-        $fieldset['scholar_dateformat_single'] = array(
+        $fieldset[scholar_setting_name('format_date', $language)] = array(
             '#title' => 'Single date',
             '#type' => 'textfield',
             '#size' => 24,
             '#required' => true,
             '#description' => t('Format for displaying a single date.'),
+            '#default_value' => scholar_setting_format_date($language),
         );
 
-        $fieldset['scholar_dateformat_range_same_month'] = array(
+        $fieldset[scholar_setting_name('format_daterange_same_month', $language)] = array(
             '#tree' => true,
             scholar_form_tablerow_open(array(
                 '#prefix' => theme_scholar_label(t('Same month date range'), true),
@@ -66,7 +67,7 @@ function scholar_settings_form(&$form_state)
             )),
         );
 
-        $fieldset['scholar_dateformat_range_same_year'] = array(
+        $fieldset[scholar_setting_name('format_daterange_same_year', $language)] = array(
             '#tree' => true,
             scholar_form_tablerow_open(array(
                 '#prefix' => theme_scholar_label(t('Same year date range'), true),
