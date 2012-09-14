@@ -179,7 +179,7 @@ function scholar_load_files($row_id, $table_name, $language = null) // {{{
  * @param int $row_id
  * @param string $table_name
  * @param array $attachments
- *     taka jak wartosć z {@see scholar_element_files}, czyli tablica 
+ *     taka jak wartosć z scholar_element_files, czyli tablica 
  *     [language][file_id] => (id, label)
  * @return int liczba dodanych rekordów
  */
@@ -451,6 +451,7 @@ function scholar_save_upload($source) // {{{
  * @param array $header
  * @param string $before
  * @param array $pager
+ * @return resource
  */
 function scholar_files_recordset($conds = null, $header = null, $before = null, $pager = null) // {{{
 {
@@ -460,10 +461,13 @@ function scholar_files_recordset($conds = null, $header = null, $before = null, 
 } // }}}
 
 /**
+ * Przekształca rekord z tabeli plików modułu na obiekt imitujący rekord
+ * z tabeli plików Drupala.
+ *
  * @param array $file
  * @return object
  */
-function scholar_drupalize_file($file)
+function scholar_drupalize_file($file) // {{{
 {
     $object = new stdClass;
 
@@ -471,17 +475,18 @@ function scholar_drupalize_file($file)
     $object->nid = null;
     $object->vid = null;
     $object->uid = $file['user_id'];
+
     $object->timestamp   = time();
     $object->filename    = $file['filename'];
     $object->filepath    = scholar_file_path($file['filename']);
     $object->filemime    = $file['mimetype'];
     $object->filesize    = $file['size'];
-    $object->status      = 1;
     $object->description = $file['label'];
+    $object->status      = 1;
     $object->list        = 1;
     $object->weight      = $file['weight'];
 
     return $object;
-}
+} // }}}
 
 // vim: fdm=marker
