@@ -24,13 +24,15 @@ function scholar_load_events($row_id, $table_name) // {{{
         // tutaj dostajemy po jednym evencie na jezyk, eventy sa unikalne
         while ($row = db_fetch_array($query)) {
             $event = events_load_event($row['event_id']);
+            $event = $event ? (array) $event : array();
 
-            if ($event) {
-                $event = (array) $event;
-                $event['body'] = $row['body']; // nieprzetworzona tresc
+            // uzyj tytulu i nieprzetworzonej tresci
+            $event['status']   = $row['status'];
+            $event['title']    = $row['title'];
+            $event['body']     = $row['body'];
+            $event['language'] = $row['language'];
 
-                $rows[$event['language']] = $event;
-            }
+            $rows[$event['language']] = $event;
         }
 
          _scholar_rendering_enabled($rendering);
@@ -111,8 +113,8 @@ function scholar_save_events($row_id, $table_name, $events) // {{{
                 );
 
                 // ... i dodaj nowe
-                db_query("INSERT INTO {scholar_events} (table_name, row_id, event_id, language, body) VALUES ('%s', %d, %d, '%s', '%s')",
-                    $table_name, $row_id, $event->id, $language, $body
+                db_query("INSERT INTO {scholar_events} (table_name, row_id, event_id, language, status, title, body) VALUES ('%s', %d, %d, '%s', %d, '%s', '%s')",
+                    $table_name, $row_id, $event->id, $language, $status, $event->title, $body
                 );
 
                 ++$count;

@@ -292,6 +292,14 @@ function scholar_schema() // {{{
                 'not null' => true,
             ),
             'language'   => _scholar_schema_type('language'),
+            'status' => array(
+                'type'     => 'int',
+                'size'     => 'tiny',
+                'not null' => true,
+            ),
+            'last_rendered' => array(
+                'type'     => 'int', // timestamp
+            ),
             'title'      => array(
                 'type'     => 'varchar',
                 'length'   => 255,
