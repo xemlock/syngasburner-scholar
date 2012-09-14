@@ -163,12 +163,9 @@ user-select: none;
 .scholar-vtable .form-textarea
 .scholar-vtable .resizable-textarea,
 .scholar-vtable .scholar-sortable-multiselect {
-  width: 95%;
-}
-
-.scholar-vtable .form-text.form-date {
   width: auto;
 }
+
 .scholar .field-suffix label {
   display: inline-block;
   font-weight: normal;
@@ -283,6 +280,11 @@ html form.scholar fieldset.collapsed legend a * {
 html form.scholar fieldset.collapsible legend a {
   padding-left: 18px; /* po co w emach, skoro grafika ma rozmiary w px! */
   padding-right: 6px;
+}
+
+
+form.scholar .form-radios label.option {
+  margin-right: .7vt5em;
 }
 
 

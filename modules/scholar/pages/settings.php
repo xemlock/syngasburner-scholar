@@ -2,22 +2,38 @@
 
 function scholar_settings_form(&$form_state)
 {
-    $form = array();
-
-    $form[scholar_setting_name('image_width')] = array(
-        '#title' => 'Image width',
-        '#type'        => 'textfield',
-        '#field_suffix' => 'px',
-        '#maxlength'   => 3,
-        '#description' => t('Width of images shown in the preface of auto-generated pages. Minimum width is 150px.'),
-        '#size' => 24,
-        '#required' => true,
-        '#default_value' => scholar_setting('image_width'),
+    $image = array(
+        '#type'  => 'scholar_element_vtable_row',
+        '#title' => t('Images'),
+        '#description' => t('Configure preface images'),
+        scholar_setting_name('image_width') => array(
+            '#title'         => t('Image width'),
+            '#type'          => 'textfield',
+            '#required'      => true,
+            '#description'   => t('Width of images shown in the preface of auto-generated pages. Minimum width is 150px.'),
+            '#maxlength'     => 3,
+            '#size'          => 24,
+            '#field_suffix'  => 'px',
+            '#default_value' => scholar_setting('image_width'),
+        ),
+        scholar_setting_name('image_lightbox') => array(
+            '#title'         => 'Lightbox',
+            '#type'          => 'radios',
+            '#required'      => true,
+            '#description'   => t('When enabled, preface images will be automatically processed by Lightbox (if available).'),
+            '#default_value' => scholar_setting('image_lightbox'),
+            '#options'       => array(1 => t('Enabled'), 0 => t('Disabled')),
+        ),
     );
 
-    $form[] = array(
-        '#type' => 'markup',
-        '#value' => "<p>Date formats use the same notation as the <a href=\"http://www.php.net/manual/en/function.date.php\" target=\"_blank\">PHP date function</a>.</p>",
+    $dateformat = array(
+        '#type'  => 'scholar_element_vtable_row',
+        '#title' => t('Date formats'),
+        '#description' => t('Configure how dates are displayed'),
+        array(
+            '#type' => 'markup',
+            '#value' => "<p>Date formats use the same notation as the <a href=\"http://www.php.net/manual/en/function.date.php\" target=\"_blank\">PHP date function</a>. However only subset of placeholders is supported.</p>",
+        ),
     );
 
     foreach (scholar_languages() as $language => $name) {
@@ -109,8 +125,17 @@ function scholar_settings_form(&$form_state)
             )),
         );
 
-        $form[] = $fieldset;
+        $dateformat[] = $fieldset;
     }
+
+    $vtable = array(
+        '#type' => 'scholar_element_vtable',
+        'images' => $image,
+        'dateformat' => $dateformat,
+    );
+
+    $form = array();
+    $form['vtable'] = $vtable;
 
     $form = system_settings_form($form);
     array_unshift($form['#submit'], 'scholar_settings_form_submit');
@@ -131,6 +156,8 @@ function scholar_settings_form_validate($form, &$form_state) // {{{
 {
     $values = &$form_state['values'];
 
+    // dokonaj walidacji szerokosci obrazu, jezeli sie powiedzie zmien jej
+    // typ na liczbe calkowita
     $image_width_name = scholar_setting_name('image_width');
     $image_width = intval($values[$image_width_name]);
 
@@ -139,6 +166,10 @@ function scholar_settings_form_validate($form, &$form_state) // {{{
     } else {
         $values[$image_width_name] = $image_width;
     }
+
+    // ustawienie dla Lightboksa przechowuj jako liczbe calkowita
+    $image_lightbox_name = scholar_setting_name('image_lightbox');
+    $values[$image_lightbox_name] = intval($values[$image_lightbox_name]);
 } // }}}
 
 function scholar_settings_form_submit($form, &$form_state) // {{{

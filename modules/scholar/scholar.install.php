@@ -292,6 +292,11 @@ function scholar_schema() // {{{
                 'not null' => true,
             ),
             'language'   => _scholar_schema_type('language'),
+            'title'      => array(
+                'type'     => 'varchar',
+                'length'   => 255,
+                'not null' => true,
+            ),
             'body'       => array(
                 // tresc wydarzenia, ktora po przetworzeniu (renderowaniu)
                 // zostanie zapisana do wezla
@@ -303,6 +308,7 @@ function scholar_schema() // {{{
         'unique keys' => array(
             'event' => array('event_id'), // kazdy event moze byc podpiety do co najwyzej jednego rekordu generycznego
         ),
+        'mysql_suffix' => 'CHARACTER SET utf8 COLLATE utf8_unicode_ci',
     ); // }}}
 
     $schema['scholar_authors'] = array( // {{{

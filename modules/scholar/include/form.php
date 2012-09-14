@@ -556,7 +556,7 @@ function scholar_element_attributes($element) // {{{
         $name = '';
     }
 
-    $attrs['id']   = $id;
+    $attrs['id'] = form_clean_id($id);
     $attrs['name'] = $name . ($multiple ? '[]' : '');
 
     if ($multiple) {

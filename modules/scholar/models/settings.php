@@ -54,6 +54,14 @@ function scholar_setting_image_width() // {{{
 } // }}}
 
 /**
+ * @return int
+ */
+function scholar_setting_image_lightbox()
+{
+   return max(0, variable_get(scholar_setting_name('image_lightbox'), 0));
+}
+
+/**
  * @return string
  */
 function scholar_setting_format_date($language) // {{{

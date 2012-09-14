@@ -550,7 +550,9 @@ function scholar_markup_converter___image(Zend_Markup_Token $token, $contents) /
 {
     // trzeba pobrac szerokosc obrazu z ustawien
     $token->addAttribute('width', scholar_setting('image_width'));
-    $token->addAttribute('height', 0);
+    $token->addAttribute('height', null);
+    $token->addAttribute('lightbox', scholar_setting('image_lightbox') ? '' : null);
+
     $output = scholar_markup_converter_gallery_img($token, $contents);
 
     if (strlen($output)) {

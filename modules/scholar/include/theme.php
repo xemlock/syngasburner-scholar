@@ -143,6 +143,38 @@ function theme_scholar_label($title, $required = false) // {{{
     return '<label>' . t('!title: !required', array('!title' => $title, '!required' => $required)) . '</label>';
 } // }}}
 
+/**
+ * Przyciski radiowe w układzie poziomym.
+ */
+function theme_scholar_radios($element) // {{{
+{
+    $output = '<div class="form-radios">';
+
+    $attrs = scholar_element_attributes($element);
+    $attrs['type'] = 'radio';
+
+    $id = $attrs['id'];
+
+    if (isset($element['#options'])) {
+        foreach ((array) $element['#options'] as $value => $label) {
+            if (isset($attrs['checked'])) {
+                unset($attrs['checked']);
+            }
+            if ($element['#default_value'] == $element['#value']) {
+                $attrs['checked'] = 'checked';
+            }
+            $attrs['id']    = form_clean_id($id . '-' . $value);
+            $attrs['value'] = $value;
+
+            $output .= '<label class="option"><input' . drupal_attributes($attrs) . '/> ' . $label . '</label>';
+        }
+    }
+
+    $output .= '</div>';
+
+    return $output;
+} // }}}
+
 function theme_scholar_description($description) // {{{
 {
     return '<div class="description">' . $description . '</div>';
@@ -169,7 +201,7 @@ function scholar_theme_element($element, $content) // {{{
  * @param ...
  *     Dodatkowe parametry do zastąpienia nimi symboli zastępczych w $subpath
  */
-function scholar_oplink($title, $path_name, $subpath) // {{{
+function scholar_oplink($title, $path_name, $subpath = null) // {{{
 {
     $args = array_slice(func_get_args(), 1);
     $path = call_user_func_array('scholar_path', $args);

@@ -399,8 +399,11 @@ function scholar_theme() // {{{
 
     $theme += scholar_elements_theme();
 
-    $theme['scholar_textfield']   = array('arguments' => array('element' => null));
+    $theme['scholar_checkbox']    = array('arguments' => array('element' => null));
+    $theme['scholar_radios']      = array('arguments' => array('element' => null));
     $theme['scholar_select']      = array('arguments' => array('element' => null));
+    $theme['scholar_textfield']   = array('arguments' => array('element' => null));
+
 //  $theme['scholar_label']       = array('arguments' => array('title' => null, 'required' => null));
 //  $theme['scholar_description'] = array('arguments' => array('description' => null));
 //  $theme['scholar_dl']          = array('arguments' => array('data' => null, 'attributes' => null));
