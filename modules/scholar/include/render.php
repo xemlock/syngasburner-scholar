@@ -37,6 +37,7 @@ function scholar_invalidate_rendering() // {{{
     variable_set('scholar_last_change', date('Y-m-d H:i:s'));
 } // }}}
 
+
 /**
  * Generuje kod BBCode prezentujący spis publikacji i wystąpień osoby
  * o podanym identyfikatorze.

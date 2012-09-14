@@ -1,107 +1,5 @@
 <?php
 
-class scholar_view_vars implements Iterator
-{
-    private $_vars = array();
-    private $_escape;
-
-    public function __construct($escape = null, $vars = null) // {{{
-    {
-        if (null === $escape) {
-            $this->_escape = 'htmlspecialchars';
-        } else {
-            if (!is_callable($escape)) {
-                throw new InvalidArgumentException('Invalid escape function');
-            }
-            $this->_escape = $escape;
-        }
-
-        if (is_array($vars) || ($vars instanceof Iterator)) {
-            foreach ($vars as $key => $value) {
-                $this->assign($key, $value);
-            }
-        }
-    } // }}}
-
-    public function assign($key, $value) // {{{
-    {
-        if (is_array($value)) {
-            $this->_vars[$key] = new self($this->_escape, $value);
-        } else {
-            $this->_vars[$key] = $value;
-        }
-        return $this;
-    } // }}}
-
-    public function get($key) // {{{
-    {
-        $value = $this->raw($key);
-        return is_string($value) ? $this->escape($value) : $value;
-    } // }}}
-
-    public function raw($key) // {{{
-    {
-        return isset($this->_vars[$key]) ? $this->_vars[$key] : null;
-    } // }}}
-
-    /**
-     * Sprawdza czy istnieje zmienna, jeżeli zmienna jest pustym
-     * tekstem jest ona traktowana jakby jej nie było.
-     *
-     * @param string $key
-     */
-    public function has($key) // {{{
-    {
-        $value = $this->raw($key);
-
-        if (is_string($value)) {
-            return 0 < strlen($value);
-        }
-
-        return null !== $value;
-    } // }}}
-
-    public function escape($value) // {{{
-    {
-        return call_user_func($this->_escape, $value);
-    } // }}}
-
-    public function __get($key) // {{{
-    {
-        return $this->get($key);
-    } // }}}
-
-    public function current() // {{{
-    {
-        return current($this->_vars);
-    } // }}}
-
-    public function key() // {{{
-    {
-        return key($this->_vars);
-    } // }}}
-
-    public function next() // {{{
-    {
-        return next($this->_vars);
-    } // }}}
-
-    public function rewind() // {{{
-    {
-        reset($this->_vars);
-    } // }}}
-
-    public function valid() // {{{
-    {
-        return false !== $this->current();
-    } // }}}
-
-    public function __toString() // {{{
-    {
-        return '';
-    } // }}}
-}
-
 /**
  * Klasa abstrakcyjna, kapsułkująca ustawienia widoku, tak, by
  * nie można ich było zmodyfikować podczas renderingu widoku.
@@ -201,7 +99,7 @@ class scholar_view extends scholar_view_abstract
             return $this->_render($templateFile);
         }
 
-        drupal_set_message(t('Unable to render template: %template', array('%template' => $template)), 'error');
+        throw new InvalidArgumentException('Unable to render template: ' . $template);
     } // }}}
 
     protected function _render() // {{{

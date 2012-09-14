@@ -5,19 +5,10 @@
  * ustawia odpowiednie callbacki oraz atrybut class.
  *
  * @param array &$form
- * @param array &$form_state
- * @param string $form_id
  */
-function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
+function scholar_prepare_form(&$form) // {{{
 {
-    if ('node_type_form' == $form_id && isset($form['#node_type']) && $form['#node_type']->type == 'scholar') {
-        // nie mozna modyfikowac
-        drupal_set_message(t('Modification of the Scholar content type is not allowed.'), 'error');
-        scholar_goto('admin/content/types');
-    }
-
-    if (0 == strncmp($form_id, 'scholar_', 8)) {
-        // callback #submit o nazwie takiej jak nazwa formularza
+    // callback #submit o nazwie takiej jak nazwa formularza
         // z przyrostkiem _submit jest automaycznie dodawany przez
         // drupal_prepare_form() wywolywana przez drupal_get_form().
 
@@ -36,7 +27,6 @@ function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
         } else {
             $form['#attributes']['class'] .= ' scholar';
         }
-    }
 } // }}}
 
 /**
@@ -50,8 +40,8 @@ function scholar_elements() // {{{
 
     $elements['scholar_textarea'] = array(
         '#input'            => true,
-        '#description'      => t('Use BBCode markup, supported tags are listed <a href="#!">here</a>'),
     );
+
     $elements['scholar_country'] = array(
         '#input'            => true,
         '#options'          => scholar_countries(),
@@ -145,101 +135,6 @@ function scholar_elements_theme() // {{{
     $theme['scholar_element_vtable_row']   = $theme_arguments;
 
     return $theme;
-} // }}}
-
-/**
- * @return string|null
- */
-function form_type_scholar_textarea_value($element, $post = false) // {{{
-{
-    if (false === $post) {
-        $value = isset($element['#default_value']) ? $element['#default_value'] : null;
-    } else {
-        $value = $post;
-    }
-
-    $value = trim(strval($value));
-
-    return strlen($value) ? $value : null;
-} // }}}
-
-function theme_scholar_textarea($element) // {{{
-{
-    if (is_array($element['#description'])) {
-        $element['#description'] = implode('', $element['#description']);
-    }
-
-    $textarea = theme_textarea($element);
-    return $textarea;
-} // }}}
-
-/**
- * Funkcja renderująca kontener.
- *
- * @param array $element
- * @return string
- */
-function theme_scholar_checkboxed_container($element) // {{{
-{
-    // nazwa klucza odpowiadajacego wartosci zaznaczenia checkboksa
-    $checkbox_name = $element['#checkbox_name'];
-
-    // ustaw stan zaznaczenia checkboksa na podstawie wartosci znajdujacej
-    // sie pod kluczem podanym w #checkbox_name
-    $checked = isset($element['#value'][$checkbox_name]) && $element['#value'][$checkbox_name];
-
-    $parents = $element['#parents'];
-    if ($parents) {
-        $name = array_shift($parents) 
-              . ($parents ? '[' . implode('][', $parents) . ']' : '')
-              . '[' .$checkbox_name . ']';
-    } else {
-        $name = $checkbox_name;
-    }
-
-    $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
-    $output .= '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($checked ? ' checked="checked"' : ''). '/>' . $element['#title'] . '</label>';
-    $output .= '<div class="contents">';
-    $output .= $element['#children'];
-    $output .= '</div>';
-    $output .= '</div>';
-
-    $output .= '<script type="text/javascript">/*<![CDATA[*/$(function(){
-        if (!$("#'.$element['#id'].'").is(":checked")) {
-            $("#'.$element['#id'].'-wrapper .contents").hide();
-        }
-})/*]]>*/</script>';
-
-    return $output;
-} // }}}
-
-/**
- * @param array $element
- * @param mixed $post
- *     podtablica z wartościami dla tego elementu
- * @return array
- *     wartość checkboksa kontrolujacego ten kontener
- */
-function form_type_scholar_checkboxed_container_value($element, $post = false) // {{{
-{
-    // nazwa pola w tablicy $post przechowujacej status zaznaczenia
-    // checkboksa kontrolujacego ten kontener
-    $checkbox_name = $element['#checkbox_name'];
-
-    // stan zaznaczenia checkboksa gdy przeslano formularza jest pobrany
-    // z wartosci klucza o nazwie podanej w #checkbox_name, albo pochodzi
-    // z #default_value
-    if ($post) {
-        $value = isset($post[$checkbox_name]) && $post[$checkbox_name];
-    } else {
-        $value = isset($element['#default_value']) ? (bool) $element['#default_value'] : false;
-    }
-
-    // funkcja musi zwrocic tablice, zeby dzieci kontenera mogly wpisac
-    // do niej swoje wartosci
-    return array(
-        $checkbox_name => intval($value)
-    );
 } // }}}
 
 /**

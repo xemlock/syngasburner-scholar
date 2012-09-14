@@ -69,15 +69,7 @@ function scholar_perm() { // {{{
 } // }}}
 
 
-/**
- * Zwraca liczbę rekordów na stronę w listach rekordów.
- *
- * @return int
- */
-function scholar_admin_page_size() // {{{
-{
-    return 25;
-} // }}}
+
 
 /**
  * Dodaje arkusz ze stylami tego modułu.
@@ -181,6 +173,27 @@ function scholar_node_form(&$form_state, $node) // {{{
 
     } else {
 	    drupal_set_message(t('Database corruption detected. No binding found for node (%nid)', array('%nid' => $node->nid)), 'error');
+    }
+} // }}}
+
+/**
+ * Do formularzy o identyfikatorze rozpoczynającym się od scholar_
+ * ustawia odpowiednie callbacki oraz atrybut class.
+ *
+ * @param array &$form
+ * @param array &$form_state
+ * @param string $form_id
+ */
+function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
+{
+    if ('node_type_form' == $form_id && isset($form['#node_type']) && $form['#node_type']->type == 'scholar') {
+        // nie mozna modyfikowac
+        drupal_set_message(t('Modification of the Scholar content type is not allowed.'), 'error');
+        scholar_goto('admin/content/types');
+    }
+
+    if (0 == strncmp($form_id, 'scholar_', 8)) {
+        scholar_prepare_form(&$form);
     }
 } // }}}
 

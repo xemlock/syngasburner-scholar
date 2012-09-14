@@ -441,6 +441,11 @@ function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {
         : ('<del title="' . t('Broken link', array(), $language) . '">' . $contents . '</del>');
 } // }}}
 
+/**
+ * [gallery-img]url[/gallery-img]
+ * Atrybuty:
+ * title, width, height, align=left|right, lightbox (pusty lub z wartoscia id galerii)
+ */
 function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $contents) // {{{
 {
     if (strlen($contents) && ctype_digit($contents)) {
@@ -485,6 +490,13 @@ function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $content
                 case 'right':
                     $a['style'] = 'float:right';
                     break;
+            }
+
+            if ($token->hasAttribute('lightbox')) {
+                $lightbox = $token->getAttribute('lightbox');
+                $a['rel'] = strlen($lightbox)
+                    ? 'lightbox[' . $lightbox . ']'
+                    : 'lightbox';
             }
 
             return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . '/></a>';

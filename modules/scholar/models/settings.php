@@ -96,4 +96,14 @@ function scholar_setting_format_daterange_same_year($language = null) // {{{
     return $format;
 } // }}}
 
+/**
+ * Zwraca liczbę rekordów na stronę w listach rekordów.
+ *
+ * @return int
+ */
+function scholar_admin_page_size() // {{{
+{
+    return 25;
+} // }}}
+
 // vim: fdm=marker
