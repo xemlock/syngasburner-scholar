@@ -129,15 +129,84 @@ class scholar_filesystem_scanner
 
 function scholar_pages_system_files() // {{{
 {
-    $s = new scholar_filesystem_scanner;
+    /*$s = new scholar_filesystem_scanner;
     if (isset($_GET['clear'])) {
         $s->clear($_GET['clear']);
     }
     $s->scan();
     p($s->status());
     p($s->getFiles());
+     */
+
+    // shutdown zapis cache'u
+    if ($data = cache_get('scholar_file_import')) {
+        $cache = (array) $data->data;
+    } else {
+        $cache = array();
+    }
+
+    $dir = scholar_file_path();
+    $table = array();
+    foreach (scandir($dir) as $entry) {
+        $path = $dir . '/' . $entry;
+        if (!is_file($path)) {
+            continue;
+        }
+
+        if (isset($cache[$entry])) {
+            if (($cache[$entry]['size'] != filesize($path))
+                || ($cache[$entry]['ctime'] != filectime($path))
+                || ($cache[$entry]['mtime'] != filemtime($path))
+            ) {
+                unset($cache[$entry]);
+            }
+        }
+
+        if (!isset($cache[$entry])) {
+            $cache[$entry] = array(
+                'md5sum' => md5_file($path),
+                'size'   => filesize($path),
+                'ctime'  => filectime($path),
+                'mtime'  => filemtime($path),
+            );
+        }
+
+        $result = array();
+        $res = db_fetch_array(scholar_files_recordset(array('md5sum' => $cache[$entry]['md5sum'])));
+        if ($res) {
+            if ($res['filename'] == $entry) {
+                $result['added on'] = date('Y-m-d H:i:s', $res['create_time']);
+            } else {
+                $result['duplicate of'] = $res['filename'];
+            }
+        } else {
+            // nie ma w bazie trzeba dodac
+            $result['pliku nie ma w bazie'] = $cache[$entry]['md5sum'];
+
+            global $user;
+            $file = new stdClass;
+            $file->md5sum   = $cache[$entry]['md5sum'];
+            $file->filename = $entry;
+            $file->id       = null;
+            $file->mimetype = file_get_mimetype($entry); // detect mimetype
+            $file->size     = $cache[$entry]['size'];
+            $file->user_id  = $user->uid;
+            $file->create_time = time();
+
+            if ($success = scholar_db_write_record('scholar_files', $file)) {
+                $result['dodano do bazy id:'] = $file->id;
+            } else {
+                $result['nie udalo sie dodac...'] = '';
+            }
+        }
+
+        $table[$entry] = $result;
+    }
+    cache_set('scholar_file_import', $cache);
+    p($table);
+
     /*
-    $res = scholar_files_recordset();
+    $res = ();
     $files = array();
 
     while ($row = db_fetch_array($res)) {
