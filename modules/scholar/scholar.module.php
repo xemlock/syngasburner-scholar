@@ -193,7 +193,7 @@ function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
     }
 
     if (0 == strncmp($form_id, 'scholar_', 8)) {
-        scholar_prepare_form(&$form);
+        scholar_prepare_form($form);
     }
 } // }}}
 
