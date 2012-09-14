@@ -6,6 +6,8 @@ function scholar_pages_system_index()
     $output .= scholar_oplink(t('Database schema'), 'system.schema');
     $output .= '<br/>';
     $output .= scholar_oplink(t('Settings'), 'settings');
+    $output .= '<br/>';
+    $output .= scholar_oplink(t('Filesystem'), 'system.files');
     return $output;
 }
 
@@ -32,5 +34,12 @@ function scholar_pages_system_schema() // {{{
     }
 
     return '<pre><code class="sql">' . $html . '</code></pre>';
+} // }}}
+
+function scholar_pages_system_files() // {{{
+{
+
+
+
 } // }}}
 

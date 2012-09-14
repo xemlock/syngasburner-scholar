@@ -34,7 +34,7 @@ function _scholar_rendering_enabled($enabled = null) // {{{
  */
 function scholar_invalidate_rendering() // {{{
 {
-    variable_set('scholar_last_change', date('Y-m-d H:i:s'));
+    variable_set('scholar_last_change', time());
 } // }}}
 
 

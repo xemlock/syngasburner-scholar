@@ -181,6 +181,11 @@ function scholar_generics_conference_details_form(&$form_state, $record) // {{{
         $dl[] = l($record->url, $record->url);
     }
 
+    if ($record->nodes) {
+        $dl[] = t('Tag');
+        $dl[] = '<code>[node]conference.' . $record->id . '[/node]</code>';
+    }
+
     $user = user_load((int) $record->user_id);
     $dl[] = t('Created');
     $dl[] = t('!time, by !user', array(

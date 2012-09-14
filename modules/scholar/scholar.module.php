@@ -197,23 +197,6 @@ function scholar_form_alter(&$form, &$form_state, $form_id) // {{{
     }
 } // }}}
 
-function scholar_eventapi(&$event, $op) // {{{
-{
-    switch ($op) {
-        case 'prepare':
-            if ($info = scholar_event_owner_info($event->id)) {
-                return scholar_redirect_to_form($info['row_id'], $info['table_name'], 'destination=admin/content/events', '!scholar-form-vtable-events');
-            }
-            break;
-
-        case 'load':
-            if (_scholar_rendering_enabled()) {
-                // TODO feature do zrealizowania w przyszlosci
-            }
-            break;
-    }
-} // }}}
-
 function scholar_node_info() {
     return array(
         'scholar' => array(
@@ -224,7 +207,6 @@ function scholar_node_info() {
         ),
     );
 }
-
 
 function scholar_nodeapi(&$node, $op)
 {
@@ -261,51 +243,75 @@ function scholar_nodeapi(&$node, $op)
             if (function_exists($func)) {
                 $body = $func($view, $binding['row_id'], $node);
             }
-            global $language;
-            $bbcode = '[__language="' . $language->language . '"]'
-                    
-                    . $body . $binding['body'];
 
-            // $node->body = $bbcode; return;
+            $bbcode = '[__language="' . $node->language . '"]' . $body . $binding['body'];
 
+            $timestamp = time();
 
+            $rendered_body = '<div class="scholar-node" data-generated="' . date('Y-m-d H:i:s') . '">' . __scholar_rrrender($bbcode) . '</div>';
 
+            db_query("UPDATE {node} SET changed = %d WHERE nid = %d", $timestamp, $node->nid);
+            db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $rendered_body, $timestamp, $node->nid, $node->vid);
+            db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
 
-
-
-
-            
-            //            $bbcode = file_get_contents(dirname(__FILE__) . '/bbcode/kierownik_projektu.bbcode');
-            $rendering = '';
-            try {
-                $tree = scholar_markup_parser()->parse($bbcode);
-                $renderer = scholar_markup_renderer();
-                $rendering = $renderer->render($tree);
-                $preface   = scholar_markup_converter_preface();
-                if ($preface) {
-                    $rendering = $preface . $rendering;
-                }
-
-                // poniewaz w formacie Full HTML (2) znaki nowego wiersza sa automatycznie
-                // przeksztalcane na znaczniki BR, zamien je na spacje. Znaki nowego wiersza
-                // wewnatrz PRE sa zamienione na BR przez renderer.
-                $rendering = str_replace(array("\r\n", "\n", "\r"), ' ', $rendering);
-//echo($rendering); exit;
-                // niestety dodaje tez paragrafy, ale to mozna obejsc ustawiajac odpowiednie marginesy.
-
-            } catch (Exception $e) {
-            p($e);
-            }
-//p($bbcode); exit;
-            $node->body = '<div class="scholar-rendering">' . $rendering . '</div>';
-            // $node->body = $markup;
-            $node->created = $node->changed = time();
-            // db_query("UPDATE {node} SET created = %d, changed = %d WHERE nid = %d", $node->created, $node->changed, $node->nid);
-            // db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $markup, $timestamp, $node->nid, $node->vid);
-            // db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
+            $node->body = $rendered_body;
+            $node->changed = $timestamp;
         }
     }
 }
+
+function __scholar_rrrender($markup)
+{
+    $output = '';
+
+    if (strlen($markup)) {
+        try {
+            $tree     = scholar_markup_parser()->parse($markup);
+            $renderer = scholar_markup_renderer();
+            $output   = $renderer->render($tree);
+
+            // umiesc na poczatku zawartosc preambuly
+            $preface  = scholar_markup_converter_preface();
+            if ($preface) {
+                $output = $preface . $output;
+            }
+        } catch (Exception $e) {
+            // TODO watchdog
+        }
+    }
+
+    return $output;
+}
+
+function scholar_eventapi(&$event, $op) // {{{
+{
+    switch ($op) {
+        case 'prepare':
+            if ($binding = scholar_event_owner_info($event->id)) {
+                if (isset($_GET['destination'])) {
+                    $query = 'destination=' . $_GET['destination'];
+                } else {
+                    $query = 'destination=admin/content/events';
+                }
+                return scholar_redirect_to_form($binding['row_id'], $binding['table_name'], $query, '!scholar-form-vtable-events');
+            }
+            break;
+
+        case 'load':
+            if (_scholar_rendering_enabled() && $binding = scholar_event_owner_info($event->id)) {
+                $render = empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0);
+                if ($render) {
+                    $body = '<!-- [[ -->'
+                          . __scholar_rrrender('[__language="' . $binding['language'] . '"]' . $binding['body'])
+                          . '<!-- ' . date('Y-m-d H:i:s') . ' ]] -->';
+                    db_query("UPDATE {events} SET body = '%s' WHERE id = %d", $body, $event->id);
+                    db_query("UPDATE {scholar_events} SET last_rendered = %d", time());
+                    $event->body = $body;
+                }
+            }
+            break;
+    }
+} // }}}
 
 function scholar_index()
 {

@@ -259,9 +259,10 @@ function scholar_markup_converter_preface($token = null, $contents = null, $firs
     static $prefaces = array();
 
     if (null === $token) {
-        // tag [preface] dziala w trybie zamiany znakow konca linii na tagi BR,
-        // czyli tak, jakby jego zawartosc nie byla owinieta w zaden tag
-        return '<div class="scholar-preface">' . trim(implode('', $prefaces)) . '</div>';
+        $preface = trim(implode('', $prefaces));
+        return strlen($preface)
+            ? '<div class="scholar-preface">' . $preface . '</div>'
+            : '';
     }
 
     if ($first) {
@@ -390,17 +391,28 @@ function scholar_markup_converter_t(Zend_Markup_Token $token, $contents) // {{{
     return t($contents, array(), $language);
 }  // }}}
 
+// Link do węzła o podanym identyfikatorze.
+// W przypadku odwoływania się do węzłów poprzez identyfikatory rekordów
+// z innych tabel, język węzła musi pokrywać się z językiem w aktualnym
+// kontekście renderowania.
+// [node]25[/node]
+// [node]person.1[/node]
+// [node="person.1"]Kierownik projektu[/node]
 function scholar_markup_converter_node(Zend_Markup_Token $token, $contents) // {{{
 {
     $language = scholar_markup_converter___language();
+    $node     = trim($token->getAttribute('node'));
     $contents = trim($contents);
 
-    $parts = explode('.', $token->getAttribute('node'));
-    $link  = false;
+    // jezeli atrybut node jest pusty, uzyj identyfikatora z tresci,
+    // wyczysc tresc, zeby pozniej nie zostala wzieta jako tekst hiperlacza
+    if (!strlen($node)) {
+        $node     = $contents;
+        $contents = '';
+    }
 
-    // [node="person.1"][/node]
-    // [node="person.1"]Kierownik projektu[/node]
-    // [node="25"][/node]
+    $parts = explode('.', $node);
+    $link  = false;
 
     // jezeli link nie zostal znaleziony zostaje wyrenderowany
     // <del title="Broken link">$contents</del>

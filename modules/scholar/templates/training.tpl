@@ -29,5 +29,4 @@
 <?php   } ?>
 <?php } ?>
 [/__tag]
-[/nonl2br]
-<?php // vim: ft=php
+[/nonl2br]<?php // vim: ft=php

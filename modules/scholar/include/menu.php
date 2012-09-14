@@ -377,6 +377,16 @@ function _scholar_menu() // {{{
         'parent'            => $root . '/system',
         '@scholar_path'     => 'system.schema',
     );
+    $items[$root . '/system/files'] = array(
+        'type'              => MENU_CALLBACK,
+        'title'             => t('Filesystem'),
+        'access arguments'  => array('administer scholar'),
+        'page callback'     => 'scholar_pages_system_files',
+        'file'              => 'pages/system.php',
+        'parent'            => $root . '/system',
+        '@scholar_path'     => 'system.files',
+    );
+
 
     _scholar_menu_add_page_argument_positions($items);
 

@@ -127,7 +127,7 @@ function scholar_generics_training_details_form(&$form_state, $record) // {{{
 
     if ($record->nodes) {
         $dl[] = t('Tag');
-        $dl[] = '<code>[node="training.' . $record->id . '"][/node]</code>';
+        $dl[] = '<code>[node]training.' . $record->id . '[/node]</code>';
     }
 
     $user = user_load((int) $record->user_id);
