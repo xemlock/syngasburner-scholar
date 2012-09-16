@@ -150,7 +150,7 @@ function _scholar_menu() // {{{
     $items[$root . '/people'] = array(
         'title'             => t('People'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_people_list',
+        'page callback'     => 'scholar_pages_people_list',
         'parent'            => $root,
         'file'              => 'pages/people.php',
         '@scholar_path' => 'people',
@@ -165,7 +165,7 @@ function _scholar_menu() // {{{
         'title'             => t('Add person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_form'),
+        'page arguments'    => array('scholar_pages_people_form'),
         'parent'            => $root . '/people',
         'file'              => 'pages/people.php',
     );
@@ -174,7 +174,7 @@ function _scholar_menu() // {{{
         'title'             => t('Edit person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_form'),
+        'page arguments'    => array('scholar_pages_people_form'),
         'parent'            => $root . '/people',
         'file'              => 'pages/people.php',
     );
@@ -183,7 +183,7 @@ function _scholar_menu() // {{{
         'title'             => t('Delete person'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_people_delete_form'),
+        'page arguments'    => array('scholar_pages_people_delete_form'),
         'parent'            => $root . '/people',
         'file'              => 'pages/people.php',
     );
@@ -192,7 +192,7 @@ function _scholar_menu() // {{{
         'title'             => t('Select people'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_people_itempicker'),
+        'page arguments'    => array('scholar_pages_people_itempicker'),
         'parent'            => $root . '/people',
         'file'              => 'pages/people.php',
     );
@@ -274,10 +274,10 @@ function _scholar_menu() // {{{
         )
     );
     $items[$root . '/trainings/training']['weight'] = -10;
-    /*$items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
+    $items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
         'edit'   => t('Edit training category'),
         'delete' => t('Delete training category'),
-    ));*/
+    ));
 
     $items += _scholar_generic_menu($root . '/trainings/class',
         'class',
@@ -292,7 +292,7 @@ function _scholar_menu() // {{{
     $items[$root . '/file'] = array(
         'title'             => t('Files'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_file_list',
+        'page callback'     => 'scholar_pages_file_list',
         'parent'            => $root,
         'file'              => 'pages/file.php',
         '@scholar_path'     => 'files',
@@ -307,7 +307,7 @@ function _scholar_menu() // {{{
         'title'             => t('Upload file'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_upload_form'),
+        'page arguments'    => array('scholar_pages_file_upload_form'),
         'parent'            => $root . '/file',
         'file'              => 'pages/file.php',
     );
@@ -316,7 +316,7 @@ function _scholar_menu() // {{{
         'title'             => t('Edit file'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_edit_form'),
+        'page arguments'    => array('scholar_pages_file_edit_form'),
         'parent'            => $root . '/file',
         'file'              => 'pages/file.php',
     );
@@ -325,7 +325,7 @@ function _scholar_menu() // {{{
         'title'             => t('Delete file'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_file_delete_form'),
+        'page arguments'    => array('scholar_pages_file_delete_form'),
         'parent'            => $root . '/file',
         'file'              => 'pages/file.php',
     );
@@ -334,7 +334,7 @@ function _scholar_menu() // {{{
         'title'             => t('File selection'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_file_itempicker'),
+        'page arguments'    => array('scholar_pages_file_itempicker'),
         'parent'            => $root . '/file',
         'file'              => 'pages/file.php',
     );
@@ -343,7 +343,7 @@ function _scholar_menu() // {{{
         'type'              => MENU_LOCAL_TASK,
         'title'             => t('Pages'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_page_list',
+        'page callback'     => 'scholar_pages_page_list',
         'parent'            => $root,
         'file'              => 'pages/page.php',
         'weight'            => 10,
@@ -354,7 +354,7 @@ function _scholar_menu() // {{{
         'title'             => t('Edit page'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_page_form'),
+        'page arguments'    => array('scholar_pages_page_form'),
         'parent'            => $root . '/page',
         'file'              => 'pages/page.php',
     );
@@ -375,16 +375,14 @@ function _scholar_menu() // {{{
         'page callback'     => 'scholar_pages_system_schema',
         'file'              => 'pages/system.php',
         'parent'            => $root . '/system',
-        '@scholar_path'     => 'system.schema',
     );
-    $items[$root . '/system/files'] = array(
+    $items[$root . '/system/file-import'] = array(
         'type'              => MENU_CALLBACK,
-        'title'             => t('Filesystem'),
+        'title'             => t('File import'),
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_system_files',
+        'page callback'     => 'scholar_pages_system_file_import',
         'file'              => 'pages/system.php',
         'parent'            => $root . '/system',
-        '@scholar_path'     => 'system.files',
     );
 
 
@@ -408,7 +406,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'type'              => MENU_LOCAL_TASK,
         'title'             => $titles['list'],
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_category_list',
+        'page callback'     => 'scholar_pages_category_list',
         'page arguments'    => array($table_name, $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
@@ -425,7 +423,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'title'             => $titles['add'],
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_form', $table_name, $subtype),
+        'page arguments'    => array('scholar_pages_category_form', $table_name, $subtype),
         'parent'            => $root_path,
         'file'              => 'pages/category.php',
         'weight'            => 10,
@@ -435,7 +433,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'title'             => $titles['edit'],
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_form', $table_name, $subtype),
+        'page arguments'    => array('scholar_pages_category_form', $table_name, $subtype),
         'file'              => 'pages/category.php',
     );
     $items[$root_path . '/delete/%'] = array(
@@ -443,7 +441,7 @@ function _scholar_category_menu($root_path, $table_name, $subtype = null, $title
         'title'             => $titles['delete'],
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_category_delete_form'),
+        'page arguments'    => array('scholar_pages_category_delete_form'),
         'file'              => 'pages/category.php',
     );
 

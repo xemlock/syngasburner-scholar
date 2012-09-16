@@ -1,6 +1,6 @@
 <?php
 
-function scholar_settings_form(&$form_state)
+function scholar_pages_settings_form(&$form_state)
 {
     $image = array(
         '#type'  => 'scholar_element_vtable_row',
@@ -152,7 +152,7 @@ function scholar_settings_form(&$form_state)
     return $form;
 }
 
-function scholar_settings_form_validate($form, &$form_state) // {{{
+function scholar_pages_settings_form_validate($form, &$form_state) // {{{
 {
     $values = &$form_state['values'];
 
@@ -172,15 +172,15 @@ function scholar_settings_form_validate($form, &$form_state) // {{{
     $values[$image_lightbox_name] = intval($values[$image_lightbox_name]);
 } // }}}
 
-function scholar_settings_form_submit($form, &$form_state) // {{{
+function scholar_pages_settings_form_submit($form, &$form_state) // {{{
 {
     // kazda zmiana ustawien uniewaznia rendering
     scholar_invalidate_rendering();
 } // }}}
 
-function scholar_settings_dateformat()
+function scholar_pages_settings_dateformat()
 {
-    
+    // DATEFORMAT PREVIEW
 }
 
 // vim: fdm=marker

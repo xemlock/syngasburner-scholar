@@ -1,21 +1,11 @@
 <?php
 
 /**
- * Analizuje zawartość katalogu z plikami i dodaje pliki, których nie
- * ma w bazie danych. Duplikaty plików istniejących w bazie są ignorowane.
- */
-function scholar_file_import()
-{
-    
-
-}
-
-/**
  * Lista plików.
  *
  * @return string
  */
-function scholar_file_list() // {{{
+function scholar_pages_file_list() // {{{
 {
     $header = array(
         array('data' => t('File name'), 'field' => 'filename', 'sort' => 'asc'),
@@ -43,35 +33,7 @@ function scholar_file_list() // {{{
 
     $help = t('<p>Below is a list of files managed exclusively by the Scholar module.</p>');
 
-    return '<div class="help">' . $help . '</div>' . scholar_theme_table($header, $rows);
-} // }}}
-
-/**
- * Dostarcza rekordy plików do wybieralnej listy.
- *
- * @param array &$options OPTIONAL
- * @return array
- */
-function scholar_file_itempicker(&$options = null) // {{{
-{
-    $options = array(
-        'filterKey'    => 'filename',
-        'template'     => '{ filename }',
-        'emptyMessage' => t('No files found')
-    );
-
-    $files = array();
-    $query = scholar_files_recordset(null, 'filename');
-
-    while ($row = db_fetch_array($query)) {
-        $files[] = array(
-            'id'       => $row['id'],
-            'filename' => $row['filename'],
-            'size'     => $row['size'],
-        );
-    }
-
-    return $files;
+    return '<div class="help">' . $help . '</div>' . theme_scholar_table($header, $rows);
 } // }}}
 
 /**
@@ -79,7 +41,7 @@ function scholar_file_itempicker(&$options = null) // {{{
  *
  * @return array
  */
-function scholar_file_upload_form() // {{{
+function scholar_pages_file_upload_form() // {{{
 {
     $form = array();
     $form['#attributes'] = array('enctype' => "multipart/form-data");
@@ -120,12 +82,11 @@ function scholar_file_upload_form() // {{{
     return $form;
 } // }}}
 
-
 /**
  * Obsługa walidacji i zapisania pliku przesłanego za pomocą formularza
- * {@link scholar_file_upload_form()}.
+ * {@link scholar_pages_file_upload_form()}.
  */
-function scholar_file_upload_form_submit($form, &$form_state) // {{{
+function scholar_pages_file_upload_form_submit($form, &$form_state) // {{{
 {
     $dialog = intval($form_state['values']['dialog']);
     $fragment = strval($form_state['values']['fragment']);
@@ -156,7 +117,7 @@ function scholar_file_upload_form_submit($form, &$form_state) // {{{
  * @param int $file_id          identyfikator pliku
  * @return array
  */
-function scholar_file_edit_form(&$form_state, $file_id) // {{{
+function scholar_pages_file_edit_form(&$form_state, $file_id) // {{{
 {
     $file = scholar_fetch_file($file_id, scholar_path('files'));
 
@@ -237,7 +198,7 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
 
         $form['ref'][] = array(
             '#type' => 'markup',
-            '#value' => scholar_theme_table($header, $rows),
+            '#value' => theme_scholar_table($header, $rows),
         );
     }
 
@@ -255,7 +216,7 @@ function scholar_file_edit_form(&$form_state, $file_id) // {{{
  * @param array $form
  * @param array &$form_state
  */
-function scholar_file_edit_form_submit($form, &$form_state) // {{{
+function scholar_pages_file_edit_form_submit($form, &$form_state) // {{{
 {
     if ($file = $form['#file']) {
         // Zakladamy, ze w file->filename jest nazwa pliku w czystym ASCII,
@@ -286,7 +247,7 @@ function scholar_file_edit_form_submit($form, &$form_state) // {{{
  * @param array &$form_state
  * @param int $file_id          identyfikator pliku
  */
-function scholar_file_delete_form(&$form_state, $file_id) // {{{
+function scholar_pages_file_delete_form(&$form_state, $file_id) // {{{
 {
     $file = scholar_fetch_file($file_id, scholar_path('files'));
     $refcount = scholar_file_refcount($file->id);
@@ -313,14 +274,42 @@ function scholar_file_delete_form(&$form_state, $file_id) // {{{
  * @param array $form
  * @param array &$form_state
  */
-function scholar_file_delete_form_submit($form, &$form_state) // {{{
+function scholar_pages_file_delete_form_submit($form, &$form_state) // {{{
 {
     if ($file = $form['#file']) {
         scholar_delete_file($file);
-        drupal_set_message(t('File deleted successfully (%filename)', array('%filename' => $file->filename)));
+        drupal_set_message(t('File %filename deleted successfully.', array('%filename' => $file->filename)));
     }
 
     drupal_goto(scholar_path('files'));
+} // }}}
+
+/**
+ * Dostarcza rekordy plików do wybieralnej listy.
+ *
+ * @param array &$options OPTIONAL
+ * @return array
+ */
+function scholar_pages_file_itempicker(&$options = null) // {{{
+{
+    $options = array(
+        'filterKey'    => 'filename',
+        'template'     => '{ filename }',
+        'emptyMessage' => t('No files found')
+    );
+
+    $files = array();
+    $query = scholar_files_recordset(null, 'filename');
+
+    while ($row = db_fetch_array($query)) {
+        $files[] = array(
+            'id'       => $row['id'],
+            'filename' => $row['filename'],
+            'size'     => $row['size'],
+        );
+    }
+
+    return $files;
 } // }}}
 
 // vim: fdm=marker

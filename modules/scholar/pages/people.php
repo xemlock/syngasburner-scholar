@@ -1,6 +1,6 @@
 <?php
 
-function scholar_people_form(&$form_state, $id = null) // {{{
+function scholar_pages_people_form(&$form_state, $id = null) // {{{
 {
     $record = $id ? scholar_load_record('people', $id, scholar_path('people')) : null;
 
@@ -37,7 +37,7 @@ function scholar_people_form(&$form_state, $id = null) // {{{
  * @param array $form
  * @param array &$form_state
  */
-function scholar_people_form_submit($form, &$form_state) // {{{
+function scholar_pages_people_form_submit($form, &$form_state) // {{{
 {
     $values = $form_state['values'];
     $is_new = empty($form['#record']);
@@ -66,12 +66,12 @@ function scholar_people_form_submit($form, &$form_state) // {{{
     drupal_goto(scholar_path('people'));
 } // }}}
 
-function scholar_people_form_validate($form, &$form_state) // {{{
+function scholar_pages_people_form_validate($form, &$form_state) // {{{
 {
     return true;
 } // }}}
 
-function scholar_people_delete_form(&$form_state, $id) // {{{
+function scholar_pages_people_delete_form(&$form_state, $id) // {{{
 {
     $record = scholar_load_record('people', $id, scholar_path('people'));
 
@@ -92,7 +92,7 @@ function scholar_people_delete_form(&$form_state, $id) // {{{
     return $form;
 } // }}}
 
-function scholar_people_delete_form_submit($form, &$form_state) // {{{
+function scholar_pages_people_delete_form_submit($form, &$form_state) // {{{
 {
     if ($record = $form['#record']) {
         scholar_delete_record('people', $record);
@@ -109,7 +109,7 @@ function scholar_people_delete_form_submit($form, &$form_state) // {{{
  *
  * @return string
  */
-function scholar_people_list() // {{{
+function scholar_pages_people_list() // {{{
 {
     $header = array(
         array('data' => t('Name'),        'field' => 'last_name', 'sort' => 'asc'),
@@ -135,7 +135,7 @@ function scholar_people_list() // {{{
         );
     }
 
-    return scholar_theme_table($header, $rows);
+    return theme_scholar_table($header, $rows);
 } // }}}
 
 /**
@@ -144,7 +144,7 @@ function scholar_people_list() // {{{
  * @param array &$options OPTIONAL
  * @return array
  */
-function scholar_people_itempicker(&$options = null) // {{{
+function scholar_pages_people_itempicker(&$options = null) // {{{
 {
     $options = array(
         'filterKey'    => 'full_name',

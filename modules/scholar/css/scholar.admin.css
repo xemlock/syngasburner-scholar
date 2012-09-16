@@ -287,6 +287,34 @@ form.scholar .form-radios label.option {
   margin-right: .7vt5em;
 }
 
+.scholar-table tr.success,
+.scholar-table tr.success.even {
+  background: #dfd;
+  border: 1px solid #beb;
+  border-width: 0 0 1px;
+}
+.scholar-table tr.success.odd {
+  background: #d2f2d2;
+}
+.scholar-table tr.error,
+.scholar-table tr.error.even {
+  background: #fcc;
+  border: 1px solid #ebb;
+  border-width: 0 0 1px;
+}
+.scholar-table tr.error.odd {
+  background: #f2c2c2;
+}
+
+.scholar-table tr.success td {
+  background: none;
+  color: #020;
+}
+.scholar-table tr.error td {
+  background: none;
+  color: #200;
+}
+
 
 /* modal {{{ */
 .dialog {

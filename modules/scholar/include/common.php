@@ -43,7 +43,7 @@ function scholar_ascii($string) // {{{
  * Używane tylko tam, gdzie musimy zignorować destination.
  *
  * @param string $path
- * @param string $query
+ * @param string|array $query
  * @param string $fragment
  */
 function scholar_goto($path, $query = null, $fragment = null) // {{{

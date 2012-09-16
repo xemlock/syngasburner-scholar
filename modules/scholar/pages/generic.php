@@ -94,7 +94,7 @@ function scholar_generics_list($subtype) // {{{
         $rows[] = call_user_func($func, $row);
     }
 
-    $html = scholar_theme_table($header, $rows);
+    $html = theme_scholar_table($header, $rows);
 
     if ($pager_total > 1) {
         $html .= theme('pager', array(), $limit);
@@ -389,7 +389,7 @@ function scholar_generics_weight_form(&$form, $records, $callback, $region_locke
         }
 
         // ...jezeli tak, i jest on rozny od poprzedniego dodaj do tabeli 
-        // wiersz rozpoczynajacy region, scholar_theme_table przeksztalci
+        // wiersz rozpoczynajacy region, theme_scholar_table przeksztalci
         // to na postac zrozumiala dla theme_table
         if ($region != $last_region) {
             $rows[] = array('region' => $region);
@@ -444,7 +444,7 @@ function scholar_generics_weight_form(&$form, $records, $callback, $region_locke
         $attrs['class'] = 'region-locked';
     }
 
-    $html = scholar_theme_table($header, $rows, $attrs);
+    $html = theme_scholar_table($header, $rows, $attrs);
 
     if ($tabledrag) {
         drupal_add_tabledrag($table_id, 'order', 'sibling', 'tr-weight', null, null, true);

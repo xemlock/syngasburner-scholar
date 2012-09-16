@@ -3,11 +3,11 @@
 function scholar_pages_system_index()
 {
     $output = '';
-    $output .= scholar_oplink(t('Database schema'), 'system.schema');
+    $output .= scholar_oplink(t('Database schema'), 'system', '/schema');
+    $output .= '<br/>';
+    $output .= scholar_oplink(t('File import'), 'system', '/file-import');
     $output .= '<br/>';
     $output .= scholar_oplink(t('Settings'), 'settings');
-    $output .= '<br/>';
-    $output .= scholar_oplink(t('Filesystem'), 'system.files');
     return $output;
 }
 
@@ -36,134 +36,59 @@ function scholar_pages_system_schema() // {{{
     return '<pre><code class="sql">' . $html . '</code></pre>';
 } // }}}
 
-class scholar_filesystem_scanner
+/**
+ * Analizuje zawartość katalogu z plikami i dodaje pliki, których nie
+ * ma w bazie danych. Duplikaty plików istniejących w bazie są ignorowane.
+ *
+ * @return string
+ */
+function scholar_pages_system_file_import() // {{{
 {
-    protected $_files = array();
-    protected $_dirty = false;
-    protected $_ls = array();
-    protected $_dir;
+    global $user;
 
-    public function __construct()
-    {
-        register_shutdown_function(array($this, 'shutdown'));
-        if ($data = cache_get(__CLASS__)) {
-            $this->_files = (array) $data->data;
-        }
+    $thead = array(
+        array('data' => t('Filename')),
+        array('data' => t('Status')),
+    );
+    $tbody = array();
 
-        $this->_dir = scholar_file_path();
-        foreach (scandir($this->_dir) as $entry) {
-            if (!is_file($this->_dir . '/' . $entry)) {
-                continue;
-            }
-            $this->_ls[$entry] = true;
-        }
-    }
-
-    public function scan()
-    {
-        foreach ($this->_ls as $entry => $ignore) {
-            if (isset($this->_files[$entry])) {
-                continue;
-            }
-            $path = $this->_dir . '/' . $entry;
-            $this->_dirty = true;
-
-            // oznacz jako przetwarzane, jezeli nie uda sie to trudno
-            $this->_files[$entry] = false;
-
-            $md5 = md5_file($path);
-            $this->_files[$entry] = array(
-                'md5sum' => $md5,
-                'mtime'  => filemtime($path),
-                'ctime'  => filectime($path),
-                'size'   => filesize($path),
-            );
-        }
-    }
-
-    public function clear($entry = null)
-    {
-        if (null === $entry) {
-            if ($this->_files) {
-                $this->_files = array();
-                $this->_dirty = true;
-            }
-        } else {
-            if (isset($this->_files[$entry])) {
-                unset($this->_files[$entry]);
-                $this->_dirty = true;
-            }
-        }
-    }
-
-    // Podczas przekroczenia limitu czasu zostaja wywolane funkcje zamykające.
-    // http://www.php.net/manual/en/function.set-time-limit.php#69957
-    public function shutdown()
-    {
-        if ($this->_dirty) {
-            ksort($this->_files);
-            cache_set(__CLASS__, $this->_files);
-        }
-    }
-
-    public function status()
-    {
-        if (empty($this->_ls)) {
-            return 1;
-        }
-
-        $count = 0;
-        foreach ($this->_ls as $entry => $ignore) {
-            if (isset($this->_files[$entry]) && is_array($this->_files[$entry])) {
-                ++$count;
-            }
-        }
-        return $count / count($this->_ls);
-    }
-
-    public function getFiles()
-    {
-        return $this->_files;
-    }
-}
-
-function scholar_pages_system_files() // {{{
-{
-    /*$s = new scholar_filesystem_scanner;
-    if (isset($_GET['clear'])) {
-        $s->clear($_GET['clear']);
-    }
-    $s->scan();
-    p($s->status());
-    p($s->getFiles());
-     */
-
-    // shutdown zapis cache'u
-    if ($data = cache_get('scholar_file_import')) {
-        $cache = (array) $data->data;
-    } else {
-        $cache = array();
-    }
-
+    // informacje o plikach umieszczonych w katalogu plikow
+    $files = new scholar_cached_array('file_import');
     $dir = scholar_file_path();
-    $table = array();
+
+    $added = 0;
+
+    // jezeli podano nazwe pliku wymus odswiezenie informacji o nim
+    if (isset($_GET['retry']) && isset($files[$_GET['retry']])) {
+        unset($files[$_GET['retry']]);
+        return scholar_goto($_GET['q']);
+    }
+
     foreach (scandir($dir) as $entry) {
         $path = $dir . '/' . $entry;
         if (!is_file($path)) {
             continue;
         }
 
-        if (isset($cache[$entry])) {
-            if (($cache[$entry]['size'] != filesize($path))
-                || ($cache[$entry]['ctime'] != filectime($path))
-                || ($cache[$entry]['mtime'] != filemtime($path))
-            ) {
-                unset($cache[$entry]);
+        if (isset($files[$entry]) && is_array($files[$entry])) {
+            $file  = &$files[$entry];
+            $valid = ($file['size']  == filesize($path))
+                     && ($file['ctime'] == filectime($path))
+                     && ($file['mtime'] == filemtime($path));
+            if (!$valid) {
+                // plik zostal podmieniony na inny, trzeba wyliczyc
+                // jeszcze raz sume kontrolna MD5
+                unset($files[$entry], $file);
             }
         }
 
-        if (!isset($cache[$entry])) {
-            $cache[$entry] = array(
+        if (!isset($files[$entry])) {
+            // na wypadek przekroczenia czasu, zaznacz plik jako przetwarzany,
+            // ale nieukonczony
+            $files[$entry] = false;
+            // ta instrukcja moze nie dojsc do skutku, jezeli md5_file zabierze
+            // za duzo czasu
+            $files[$entry] = array(
                 'md5sum' => md5_file($path),
                 'size'   => filesize($path),
                 'ctime'  => filectime($path),
@@ -171,49 +96,80 @@ function scholar_pages_system_files() // {{{
             );
         }
 
-        $result = array();
-        $res = db_fetch_array(scholar_files_recordset(array('md5sum' => $cache[$entry]['md5sum'])));
-        if ($res) {
-            if ($res['filename'] == $entry) {
-                $result['added on'] = date('Y-m-d H:i:s', $res['create_time']);
-            } else {
-                $result['duplicate of'] = $res['filename'];
-            }
+        $file = &$files[$entry];
+
+        $class = '';
+        $tr = array(
+            $entry, // 0: nazwa pliku
+            '',     // 1: status importu
+        );
+
+        if (false === $file) {
+            $class = 'error';
+            $tr[1] = t('Error: Unable to analyze file. <a href="!retry">Click to retry</a>', array(
+                '!retry' => url($_GET['q'], array('query' => array('retry' => $entry))),
+            ));
         } else {
-            // nie ma w bazie trzeba dodac
-            $result['pliku nie ma w bazie'] = $cache[$entry]['md5sum'];
-
-            global $user;
-            $file = new stdClass;
-            $file->md5sum   = $cache[$entry]['md5sum'];
-            $file->filename = $entry;
-            $file->id       = null;
-            $file->mimetype = file_get_mimetype($entry); // detect mimetype
-            $file->size     = $cache[$entry]['size'];
-            $file->user_id  = $user->uid;
-            $file->create_time = time();
-
-            if ($success = scholar_db_write_record('scholar_files', $file)) {
-                $result['dodano do bazy id:'] = $file->id;
+            $file_by_md5 = db_fetch_array(scholar_files_recordset(array('md5sum' => $file['md5sum'])));
+            if ($file_by_md5) {
+                if ($file_by_md5['filename'] == $entry) {
+                    // zgodnosc nazw plikow i sumy MD5, plik jest dodany do bazy
+                    continue;
+                } else {
+                    $class = 'error';
+                    $tr[1] = t('Error: Duplicate of file !file', array(
+                        '!file' => scholar_oplink($file_by_md5['filename'], 'files', '/edit/%d', $file_by_md5['id']),
+                    ));
+                }
             } else {
-                $result['nie udalo sie dodac...'] = '';
+                // w bazie nie ma pliku o podanej sumie MD5, trzeba sprawdzic, czy istnieje
+                // plik o takiej samej nazwie - jezeli tak, to baza rozsynchronizowala
+                // sie w plikami na dysku.
+                $file_by_name = db_fetch_array(scholar_files_recordset(array('filename' => $entry)));
+                if ($file_by_name) {
+                    // inny plik o tej nazwie jest w bazie danych
+                    $class = 'error';
+                    $tr[1] = t('Error: File of this name already exists in the database (file id: %id).', array('%id' => $file_by_name['id']));
+                } else {
+                    // nie ma w bazie trzeba dodac
+                    $record = new stdClass;
+                    $record->md5sum   = $file['md5sum'];
+                    $record->filename = $entry;
+                    $record->mimetype = file_get_mimetype($entry); // detect mimetype
+                    $record->size     = $file['size'];
+                    $record->user_id  = $user->uid;
+                    $record->create_time = time();
+
+                    if ($success = scholar_db_write_record('scholar_files', $record)) {
+                        $class = 'success';
+                        $tr[1] = t('Successfully added to database (file id: %id).', array('%id' => $record->id));
+                        ++$added;
+                    } else {
+                        $class = 'error';
+                        $tr[1] = t('Error: Unable to save file to the database.');
+                    }
+                }
             }
         }
-
-        $table[$entry] = $result;
+        $tbody[] = array('data' => $tr, 'class' => $class);
     }
-    cache_set('scholar_file_import', $cache);
-    p($table);
 
-    /*
-    $res = ();
-    $files = array();
+    if (empty($tbody)) {
+        $tbody[] = array(
+            array('data' => t('No more files to import'), 'colspan' => 2),
+        );
+    }
 
-    while ($row = db_fetch_array($res)) {
-        $filename = $row['filename'];
-        $row['file_exists'] = is_file($dir . '/' . $filename);
-        
-    
-    }*/
+    if ($added) {
+        drupal_set_message(format_plural($added, 'Successfully imported one file.', 'Successfully imported @count files.'));
+    }
+
+    $help = '<div class="help">'
+          . t('Upload new files via FTP or SCP to %dir directory under Drupal installation and <a href="!url">reload</a> this page.', array('%dir' => rtrim($dir, '/'), '!url' => url($_GET['q'])))
+          . '</div>';
+
+    $output = $help . theme_scholar_table($thead, $tbody);
+
+    return $output;
 } // }}}
 

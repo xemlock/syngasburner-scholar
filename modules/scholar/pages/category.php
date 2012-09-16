@@ -6,7 +6,7 @@
  * @param string $table_name
  * @param string $subtype OPTIONAL
  */
-function scholar_category_list($table_name, $subtype = null) // {{{
+function scholar_pages_category_list($table_name, $subtype = null) // {{{
 {
     global $language;
 
@@ -41,7 +41,7 @@ function scholar_category_list($table_name, $subtype = null) // {{{
         );
     }
 
-    return scholar_theme_table($header, $rows);
+    return theme_scholar_table($header, $rows);
 } // }}}
 
 /**
@@ -55,7 +55,7 @@ function scholar_category_list($table_name, $subtype = null) // {{{
  * @param string $subtype OPTIONAL
  * @param int $id OPTIONAL
  */
-function scholar_category_form(&$form_state, $table_name, $subtype = null, $id = null) // {{{
+function scholar_pages_category_form(&$form_state, $table_name, $subtype = null, $id = null) // {{{
 {
     if (null === $id) {
         // pusty rekord, musi miec ustawione pola table_name i subtype,
@@ -71,20 +71,6 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
             'subtype'    => $subtype,
         );
         $record = scholar_load_record('categories', $conds, scholar_path("categories.{$table_name}.{$subtype}"));
-    }
-
-    $names = array(
-        '#tree' => true,
-    );
-
-    foreach (scholar_languages() as $code => $name) {
-        $names[$code] = array(
-            '#type'          => 'textfield',
-            '#title'         => scholar_language_label($code, t('Name')),
-            '#description'   => t('Category name in language: @language', array('@language' => $name)),
-            '#required'      => true,
-            '#default_value' => $record ? $record->names[$code] : null,
-        );
     }
 
     $fields = array(
@@ -105,7 +91,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
     );
 
     // dodaj dodatkowe pola zwiazane z kategoriami rekordow konkretnych typow
-    $callback = 'scholar_category_form_' . $table_name;
+    $callback = 'scholar_pages_category_form_' . $table_name;
     if ($subtype) {
         $callback .= '_' . $subtype;
     }
@@ -126,7 +112,7 @@ function scholar_category_form(&$form_state, $table_name, $subtype = null, $id =
  * @param array $form
  * @param array &$form_state
  */
-function scholar_category_form_submit($form, &$form_state) // {{{
+function scholar_pages_category_form_submit($form, &$form_state) // {{{
 {
     $record = $form['#record'];
 
@@ -165,7 +151,7 @@ function scholar_category_form_submit($form, &$form_state) // {{{
  * @param array &$form_state
  * @param int $id
  */
-function scholar_category_delete_form(&$form_state, $id) // {{{
+function scholar_pages_category_delete_form(&$form_state, $id) // {{{
 {
     global $language;
 
@@ -192,7 +178,7 @@ function scholar_category_delete_form(&$form_state, $id) // {{{
  * @param array $form
  * @param array &$form_state
  */
-function scholar_category_delete_form_submit($form, &$form_state) // {{{
+function scholar_pages_category_delete_form_submit($form, &$form_state) // {{{
 {
     global $language;
 
@@ -205,11 +191,17 @@ function scholar_category_delete_form_submit($form, &$form_state) // {{{
     }
 } // }}}
 
-function scholar_category_form_generics_conference(&$fields) // {{{
+function scholar_pages_category_form_generics_conference(&$fields) // {{{
 {
     // dodaj pola formularza odpowiedzialne za konfiguracje
     // powiazanych wezlow
     $fields[] = 'nodes';
 } // }}}
+
+function scholar_pages_category_form_people(&$fields)
+{
+    $fields['names']['#title'] = t('Affiliation name');
+    $fields['names']['#description'] = t('Enter affiliation names for each language.');
+}
 
 // vim: fdm=marker

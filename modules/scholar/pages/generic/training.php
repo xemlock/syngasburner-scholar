@@ -2,6 +2,8 @@
 
 function scholar_generics_training_form(&$form_state, $record = null) // {{{
 {
+    $categories = scholar_category_options('generics', 'training');
+
     $form = scholar_generic_form(array(
         'title' => array(
             '#title' => t('Training title'),
@@ -23,6 +25,9 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
             '#default_value' => true,
         ),
         scholar_element_separator(),
+        'category_id' => empty($categories) ? false : array(
+            '#options' => $categories,
+        ),
         'image_id',
         'files',
         'nodes',

@@ -4,9 +4,8 @@
  * Wykorzystuje locale_language_list().
  *
  * @param string $language
- * @param string $default
  */
-function scholar_languages($language = null, $default = null) // {{{
+function scholar_languages($language = null) // {{{
 {
     static $languages = null;
 
@@ -218,3 +217,4 @@ function scholar_countries($code = null, $language_code = null) // {{{
 
     return isset($_cache[$language_code][$code]) ? $_cache[$language_code][$code] : null;
 } // }}}
+

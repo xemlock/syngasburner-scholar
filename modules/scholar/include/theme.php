@@ -56,7 +56,7 @@ function scholar_table_colspan($header) // {{{
     return $colspan;
 } // }}}
 
-function scholar_theme_table($header, $rows, $attributes = array(), $caption = null) // {{{
+function theme_scholar_table($header, $rows, $attributes = array(), $caption = null) // {{{
 {
     scholar_add_css();
 
