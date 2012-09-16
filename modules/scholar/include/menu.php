@@ -128,14 +128,14 @@ function _scholar_menu() // {{{
         'title'             => t('Scholar settings'),
         'access arguments'  => array('administer scholar'),
         'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_settings_form'),
+        'page arguments'    => array('scholar_pages_settings_form'),
         'file'              => 'pages/settings.php',
         '@scholar_path'     => 'settings',
     );
     $items['admin/settings/scholar/dateformat'] = array(
         'type'              => MENU_CALLBACK,
         'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_settings_dateformat',
+        'page callback'     => 'scholar_pages_settings_dateformat',
         'file'              => 'pages/settings.php',
         '@scholar_path'     => 'settings.dateformat',
     );

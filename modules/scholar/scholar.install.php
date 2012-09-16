@@ -416,9 +416,13 @@ function scholar_schema() // {{{
 function scholar_install() // {{{
 {
     $dir = file_directory_path() . '/scholar';
-    if (!is_dir($dir) && !mkdir($dir, 0777)) {
+    if (!is_dir($dir) && !mkdir($dir)) {
         trigger_error('scholar_install: Unable to create storage directory: ' . $dir, E_USER_ERROR);
     }
+
+    // trzeba ustawic uprawnienia do katalogu, bo uprawnienia, z ktorymi
+    // mkdir() tworzy katalog sa modyfikowane przez umask.
+    chmod($dir, 0777);
 
     drupal_install_schema('scholar');
 
