@@ -78,7 +78,7 @@ function scholar_report_person($id, $language) // {{{
         LEFT JOIN {scholar_generic_suppinfo} i
             ON (g.id = i.generic_id AND i.language = '%s')
         LEFT JOIN {scholar_generic_suppinfo} i2
-            ON (g2.id = i2.generic_id AND i.language = '%s')
+            ON (g2.id = i2.generic_id AND i2.language = '%s')
         WHERE g2.list <> 0
             AND g.subtype = 'presentation'
             AND a.person_id = %d

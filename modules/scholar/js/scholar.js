@@ -5,7 +5,7 @@ window.jQuery && window.jQuery(function($) {
             c = j.children('.scholar-collapsible-content');
 
         if (j.hasClass('scholar-collapsible-collapsed')) {
-            c.slideUp(0);
+            c.css('display', 'none');
         }
 
         h.click(function() {

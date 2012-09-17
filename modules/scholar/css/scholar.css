@@ -88,11 +88,11 @@
 }
 .scholar-entry-heading {
   float: left;
-  width: 140px;
+  width: 128px;
   color: #555;
 }
 .scholar-entry-content {
-  margin-left: 140px;
+  margin-left: 128px;
 }
 
 .scholar-node .authors {
@@ -140,14 +140,15 @@
 .scholar-node .training-class .title {
   font-weight: bold;
 }
-
+.scholar-node .training-heading {
+  margin-bottom: .25em;
+}
 .scholar-node .training-heading .title {
   font-weight: bold;
 }
 .scholar-node .training-description,
 .scholar-node .training-lecturers {
   font-size: 100%;
-  line-height: 160%;
 }
 
 .scholar-asset {
