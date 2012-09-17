@@ -14,7 +14,7 @@
     [__tag="cite" class="title"][url="<?php $this->displayAttr($training['url']) ?>" target="_self"]<?php $this->display($training['title']) ?>[/url][/__tag]
   [/__tag]
 <?php     if ($training['suppinfo']) { ?>
-  [__tag="div" class="description"]<?php $this->display($training['suppinfo']) ?>[/__tag]
+  [__tag="div" class="training-description"]<?php $this->display($training['suppinfo']) ?>[/__tag]
 <?php     } ?>
 <?php     if ($training['authors']) { ?>
   [__tag="div" class="training-lecturers"]

@@ -6,7 +6,7 @@
 <?php       $authors = $article['authors'];
             include dirname(__FILE__) . '/_authors.tpl'; ?>[/__tag]<?php
             if (isset($article['year']) && $article['year']) {
-              ?>([__tag="span" class="dtstart"]<?php $this->display($article['year']) ?>[/__tag])<?php
+              ?> ([__tag="span" class="dtstart"]<?php $this->display($article['year']) ?>[/__tag])<?php
             } ?>:
 <?php   } ?>
   [__tag="cite" class="title"][url="<?php $this->displayAttr($article['url']) ?>"]<?php $this->display($article['title']) ?>[/url][/__tag]<?php

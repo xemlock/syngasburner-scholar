@@ -20,13 +20,15 @@
 
 .scholar-section {
   color: #222;
-  font-size: 1.35em;
+  font-size: 1.5em;
   font-weight: normal;
+  margin: 1em 0 .75em;
 }
 .scholar-subsection {
   color: #222;
-  font-size: 1.15em;
+  font-size: 1.35em;
   font-weight: normal;
+  margin: 1em 0 .75em;
 }
 
 
@@ -43,13 +45,21 @@
   cursor: pointer;
   margin: .5em 0;
   color: #666;
+  font-weight: bold;
 }
 .scholar-collapsible-collapsed .scholar-collapsible-heading {
   background: url(../img/collapsed.png) 100% 50% no-repeat;
 }
+.scholar-collapsible-collapsed .scholar-collapsible-heading:hover {
+  background-image: url(../img/collapsed-hover.png);
+  color: #222;
+}
 .scholar-collapsible-open .scholar-collapsible-heading {
   background: url(../img/open.png) 100% 50% no-repeat;
-  font-weight: bold;
+}
+.scholar-collapsible-open .scholar-collapsible-heading:hover {
+  background-image: url(../img/open-hover.png);
+  color: #222;
 }
 .scholar-collapsible-disabled .scholar-collapsible-heading {
   background-image: none;
@@ -78,11 +88,11 @@
 }
 .scholar-entry-heading {
   float: left;
-  width: 10em;
+  width: 140px;
   color: #555;
 }
 .scholar-entry-content {
-  margin-left: 10em; 
+  margin-left: 140px;
 }
 
 .scholar-node .authors {
@@ -91,11 +101,13 @@
 
 .scholar-node ul.components {
   margin: .5em 0;
-  padding: 0 0 0 1.5em;
+  padding: 0 0 0 1.75em;
   list-style: none;
 }
 .scholar-node ul.components li {
   margin: .5em 0;
+  padding: 0;
+  background: none;
 }
 
 .scholar-node .conference {
@@ -111,7 +123,8 @@
 .scholar-node .presentation-files {
   display: inline;
 }
-.scholar-node .presentation-description {
+.scholar-node .presentation-description,
+.scholar-node .article-description {
 }
 
 .scholar-node .article {
@@ -123,9 +136,6 @@
 .scholar-node .article-files {
   display: inline;
 }
-.scholar-node .article-description {
-}
-
 
 .scholar-node .training-class .title {
   font-weight: bold;
@@ -134,7 +144,11 @@
 .scholar-node .training-heading .title {
   font-weight: bold;
 }
-
+.scholar-node .training-description,
+.scholar-node .training-lecturers {
+  font-size: 100%;
+  line-height: 160%;
+}
 
 .scholar-asset {
   overflow: hidden;
@@ -167,8 +181,5 @@
 
 
 
-.training .title {
-  display:block;
-  margin-bottom: .02em;
-}
+
 

@@ -13,11 +13,6 @@
 <?php   foreach ($this->conferences as $conference) { ?>
 [entry date="<?php $this->displayAttr($conference['start_date'] . '/' . $conference['end_date']) ?>"]
 <?php     include dirname(__FILE__) . '/_conference.tpl'; ?>
-  [list]
-<?php     foreach ($conference['presentations'] as $presentation) { ?>
-    [__tag="li"]<?php include dirname(__FILE__) . '/_presentation.tpl'; ?>[/__tag]  
-<?php	  } ?>
-  [/list]
 [/entry]
 <?php   } ?>
 <?php } ?>
