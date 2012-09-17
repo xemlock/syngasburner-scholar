@@ -9,16 +9,18 @@
         } ?>
 <?php   foreach ($trainings as $training) { ?>
 [entry date="<?php $this->displayAttr($training['start_date'] . '/' . $training['end_date']) ?>"]
-[__tag="div" class="training"]
-  [__tag="cite" class="title"][url="<?php $this->displayAttr($training['url']) ?>" target="_self"]<?php $this->display($training['title']) ?>[/url][/__tag]
+[__tag="div" class="training" id="training-<?php $this->displayAttr($training['id']) ?>"]
+  [__tag="div" class="training-heading"]
+    [__tag="cite" class="title"][url="<?php $this->displayAttr($training['url']) ?>" target="_self"]<?php $this->display($training['title']) ?>[/url][/__tag]
+  [/__tag]
 <?php     if ($training['suppinfo']) { ?>
   [__tag="div" class="description"]<?php $this->display($training['suppinfo']) ?>[/__tag]
 <?php     } ?>
 <?php     if ($training['authors']) { ?>
-  [__tag="div" class="speakers"]
-  [t]Speakers[/t]: <?php 
+  [__tag="div" class="training-lecturers"]
+  [t]Lecturers[/t]: <?php 
             $authors = $training['authors'];
-            include dirname(__FILE__) . '/_training_authors.tpl'; ?>
+            include dirname(__FILE__) . '/_authors.tpl'; ?>
   [/__tag]
 <?php     } ?>
 [/__tag]

@@ -1,8 +1,8 @@
 <?php if (isset($presentations) && count($presentations)) { ?>
-[list]<?php
+[__tag="ul" class="components"]<?php
         foreach ($presentations as $presentation) { ?>
-  [__tag="li"]<?php include dirname(__FILE__) . '/_presentation.tpl'; ?>[/__tag]<?php
+[__tag="li"]<?php include dirname(__FILE__) . '/_presentation.tpl'; ?>[/__tag]<?php
 	    } ?>
-[/list]<?php 
+[/__tag]<?php 
       } ?>
 <?php // vim: ft=php

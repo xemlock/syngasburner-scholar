@@ -10,8 +10,6 @@
 <?php   foreach ($conferences as $conference) { ?>
 [entry date="<?php $this->displayAttr($conference['start_date'] . '/' . $conference['end_date']) ?>"]
 <?php     include dirname(__FILE__) . '/_conference.tpl'; ?>
-<?php     $presentations = $conference['presentations']; 
-          include dirname(__FILE__) . '/_presentations.tpl'; ?>
 [/entry]
 <?php   } ?>
 <?php   if ($sections) { ?>[/collapsible]<?php } ?>

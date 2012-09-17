@@ -1,9 +1,6 @@
 <?php if (isset($conference)) { ?>
-  [__tag="div" class="hCite conference"]
-    [__tag="span" class="dtstart" title="<?php $this->displayAttr($conference['start_date']) ?>"][/__tag]
-<?php     if ($conference['end_date']) { ?>
-    [__tag="span" class="dtend" title="<?php $this->displayAttr($conference['end_date']) ?>"][/__tag]
-<?php     } ?>
+[__tag="div" class="conference" id="conference-<?php $this->displayAttr($conference['id']) ?>"]
+  [__tag="div" class="conference-heading"]
     [__tag="cite" class="title"][url="<?php $this->displayAttr($conference['url']) ?>"]<?php $this->display($conference['title']) ?>[/url][/__tag]<?php
           if ($conference['suppinfo']) { ?>, <?php $this->display($conference['suppinfo']) ?><?php }
           if ($conference['locality'] || $conference['country']) { ?>, [__tag="span" class="adr"]<?php
@@ -16,5 +13,12 @@
               } ?>
     [/__tag]<?php } ?>
   [/__tag]
+<?php   if (isset($conference['presentations']) && $conference['presentations']) { ?>
+  [__tag="div" class="conference-presentations"]<?php
+          $presentations = $conference['presentations'];
+          include dirname(__FILE__) . '/_presentations.tpl';
+?>[/__tag]
+<?php   } ?>
+[/__tag]
 <?php } ?>
 <?php // vim: ft=php

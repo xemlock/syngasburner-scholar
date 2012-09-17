@@ -69,49 +69,89 @@
 
 
 
-
 .scholar-entry {
   overflow: hidden;
-  margin: .5em 0;
+  margin: .5em 0 1.5em;
 }
-
+.scholar-entry:first-child {
+  margin-top: 0;
+}
 .scholar-entry-heading {
   float: left;
   width: 10em;
   color: #555;
 }
-
 .scholar-entry-content {
   margin-left: 10em; 
 }
 
-.scholar-conferences .conference + ul {
-  margin: .25em 0 1.25em;
-  padding-left: 1.5em;
-}
-.scholar-conferences .conference + ul li {
-  margin: .5em 0;
-}
-.scholar-conferences .presentation .authors {
+.scholar-node .authors {
   font-weight: bold;
 }
-.scholar-conferences .presentation {
+
+.scholar-node ul.components {
+  margin: .5em 0;
+  padding: 0 0 0 1.5em;
+  list-style: none;
+}
+.scholar-node ul.components li {
+  margin: .5em 0;
+}
+
+.scholar-node .conference {
+}
+.scholar-node .conference-heading {
+}
+
+.scholar-node .presentation {
+}
+.scholar-node .presentation-heading {
   display: inline;
 }
-.scholar-conferences .files {
+.scholar-node .presentation-files {
   display: inline;
 }
+.scholar-node .presentation-description {
+}
+
+.scholar-node .article {
+  margin-bottom: .5em;
+}
+.scholar-node .article-heading {
+  display: inline;
+}
+.scholar-node .article-files {
+  display: inline;
+}
+.scholar-node .article-description {
+}
+
+
+.scholar-node .training-class .title {
+  font-weight: bold;
+}
+
+.scholar-node .training-heading .title {
+  font-weight: bold;
+}
+
 
 .scholar-asset {
   overflow: hidden;
   background: #a2d976; /* #027AC6; */
-  padding: .15em .4em;
+  padding: 2px 6px 1px;
   border-radius: 2px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
   color: #fff;
-  margin-right: .25em;
-  font-size: 85%;
+  margin-left: 2px;
+  font-size: 11px;
+  display: inline-block;
+  position: relative;
+  top: 0.35em;
+}
+.scholar-asset:first-child {
+  margin-left: 0;
 }
 .scholar-asset a,
 .scholar-asset a:hover,
@@ -122,7 +162,7 @@
   background: none;
 }
 .scholar-asset:hover {
-  background: #71b33c; #0062A0;
+  background: #71b33c;
 }
 
 

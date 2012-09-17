@@ -3,8 +3,9 @@
 [__tag="div" class="scholar-person"]
 <?php if ($this->articles) { ?>
 [section][t]Publications[/t][/section]
-<?php   $articles = $this->articles;
-        include dirname(__FILE__) . '/_articles.tpl' ?>
+<?php   foreach ($this->articles as $article) { ?>
+[entry="<?php $this->displayAttr($article['year']) ?>"]<?php include dirname(__FILE__) . '/_article.tpl' ?>[/entry]
+<?php   } ?>
 <?php } ?>
 
 <?php if ($this->conferences) { ?>
