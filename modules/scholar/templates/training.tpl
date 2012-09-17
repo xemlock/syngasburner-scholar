@@ -7,7 +7,7 @@
 [subsection][date]<?php $this->display($date) ?>[/date][/subsection]
 <?php     foreach ($classes as $class) { ?>
 [entry="<?php if ($class['start_time']) { $this->displayAttr($class['start_time'] . ' &ndash; ' . $class['end_time']); } ?>"]
-[__tag="div" class="training-class"]
+[__tag="div" class="training-class" id="class-<?php $this->displayAttr($class['id']) ?>"]
   [__tag="div" class="training-class-heading"]
     [__tag="cite" class="title"][url="<?php $this->displayAttr($class['url']) ?>"]<?php $this->display($class['title']) ?>[/url][/__tag]<?php
             if ($class['suppinfo']) { ?>, <?php $this->display($class['suppinfo']) ?><?php } ?>
