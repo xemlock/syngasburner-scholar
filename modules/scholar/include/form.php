@@ -617,4 +617,5 @@ function scholar_element_get_error($element) // {{{
     }
 } // }}}
 
+
 // vim: fdm=marker

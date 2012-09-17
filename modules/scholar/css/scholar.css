@@ -4,27 +4,7 @@
   font-weight: bold;
 }
 
-.scholar-asset {
-  overflow: hidden;
-  background: #027AC6;
-  padding: .15em .3em;
-  border-radius: 2px;
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
-  color: #fff;
-  margin-right: .25em;
-}
-.scholar-asset a,
-.scholar-asset a:hover,
-.scholar-asset a:link,
-.scholar-asset a:visited {
-  color: #fff;
-  text-decoration: none;
-  background: none;
-}
-.scholar-asset:hover {
-  background: #0062A0;
-}
+
 
 .scholar-rendering p {
   margin:0;
@@ -35,32 +15,34 @@
   overflow: hidden;
 }
 
-.scholar-block > .tm {
-  float: left;
-  width: 12em;
-}
 
-.scholar-block > .details {
-  margin-left: 12em;
-}
 
 
 .scholar-section {
-  color: red;
+  color: #222;
   font-size: 1.35em;
   font-weight: normal;
 }
 .scholar-subsection {
-  color: blue;
+  color: #222;
   font-size: 1.15em;
   font-weight: normal;
 }
 
+
+
 .scholar-collapsible {
-  border: 1px dotted #eee;
+  padding-bottom: .5em;
+  border-top: 1px solid #ddd;
+}
+.scholar-collapsible:first-child {
+  border: none;
 }
 .scholar-collapsible-heading {
+  font-size: 1.5em;
   cursor: pointer;
+  margin: .5em 0;
+  color: #666;
 }
 .scholar-collapsible-collapsed .scholar-collapsible-heading {
   background: url(../img/collapsed.png) 100% 50% no-repeat;
@@ -69,7 +51,6 @@
   background: url(../img/open.png) 100% 50% no-repeat;
   font-weight: bold;
 }
-
 .scholar-collapsible-disabled .scholar-collapsible-heading {
   background-image: none;
   cursor: default;
@@ -82,3 +63,72 @@
 .scholar-preface {
   overflow: hidden;
 }
+
+
+
+
+
+
+
+.scholar-entry {
+  overflow: hidden;
+  margin: .5em 0;
+}
+
+.scholar-entry-heading {
+  float: left;
+  width: 10em;
+  color: #555;
+}
+
+.scholar-entry-content {
+  margin-left: 10em; 
+}
+
+.scholar-conferences .conference + ul {
+  margin: .25em 0 1.25em;
+  padding-left: 1.5em;
+}
+.scholar-conferences .conference + ul li {
+  margin: .5em 0;
+}
+.scholar-conferences .presentation .authors {
+  font-weight: bold;
+}
+.scholar-conferences .presentation {
+  display: inline;
+}
+.scholar-conferences .files {
+  display: inline;
+}
+
+.scholar-asset {
+  overflow: hidden;
+  background: #a2d976; /* #027AC6; */
+  padding: .15em .4em;
+  border-radius: 2px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  color: #fff;
+  margin-right: .25em;
+  font-size: 85%;
+}
+.scholar-asset a,
+.scholar-asset a:hover,
+.scholar-asset a:link,
+.scholar-asset a:visited {
+  color: #fff;
+  text-decoration: none;
+  background: none;
+}
+.scholar-asset:hover {
+  background: #71b33c; #0062A0;
+}
+
+
+
+.training .title {
+  display:block;
+  margin-bottom: .02em;
+}
+

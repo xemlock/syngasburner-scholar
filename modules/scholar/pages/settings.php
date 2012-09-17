@@ -154,7 +154,8 @@ function scholar_pages_settings_form(&$form_state)
 
 function scholar_pages_settings_form_validate($form, &$form_state) // {{{
 {
-    $values = &$form_state['values'];
+    // rekursywnie usun biale znaki otaczajace wartosci tekstowe
+    $values = scholar_trim($form_state['values']);
 
     // dokonaj walidacji szerokosci obrazu, jezeli sie powiedzie zmien jej
     // typ na liczbe calkowita
@@ -170,6 +171,8 @@ function scholar_pages_settings_form_validate($form, &$form_state) // {{{
     // ustawienie dla Lightboksa przechowuj jako liczbe calkowita
     $image_lightbox_name = scholar_setting_name('image_lightbox');
     $values[$image_lightbox_name] = intval($values[$image_lightbox_name]);
+
+    $form_state['values'] = $values;
 } // }}}
 
 function scholar_pages_settings_form_submit($form, &$form_state) // {{{

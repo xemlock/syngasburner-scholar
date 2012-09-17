@@ -1,6 +1,23 @@
 <?php
 
 /**
+ * @param string|array $value
+ * @return mixed
+ */
+function scholar_trim($value) // {{{
+{
+    if (is_array($value)) {
+        return array_map(__FUNCTION__, $value);
+
+    } else if (is_string($value)) {
+        return trim($value);
+    }
+
+    return $value;
+} // }}}
+
+
+/**
  * Transliteracja z UTF-8 do ASCII.
  *
  * @param string $string

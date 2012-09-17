@@ -3,6 +3,7 @@
 function scholar_pages_people_form(&$form_state, $id = null) // {{{
 {
     $record = $id ? scholar_load_record('people', $id, scholar_path('people')) : null;
+    $categories = scholar_category_options('people');
 
     $form = scholar_generic_form(array(
         'first_name' => array(
@@ -11,9 +12,9 @@ function scholar_pages_people_form(&$form_state, $id = null) // {{{
         'last_name' => array(
             '#required' => true,
         ),
-        'category_id' => array(
+        'category_id' => empty($categories) ? false : array(
             '#title' => t('Affiliation'),
-            '#options' => scholar_category_options('people'),
+            '#options' => $categories,
             '#description' => t('Name of a scientific institution this person is primarily affiliated with.'),
         ),
         'image_id' => array(

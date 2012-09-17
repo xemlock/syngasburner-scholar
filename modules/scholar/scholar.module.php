@@ -208,6 +208,29 @@ function scholar_node_info() {
     );
 }
 
+function __scholar_rrrender($markup)
+{
+    $output = '';
+
+    if (strlen($markup)) {
+        try {
+            $tree     = scholar_markup_parser()->parse($markup);
+            $renderer = scholar_markup_renderer();
+            $output   = $renderer->render($tree);
+
+            // umiesc na poczatku zawartosc preambuly
+            $preface  = scholar_markup_converter_preface();
+            if ($preface) {
+                $output = $preface . $output;
+            }
+        } catch (Exception $e) {
+            // TODO watchdog
+        }
+    }
+
+    return $output;
+}
+
 function scholar_nodeapi(&$node, $op)
 {
     // dolacz pliki
@@ -233,7 +256,7 @@ function scholar_nodeapi(&$node, $op)
         }
 
         scholar_add_css();
-        if (empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
+        if (1||empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0)) {
             $func = 'scholar_render_' . $binding['table_name'] . '_node';
             $body = '';
 
@@ -260,29 +283,6 @@ function scholar_nodeapi(&$node, $op)
     }
 }
 
-function __scholar_rrrender($markup)
-{
-    $output = '';
-
-    if (strlen($markup)) {
-        try {
-            $tree     = scholar_markup_parser()->parse($markup);
-            $renderer = scholar_markup_renderer();
-            $output   = $renderer->render($tree);
-
-            // umiesc na poczatku zawartosc preambuly
-            $preface  = scholar_markup_converter_preface();
-            if ($preface) {
-                $output = $preface . $output;
-            }
-        } catch (Exception $e) {
-            // TODO watchdog
-        }
-    }
-
-    return $output;
-}
-
 function scholar_eventapi(&$event, $op) // {{{
 {
     switch ($op) {
@@ -299,7 +299,7 @@ function scholar_eventapi(&$event, $op) // {{{
 
         case 'load':
             if (_scholar_rendering_enabled() && $binding = scholar_event_owner_info($event->id)) {
-                $render = empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0);
+                $render = 1||empty($binding['last_rendered']) || $binding['last_rendered'] < variable_get('scholar_last_change', 0);
                 if ($render) {
                     $body = '<!-- [[ -->'
                           . __scholar_rrrender('[__language="' . $binding['language'] . '"]' . $binding['body'])

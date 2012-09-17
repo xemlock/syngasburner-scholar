@@ -169,6 +169,11 @@ function scholar_markup_converter_url(Zend_Markup_Token $token, $contents) // {{
     if (false === strpos($url, '://')) {
         // wzgledny URL
         $url = valid_url($url, false) ? $url : false;
+        if ($url) {
+            // dolacz sciezke bazowa do wzglednego adresu
+            global $base_url;
+            $url = $base_url . '/' . ltrim($url, '/');
+        }
     } else {
         // absolutny URL
         $url = valid_url($url, true) ? $url : false;
@@ -243,7 +248,7 @@ function scholar_markup_converter_size(Zend_Markup_Token $token, $contents) // {
 // https://www.vbulletin.com/forum/archive/index.php/t-197474.html
 function scholar_markup_converter_nonl2br(Zend_Markup_Token $token, $contents) // {{{
 {
-    return '<div style="border:4px solid #999">' . str_replace(array("\r\n", "\n", "\r"), ' ', $contents) . '</div>';
+    return str_replace(array("\r\n", "\n", "\r"), ' ', $contents);
 } // }}}
 
 // tagi scholara
