@@ -111,15 +111,17 @@ function scholar_nodes_subform($record = null) // {{{
                 '#collapsible'  => true,
                 '#collapsed'    => true,
             );
-            $container['gallery']['gallery_id'] = array(
+            $container['gallery']['id'] = array(
                 '#type'         => 'select',
                 '#title'        => t('Gallery'),
                 '#description'  => t('Select a gallery attached to this node.'),
                 '#options'      => $gallery_options,
             );
-            $container['gallery']['gallery_layout'] = array(
-                '#type'         => 'hidden',
-                '#default_value' => 'horizontal', // poziomy uklad galerii
+            $container['gallery']['layout'] = array(
+                '#type'         => 'select',
+                '#title'        => t('Gallery layout'),
+                '#options'      => array('horizontal' => t('horizontal'), 'vertical' => t('vertical')),
+                '#description'  => t('Choose which layout should be applied for displaying gallery on page.'),
             );
         }
 

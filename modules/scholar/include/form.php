@@ -191,8 +191,9 @@ function scholar_populate_form(&$form, &$record) // {{{
             }
 
             // wartosci dla galerii
-            if (isset($node->gallery_id)) {
-                $subform[$language]['gallery']['gallery_id']['#default_value'] = $node->gallery_id;
+            if (isset($node->gallery)) {
+                $subform[$language]['gallery']['id']['#default_value'] = $node->gallery['id'];
+                $subform[$language]['gallery']['layout']['#default_value'] = $node->gallery['layout'];
             }
         }
 
