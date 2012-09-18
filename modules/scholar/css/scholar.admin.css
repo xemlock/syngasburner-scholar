@@ -83,17 +83,6 @@ user-select: none;
   background: yellow;
 }
 
-.form-item .scholar-sortable-multiselect {
-  border: 1px solid #999;
-}
-
-.form-item .scholar-sortable-multiselect .table-wrapper {
-  padding: 0 .5em 0;
-}
-.form-item .scholar-sortable-multiselect .buttons-wrapper {
-  padding: .5em;
-}
-
 .scholar-sortable-multiselect .table-wrapper table {
   margin-top: 0;
 }
@@ -197,6 +186,9 @@ form.scholar fieldset.collapsible.collapsed legend a:hover {
 form.scholar fieldset.collapsible legend a {
   color: #000;
 }
+form.scholar select {
+  max-width: 480px;
+}
 
 
 .scholar-table {
@@ -239,6 +231,7 @@ form.scholar fieldset.collapsible legend a {
   border: none;
   border-bottom: 2px solid #d2d2d2;
   border-top: 1.5em solid #fff;
+  font-weight: bold;
 }
 .scholar-table tr.region td,
 .scholar-table tr.region td.region,
@@ -246,6 +239,11 @@ form.scholar fieldset.collapsible legend a {
   background: none;
   border: none;
   color: #555;
+}
+.scholar-table tr.region:first-child,
+.scholar-table tr.region.odd:first-child,
+.scholar-table tr.region.even:first-child {
+  border-top: none;
 }
 
 
