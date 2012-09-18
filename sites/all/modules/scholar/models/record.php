@@ -98,27 +98,25 @@ function scholar_save_record($model, &$record) // {{{
 
         // zapisz wezly
         if (isset($record->nodes) && is_array($record->nodes)) {
-            $nodes_saved = scholar_save_nodes($record->id, $model, $record->nodes);
-        } else {
-            $nodes_saved = 0;
+            scholar_save_nodes($record->id, $model, $record->nodes);
         }
 
         // zapisz zmiany w powiazanych wydarzeniach, korzystajac w miare
         // potrzeby z danych uprzednio zapisanych wezlow
         if (isset($record->events) && is_array($record->events)) {
-            if ($nodes_saved) {
-                // jezeli zostaly powiazane wezly, ustaw url eventu wskazujacy
-                // na opublikowany wezel, w przeciwnym razie skopiuj pole url
-                // rekordu (o ile istnieje)
-                foreach ($record->events as $language => &$event) {
-                    if ($record->nodes[$language]['nid'] && $record->nodes[$language]['status']) {
-                        $event['url'] = scholar_node_url($record->nodes[$language]['nid'], true);
-                    } else if (isset($record->url)) {
-                        $event['url'] = $record->url;
-                    }
+            // jezeli zostaly powiazane wezly, ustaw url eventu wskazujacy
+            // na opublikowany wezel, w przeciwnym razie skopiuj pole url
+            // rekordu (o ile istnieje)
+
+            foreach ($record->events as $language => &$event) {
+                if ($record->nodes[$language]['nid'] && $record->nodes[$language]['status']) {
+                    $event['url'] = scholar_node_url($record->nodes[$language]['nid'], true);
+                } else if (isset($record->url)) {
+                    $event['url'] = $record->url;
                 }
-                unset($event);
             }
+            unset($event);
+
             scholar_save_events($record->id, $model, $record->events);
         }
 
