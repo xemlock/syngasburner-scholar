@@ -23,12 +23,14 @@
   font-size: 1.5em;
   font-weight: normal;
   margin: 1em 0 .75em;
+  clear: both;
 }
 .scholar-subsection {
   color: #222;
   font-size: 1.35em;
   font-weight: normal;
   margin: 1em 0 .75em;
+  clear: both;
 }
 
 
@@ -123,6 +125,13 @@
 .scholar-node .presentation-files {
   display: inline;
 }
+
+.scholar-node .article-files .scholar-asset,
+.scholar-node .presentation-files .scholar-asset {
+  position: relative;
+  top: 0.35em;
+}
+
 .scholar-node .presentation-description,
 .scholar-node .article-description {
 }
@@ -150,6 +159,10 @@
 .scholar-node .training-lecturers {
   font-size: 100%;
 }
+.scholar-node .training-class-files {
+  margin-top: .35em;
+}
+
 
 .scholar-asset {
   overflow: hidden;
@@ -161,9 +174,10 @@
   color: #fff;
   margin-left: 2px;
   font-size: 11px;
+  display: -moz-inline-box;
   display: inline-block;
-  position: relative;
-  top: 0.35em;
+  *display: inline;
+  zoom:1;
 }
 .scholar-asset:first-child {
   margin-left: 0;

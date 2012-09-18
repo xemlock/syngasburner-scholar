@@ -239,6 +239,10 @@ function scholar_save_files($row_id, $table_name, $attachments) // {{{
         $count += count($saved);
     }
 
+    // wymuszamy uniewaznie renderingu, poniewaz wraz z modyfikacja listy
+    // powiazanych plikow zmianie moga ulec automatycznie wygenerowane linki
+    scholar_invalidate_rendering();
+
     return $count;
 } // }}}
 
@@ -252,6 +256,9 @@ function scholar_save_files($row_id, $table_name, $attachments) // {{{
 function scholar_delete_files($row_id, $table_name) // {{{
 {
     db_query("DELETE FROM {scholar_attachments} WHERE table_name = '%s' AND row_id = %d", $table_name, $row_id);
+
+    // wraz z usunieciem powiazan trzeba uniewaznic rendering
+    scholar_invalidate_rendering();
 } // }}}
 
 /**

@@ -17,6 +17,7 @@ class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
         // constructor.
         $this->addTag('ldelim', array('single' => true));
         $this->addTag('rdelim', array('single' => true));
+        $this->addTag('br',     array('single' => true));
         $this->addTag('noparse', array('parse_inside' => false));
     } // }}}
 

@@ -56,7 +56,7 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
 
     if (isset($markup[$tagName])) {
         if (empty($markup[$tagName]['end'])) {
-            return $markup[$tagName];
+            return $markup[$tagName]['start'];
         }
         return $markup[$tagName]['start'] . $contents . $markup[$tagName]['end'];
     }
@@ -374,8 +374,7 @@ function scholar_markup_converter_asset(Zend_Markup_Token $token, $contents) // 
     }
 
     $attrs = array(
-        'href'   => $asset,
-        'target' => '_blank',
+        'href' => $asset,
     );
 
     if (strlen($details)) {
