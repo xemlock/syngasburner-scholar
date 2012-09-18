@@ -153,6 +153,7 @@ form.scholar textarea.error {
 form.scholar input[type="text"]:focus,
 form.scholar input[type="password"]:focus,
 form.scholar textarea:focus {
+  border-color: #000;
   color: #000;
 }
 
@@ -413,10 +414,6 @@ form.scholar div.warning {
 
 form.scholar .form-text {
   padding: .25em;
-}
-
-form.scholar .form-text:focus {
-  border-color: #000;
 }
 
 .scholar-table tr.region .region-link {

@@ -344,7 +344,7 @@ function scholar_save_node(&$node, $row_id, $table_name) // {{{
 {
     $body = trim($node->body);
 
-    $node->format = 2;  // full HTML
+    $node->format = scholar_setting_node_format();
     $node->type   = 'scholar';
     $node->body   = ''; // puste body, bo tresc do przetworzenia zostanie
                         // zapisana w bindingu
@@ -558,6 +558,26 @@ function scholar_node_link($row_id, $table_name = null, $language = null, $refre
     }
 
     return $links[$key];
+} // }}}
+
+/**
+ * @param int $format_id
+ *     identyfikator istniejącego formatu danych
+ * @return int
+ *     liczba zaktualizowanych węzłów
+ */
+function scholar_set_node_format($format_id) // {{{
+{
+    // sprawdz, czy filtr o podanym identyfikatorze istnieje
+    $row = db_fetch_array(db_query("SELECT COUNT(*) AS cnt FROM {filter_formats} WHERE format = %d", $format_id));
+    if ($row['cnt']) {
+        // skoro tak, ustaw jego identyfikator dla wszystkich rewizji wezlow
+        // typu scholar
+        db_query("UPDATE {node_revisions} SET format = %d WHERE nid IN (SELECT nid FROM {node} WHERE type = 'scholar')", $format_id);
+        return db_affected_rows();
+    }
+
+    return 0;
 } // }}}
 
 // vim: fdm=marker

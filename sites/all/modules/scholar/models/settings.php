@@ -43,8 +43,8 @@ function scholar_setting_name($name, $language = null) // {{{
 } // }}}
 
 /**
- * Domyślna, minimalna szerokość obrazów to 150px. Ustawienie jest niezależne
- * od języka.
+ * Domyślna, minimalna szerokość obrazów to 150px. Ustawienie jest
+ * niezależne od języka.
  *
  * @return int
  */
@@ -54,12 +54,15 @@ function scholar_setting_image_width() // {{{
 } // }}}
 
 /**
+ * Czy użyć atrybutów podpinających Lightbox do obrazów w preambule
+ * generowanych stron.
+ *
  * @return int
  */
-function scholar_setting_image_lightbox()
+function scholar_setting_image_lightbox() // {{{
 {
    return max(0, variable_get(scholar_setting_name('image_lightbox'), 0));
-}
+} // }}}
 
 /**
  * @return string
@@ -102,6 +105,17 @@ function scholar_setting_format_daterange_same_year($language = null) // {{{
     }
 
     return $format;
+} // }}}
+
+/**
+ * Zwraca identyfikator formatu danych dla treści węzła. Domyślnie zwracana
+ * jest wartość 2 odpowiadająca formatowi Full HTML.
+ *
+ * @return int
+ */
+function scholar_setting_node_format() // {{{
+{
+    return variable_get(scholar_setting_name('node_format'), 2);
 } // }}}
 
 /**

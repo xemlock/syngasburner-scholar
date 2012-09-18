@@ -128,17 +128,35 @@ function scholar_pages_settings_form(&$form_state)
         $dateformat[] = $fieldset;
     }
 
+    $formats = array();
+    foreach (filter_formats() as $format) {
+        $formats[$format->format] = $format->name;
+    }
+    $nodes = array(
+        '#type'  => 'scholar_element_vtable_row',
+        '#title' => t('Nodes'),
+        '#description' => t('Configure how pages are displayed'),
+        scholar_setting_name('node_format') => array(
+            '#title'   => t('Node format'),
+            '#type'    => 'select',
+            '#options' => $formats,
+            '#description' => t('Input format of auto-generated nodes. For best results, use a format with no filters enabled.'),
+            '#default_value' => scholar_setting('node_format'),
+        ),
+    );
+
     $vtable = array(
         '#type' => 'scholar_element_vtable',
         'images' => $image,
         'dateformat' => $dateformat,
+        'nodes' => $nodes,
     );
 
     $form = array();
     $form['vtable'] = $vtable;
 
     $form = system_settings_form($form);
-    array_unshift($form['#submit'], 'scholar_settings_form_submit');
+    array_unshift($form['#submit'], 'scholar_pages_settings_form_submit');
 
     $form['buttons']['#prefix'] = '<div class="scholar-buttons">';
     $form['buttons']['#suffix'] = '</div>';
@@ -179,6 +197,9 @@ function scholar_pages_settings_form_submit($form, &$form_state) // {{{
 {
     // kazda zmiana ustawien uniewaznia rendering
     scholar_invalidate_rendering();
+
+    // zaktualizuj format danych dla wezlow typu scholar
+    scholar_set_node_format($form_state['values'][scholar_setting_name('node_format')]);
 } // }}}
 
 function scholar_pages_settings_dateformat()
