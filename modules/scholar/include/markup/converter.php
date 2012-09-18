@@ -509,10 +509,22 @@ function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $content
             }
 
             if ($token->hasAttribute('lightbox')) {
-                $lightbox = $token->getAttribute('lightbox');
+                $lightbox = trim($token->getAttribute('lightbox'));
+
                 $a['rel'] = strlen($lightbox)
                     ? 'lightbox[' . $lightbox . ']'
                     : 'lightbox';
+
+                // dodaj atrybut title do linku, zostanie on uzyty jako tytul obrazu
+                if ($title) {
+                    $a['title'] = $title;
+                }
+
+                // dodaj dodatkowy opis obrazka
+                $description = trim($image['description']);
+                if ($description) {
+                    $a['data-description'] = $description;
+                }
             }
 
             return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . '/></a>';

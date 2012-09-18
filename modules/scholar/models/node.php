@@ -1,15 +1,7 @@
 <?php
 
-/* 
- * Narzędzia do manipulacji węzłami
- * 
- * @author xemlock
- * @version 2012-08-19
- */
-
 /**
- * Sprawdza czy tabela url_alias stworzona przez moduł path jest
- * dostępna.
+ * Sprawdza czy tabela url_alias stworzona przez moduł path jest dostępna.
  *
  * @return bool
  */
@@ -28,8 +20,8 @@ function _scholar_url_alias_exists() // {{{
  * Pobiera z bazy danych rekord wiążący węzeł z obiektem z podanej tabeli.
  * @param int $row_id
  * @param string $table_name
- *     nazwa tabeli. Jeżeli jej nie podano, nastąpi wyszukiwanie wiąznia
- *     względem identyfikatora węzła równemu wartości parametru $row_id.
+ *     nazwa modelu. Jeżeli jej nie podano, nastąpi wyszukiwanie wiązania
+ *     po identyfikatorze węzła równym wartości $row_id
  * @param string $language OPTIONAL
  *     jeżeli nie podany zostaną pobrane wiązania dla wszystkich języków
  * @return false|array
@@ -69,7 +61,8 @@ function _scholar_fetch_node_binding($row_id, $table_name = null, $language = nu
 } // }}}
 
 /**
- * Tworzy powiązanie między rekordem z podanej tabeli a istniejącym węzłem.
+ * Tworzy wiązanie między rekordem należącym do podanego modelu
+ * z istniejącym węzłem.
  *
  * @param object &$node
  * @param int $row_id
@@ -127,7 +120,7 @@ function _scholar_bind_node(&$node, $row_id, $table_name, $body = '') // {{{
 } // }}}
 
 /**
- * Ustawia wartości węzła.
+ * Ustawia wartości pól węzła na podstawie podanego wiązania.
  *
  * @param object $node
  * @param array $binding
@@ -172,9 +165,9 @@ function _scholar_populate_node(&$node, $binding) // {{{
 
 /**
  * Pobiera z bazy węzeł należący do podanego wiązania i zwraca reprezentujący
- * go obiekt. Jeżeli węzeł nie został znaleziony zostaje zwrócony obiekt zawierający
- * dane z wiązania, jednakże o pustym identyfikatorze (nid ma wartość NULL). 
- * Ładowanie węzła odbywa się poprzez Node API.
+ * go obiekt. Jeżeli węzeł nie został znaleziony zostaje zwrócony obiekt
+ * zawierający dane z wiązania, jednakże o pustym identyfikatorze (nid ma
+ * wartość NULL). Ładowanie węzła odbywa się poprzez Node API.
  *
  * @param array $binding
  * @return object
@@ -219,8 +212,8 @@ function scholar_fetch_node($row_id, $table_name, $language) // {{{
 } // }}}
 
 /**
- * Zwraca wszystkie wezly powiązane z tym rekordem,
- * indeksowane kodem języka.
+ * Zwraca wszystkie wezly powiązane z tym rekordem, indeksowane kodem języka.
+ *
  * @return array
  */
 function scholar_load_nodes($row_id, $table_name) // {{{
@@ -239,16 +232,29 @@ function scholar_load_nodes($row_id, $table_name) // {{{
 } // }}}
 
 /**
+ * Po zapisie każdy rekord opisujący węzeł ma ustawione pole nid przechowujące
+ * identyfikator zapisanego węzła oraz pole status z zerojedynkową wartością
+ * mówiącą czy węzeł został opublikowany.
+ *
  * @param int $row_id
  * @param string $table_name
- * @param array $nodes          wartość w postaci zwracanej przez podformularz węzłów
+ * @param array &$nodes
+ *     wartość w postaci zwracanej przez podformularz węzłów
+ * @return int
+ *     liczba zapisanych węzłów
  */
-function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
+function scholar_save_nodes($row_id, $table_name, &$nodes) // {{{
 {
-    foreach ($nodes as $language => $node_data) {
+    $saved = 0;
+
+    foreach ($nodes as $language => &$node_data) {
         // sprobuj pobrac wezel powiazany z tym obiektem
         $node = scholar_fetch_node($row_id, $table_name, $language);
-        $status = intval($node_data['status']) ? 1 : 0;
+        $status = isset($node_data['status']) && intval($node_data['status']) ? 1 : 0;
+
+        $node_data['nid']      = null;
+        $node_data['status']   = $status;
+        $node_data['language'] = $language;
 
         if (empty($node->nid)) {
             // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
@@ -260,9 +266,6 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
         foreach ($node_data as $key => $value) {
             $node->$key = $value;
         }
-
-        $node->status   = $status;
-        $node->language = $language;
 
         if (isset($node_data['menu'])) {
             // wyznacz parenta z selecta, na podstawie modules/menu/menu.module:429
@@ -278,8 +281,14 @@ function scholar_save_nodes($row_id, $table_name, $nodes) // {{{
             $node->path = rtrim($node_data['path']['path'], '/');
         }
 
-        scholar_save_node($node, $row_id, $table_name);
+        if (scholar_save_node($node, $row_id, $table_name)) {
+            $node_data['nid'] = $node->nid;
+            ++$saved;
+        }
     }
+    unset($node_data);
+
+    return $saved;
 } // }}}
 
 /**
@@ -318,6 +327,7 @@ function scholar_create_node($values = array()) // {{{
  * @param object &$node
  * @param int $row_id
  * @param string $table_name
+ * @return bool
  */
 function scholar_save_node(&$node, $row_id, $table_name) // {{{
 {
@@ -345,11 +355,16 @@ function scholar_save_node(&$node, $row_id, $table_name) // {{{
 
     node_save($node);
 
-    // dodaj węzeł do indeksu powiązanych węzłów
-    _scholar_bind_node($node, $row_id, $table_name, $body);
-
     // przywroc body do wartosci sprzed zapisu
     $node->body = $body;
+
+    if (empty($node->nid)) {
+        // zapis wezla nie powiodl sie
+        return false;
+    }
+
+    // dodaj węzeł do indeksu powiązanych węzłów
+    return _scholar_bind_node($node, $row_id, $table_name, $body);
 } // }}}
 
 /**
@@ -378,7 +393,7 @@ function scholar_delete_nodes($row_id, $table_name) // {{{
             db_query("DELETE FROM {url_alias} WHERE pid =%d", $binding['path_id']);
         }
 
-	db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
+        db_query("DELETE FROM {scholar_nodes} WHERE node_id = %d", $binding['node_id']);
 
         // Tutaj musimy uzyc nodeapi zeby poprawnie usunac rekord wezla,
         // usuniete zostana linki menu i aliasy sciezek.
@@ -406,17 +421,15 @@ function scholar_delete_nodes($row_id, $table_name) // {{{
 } // }}}
 
 /**
- * Zwraca adres URL prowadzący do węzła przypisanego do rekordu
- * z podanej tabeli.
+ * Zwraca adres URL prowadzący do węzła przypisanego do rekordu z podanej
+ * tabeli. Funkcja korzysta z wyniku funkcji {@see scholar_node_link()}, której
+ * przekazuje bezpośrednio swoje parametry wywołania.
  *
- * @param int $row_id
- * @param string $table_name
- * @param string $language
  * @return false|string
  */
-function scholar_node_url($row_id, $table_name, $language) // {{{
+function scholar_node_url($row_id, $table_name = null, $language = null, $refresh = false) // {{{
 {
-    $link = scholar_node_link($row_id, $table_name, $language);
+    $link = scholar_node_link($row_id, $table_name, $language, $refresh);
 
     return $link
         ? url($link['path'], array('absolute' => true))
@@ -454,9 +467,9 @@ function _scholar_node_link_node($node_id) // {{{
 } // }}}
 
 /**
- * Funkcja pomocnicza szukająca w bazie wiązania rekordu o podanym identyfikatorze
- * znajdującym się w podanej tabeli z opublikowanym węzłem w danym języku, i zwracająca
- * informacje o odnośniku do tego węzła.
+ * Funkcja pomocnicza zwracająca informacje o odnośniku do opublikowanego
+ * węzła powiązanego z rekordem o podanym identyfikatorze należącym do podanego
+ * modelu.
  *
  * @param int $row_id
  * @param string $table_name
@@ -485,13 +498,36 @@ function _scholar_node_link_record($row_id, $table_name, $language) // {{{
     return false;
 } // }}}
 
-
 /**
+ * Zwraca specyfikację odnośnika do węzła w postaci tablicy o polach: node_id,
+ * title i path przechowyjących odpowiednio identyfikator węzła, jego tytuł
+ * oraz ścieżkę.
+ *
+ * @param int $row_id
+ *     identyfikator rekordu
+ * @param string|bool $table_name
+ *     opcjonalna nazwa modelu, do którego odnosi się identyfikator rekordu.
+ *     Jeżeli nie została podana parametr $row_id zostaje potraktowany jako
+ *     identyfikator węzła. Gdy podano wartość typu logicznego zostanie ona
+ *     użyta jako parametr $refresh
+ * @param string $language
+ *     opcjonalny język węzła, brany pod uwagę tylko jeżeli podano nazwę
+ *     modelu. Jeżeli podano nazwę modelu nie podając języka, zostanie użyty
+ *     bieżący język
+ * @param bool $refresh
+ *     czy pobierać dane z bazy z pominięciem pamięci podręcznej funkcji
  * @return false|array
  */
-function scholar_node_link($row_id, $table_name = null, $language = null) // {{{
+function scholar_node_link($row_id, $table_name = null, $language = null, $refresh = false) // {{{
 {
     static $links = array();
+
+    // jezeli nazwa tabeli jest wartoscia logiczna uzyj jej
+    // zamiast parametru $refresh
+    if (is_bool($table_name)) {
+        $refresh = $table_name;
+        $table_name = null;
+    }
 
     $row_id     = (int) $row_id;
     $table_name = (string) $table_name;
@@ -504,7 +540,7 @@ function scholar_node_link($row_id, $table_name = null, $language = null) // {{{
 
     $key = "{$row_id}_{$table_name}_{$language}";
 
-    if (!isset($links[$key])) {
+    if (!isset($links[$key]) || $refresh) {
         $links[$key] = strlen($table_name)
             ? _scholar_node_link_record($row_id, $table_name, $language)
             : _scholar_node_link_node($row_id);

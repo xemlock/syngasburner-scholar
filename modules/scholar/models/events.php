@@ -58,12 +58,12 @@ function scholar_load_events($row_id, $table_name) // {{{
  * @return int
  *     liczba zapisanych (utworzonych lub zaktualizowanych) rekordów
  */
-function scholar_save_events($row_id, $table_name, $events) // {{{
+function scholar_save_events($row_id, $table_name, &$events) // {{{
 {
     $count = 0;
 
     if (module_exists('events')) {
-        foreach ($events as $language => $event_data) {
+        foreach ($events as $language => &$event_data) {
             // sprawdz czy istnieje relacja miedzy generykiem a eventem
             $event = false;
             $query = db_query("SELECT * FROM {scholar_events} WHERE table_name = '%s' AND row_id = %d AND language = '%s'", $table_name, $row_id, $language);
@@ -120,6 +120,7 @@ function scholar_save_events($row_id, $table_name, $events) // {{{
                 ++$count;
             }
         }
+        unset($event_data);
     }
 
     return $count;
