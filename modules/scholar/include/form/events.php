@@ -97,7 +97,7 @@ function form_type_scholar_element_events_process($element) // {{{
             $element_fields[$code] = array(
                 '#type'          => 'scholar_checkboxed_container',
                 '#checkbox_name' => 'status',
-                '#title'         => 'Add event in language: ' . scholar_language_label($code, $name),
+                '#title'         => t('Add event in language: !language', array('!language' => scholar_language_label($code, $name))),
                 '#tree'          => true,
             );
 

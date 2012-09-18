@@ -480,7 +480,7 @@ function scholar_generic_form_validate_date_range($form, &$form_state) // {{{
 
 function scholar_element_separator() // {{{
 {
-    return array('#type' => 'markup', '#value' => '<div style="width:95%;margin:2em 0 1em"><hr/></div>');
+    return array('#type' => 'markup', '#value' => '<div class="scholar-separator"><hr/></div>');
 } // }}}
 
 /**

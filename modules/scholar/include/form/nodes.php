@@ -37,7 +37,7 @@ function scholar_nodes_subform($record = null) // {{{
     foreach (scholar_languages() as $code => $name) {
         $container = array(
             '#type'     => 'scholar_checkboxed_container',
-            '#title'    => t('Publish page in language: @lang', array('@lang' => $name)) . ' (<img src="' . base_path() . 'i/flags/' . $code . '.png" alt="" title="' . $name . '" style="display:inline" />)',
+            '#title'    => t('Publish page in language: !language', array('!language' => scholar_language_label($code, $name))),
             '#checkbox_name' => 'status',
             '#default_value' => false,
             '#tree'     => true,

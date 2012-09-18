@@ -375,7 +375,8 @@ function scholar_render_itempicker($callback) // {{{
 
     ob_start();
 ?><script type="text/javascript">$(function() {
-  new Scholar.ItemPicker('#items', <?php echo drupal_to_js($items) ?>, <?php echo drupal_to_js($options) ?>);
+new Scholar.ItemPicker('#items', <?php echo drupal_to_js($items) ?>, <?php echo drupal_to_js($options) ?>);
+setTimeout(function() { $('#name-filter').focus(); }, 100);
 });</script>
 Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
 Dwukrotne kliknięcie zaznacza element

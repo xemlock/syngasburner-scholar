@@ -78,7 +78,7 @@ function theme_scholar_element_langtext($element) // {{{
 
     $output .= '</table></div>';
 
-    return scholar_theme_element($element, $output);
+    return theme_form_element($element, $output);
 } // }}}
 
 // vim: fdm=marker

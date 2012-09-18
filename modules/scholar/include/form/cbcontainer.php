@@ -53,16 +53,18 @@ function theme_scholar_checkboxed_container($element) // {{{
         $name = $checkbox_name;
     }
 
-    $output = '<div style="border:1px solid black" id="' . $element['#id'] . '-wrapper">';
-    $output .= '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper .contents\')[this.checked ? \'show\' : \'hide\']()"' . ($checked ? ' checked="checked"' : ''). '/>' . $element['#title'] . '</label>';
-    $output .= '<div class="contents">';
-    $output .= $element['#children'];
-    $output .= '</div>';
-    $output .= '</div>';
+    $output = '<div class="scholar-container" id="' . $element['#id'] . '-wrapper">'
+            . '<div class="scholar-container-heading">'
+            . '<label><input type="checkbox" name="' . $name .'" id="'.$element['#id'].'" value="1" onchange="$(\'#'.$element['#id'].'-wrapper > .scholar-container-content\')[this.checked ? \'show\' : \'hide\']()"' . ($checked ? ' checked="checked"' : ''). '/>' . $element['#title'] . '</label>'
+            . '</div>'
+            . '<div class="scholar-container-content">'
+            . $element['#children']
+            . '</div>'
+            . '</div>';
 
     $output .= '<script type="text/javascript">/*<![CDATA[*/$(function(){
         if (!$("#'.$element['#id'].'").is(":checked")) {
-            $("#'.$element['#id'].'-wrapper .contents").hide();
+            $("#'.$element['#id'].'-wrapper > .scholar-container-content").hide();
         }
 })/*]]>*/</script>';
 

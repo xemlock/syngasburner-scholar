@@ -102,6 +102,110 @@ user-select: none;
   border: 1px solid #ccc;
 }
 
+
+/* scholar-container {{{ */
+.scholar-container + .scholar-container {
+  border-top: 1px solid #ccc;
+}
+.scholar-container-heading {
+  padding: 12px 0;
+}
+.scholar-container-content {
+  padding: 0 0 12px;
+}
+/* }}} */
+
+/* scholar-langtext {{{ */
+.scholar-element-langtext table {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+.scholar-element-langtext tbody {
+  border: none;
+}
+.scholar-element-langtext td {
+  padding: 4px 0 !important;
+}
+.scholar-element-langtext td:first-child {
+  white-space: nowrap;
+}
+.scholar-element-langtext td + td {
+  padding: 4px !important;
+}
+.scholar-element-langtext .form-item {
+  margin: 0;
+}
+.scholar-element-langtext .form-text {
+  width: 95% !important;
+}
+.scholar-element-langtext .scholar-character-countdown {
+  font-size: 85%;
+  color: #888;
+  display: block;
+}
+/* }}} */
+
+form.scholar input[type="text"],
+form.scholar input[type="password"],
+form.scholar textarea {
+  color: #000;
+  border: 1px solid #aaa;
+}
+form.scholar input[type="text"].error,
+form.scholar input[type="password"].error,
+form.scholar textarea.error {
+  border-color: #e55;
+  color: #000;
+}
+
+
+form.scholar .description {
+  font-size: .85em;
+  color: #777;
+}
+
+form.scholar fieldset {
+  border: 1px solid #aaa;
+  border-width: 1px 0 0!important;
+  padding: 6px 0 0 !important;
+  margin-bottom: 12px !important;
+}
+form.scholar fieldset legend a,
+form.scholar fieldset legend a:hover,
+form.scholar fieldset.collapsible.collapsed legend a,
+form.scholar fieldset.collapsible.collapsed legend a:hover {
+  color: #777;
+  text-decoration: none;
+}
+form.scholar fieldset.collapsible legend a {
+  color: #000;
+}
+
+
+form.scholar table {
+  width: 100%;
+}
+form.scholar table th,
+form.scholar table td {
+  padding: .25em .5em;
+}
+
+
+.scholar-buttons {
+  margin: 16px 0 32px;
+}
+
+
+
+.scholar-separator {
+  margin: 2em .75em;
+  border-top: 1px solid #aaa;
+}
+.scholar-separator hr {
+  display: none;
+}
+
 .scholar-vtable {
   background: #fff;
   border-spacing: 0;
@@ -158,7 +262,6 @@ user-select: none;
   margin-top: 0;
 }
 
-
 .scholar-vtable .form-text,
 .scholar-vtable .form-textarea
 .scholar-vtable .resizable-textarea,
@@ -181,7 +284,8 @@ html.js .resizable-textarea textarea {
   resize: none;
   -moz-resize: none;
   -webkit-resize: none;
-}
+} 
+
 
 form.scholar button::-moz-focus-inner,
 form.scholar input::-moz-focus-inner {
@@ -192,7 +296,8 @@ form.scholar input::-moz-focus-inner {
 }
 
 form.scholar .form-submit,
-form.scholar .scholar-cancel {
+form.scholar .scholar-cancel,
+.scholar-sortable-multiselect button {
   background: #eee;
   border: 1px solid #ccc;
   cursor: pointer;
@@ -205,10 +310,23 @@ form.scholar .scholar-cancel {
 }
 
 form.scholar .form-submit:hover,
-form.scholar .scholar-cancel:hover {
+form.scholar .scholar-cancel:hover,
+.scholar-sortable-multiselect button:hover {
   text-decoration: none;
   background: #fff;
 }
+
+.scholar-sortable-multiselect .buttons-wrapper {
+  margin: 6px 0 12px;
+}
+.scholar-sortable-multiselect button {
+  font-size: 85%;
+  margin-right: .25em;
+}
+.scholar-sortable-multiselect table {
+  margin-bottom: 6px;
+}
+
 
 .scholar-language-label .language-icon {
   margin-right: 2px;
@@ -224,31 +342,10 @@ form.scholar .scholar-cancel:hover {
   border-color: #777;
 }
 
-.scholar-element-langtext table {
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-.scholar-element-langtext tbody {
-  border: none;
-}
-.scholar-element-langtext td {
-}
-.scholar-element-langtext td:first-child {
-  white-space: nowrap;
-}
-.scholar-element-langtext .form-item {
-  margin: 0;
-}
-.scholar-element-langtext .form-text {
-  width: 99%;
-}
-
-.scholar-element-langtext .scholar-character-countdown {
-  font-size: 85%;
-  color: #888;
-  cursor: help;
-  display: block;
+form.scholar div.warning {
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
 }
 
 form.scholar .form-text {
