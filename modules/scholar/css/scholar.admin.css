@@ -97,6 +97,9 @@ user-select: none;
 .scholar-sortable-multiselect .table-wrapper table {
   margin-top: 0;
 }
+.scholar-sortable-multiselect .form-text {
+  width: 95% !important;
+}
 
 .form-item label .language-icon {
   border: 1px solid #ccc;
@@ -149,20 +152,29 @@ user-select: none;
 form.scholar input[type="text"],
 form.scholar input[type="password"],
 form.scholar textarea {
-  color: #000;
+  color: #444;
   border: 1px solid #aaa;
 }
 form.scholar input[type="text"].error,
 form.scholar input[type="password"].error,
 form.scholar textarea.error {
-  border-color: #e55;
+  border: 1px solid #e55;
+  color: #444;
+}
+form.scholar input[type="text"]:focus,
+form.scholar input[type="password"]:focus,
+form.scholar textarea:focus {
   color: #000;
 }
 
 
+form.scholar {
+  color: #444;
+}
 form.scholar .description {
   font-size: .85em;
   color: #777;
+  margin: 0;
 }
 
 form.scholar fieldset {
@@ -170,6 +182,10 @@ form.scholar fieldset {
   border-width: 1px 0 0!important;
   padding: 6px 0 0 !important;
   margin-bottom: 12px !important;
+  background: none !important;
+}
+form.scholar fieldset legend {
+  padding: 0 6px 0 0;
 }
 form.scholar fieldset legend a,
 form.scholar fieldset legend a:hover,
@@ -183,13 +199,57 @@ form.scholar fieldset.collapsible legend a {
 }
 
 
-form.scholar table {
+.scholar-table {
   width: 100%;
 }
-form.scholar table th,
-form.scholar table td {
-  padding: .25em .5em;
+.scholar-table thead {
+  border: solid #e4e4e4;
+  border-width: 0 0 2px;
 }
+.scholar-table thead th,
+.scholar-table thead td {
+  border: none;
+}
+.scholar-table th,
+.scholar-table td {
+  background: none;
+  padding: .3em .5em;
+  border: 1px solid #e4e4e4;
+  border-width: 1px 0;
+}
+.scholar-table tr.odd {
+  background: #f4f4f4;
+  padding: 0;
+}
+.scholar-table tr.even {
+  background: #fff;
+  padding: 0;
+}
+.scholar-table tr.odd td.active {
+  background: #e9e9e9;
+}
+.scholar-table tr.even td.active {
+  background: #eee;  
+}
+
+.scholar-table tr.region,
+.scholar-table tr.region.odd,
+.scholar-table tr.region.even {
+  background: #e3e3e3;
+  border: none;
+  border-bottom: 2px solid #d2d2d2;
+  border-top: 1.5em solid #fff;
+}
+.scholar-table tr.region td,
+.scholar-table tr.region td.region,
+.scholar-table tr.region td.region.active {
+  background: none;
+  border: none;
+  color: #555;
+}
+
+
+
 
 
 .scholar-buttons {
@@ -220,13 +280,13 @@ form.scholar table td {
 .scholar-vtable > tbody > tr > td {
   vertical-align: top;
   padding: 1em;
-  border: 1px solid #e2eef6;
+  border: 1px solid #ccc;
 
 }
 
 .scholar-vtable > tbody > tr > td:first-child {
-  background: #f1f7fb;
-  padding: 0;
+  background: #eee;
+  padding: 0 0 24px;
   border-right: none;
 }
 
@@ -239,13 +299,18 @@ form.scholar table td {
   width: 160px;
   padding: 10px 10px 20px;
   cursor: default;
-  border-right: 1px solid #e2eef6;
-  border-bottom: 1px solid #e2eef6;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background: #f6f6f6;  
 }
 .scholar-vtable .vtab-title {
-  color: #558fcd;
   font-size: 110%;
   font-weight: bold;
+}
+.scholar-vtable .vtab-title a,
+.scholar-vtable .vtab-title a:hover {
+  text-decoration: none;
+  cursor: default;
 }
 .scholar-vtable .vtab-description {
   font-size: 80%;

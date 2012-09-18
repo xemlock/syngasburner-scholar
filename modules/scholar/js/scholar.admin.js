@@ -1209,7 +1209,7 @@ var Scholar = {
             // utworz za kazdym razem nowa tabele, zeby odpiac Drupalowe
             // dodatki
             var wrapper = _element.children('.table-wrapper'),
-                table = $('<table class="sticky-enabled"/>'),
+                table = $('<table class="scholar-table sticky-enabled"/>'),
                 thead, tbody;
 
             // zbuduj naglowek w oparciu o specyfikacje
@@ -1226,7 +1226,7 @@ var Scholar = {
             // utworz wiersze tabeli na bazie wybranych elementow
             tbody = $('<tbody/>');
 
-            var position = 0;
+            var position = 1;
             _selected.each(function(id, item) {
                 _createRow(tbody, id, item, position++);
             });

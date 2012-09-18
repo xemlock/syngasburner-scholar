@@ -16,7 +16,7 @@ function theme_scholar_element_vtable_row($element) // {{{
 {
     $id = isset($element['#id']) ? (' id="' . $element['#id'] . '"') : '';
 
-    return '<tr' . $id . '><td><div class="vtab"><div class="vtab-title">' . $element['#title'] . '</div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
+    return '<tr' . $id . '><td><div class="vtab"><div class="vtab-title"><a href="#!" onfocus="this.blur()">' . $element['#title'] . '</a></div><div class="vtab-description">' . $element['#description'] . '</div></div></td><td> ' . $element['#children'] . '</td></tr>';
 } // }}}
 
 // vim: fdm=marker

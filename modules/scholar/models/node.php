@@ -250,15 +250,23 @@ function scholar_save_nodes($row_id, $table_name, &$nodes) // {{{
     foreach ($nodes as $language => &$node_data) {
         // sprobuj pobrac wezel powiazany z tym obiektem
         $node = scholar_fetch_node($row_id, $table_name, $language);
+
         $status = isset($node_data['status']) && intval($node_data['status']) ? 1 : 0;
 
-        $node_data['nid']      = null;
+        // id wezla jest pobierany z wiazania i nie moze zostac nadpisany
+        // wartoscia z nowych danych wezla
+        if (isset($node_data['nid'])) {
+            unset($node_data['nid']);
+        }
+
         $node_data['status']   = $status;
         $node_data['language'] = $language;
 
         if (empty($node->nid)) {
-            // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego
+            // jezeli status jest zerowy, a wezel nie istnieje nie tworz nowego,
+            // ustaw pusty id wezla
             if (!$status) {
+                $node_data['nid'] = null;
                 continue;
             }
         }
@@ -284,6 +292,9 @@ function scholar_save_nodes($row_id, $table_name, &$nodes) // {{{
         if (scholar_save_node($node, $row_id, $table_name)) {
             $node_data['nid'] = $node->nid;
             ++$saved;
+        } else {
+            // zapis sie nie powiodl, ustaw pusty id wezla
+            $node_data['nid'] = null;
         }
     }
     unset($node_data);
