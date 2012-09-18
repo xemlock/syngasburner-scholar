@@ -36,13 +36,13 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
             'end'   => '</sup>',
         ),
         'br' => array(
-            'start' => '<br/>',
+            'start' => '<br />',
         ),
         'hr' => array(
-            'start' => '<hr/>',
+            'start' => '<hr />',
         ),
         'rule' => array(
-            'start' => '<hr/>',
+            'start' => '<hr />',
         ),
         'item' => array(
             'start' => '<li>',
@@ -54,6 +54,9 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
         ),
     );
 
+    // tagi BR i HR maja spacje przed ukosnikiem zamykajacym, poniewaz bez niej
+    // drupalowy HTML corrector zamiast poprawiac, tworzy niepoprawny dokument,
+    // patrz: http://drupal.org/node/787530
     if (isset($markup[$tagName])) {
         if (empty($markup[$tagName]['end'])) {
             return $markup[$tagName]['start'];
@@ -134,7 +137,10 @@ function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{
             break;
     }
 
-    return '<img' . drupal_attributes($attrs) . '/>';
+    // tag IMG ma spacje przed zamknieciem, poniewaz bez niej drupalowy
+    // HTML corrector zamiast poprawiac, generuje niepoprawny dokument,
+    // patrz: http://drupal.org/node/787530
+    return '<img' . drupal_attributes($attrs) . ' />';
 } // }}}
 
 function scholar_markup_converter_list(Zend_Markup_Token $token, $contents) // {{{
@@ -527,7 +533,10 @@ function scholar_markup_converter_gallery_img(Zend_Markup_Token $token, $content
                 }
             }
 
-            return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . '/></a>';
+            // tag IMG ma spacje przed zamknieciem, poniewaz bez niej drupalowy
+            // HTML corrector zamiast poprawiac, generuje niepoprawny dokument,
+            // patrz: http://drupal.org/node/787530
+            return '<a' . drupal_attributes($a) . '><img' . drupal_attributes($img) . ' /></a>';
         }
     }
 } // }}}
