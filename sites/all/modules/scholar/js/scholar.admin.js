@@ -1083,6 +1083,11 @@ var Scholar = {
             tbody.parent().next('.warning').fadeOut(function() {
                 $(this).remove();
             });
+
+            // usun cala tabele, jezeli zbior zaznaczonych jest pusty
+            if (!_selected.size()) {
+                tbody.parent().empty();
+            }
         }
 
         /**
@@ -1208,8 +1213,15 @@ var Scholar = {
         this.redraw = function() {
             // utworz za kazdym razem nowa tabele, zeby odpiac Drupalowe
             // dodatki
-            var wrapper = _element.children('.table-wrapper'),
-                table = $('<table class="scholar-table sticky-enabled"/>'),
+            var wrapper = _element.children('.table-wrapper');
+
+            // jezeli zbior zaznaczonych jest pusty nie generuj tabeli
+            if (!_selected.size()) {
+                wrapper.empty();
+                return;
+            }
+
+            var table = $('<table class="scholar-table sticky-enabled"/>'),
                 thead, tbody;
 
             // zbuduj naglowek w oparciu o specyfikacje
