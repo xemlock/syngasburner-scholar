@@ -83,7 +83,7 @@ fieldset.scholar legend .language-icon {
 
 /* scholar-container {{{ */
 .scholar-container + .scholar-container {
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #777;
 }
 .scholar-container-heading {
   padding: 12px 0;
@@ -248,7 +248,7 @@ form.scholar .form-radios {
 
 .scholar-separator {
   margin: 2em .75em;
-  border-top: 1px solid #aaa;
+  border-top: 1px solid #777;
 }
 .scholar-separator hr {
   display: none;
@@ -408,10 +408,10 @@ form.scholar .form-textarea {
   min-height: 120px;
 }
 .js form.scholar input.form-autocomplete {
-  background-position: 100% 6px;
+  background-position: 100% 5px;
 }
 .js form.scholar input.form-autocomplete.throbbing {
-  background-position: 100% -14px;
+  background-position: 100% -15px;
 }
 
 .scholar-table tr.region .region-link {
