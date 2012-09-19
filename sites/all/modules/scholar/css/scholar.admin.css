@@ -410,6 +410,9 @@ form.scholar .form-textarea {
 .js form.scholar input.form-autocomplete {
   background-position: 100% 6px;
 }
+.js form.scholar input.form-autocomplete.throbbing {
+  background-position: 100% -14px;
+}
 
 .scholar-table tr.region .region-link {
   font-weight: normal;
@@ -630,7 +633,7 @@ body.scholar-dialog form.scholar {
   margin-left: 6px;
 }
 .dialog-button {
-  background: #71b33c;
+  background: #5eac27;
   border: 1px solid #387804;
   color: #fff;
   cursor: pointer;
@@ -647,8 +650,8 @@ body.scholar-dialog form.scholar {
                             wartosci paddingow dobrane empirycznie */
 }
 .dialog-button:hover {
-  background: #92cc63;
-  border-color: #5e9f29;
+  background: #6eb640;
+  border-color: #387804;
   color: #fff;
   text-decoration: none;
 }
