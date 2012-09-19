@@ -140,6 +140,25 @@ function scholar_setting_last_change()
 }
 
 /**
+ * Ustawia / zwraca czas ostatniej modyfikacji rekordów w tabelach
+ * zarządzanych przez moduł.
+ * @param int $time OPTIONAL
+ * @return int
+ */
+function scholar_last_change($time = null) // {{{
+{
+    if (null === $time) {
+        return variable_get('scholar_last_change', 0);
+    }
+
+    $time = intval($time);
+
+    variable_set('scholar_last_change', $time);
+
+    return $time;
+} // }}}
+
+/**
  * Zwraca liczbę rekordów na stronę w listach rekordów.
  *
  * @return int

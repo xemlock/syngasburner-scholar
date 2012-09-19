@@ -67,21 +67,7 @@ fieldset.scholar legend .language-icon {
   zoom: 1;
 }
 
-#items li.selected {
-  font-weight: bold;
-}
-#items li {
-  cursor:pointer;
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-user-select: none;
-}
-#items li:hover {
-  background: yellow;
-}
+
 
 .scholar-sortable-multiselect .table-wrapper table {
   margin-top: 0;
@@ -475,6 +461,95 @@ form.scholar .form-radios label.option {
   color: #200;
 }
 
+body.scholar-dialog {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: .9em;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+body.scholar-dialog > .messages {
+  margin: 0 10px;
+  font-size: 90%;
+  padding: 4px;
+}
+body.scholar-dialog form.scholar {
+  padding: 10px;
+}
+
+#scholar-itempicker {
+  width: 480px;
+  height: 240px;
+  overflow: hidden;
+}
+#scholar-itempicker-filter {
+  padding: 0 10px 6px;
+  height: 24px;
+  background: #fff;
+}
+#scholar-itempicker-filter input {
+  width: 360px;
+  height: 20px;
+  line-height: 18px;
+  padding: 2px 4px 2px 24px;
+  margin: 0;
+  border: 1px solid #aaa;
+  background: url(../img/search.png) no-repeat 4px 50%;
+}
+#scholar-itempicker-filter input:focus {
+  border-color: #999;
+}
+#scholar-itempicker-filter input::-webkit-input-placeholder {
+   color: #aaa;
+}
+#scholar-itempicker-filter input:-moz-placeholder {  
+   color: #aaa;
+}
+
+#scholar-itempicker-filter button {
+  position: absolute;
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #aaa;
+}
+#scholar-itempicker-filter button:hover {
+  color: #444;
+}
+#scholar-itempicker-items {
+  height: 210px;
+  overflow: auto;
+}
+#scholar-itempicker-items ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#scholar-itempicker-items li {
+  color: #444;
+  background: none;
+  padding: .5em 0 .5em 32px;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+#scholar-itempicker-items li:hover {
+  background: #eee;
+}
+#scholar-itempicker-items li.selected {
+  background: #f8f8f8 url(../img/selected.png) no-repeat 8px 50%;
+}
+#scholar-itempicker-items li + li {
+  border-top: 1px solid #ddd;
+}
+
+
 
 /* modal {{{ */
 .dialog {
@@ -491,8 +566,10 @@ form.scholar .form-radios label.option {
 }
 .dialog .title-bar {
   height: 30px;
-  background: #fbd832;
-  border: 1px solid #f3c015;
+  background: #fff;
+  border: 1px solid #aeaeae;
+  border-bottom: none;
+  padding-bottom: 4px;
   -webkit-user-select: none;
      -moz-user-select: none;
           user-select: none;
@@ -517,7 +594,7 @@ form.scholar .form-radios label.option {
   color: #666;
   margin-left: 6px;
   cursor: default;
-  font-weight: bold;
+  font-weight: normal;
 }
 .dialog .content {
   border: 1px solid #aeaeae;
@@ -536,6 +613,8 @@ form.scholar .form-radios label.option {
   font-size: 14px;
   padding: 4px 0;
   color: #777;
+  background: none;
+  border: none;
 }
 
 .dialog .buttons {
@@ -545,8 +624,8 @@ form.scholar .form-radios label.option {
   margin-left: 6px;
 }
 .dialog-button {
-  background: #7c639f;
-  border: 1px solid #633b88;
+  background: #71b33c;
+  border: 1px solid #387804;
   color: #fff;
   cursor: pointer;
   font-size: 14px;
@@ -562,8 +641,8 @@ form.scholar .form-radios label.option {
                             wartosci paddingow dobrane empirycznie */
 }
 .dialog-button:hover {
-  background: #ad87d1;
-  border-color: #7c639f;
+  background: #92cc63;
+  border-color: #5e9f29;
   color: #fff;
   text-decoration: none;
 }

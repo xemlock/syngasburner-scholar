@@ -288,34 +288,6 @@ function scholar_eventapi(&$event, $op) // {{{
     }
 } // }}}
 
-function scholar_index()
-{
-    p(scholar_referer());
-    p($_SERVER['HTTP_REFERER']);
-    p(scholar_languages());
-
-    return '<pre>' . print_r(func_get_args(), 1) . '</pre>';
-}
-
-/**
- * Ustawia / zwraca czas ostatniej modyfikacji rekordów w tabelach
- * zarządzanych przez moduł.
- * @param int $time OPTIONAL
- * @return int
- */
-function scholar_last_change($time = null) // {{{
-{
-    if (null === $time) {
-        return variable_get('scholar_last_change', 0);
-    }
-
-    $time = intval($time);
-
-    variable_set('scholar_last_change', $time);
-
-    return $time;
-} // }}}
-
 function scholar_render($html, $dialog = false) // {{{
 {
     scholar_add_js();
@@ -343,20 +315,20 @@ function scholar_render_itempicker($callback) // {{{
     $items = $callback($options);
 
     $options = array_merge((array) $options, array(
-        'filterSelector' => '#name-filter',
-        'filterReset'    => '#reset-filter',
+        'filterSelector' => '#scholar-itempicker-filter-name',
+        'filterReset'    => '#scholar-itempicker-filter-reset',
         'showOnInit'     => false,
     ));
 
     ob_start();
 ?><script type="text/javascript">$(function() {
-new Scholar.ItemPicker('#items', <?php echo drupal_to_js($items) ?>, <?php echo drupal_to_js($options) ?>);
-setTimeout(function() { $('#name-filter').focus(); }, 100);
+new Scholar.ItemPicker('#scholar-itempicker-items', <?php echo drupal_to_js($items) ?>, <?php echo drupal_to_js($options) ?>);
+setTimeout(function() { $('#scholar-itempicker-filter-name').focus(); }, 100);
 });</script>
-Filtruj: <input type="text" id="name-filter" placeholder="<?php echo 'Search file'; ?>"/><button type="button" id="reset-filter">Wyczyść</button>
-Dwukrotne kliknięcie zaznacza element
-<hr/>
-<div id="items"></div>
+<div id="scholar-itempicker">
+<div id="scholar-itempicker-filter"><input type="text" id="scholar-itempicker-filter-name" placeholder="<?php echo t('Search'); ?>"/><button type="button" id="scholar-itempicker-filter-reset"><?php echo t('Reset') ?></button>
+</div>
+<div id="scholar-itempicker-items"></div>
 <?php
     return scholar_render(ob_get_clean(), true);
 } // }}}

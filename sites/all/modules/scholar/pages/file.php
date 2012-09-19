@@ -49,6 +49,7 @@ function scholar_pages_file_upload_form() // {{{
     $form['file'] = array(
         '#type'  => 'file',
         '#title' => t('Upload new file'),
+        '#size'  => 36, // domyslne 60 jest zbyt duze
         '#description' => t(
             'The maximum upload size is %filesize. Only files with the following extensions may be uploaded: %extensions. ',
             array(
