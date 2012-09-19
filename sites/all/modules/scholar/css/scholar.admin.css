@@ -611,7 +611,7 @@ body.scholar-dialog form.scholar {
   background: #fff;
 }
 .dialog.loading .content {
-  background: #fff url(../i/v2/throbber.gif) no-repeat 50% 50%;
+  background: #fff url(../img/throbber.gif) no-repeat 50% 50%;
 }
 .dialog .status-bar {
   padding: 10px 0 0;
