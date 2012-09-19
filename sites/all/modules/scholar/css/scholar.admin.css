@@ -404,6 +404,12 @@ form.scholar div.warning {
 form.scholar .form-text {
   padding: .25em;
 }
+form.scholar .form-textarea {
+  min-height: 120px;
+}
+.js form.scholar input.form-autocomplete {
+  background-position: 100% 6px;
+}
 
 .scholar-table tr.region .region-link {
   font-weight: normal;
