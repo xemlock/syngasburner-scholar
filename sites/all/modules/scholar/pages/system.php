@@ -1,5 +1,23 @@
 <?php
 
+function _scholar_pages_system_index_menu($path_name)
+{
+    // chcemy pobrac liste dzieci danej sciezki
+    $path = rtrim(scholar_path($path_name), '/') . '/';
+    $output = '';
+    $menu = scholar_menu_items($path);
+
+    if ($menu) {
+        $output .= '<ul>';
+        foreach ($menu as $path => $item) {
+            $output .= '<li>' . l($item['title'], $path) . '</li>';
+        }
+        $output .= '</ul>';
+    }
+
+    return $output;
+}
+
 function scholar_pages_system_index()
 {
     $output = '';
@@ -8,6 +26,34 @@ function scholar_pages_system_index()
     $output .= scholar_oplink(t('File import'), 'system', '/file-import');
     $output .= '<br/>';
     $output .= scholar_oplink(t('Settings'), 'settings');
+
+    $output .= '<h3>' . t('Articles') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.article');
+
+    $output .= '<h3>' . t('Journals') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.journal');
+
+    $output .= '<h3>' . t('Conferences') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.conference');
+
+    $output .= '<h3>' . t('Presentations') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.presentation');
+
+    $output .= '<h3>' . t('Trainings') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.training');
+
+    $output .= '<h3>' . t('Classes') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('generics.class');
+
+    $output .= '<h3>' . t('People') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('people');
+
+    $output .= '<h3>' . t('Files') . '</h3>';
+    $output .= _scholar_pages_system_index_menu('files');
+
+    $output .= '<h3>' . t('Pages') . '</h3>';
+    $output .= l(t('Pages'), scholar_path('pages'));
+
     return $output;
 }
 

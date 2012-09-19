@@ -121,273 +121,276 @@ function _scholar_menu_add_page_argument_positions(&$items) // {{{
  */
 function _scholar_menu() // {{{
 {
-    $root  = 'admin/scholar';
-    $items = array();
+    static $items = null;
 
-    $items['admin/settings/scholar/settings'] = array(
-        'title'             => t('Scholar settings'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_settings_form'),
-        'file'              => 'pages/settings.php',
-        '@scholar_path'     => 'settings',
-    );
-    $items['admin/settings/scholar/dateformat'] = array(
-        'type'              => MENU_CALLBACK,
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_settings_dateformat',
-        'file'              => 'pages/settings.php',
-        '@scholar_path'     => 'settings.dateformat',
-    );
+    if (null === $items) {
+        $root  = 'admin/scholar';
+        $items = array();
 
-    $items[$root] = array(
-        'title'             => t('Scholar'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_system_index',
-        'file'              => 'pages/system.php',
-        '@scholar_path'     => 'root',
-    );
+        $items['admin/settings/scholar/settings'] = array(
+            'title'             => t('Scholar settings'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_settings_form'),
+            'file'              => 'pages/settings.php',
+            '@scholar_path'     => 'settings',
+        );
+        $items['admin/settings/scholar/dateformat'] = array(
+            'type'              => MENU_CALLBACK,
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_settings_dateformat',
+            'file'              => 'pages/settings.php',
+            '@scholar_path'     => 'settings.dateformat',
+        );
 
-    $items[$root . '/people'] = array(
-        'title'             => t('People'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_people_list',
-        'parent'            => $root,
-        'file'              => 'pages/people.php',
-        '@scholar_path' => 'people',
-    );
-    $items[$root . '/people/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => t('List'),
-        'weight'            => -10, // na poczatku listy
-    );
-    $items[$root . '/people/add'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Add person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_people_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_people_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Delete person'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_people_delete_form'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items[$root . '/people/itempicker'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Select people'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_pages_people_itempicker'),
-        'parent'            => $root . '/people',
-        'file'              => 'pages/people.php',
-    );
-    $items += _scholar_category_menu($root . '/people', 'people', null, array(
-        'list' => t('Affiliations'),
-        'add'  => t('Add affiliation'),
-        'edit' => t('Edit affiliation'),
-        'delete' => t('Delete affiliation'),
-    ), 'affiliation');
+        $items[$root] = array(
+            'title'             => t('Scholar'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_system_index',
+            'file'              => 'pages/system.php',
+            '@scholar_path'     => 'root',
+        );
 
-    $items[$root . '/conferences'] = array(
-        'title'             => t('Conferences'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_goto',
-        'page arguments'    => array($root . '/conferences/conference'),
-    );
-    $items += _scholar_generic_menu($root . '/conferences/conference',
-        'conference',
-        t('Conferences'),
-        array(
-            'edit' => t('Edit conference'),
-            'details' => t('Conference details'),
-        )
-    );
-    $items[$root . '/conferences/conference']['weight'] = -10;
-    $items += _scholar_category_menu($root . '/conferences/conference', 'generics', 'conference', array(
-        'edit'   => t('Edit conference category'),
-        'delete' => t('Delete conference category'),
-    ));
+        $items[$root . '/people'] = array(
+            'title'             => t('People'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_people_list',
+            'parent'            => $root,
+            'file'              => 'pages/people.php',
+            '@scholar_path' => 'people',
+        );
+        $items[$root . '/people/list'] = array(
+            'type'              => MENU_DEFAULT_LOCAL_TASK,
+            'title'             => t('List'),
+            'weight'            => -10, // na poczatku listy
+        );
+        $items[$root . '/people/add'] = array(
+            'type'              => MENU_LOCAL_TASK,
+            'title'             => t('Add person'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_people_form'),
+            'parent'            => $root . '/people',
+            'file'              => 'pages/people.php',
+        );
+        $items[$root . '/people/edit/%'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Edit person'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_people_form'),
+            'parent'            => $root . '/people',
+            'file'              => 'pages/people.php',
+        );
+        $items[$root . '/people/delete/%'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Delete person'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_people_delete_form'),
+            'parent'            => $root . '/people',
+            'file'              => 'pages/people.php',
+        );
+        $items[$root . '/people/itempicker'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Select people'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_itempicker',
+            'page arguments'    => array('scholar_pages_people_itempicker'),
+            'parent'            => $root . '/people',
+            'file'              => 'pages/people.php',
+        );
+        $items += _scholar_category_menu($root . '/people', 'people', null, array(
+            'list' => t('Affiliations'),
+            'add'  => t('Add affiliation'),
+            'edit' => t('Edit affiliation'),
+            'delete' => t('Delete affiliation'),
+        ), 'affiliation');
 
-    $items += _scholar_generic_menu($root . '/conferences/presentation',
-        'presentation',
-        t('Presentations'),
-        array('edit' => t('Edit presentation'))
-    );
-    $items += _scholar_category_menu($root . '/conferences/presentation', 'generics', 'presentation', array(
-        'edit'   => t('Edit presentation category'),
-        'delete' => t('Delete presentation category'),
-    ));
+        $items[$root . '/conferences'] = array(
+            'title'             => t('Conferences'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_goto',
+            'page arguments'    => array($root . '/conferences/conference'),
+        );
+        $items += _scholar_generic_menu($root . '/conferences/conference',
+            'conference',
+            t('Conferences'),
+            array(
+                'edit' => t('Edit conference'),
+                'details' => t('Conference details'),
+            )
+        );
+        $items[$root . '/conferences/conference']['weight'] = -10;
+        $items += _scholar_category_menu($root . '/conferences/conference', 'generics', 'conference', array(
+            'edit'   => t('Edit conference category'),
+            'delete' => t('Delete conference category'),
+        ));
 
-    $items += _scholar_generic_menu($root . '/article',
-        'article',
-        t('Articles'),
-        array(
-            'add'  => t('Add article'),
-            'edit' => t('Edit article'),
-        )
-    );
-    $items += _scholar_generic_menu($root . '/journal',
-        'journal',
-        t('Journals'),
-        array(
-            'edit' => t('Edit journal'),
-            'details' => t('Journal details'),
-        )
-    );
-    $items += _scholar_category_menu($root . '/journal', 'generics', 'journal', array(
-        'edit'   => t('Edit journal category'),
-        'delete' => t('Delete journal category'),
-    ));
+        $items += _scholar_generic_menu($root . '/conferences/presentation',
+            'presentation',
+            t('Presentations'),
+            array('edit' => t('Edit presentation'))
+        );
+        $items += _scholar_category_menu($root . '/conferences/presentation', 'generics', 'presentation', array(
+            'edit'   => t('Edit presentation category'),
+            'delete' => t('Delete presentation category'),
+        ));
 
-    // zeby byly taby pierwszego poziomu w elementach w trainings/
-    // korzeniem poddrzewa jest przekierowanie do listy szkolen.
-    // Gdybysmy dali liste szkolej w korzeniu, a pozniej 2 razy DEFAULT_TASK
-    // w trainings/training i trainings/training/list dostalibysmy taby
-    // drugiego poziomu.
-    $items[$root . '/trainings'] = array(
-        'title'             => t('Trainings'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_goto',
-        'page arguments'    => array($root . '/trainings/training'),
-    );
-    $items += _scholar_generic_menu($root . '/trainings/training',
-        'training',
-        t('Trainings'),
-        array(
-            'edit' => t('Edit training'),
-            'details' => t('Training details'),
-        )
-    );
-    $items[$root . '/trainings/training']['weight'] = -10;
-    $items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
-        'edit'   => t('Edit training category'),
-        'delete' => t('Delete training category'),
-    ));
+        $items += _scholar_generic_menu($root . '/article',
+            'article',
+            t('Articles'),
+            array(
+                'add'  => t('Add article'),
+                'edit' => t('Edit article'),
+            )
+        );
+        $items += _scholar_generic_menu($root . '/journal',
+            'journal',
+            t('Journals'),
+            array(
+                'edit' => t('Edit journal'),
+                'details' => t('Journal details'),
+            )
+        );
+        $items += _scholar_category_menu($root . '/journal', 'generics', 'journal', array(
+            'edit'   => t('Edit journal category'),
+            'delete' => t('Delete journal category'),
+        ));
 
-    $items += _scholar_generic_menu($root . '/trainings/class',
-        'class',
-        t('Classes'),
-        array('edit' => t('Edit class'))
-    );
-    $items += _scholar_category_menu($root . '/trainings/class', 'generics', 'class', array(
-        'edit'   => t('Edit class category'),
-        'delete' => t('Delete class category'),
-    ));
+        // zeby byly taby pierwszego poziomu w elementach w trainings/
+        // korzeniem poddrzewa jest przekierowanie do listy szkolen.
+        // Gdybysmy dali liste szkolej w korzeniu, a pozniej 2 razy DEFAULT_TASK
+        // w trainings/training i trainings/training/list dostalibysmy taby
+        // drugiego poziomu.
+        $items[$root . '/trainings'] = array(
+            'title'             => t('Trainings'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_goto',
+            'page arguments'    => array($root . '/trainings/training'),
+        );
+        $items += _scholar_generic_menu($root . '/trainings/training',
+            'training',
+            t('Trainings'),
+            array(
+                'edit' => t('Edit training'),
+                'details' => t('Training details'),
+            )
+        );
+        $items[$root . '/trainings/training']['weight'] = -10;
+        $items += _scholar_category_menu($root . '/trainings/training', 'generics', 'training', array(
+            'edit'   => t('Edit training category'),
+            'delete' => t('Delete training category'),
+        ));
 
-    $items[$root . '/file'] = array(
-        'title'             => t('Files'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_file_list',
-        'parent'            => $root,
-        'file'              => 'pages/file.php',
-        '@scholar_path'     => 'files',
-    );
-    $items[$root . '/file/list'] = array(
-        'type'              => MENU_DEFAULT_LOCAL_TASK,
-        'title'             => t('List'),
-        'weight'            => -10,
-    );
-    $items[$root . '/file/upload'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Upload file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_file_upload_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_file_edit_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/delete/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Delete file'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_file_delete_form'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
-    $items[$root . '/file/itempicker'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('File selection'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_itempicker',
-        'page arguments'    => array('scholar_pages_file_itempicker'),
-        'parent'            => $root . '/file',
-        'file'              => 'pages/file.php',
-    );
+        $items += _scholar_generic_menu($root . '/trainings/class',
+            'class',
+            t('Classes'),
+            array('edit' => t('Edit class'))
+        );
+        $items += _scholar_category_menu($root . '/trainings/class', 'generics', 'class', array(
+            'edit'   => t('Edit class category'),
+            'delete' => t('Delete class category'),
+        ));
 
-    $items[$root . '/page'] = array(
-        'type'              => MENU_LOCAL_TASK,
-        'title'             => t('Pages'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_page_list',
-        'parent'            => $root,
-        'file'              => 'pages/page.php',
-        'weight'            => 10,
-        '@scholar_path'     => 'pages',
-    );
-    $items[$root . '/page/edit/%'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Edit page'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_render_form',
-        'page arguments'    => array('scholar_pages_page_form'),
-        'parent'            => $root . '/page',
-        'file'              => 'pages/page.php',
-    );
+        $items[$root . '/file'] = array(
+            'title'             => t('Files'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_file_list',
+            'parent'            => $root,
+            'file'              => 'pages/file.php',
+            '@scholar_path'     => 'files',
+        );
+        $items[$root . '/file/list'] = array(
+            'type'              => MENU_DEFAULT_LOCAL_TASK,
+            'title'             => t('List'),
+            'weight'            => -10,
+        );
+        $items[$root . '/file/upload'] = array(
+            'type'              => MENU_LOCAL_TASK,
+            'title'             => t('Upload file'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_file_upload_form'),
+            'parent'            => $root . '/file',
+            'file'              => 'pages/file.php',
+        );
+        $items[$root . '/file/edit/%'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Edit file'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_file_edit_form'),
+            'parent'            => $root . '/file',
+            'file'              => 'pages/file.php',
+        );
+        $items[$root . '/file/delete/%'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Delete file'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_file_delete_form'),
+            'parent'            => $root . '/file',
+            'file'              => 'pages/file.php',
+        );
+        $items[$root . '/file/itempicker'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('File selection'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_itempicker',
+            'page arguments'    => array('scholar_pages_file_itempicker'),
+            'parent'            => $root . '/file',
+            'file'              => 'pages/file.php',
+        );
 
-    // menu systemowe - niewidoczne
-    $items[$root . '/system'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Scholar system overview'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_system_index',
-        'file'              => 'pages/system.php',
-        '@scholar_path'     => 'system',
-    );
-    $items[$root . '/system/schema'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('Database schema'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_system_schema',
-        'file'              => 'pages/system.php',
-        'parent'            => $root . '/system',
-    );
-    $items[$root . '/system/file-import'] = array(
-        'type'              => MENU_CALLBACK,
-        'title'             => t('File import'),
-        'access arguments'  => array('administer scholar'),
-        'page callback'     => 'scholar_pages_system_file_import',
-        'file'              => 'pages/system.php',
-        'parent'            => $root . '/system',
-    );
+        $items[$root . '/page'] = array(
+            'type'              => MENU_LOCAL_TASK,
+            'title'             => t('Pages'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_page_list',
+            'parent'            => $root,
+            'file'              => 'pages/page.php',
+            'weight'            => 10,
+            '@scholar_path'     => 'pages',
+        );
+        $items[$root . '/page/edit/%'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Edit page'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_page_form'),
+            'parent'            => $root . '/page',
+            'file'              => 'pages/page.php',
+        );
 
+        // menu systemowe - niewidoczne
+        $items[$root . '/system'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Scholar system overview'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_system_index',
+            'file'              => 'pages/system.php',
+            '@scholar_path'     => 'system',
+        );
+        $items[$root . '/system/schema'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('Database schema'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_system_schema',
+            'file'              => 'pages/system.php',
+            'parent'            => $root . '/system',
+        );
+        $items[$root . '/system/file-import'] = array(
+            'type'              => MENU_CALLBACK,
+            'title'             => t('File import'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_system_file_import',
+            'file'              => 'pages/system.php',
+            'parent'            => $root . '/system',
+        );
 
-    _scholar_menu_add_page_argument_positions($items);
+        _scholar_menu_add_page_argument_positions($items);
+    }
 
     return $items;
 } // }}}
@@ -510,6 +513,41 @@ function _scholar_generic_menu($root_path, $subtype, $title, $titles = array()) 
         'parent'            => $root_path,
         'file'              => 'pages/generic.php',
     );
+
+    return $items;
+} // }}}
+
+function _scholar_menu_items_cmp($a, $b)
+{
+    $a_weight = isset($a['weight']) ? $a['weight'] : 0;
+    $b_weight = isset($b['weight']) ? $b['weight'] : 0;
+
+    // jezeli te same wagi porownaj tytuly...
+    if ($a_weight == $b_weight) {
+        return strcoll($a['title'], $b['title']);
+    }
+
+    // ...w przeciwnym razie sortuj na podstawie wag
+    return $a_weight < $b_weight ? -1 : 1;
+}
+
+/**
+ * Zwraca listę wszystkich elementów menu, których prefiks ścieżki
+ * jest taki sam jak podany.
+ */
+function scholar_menu_items($prefix_path) // {{{
+{
+    $menu = _scholar_menu();
+    $items = array();
+    $prefix_path_len = strlen($prefix_path);
+
+    foreach ($menu as $path => $item) {
+        if (!strncasecmp($path, $prefix_path, $prefix_path_len) && $item['type'] != MENU_CALLBACK) {
+            $items[$path] = $item;
+        }
+    }
+
+    scholar_asort($items, '_scholar_menu_items_cmp');
 
     return $items;
 } // }}}
