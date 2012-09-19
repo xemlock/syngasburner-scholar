@@ -1,6 +1,38 @@
 <?php
 
 /**
+ * Przekształca dokument BBCode w dokument HTML.
+ *
+ * @param string $markup
+ * @return string
+ */
+function scholar_render_markup($markup) // {{{
+{
+    $output = '';
+
+    if (strlen($markup)) {
+        try {
+            $tree     = scholar_markup_parser()->parse($markup);
+            $renderer = scholar_markup_renderer();
+            $output   = $renderer->render($tree);
+
+            // umiesc na poczatku zawartosc preambuly
+            $preface  = scholar_markup_converter_preface();
+            if ($preface) {
+                $output = $preface . $output;
+            }
+
+            $output .= '<span class="scholar-render" data-timestamp="' . date('Y-m-d H:i:s') . '"></span>';
+
+        } catch (Exception $e) {
+            // TODO watchdog
+        }
+    }
+
+    return $output;
+} // }}}
+
+/**
  * Ustawia albo zwraca wartość sterującą renderingiem węzłów (segmentów).
  * Jeżeli nie podano żadnego argumentu zwrócona zostanie aktualna
  * wartość. Jeżeli podano nową, zostanie ona ustawiona, przy czym zwrócona
@@ -34,7 +66,7 @@ function _scholar_rendering_enabled($enabled = null) // {{{
  */
 function scholar_invalidate_rendering() // {{{
 {
-    variable_set('scholar_last_change', time());
+    variable_set(scholar_setting_name('last_change'), time());
 } // }}}
 
 

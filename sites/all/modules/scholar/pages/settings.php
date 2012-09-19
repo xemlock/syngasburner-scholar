@@ -1,6 +1,6 @@
 <?php
 
-function scholar_pages_settings_form(&$form_state)
+function scholar_pages_settings_form(&$form_state) // {{{
 {
     $image = array(
         '#type'  => 'scholar_element_vtable_row',
@@ -143,6 +143,13 @@ function scholar_pages_settings_form(&$form_state)
             '#description' => t('Input format of auto-generated nodes. For best results, use a format with no filters enabled.'),
             '#default_value' => scholar_setting('node_format'),
         ),
+        scholar_setting_name('node_cache') => array(
+            '#title'   => t('Rendering cache'),
+            '#type'    => 'radios',
+            '#options' => array(1 => t('Enabled'), 0 => t('Disabled')),
+            '#description' => t('When enabled auto-generated node content will be cached. For performance reasons cache should be enabled in production environments.'),
+            '#default_value' => scholar_setting('node_cache'),
+        ),
     );
 
     $vtable = array(
@@ -168,27 +175,32 @@ function scholar_pages_settings_form(&$form_state)
     );
 
     return $form;
-}
+} // }}}
 
 function scholar_pages_settings_form_validate($form, &$form_state) // {{{
 {
     // rekursywnie usun biale znaki otaczajace wartosci tekstowe
     $values = scholar_trim($form_state['values']);
 
-    // dokonaj walidacji szerokosci obrazu, jezeli sie powiedzie zmien jej
-    // typ na liczbe calkowita
-    $image_width_name = scholar_setting_name('image_width');
-    $image_width = intval($values[$image_width_name]);
+    // skonwertuj do liczb calkowitych, bez dalszej walidacji:
+    // - ustawienie dla Lightboksa
+    // - ustawienia dla wezlow (id formatu, uruchomienie cache'u)
+    $int_settings = array(
+        'image_width', 'image_lightbox', 'node_format', 'node_cache',
+    );
 
-    if ($image_width < 150) {
-        form_error($form[$image_width_name], t('Image width must be an integer value greater than or equal to 150px.'));
-    } else {
-        $values[$image_width_name] = $image_width;
+    foreach ($int_settings as $setting) {
+        $setting_name = scholar_setting_name($setting);
+        $values[$setting_name] = intval($values[$setting_name]);
+
+        switch ($setting) {
+            case 'image_width':
+                if ($values[$setting_name] < 150) {
+                    form_error($form['vtable']['images'][$setting_name], t('Image width must be an integer value greater than or equal to 150px.'));
+                }
+                break;
+        }
     }
-
-    // ustawienie dla Lightboksa przechowuj jako liczbe calkowita
-    $image_lightbox_name = scholar_setting_name('image_lightbox');
-    $values[$image_lightbox_name] = intval($values[$image_lightbox_name]);
 
     $form_state['values'] = $values;
 } // }}}

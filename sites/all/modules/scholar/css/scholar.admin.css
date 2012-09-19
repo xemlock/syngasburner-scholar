@@ -190,6 +190,9 @@ form.scholar fieldset.collapsible legend a {
 form.scholar select {
   max-width: 480px;
 }
+form.scholar .form-radios {
+  margin: .25em 0;
+}
 
 
 .scholar-table {

@@ -119,6 +119,27 @@ function scholar_setting_node_format() // {{{
 } // }}}
 
 /**
+ * Zwraca stan uruchomienia pamięci podręcznej treści węzłów. Domyślnie
+ * pamięć podręczna jest włączona.
+ *
+ * @return int
+ */
+function scholar_setting_node_cache() // {{{
+{
+    return variable_get(scholar_setting_name('node_cache'), 1);
+} // }}}
+
+/**
+ * Zwraca czas ostatniej zmiany w tabelach modułu.
+ *
+ * @return int
+ */
+function scholar_setting_last_change()
+{
+    return variable_get(scholar_setting_name('last_change'), 0);
+}
+
+/**
  * Zwraca liczbę rekordów na stronę w listach rekordów.
  *
  * @return int
