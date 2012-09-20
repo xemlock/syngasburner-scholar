@@ -3,65 +3,153 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Scholar - instrukcja obsługi</title>
+<style type="text/css">
+body {
+  background: #fff;
+  color: #000;
+}
+.file {
+  font-family: monospace;
+  background: #eee;
+  color: #222;
+}
+.nav {
+  background: #eee;
+  color: #222;
+}
+table {
+  margin: 2em 0;
+}
+</style>
 </head>
 <body>
 
+<center>
+<h1>Scholar</h1>
+<h2>Moduł do zarządzania aktywnością naukową</h2>
+Wrzesień 2012
+</center>
+
 Słownik pojęć
-Węzeł (ang. node), również użytwany jako Segment &ndash; rodzaj treści
-przechowywanej przez Drupala.
+<dl>
+  <dt>węzeł <em>(ang. node)</em></dt>
+  <dd>Treść, która może zostać opublikowana w postaci podstrony. W polskim tłumaczeniu Drupala
+  używane jest dość niefortunne słowo <em>Segment</em>.</dd>
+  <dt>moduł</dt>
+  <dd>Zbiór skryptów rozszerzających funkcjonalność Drupala. Każdy moduł umieszczony jest w osobnym katalogu umieszczonym w katalogu <span>modules</span> (moduły systemowe) albo w <span>sites/all/modules</span> (moduły dodatkowe).</dd>
+</dl>
 
-<h2>Instalacja</h2>
+<h2>1. Instalacja i konfiguracja</h2>
 
-<h2>Konfiguracja</h2>
+<h3>1.1 Instalacja</h3>
 
-Administer &rarr; Site building &rarr; Themes &rarr; Configure &rarr; Global settings
+<p>Moduł umieścić w katalogu <span class="file">sites/all/modules/scholar</span>.
+Przejść do <span class="nav">Administer &rarr; Site building &rarr; Modules</span>
+odszukać w sekcji <cite>ventures</cite> moduł Scholar, zaznaczyć go
+a następnie zapisać konfigurację.</p>
 
-<p>W sekcji <cite>Display post information on</cite> należy odznaczyć typ Scholar i zapisać zmiany.
-Spowoduje to
-niewyświetlanie informacji o dacie utworzenia i autorze strony. W przypadku stron generowanych
-przez moduł Scholar informacje te ... bo autor nie jest wpisywany (treść strony jest
-generowana automatycznie na podstawie danych z bazy).</p>
+<h3>1.2 Konfiguracja</h3>
+
+<p>Aby uzyskać najlepsze efekty prezentacyjne moduł oraz środowisko jego działania muszą zostać poprawnie skonfigurowane.</p> 
+
+<h4>1.2.1 Czas i autor wpisu</h4>
+
+<p>Do stron generowanych przez moduł Scholar (nazywanych dalej &bdquo;węzłami typu Scholar&rdquo;),
+podobnie jak do węzłów typów innych niż Strona (ang. <em>Page</em>) Drupal dodaje
+automatycznie informacje o czasie utworzenia oraz o autorze jej treści. 
+Wyświetlanie tych informacji jest nieporządane, głównie ze względu na fakt, że autorem 
+strony jest zawsze <em>Anonim</em>. Jest tak dlatego, że zawartość strony jest budowana
+na podstawie danych, które mogły zostać wpisane przez więcej niż jednego użytkownika.</p>
+
+<p>Aby wyłączyć pokazywanie wspomnianych informacji należy przejść do
+<span class="nav">Administer &rarr; Site building &rarr; Themes &rarr; Configure &rarr; Global settings</span>,
+w sekcji <cite>Display post information on</cite>, odznaczyć typ Scholar i zapisać zmiany.</p>
+
+<h4>1.2.2 Filtry</h4>
+
+<p>Domyślnie wszystkie treści węzłów w Drupalu są filtrowane. Zestaw filtrów definiuje
+tzw. format danych (ang. <em>Input format</em>). Domyślnie dostępne są dwa 
+formaty: <cite>Filtered HTML</cite> (1) oraz <cite>Full HTML</cite> (2).</p>
+
+<p>Pierwszy nie nadaje się do użycia w węzłach typu Scholar
+z powodu odfiltrowywania większości struktury dokumentu &ndash; filtr <cite>Filter HTML</cite>
+usuwa większość elementów blokowych za wyjątkiem list <code>UL</code>, <code>OL</code> i <code>DL</code>).</p>
+
+<p>Drugi format można użyc z pewnymi zastrzeżeniami. W skład jego filtrów wchodzą dwa,
+które mogą powodować, że wynikowy dokument nie będzie wyglądał tak jak powinien
+(np. będzie brakowało w nim przejść do nowego wiersza, lub przeciwnie, będzie ich za dużo).
+Są to:</p>
+<ul>
+    <li><cite>HTML Corrector</cite> &ndash; w zamierzeniu autorów miał poprawiać błędy składni HTML, w praktyce dla poprawnych danych może wygenerować kod z jeszcze większą liczbą błędów (<a href="http://drupal.org/node/787530">http://drupal.org/node/787530</a>)</li>
+    <li><cite>Line break converter</cite> &ndash; zastępuje znaki końca linii, a także ciągi tagów <code>BR</code> tagami <code>P</code> oraz przeorganizowanymi tagami <code>BR</code>.</li>
+</ul>
+
+<p>Format danych dla węzłów typu Scholar powinien mieć zatem wyłączone
+ filtry <cite>HTML Corrector</cite>, <cite>HTML Filter</cite> oraz <cite>Line break converter</cite>.
+Wyłączenie ich nie zagraża bezpieczeństwu strony, o ile format używany
+jest <em>wyłącznie</em> przez węzły typu Scholar.</p>
+
+<p>Aby dodać nowy format danych dla węzłów typu Scholar należy przejść do (rys. 1.1):
+<span class="nav">Administer &rarr; Site configuration &rarr; Input formats &rarr; Add input format</span>,
+a następnie:</p>
+<ol>
+    <li>wpisać nazwę filtra (np. Scholar)</li>
+    <li>ze względów bezpieczeństwa nie zezwalać żadnej roli na używanie tego formatu (nie będzie go można uwybrać podczas edycji węzłów, chyba że użytkownik ma uprawnienie <cite>administer formats</cite>)</li>
+    <li>zaznaczyć co najwyżej filtr <cite>URL filter</cite>, który zamienia adresy stron oraz adresy e-mail na hiperłącza.</li>
+    <li>zapisać nowy format wciskając przycisk <cite>Save configuration</cite></li>
+</ol>
+
+<p>Następnie w ustawieniach modułu Scholar w sekcji <cite>Nodes</cite> należy wybrać nowoutworzony format danych i zapisać zmiany (rys. 1.2).</p>
+
+<table border="0" width="100%">
+ <tr>
+  <td align="center">
+    <img src="input_format.png" alt="" />
+    <div><strong>Rys. 1.1</strong> Konfiguracja formatu danych dla węzłów typu Scholar.</div>
+  </td>
+  <td align="center">
+    <img src="scholar_node_format.png" alt="" />
+    <div><strong>Rys. 1.2</strong> Ustawienie formatu danych dla węzłów typu Scholar.</div>
+  </td>
+ </tr>
+</table>
+
+<h4>1.2.3 Taksonomia</h4>
+
+<p>Moduł <cite>Taxonomy</cite> służy do kategoryzowania treści. Aby umożliwić
+kategoryzowanie węzłów tworzonych w ramach modułu Scholar, konieczne jest
+(poza zainstalowaniem tego modułu) podpięcie jednego lub więcej
+istniejącego słownika do węzłów typu Scholar.</p>
+
+<p>W tym celu należy przejść do <span class="nav">Content management &rarr; Taxonomy</span>,
+następnie przejść do edycji wybranego z listy słownika. W sekcji
+<cite>Content types</cite> zaznaczyć typ Scholar. Od tego momentu
+bedzie można przyporządkowywać tagi z tego słownika do węzłów zarządzanych
+przez moduł Scholar.</p>
+
+<h4>1.2.4 Konfiguracja modułu Scholar</h4>
+
 
 
 Administer &rarr; Site configuration &rarr; Scholar settings
 
 <p>Ustawienia modułu, można ustawić w nich szerokość obrazów wyświetlanych w preambule generowanych stron (czytaj więcej w rozdziale <b>x</b>), oraz formaty dat: dla daty pojednyczej, oraz zakresów dat w obrębie jednego miesiąca i w obrębie jednego roku ale w różnych miesiącach.</p>
 
-<h3>Filtry</h3>
 
-Domyślnie wszystkie treści węzłów w Drupalu są filtrowane. Zestaw filtrów definiuje format danych (ang. Input format). Domyślnie dostępne są dwa formaty: Filtered HTML (1) oraz Full HTML (2). Pierwszy nie nadaje się do użycia w węzłach generowanych przez moduł Scholar z powodu odfiltrowywania większości struktury dokumentu (filtr Filter HTML usuwa większość elementów blokowych za wyjątkiem list UL, OL i DL). Drugi można użyc z pewnymi zastrzeżeniami. W skład filtrów tego formatu wchodzą dwa, które mogą powodować, że wynikowy dokument nie będzie wyglądał tak jak powinien (np. będzie brakowało w nim przejść do nowego wiersza, lub przeciwnie, będzie ich za dużo). Są to:</p>
-<ul>
-    <li>HTML Corrector - w zamierzeniu autorów miał poprawiać błędy składni HTML, w praktyce dla poprawnych danych może wygenerować kod z jeszcze większą liczbą błędów (patrz <a href="http://drupal.org/node/787530">zgłoszenie</a>)</li>
-    <li>Line break converter - zastępuje znaki końca linii, a także ciągi tagów BR tagami BR i P.</li>
-</ul>
-<p>Ze względu na powyższe, format danych węzłów generowanych przez moduł powinien mieć wyłączone wspomniane filtry. Wyłączenie tych filtrów nie zagraża bezpieczeństwu (layout strony, złośliwy kod JavaScript), o ile jest używany <u>wyłącznie</u> dla węzłów modułu Scholar.</p>
 
-<p>Aby dodać nowy format danych dla węzłów modułu należy przejść do:</p>
-Administer &rarr; Site configuration &rarr; Input formats &rarr; Add input format
-<p>a następnie:</p>
-<ol>
-    <li>wpisać nazwę (np. Scholar)</li>
-    <li>ze względów bezpieczeństwa nie zezwalać żadnej roli na używanie tego formatu (nie będzie go można uwybrać podczas edycji węzłów, chyba że użytkownik ma uprawnienie <cite>administer formats</cite>)</li>
-    <li>zaznaczyć co najwyżej filtr <cite>URL filter</cite>, który zamienia adresy stron oraz adresy e-mail na hiperłącza.</li>
-    <li>zapisać nowy format wciskając przycisk <cite>Save configuration</cite></li>
-</ol>
 
-<p>Następnie w ustawieniach modułu Scholar w sekcji Nodes należy wybrać nowoytworzony format danych i zapisać zmiany.</p>
+<h2>BBCode</h2>
 
-<h3>Taksonomia</h3>
+<p>Do generowania treści stron moduł Scholar używa tagów BBCode. Dostępne tagi to:</p>
 
-<p>Moduł <cite>Taxonomy</cite> służy do kategoryzowania treści. Aby umożliwić
-kategoryzowanie węzłów tworzonych w ramach modułu Scholar, konieczne jest
-zainstalowanie tego modułu, a następnie podpięcie jednego lub więcej
-istniejącego słownika do typu zawartości o nazwie Scholar.</p>
-
-Content management &rarr; Taxonomy
-
-<p>Dla wybranego z listy słownika, przechodząc do edycji należy w sekcji
-<cite>Content types</cite> zaznaczyć typ Scholar. Od tego momentu
-bedzie można przyporządkowywać tagi z tego słownika do węzłów zarządzanych
-przez moduł Scholar.</p>
-
+<table>
+<tr>
+ <td colspan="2">Tagi standardowe</td>
+</tr>
+<tr>
+ <td></td>
+ <td></td>
+</tr>
 
 </body>
 </html>

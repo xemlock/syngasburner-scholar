@@ -1,6 +1,6 @@
 <?php
 
-function _scholar_pages_system_index_menu($path_name)
+function _scholar_pages_system_index_menu($path_name) // {{{
 {
     // chcemy pobrac liste dzieci danej sciezki
     $path = rtrim(scholar_path($path_name), '/') . '/';
@@ -16,46 +16,27 @@ function _scholar_pages_system_index_menu($path_name)
     }
 
     return $output;
-}
+} // }}}
 
-function scholar_pages_system_index()
+function scholar_pages_system_index() // {{{
 {
-    $output = '';
-    $output .= scholar_oplink(t('Database schema'), 'system', '/schema');
-    $output .= '<br/>';
-    $output .= scholar_oplink(t('File import'), 'system', '/file-import');
-    $output .= '<br/>';
-    $output .= scholar_oplink(t('Settings'), 'settings');
+    scholar_add_css();
+    drupal_add_js('misc/collapse.js');
 
-    $output .= '<h3>' . t('Articles') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.article');
-
-    $output .= '<h3>' . t('Journals') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.journal');
-
-    $output .= '<h3>' . t('Conferences') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.conference');
-
-    $output .= '<h3>' . t('Presentations') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.presentation');
-
-    $output .= '<h3>' . t('Trainings') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.training');
-
-    $output .= '<h3>' . t('Classes') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('generics.class');
-
-    $output .= '<h3>' . t('People') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('people');
-
-    $output .= '<h3>' . t('Files') . '</h3>';
-    $output .= _scholar_pages_system_index_menu('files');
-
-    $output .= '<h3>' . t('Pages') . '</h3>';
-    $output .= l(t('Pages'), scholar_path('pages'));
-
-    return $output;
-}
+    $view = new scholar_view;
+    $view->setTemplateDir(SCHOLAR_TEMPLATE_DIR);
+    $view->assignFromArray(array(
+        'articles'      => _scholar_pages_system_index_menu('generics.article'),
+        'journals'      => _scholar_pages_system_index_menu('generics.journal'),
+        'conferences'   => _scholar_pages_system_index_menu('generics.conference'),
+        'presentations' => _scholar_pages_system_index_menu('generics.presentation'),
+        'trainings'     => _scholar_pages_system_index_menu('generics.training'),
+        'classes'       => _scholar_pages_system_index_menu('generics.class'),
+        'people'        => _scholar_pages_system_index_menu('people'),
+        'files'         => _scholar_pages_system_index_menu('files'),
+    ));
+    return $view->render('index.tpl');
+} // }}}
 
 function scholar_pages_system_schema() // {{{
 {

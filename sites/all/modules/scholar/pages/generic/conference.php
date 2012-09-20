@@ -149,13 +149,12 @@ function scholar_generics_conference_details_form(&$form_state, $record) // {{{
         '#record' => $record,
     );
 
-    $form['properties'] = array(
-        '#type' => 'fieldset',
+    $form['properties'] = scholar_form_fieldset(array(
         '#title' => t('Conference properties'),
         '#attributes' => array('class' => 'scholar'),
         '#collapsible' => true,
         '#collapsed' => false,
-    );
+    ));
 
     $location = array();
 

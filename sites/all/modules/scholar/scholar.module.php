@@ -1,5 +1,9 @@
 <?php
 
+define('SCHOLAR_TEMPLATE_DIR', dirname(__FILE__) . '/templates');
+define('SCHOLAR_VERSION', '');
+define('SCHOLAR_REVISION', '');
+
 function p($var, $label = null)
 {
     static $last = 0;
@@ -237,8 +241,8 @@ function scholar_nodeapi(&$node, $op)
             $func = 'scholar_render_' . $binding['table_name'] . '_node';
             $body = '';
 
-            $view = new scholar_view('_scholar_render_escape');
-            $view->setTemplateDir(dirname(__FILE__) . '/templates');
+            $view = new scholar_view;
+            $view->setTemplateDir(SCHOLAR_TEMPLATE_DIR);
 
             if (function_exists($func)) {
                 $body = $func($view, $binding['row_id'], $node);
@@ -357,6 +361,7 @@ function scholar_theme() // {{{
     $theme['scholar_radios']      = array('arguments' => array('element' => null));
     $theme['scholar_select']      = array('arguments' => array('element' => null));
     $theme['scholar_textfield']   = array('arguments' => array('element' => null));
+    $theme['scholar_fieldset']    = array('arguments' => array('element' => null));
 
 //  $theme['scholar_label']       = array('arguments' => array('title' => null, 'required' => null));
 //  $theme['scholar_description'] = array('arguments' => array('description' => null));

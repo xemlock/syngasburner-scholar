@@ -483,6 +483,38 @@ function scholar_element_separator() // {{{
     return array('#type' => 'markup', '#value' => '<div class="scholar-separator"><hr/></div>');
 } // }}}
 
+
+/**
+ * Obejście błędu Drupala uniemożliwiające ostylowania elementu fieldset
+ * przy użyciu funkcji ustawionej w #theme. Czytaj {@see http://drupal.org/node/225698}
+ *
+ * @param array
+ * @return array
+ */
+function scholar_form_fieldset($element) // {{{
+{
+    if (isset($element['#theme'])) {
+        // i tak nie bedzie dzialac, wiec mozna usunac
+        unset($element['#theme']);
+    }
+
+    $element['#type'] = 'fieldset';
+
+    if (isset($element['#attributes'])) {
+        $element['#attributes'] = (array) $element['#attributes'];
+
+        if (isset($element['#attributes']['class'])) {
+            $element['#attributes']['class'] .= ' scholar';
+        } else {
+            $element['#attributes']['class'] = 'scholar';
+        }
+    } else {
+        $element['#attributes'] = array('class' => 'scholar');
+    }
+
+    return $element;
+} // }}}
+
 /**
  * Otwiera tabelę i rozpoczyna pierwszą komórkę.
  *

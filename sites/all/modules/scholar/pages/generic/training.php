@@ -142,8 +142,7 @@ function scholar_generics_training_details_form(&$form_state, $record) // {{{
                 '!user' => '<em>' . ($user ? l($user->name, 'user/' . $user->uid) : t('unknown user')) . '</em>',
             ));
 
-    $form[] = array(
-        '#type'        => 'fieldset',
+    $form[] = scholar_form_fieldset(array(
         '#title'       => t('Training properties'),
         '#attributes'  => array('class' => 'scholar'),
         '#collapsible' => true,
@@ -152,7 +151,7 @@ function scholar_generics_training_details_form(&$form_state, $record) // {{{
             '#type'  => 'markup',
             '#value' => theme_scholar_dl($dl),
         ),
-    );
+    ));
 
     $children = scholar_generic_load_children($record->id, 'class', 'start_date, weight');
 

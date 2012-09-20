@@ -272,7 +272,7 @@ function scholar_markup_converter_preface($token = null, $contents = null, $firs
     if (null === $token) {
         $preface = trim(implode('', $prefaces));
         return strlen($preface)
-            ? '<div class="scholar-preface">' . $preface . '</div>'
+            ? '<div class="scholar-preface">' . nl2br($preface) . '</div>'
             : '';
     }
 

@@ -153,26 +153,36 @@ form.scholar .description {
   margin: 0;
 }
 
-form.scholar fieldset {
+fieldset.scholar {
   border: 1px solid #aaa;
   border-width: 1px 0 0!important;
   padding: 6px 0 0 !important;
   margin-bottom: 12px !important;
   background: none !important;
 }
-form.scholar fieldset legend {
+fieldset.scholar legend {
   padding: 0 6px 0 0;
 }
-form.scholar fieldset legend a,
-form.scholar fieldset legend a:hover,
-form.scholar fieldset.collapsible.collapsed legend a,
-form.scholar fieldset.collapsible.collapsed legend a:hover {
+fieldset.scholar legend a,
+fieldset.scholar legend a:hover,
+fieldset.scholar.collapsible.collapsed legend a,
+fieldset.scholar.collapsible.collapsed legend a:hover {
   color: #777;
   text-decoration: none;
 }
-form.scholar fieldset.collapsible legend a {
+fieldset.scholar.collapsible legend a {
   color: #000;
 }
+html fieldset.scholar.collapsed legend a * {
+  display: inline;
+}
+html fieldset.scholar.collapsible legend a {
+  padding-left: 18px; /* po co w emach, skoro grafika ma rozmiary w px! */
+  padding-right: 6px;
+}
+
+
+
 form.scholar select {
   max-width: 480px;
 }
@@ -428,14 +438,6 @@ form.scholar .form-textarea {
   margin-left: 4px;
 }
 
-html form.scholar fieldset.collapsed legend a * {
-  display: inline;
-}
-
-html form.scholar fieldset.collapsible legend a {
-  padding-left: 18px; /* po co w emach, skoro grafika ma rozmiary w px! */
-  padding-right: 6px;
-}
 
 
 form.scholar .form-radios label.option {

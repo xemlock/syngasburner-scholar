@@ -131,11 +131,10 @@ function scholar_pages_file_edit_form(&$form_state, $file_id) // {{{
     $uploader = user_load(intval($file->user_id));
 
     $form = array('#file' => $file);
-    $form['properties'] = array(
-        '#type' => 'fieldset',
+    $form['properties'] = scholar_form_fieldset(array(
         '#title' => t('File properties'),
         '#attributes' => array('class' => 'scholar'),
-    );
+    ));
 
     global $base_url;
     $url = $base_url . '/' . scholar_file_path($file->filename);
@@ -154,11 +153,10 @@ function scholar_pages_file_edit_form(&$form_state, $file_id) // {{{
         )),
     );
 
-    $form['rename'] = array(
-        '#type' => 'fieldset',
+    $form['rename'] = scholar_form_fieldset(array(
         '#title' => t('Rename file'),
         '#attributes' => array('class' => 'scholar'),
-    );
+    ));
     $form['rename']['filename'] = array(
         '#type' => 'textfield',
         '#title' => t('File name'),
@@ -191,11 +189,10 @@ function scholar_pages_file_edit_form(&$form_state, $file_id) // {{{
     }
 
     if ($rows) {
-        $form['ref'] = array(
-            '#type' => 'fieldset',
+        $form['ref'] = scholar_form_fieldset(array(
             '#title' => t('Dependent database records'),
             '#attributes' => array('class' => 'scholar'),
-        );
+        ));
 
         $form['ref'][] = array(
             '#type' => 'markup',

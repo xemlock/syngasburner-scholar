@@ -60,13 +60,12 @@ function scholar_nodes_subform($record = null) // {{{
         $container['taxonomy'] = _scholar_element_taxonomy($tags);
 
         if ($have_menu) {
-            $container['menu'] = array(
-                '#type'     => 'fieldset',
+            $container['menu'] = scholar_form_fieldset(array(
                 '#title'    => t('Menu settings'),
                 '#collapsible' => true,
                 '#collapsed' => true,
                 '#tree'     => true,
-            );
+            ));
             $container['menu']['mlid'] = array(
                 '#type'     => 'hidden',
             );
@@ -91,12 +90,11 @@ function scholar_nodes_subform($record = null) // {{{
         }
 
         if ($have_path) {
-            $container['path'] = array(
-                '#type'     => 'fieldset',
+            $container['path'] = scholar_form_fieldset(array(
                 '#title'    => t('URL path settings'),
                 '#collapsible' => true,
                 '#collapsed' => true,
-            );
+            ));
             $container['path']['path'] = array(
                 '#type'     => 'textfield',
                 '#title'    => t('URL path alias'),
@@ -105,12 +103,11 @@ function scholar_nodes_subform($record = null) // {{{
         }
 
         if ($have_gallery && $gallery_options) {
-            $container['gallery'] = array(
-                '#type'         => 'fieldset',
+            $container['gallery'] = scholar_form_fieldset(array(
                 '#title'        => t('Gallery settings'),
                 '#collapsible'  => true,
                 '#collapsed'    => true,
-            );
+            ));
             $container['gallery']['id'] = array(
                 '#type'         => 'select',
                 '#title'        => t('Gallery'),

@@ -37,12 +37,11 @@ function scholar_pages_settings_form(&$form_state) // {{{
     );
 
     foreach (scholar_languages() as $language => $name) {
-        $fieldset = array(
-            '#type' => 'fieldset',
+        $fieldset = scholar_form_fieldset(array(
             '#title' => scholar_language_label($language, $name),
             '#collapsible' => true,
             '#collapsed' => $language != scholar_language(),
-        );
+        ));
 
         $fieldset[scholar_setting_name('format_date', $language)] = array(
             '#title' => 'Single date',

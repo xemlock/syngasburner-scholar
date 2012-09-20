@@ -161,8 +161,7 @@ function scholar_generics_journal_details_form(&$form_state, $record) // {{{
     //     CASE WHEN parent_start_date IS NULL THEN start_date ELSE parent_start_date END DESC), weight ASC
     $form = array(
         '#record' => $record,
-        array(
-            '#type' => 'fieldset',
+        scholar_form_fieldset(array(
             '#title' => t('Journal details'),
             '#collapsible' => true,
             '#collapsed' => false,
@@ -170,7 +169,7 @@ function scholar_generics_journal_details_form(&$form_state, $record) // {{{
                 '#type' => 'markup',
                 '#value' => theme_scholar_dl($dl),
             ),
-        ),
+        )),
     );
 
     $children = scholar_generic_load_children($record->id, 'article', 'weight');
