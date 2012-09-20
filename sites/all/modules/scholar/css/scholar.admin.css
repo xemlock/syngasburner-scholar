@@ -478,6 +478,7 @@ body.scholar-dialog {
   margin: 0;
   padding: 0;
   overflow: auto;
+  background: #fff;
 }
 
 body.scholar-dialog > .messages {
@@ -532,6 +533,7 @@ body.scholar-dialog form.scholar {
 #scholar-itempicker-items {
   height: 210px;
   overflow: auto;
+  background: #fff;
 }
 #scholar-itempicker-items ul {
   list-style: none;
@@ -543,6 +545,7 @@ body.scholar-dialog form.scholar {
   background: none;
   padding: .5em 0 .5em 32px;
   cursor: pointer;
+  margin: 0;
   -webkit-touch-callout: none;
     -webkit-user-select: none;
      -khtml-user-select: none;
@@ -685,4 +688,30 @@ body.scholar-dialog form.scholar {
   color: #fff;
 }
 /* }}} */
+
+.scholar-index table {
+  border: none;
+  margin: 0;
+}
+.scholar-index tbody {
+  border: none;
+}
+.scholar-index td {
+  vertical-align: top;
+  border: none;
+  width: 50%;
+  padding: 0 1em;
+}
+.scholar-index h3 {
+  font-size: 140%;
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+}
+.scholar-index .help {
+  font-size: 90%;
+  line-height: 150%;
+  margin: .25em 0 .5em;
+}
+
 

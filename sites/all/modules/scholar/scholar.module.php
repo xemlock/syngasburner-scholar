@@ -361,7 +361,6 @@ function scholar_theme() // {{{
     $theme['scholar_radios']      = array('arguments' => array('element' => null));
     $theme['scholar_select']      = array('arguments' => array('element' => null));
     $theme['scholar_textfield']   = array('arguments' => array('element' => null));
-    $theme['scholar_fieldset']    = array('arguments' => array('element' => null));
 
 //  $theme['scholar_label']       = array('arguments' => array('title' => null, 'required' => null));
 //  $theme['scholar_description'] = array('arguments' => array('description' => null));

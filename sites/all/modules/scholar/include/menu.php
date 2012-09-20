@@ -127,22 +127,6 @@ function _scholar_menu() // {{{
         $root  = 'admin/scholar';
         $items = array();
 
-        $items['admin/settings/scholar/settings'] = array(
-            'title'             => t('Scholar settings'),
-            'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_render_form',
-            'page arguments'    => array('scholar_pages_settings_form'),
-            'file'              => 'pages/settings.php',
-            '@scholar_path'     => 'settings',
-        );
-        $items['admin/settings/scholar/dateformat'] = array(
-            'type'              => MENU_CALLBACK,
-            'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_pages_settings_dateformat',
-            'file'              => 'pages/settings.php',
-            '@scholar_path'     => 'settings.dateformat',
-        );
-
         $items[$root] = array(
             'title'             => t('Scholar'),
             'access arguments'  => array('administer scholar'),
@@ -217,6 +201,7 @@ function _scholar_menu() // {{{
             'conference',
             t('Conferences'),
             array(
+                'add'  => t('Add conference'),
                 'edit' => t('Edit conference'),
                 'details' => t('Conference details'),
             )
@@ -230,7 +215,10 @@ function _scholar_menu() // {{{
         $items += _scholar_generic_menu($root . '/conferences/presentation',
             'presentation',
             t('Presentations'),
-            array('edit' => t('Edit presentation'))
+            array(
+                'add'  => t('Add presentation'),
+                'edit' => t('Edit presentation'),
+            )
         );
         $items += _scholar_category_menu($root . '/conferences/presentation', 'generics', 'presentation', array(
             'edit'   => t('Edit presentation category'),
@@ -249,6 +237,7 @@ function _scholar_menu() // {{{
             'journal',
             t('Journals'),
             array(
+                'add'  => t('Add journal'),
                 'edit' => t('Edit journal'),
                 'details' => t('Journal details'),
             )
@@ -273,6 +262,7 @@ function _scholar_menu() // {{{
             'training',
             t('Trainings'),
             array(
+                'add'  => t('Add training'),
                 'edit' => t('Edit training'),
                 'details' => t('Training details'),
             )
@@ -286,7 +276,10 @@ function _scholar_menu() // {{{
         $items += _scholar_generic_menu($root . '/trainings/class',
             'class',
             t('Classes'),
-            array('edit' => t('Edit class'))
+            array(
+                'add'  => t('Add class'),
+                'edit' => t('Edit class'),
+            )
         );
         $items += _scholar_category_menu($root . '/trainings/class', 'generics', 'class', array(
             'edit'   => t('Edit class category'),
@@ -342,6 +335,15 @@ function _scholar_menu() // {{{
             'parent'            => $root . '/file',
             'file'              => 'pages/file.php',
         );
+        $items[$root . '/file/import'] = array(
+            'type'              => MENU_LOCAL_TASK,
+            'title'             => t('File import'),
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_file_import',
+            'parent'            => $root . '/file',
+            'file'              => 'pages/file.php',
+            'weight'            => 10,
+        );
 
         $items[$root . '/page'] = array(
             'type'              => MENU_LOCAL_TASK,
@@ -364,29 +366,35 @@ function _scholar_menu() // {{{
         );
 
         // menu systemowe - niewidoczne
-        $items[$root . '/system'] = array(
+        $items[$root . '/settings'] = array(
             'type'              => MENU_CALLBACK,
-            'title'             => t('Scholar system overview'),
+            'title'             => t('Scholar settings'),
             'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_pages_system_index',
-            'file'              => 'pages/system.php',
-            '@scholar_path'     => 'system',
+            'page callback'     => 'scholar_render_form',
+            'page arguments'    => array('scholar_pages_settings_form'),
+            'file'              => 'pages/settings.php',
+            '@scholar_path'     => 'settings',
         );
-        $items[$root . '/system/schema'] = array(
+        $items[$root . '/settings/dateformat'] = array(
+            'type'              => MENU_CALLBACK,
+            'access arguments'  => array('administer scholar'),
+            'page callback'     => 'scholar_pages_settings_dateformat',
+            'file'              => 'pages/settings.php',
+        );
+        $items[$root . '/settings/schema'] = array(
             'type'              => MENU_CALLBACK,
             'title'             => t('Database schema'),
             'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_pages_system_schema',
-            'file'              => 'pages/system.php',
-            'parent'            => $root . '/system',
+            'page callback'     => 'scholar_pages_settings_schema',
+            'file'              => 'pages/settings.php',
         );
-        $items[$root . '/system/file-import'] = array(
-            'type'              => MENU_CALLBACK,
-            'title'             => t('File import'),
+
+        // alias do ustawien w podmenu Site configuration
+        $items['admin/settings/scholar'] = array(
+            'title'             => t('Scholar settings'),
             'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_pages_system_file_import',
-            'file'              => 'pages/system.php',
-            'parent'            => $root . '/system',
+            'page callback'     => 'scholar_goto',
+            'page arguments'    => array($root . '/settings'),
         );
 
         _scholar_menu_add_page_argument_positions($items);
