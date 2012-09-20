@@ -130,8 +130,8 @@ function _scholar_menu() // {{{
         $items[$root] = array(
             'title'             => t('Scholar'),
             'access arguments'  => array('administer scholar'),
-            'page callback'     => 'scholar_pages_system_index',
-            'file'              => 'pages/system.php',
+            'page callback'     => 'scholar_pages_index',
+            'file'              => 'pages/index.php',
             '@scholar_path'     => 'root',
         );
 

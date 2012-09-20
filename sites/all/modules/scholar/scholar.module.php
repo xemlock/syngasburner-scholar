@@ -1,8 +1,8 @@
 <?php
 
 define('SCHOLAR_TEMPLATE_DIR', dirname(__FILE__) . '/templates');
-define('SCHOLAR_VERSION', '');
-define('SCHOLAR_REVISION', '');
+define('SCHOLAR_VERSION',      '@SCHOLAR_VERSION');
+define('SCHOLAR_REVISION',     '@SCHOLAR_REVISION');
 
 function p($var, $label = null)
 {

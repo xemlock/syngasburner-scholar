@@ -89,8 +89,8 @@ function scholar_pages_page_form(&$form_state, $id) // {{{
 {
     $page = scholar_load_record('pages', $id, scholar_path('pages'));
 
-    scholar_add_tab(t('list'), scholar_path('pages'));
-    scholar_add_tab(t('edit'), scholar_path('pages', 'edit/%d'. $page->id));
+    scholar_add_tab(t('Edit'), scholar_path('pages', 'edit/%d'. $page->id));
+    scholar_add_tab(t('Back to list'), scholar_path('pages'));
 
     // wczytaj tlumaczenie tytulu strony, bedzie on uzyty w komunikacie
     // o zaktualizowaniu rekordu.

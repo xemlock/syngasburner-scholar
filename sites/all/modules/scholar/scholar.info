@@ -5,7 +5,7 @@ dependencies[] = menu
 dependencies[] = tabs
 dependencies[] = zend
 package = ventures
-version = 2012-08-dev
+version = @SCHOLAR_VERSION
 core = 6.x
 
 ; additional support for modules: languageicons, events

@@ -65,21 +65,24 @@
 </fieldset>
 
 <fieldset class="scholar collapsible">
-  <legend><?php echo t('Module') ?></legend>
+  <legend><?php echo t('Configuration') ?></legend>
    <table>
     <tr>
      <td><h3><?php echo t('Pages') ?></h3>
-      <div class="help">Special pages for displaying scientific activity reports, such as list of publications or conference attendance.</div>
+      <div class="help"><?php echo t('Special pages for displaying scientific activity reports, such as publication list or conference attendance.') ?></div>
       <ul>
        <li><?php echo scholar_oplink(t('Pages'), 'pages') ?></li>
       </ul>
      </td>
-     <td><h3><?php echo t('Settings') ?></h3>
-      <div class="help">Module configuration and overview.</div>
+     <td><h3><?php echo t('Module') ?></h3>
+      <div class="help"><?php echo t('Module configuration and overview.') ?></div>
       <ul>
        <li><?php echo scholar_oplink(t('Settings'), 'settings') ?></li>
        <li><?php echo scholar_oplink(t('Database schema'), 'settings', '/schema') ?></li>
-       <li><?php echo t('Version') ?>: <?php echo SCHOLAR_VERSION; if (SCHOLAR_REVISION) echo ' (', SCHOLAR_REVISION, ')'; ?></li>
+       <li><strong><?php echo t('Version') ?>:</strong> <?php echo SCHOLAR_VERSION ?></li>
+<?php if (SCHOLAR_REVISION) { ?>
+       <li><strong><?php echo t('Revision ID') ?>:</strong> <?php echo SCHOLAR_REVISION ?></li>
+<?php } ?>
       </ul>
      </td>
     </tr>
