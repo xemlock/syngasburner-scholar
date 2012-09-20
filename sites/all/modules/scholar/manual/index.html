@@ -36,23 +36,25 @@ Słownik pojęć
   <dd>Treść, która może zostać opublikowana w postaci podstrony. W polskim tłumaczeniu Drupala
   używane jest dość niefortunne słowo <em>Segment</em>.</dd>
   <dt>moduł</dt>
-  <dd>Zbiór skryptów rozszerzających funkcjonalność Drupala. Każdy moduł umieszczony jest w osobnym katalogu umieszczonym w katalogu <span>modules</span> (moduły systemowe) albo w <span>sites/all/modules</span> (moduły dodatkowe).</dd>
+  <dd>Zbiór skryptów rozszerzających funkcjonalność Drupala. Każdy moduł umieszczony jest w osobnym
+  katalogu umieszczonym w katalogu <span>modules</span> (moduły systemowe) albo
+  w <span>sites/all/modules</span> (moduły dodatkowe).</dd>
 </dl>
 
-<h2>1. Instalacja i konfiguracja</h2>
+<h2>1. Instalacja</h2>
 
-<h3>1.1 Instalacja</h3>
+<p>Instalacja modułu Scholar jest analogiczna jak innych modułów dla Drupala.</p>
 
-<p>Moduł umieścić w katalogu <span class="file">sites/all/modules/scholar</span>.
-Przejść do <span class="nav">Administer &rarr; Site building &rarr; Modules</span>
+<p>Pliki modułu należy umieścić w katalogu <span class="file">sites/all/modules/scholar</span>,
+przejść do <span class="nav">Administer &rarr; Site building &rarr; Modules</span>
 odszukać w sekcji <cite>ventures</cite> moduł Scholar, zaznaczyć go
 a następnie zapisać konfigurację.</p>
 
-<h3>1.2 Konfiguracja</h3>
+<h2>2 Konfiguracja</h2>
 
 <p>Aby uzyskać najlepsze efekty prezentacyjne moduł oraz środowisko jego działania muszą zostać poprawnie skonfigurowane.</p> 
 
-<h4>1.2.1 Czas i autor wpisu</h4>
+<h3>2.1 Czas i autor wpisu</h3>
 
 <p>Do stron generowanych przez moduł Scholar (nazywanych dalej &bdquo;węzłami typu Scholar&rdquo;),
 podobnie jak do węzłów typów innych niż Strona (ang. <em>Page</em>) Drupal dodaje
@@ -65,7 +67,7 @@ na podstawie danych, które mogły zostać wpisane przez więcej niż jednego u�
 <span class="nav">Administer &rarr; Site building &rarr; Themes &rarr; Configure &rarr; Global settings</span>,
 w sekcji <cite>Display post information on</cite>, odznaczyć typ Scholar i zapisać zmiany.</p>
 
-<h4>1.2.2 Filtry</h4>
+<h3>2.2 Filtry</h3>
 
 <p>Domyślnie wszystkie treści węzłów w Drupalu są filtrowane. Zestaw filtrów definiuje
 tzw. format danych (ang. <em>Input format</em>). Domyślnie dostępne są dwa 
@@ -114,7 +116,7 @@ a następnie:</p>
  </tr>
 </table>
 
-<h4>1.2.3 Taksonomia</h4>
+<h3>2.3 Taksonomia</h3>
 
 <p>Moduł <cite>Taxonomy</cite> służy do kategoryzowania treści. Aby umożliwić
 kategoryzowanie węzłów tworzonych w ramach modułu Scholar, konieczne jest
@@ -127,21 +129,26 @@ następnie przejść do edycji wybranego z listy słownika. W sekcji
 bedzie można przyporządkowywać tagi z tego słownika do węzłów zarządzanych
 przez moduł Scholar.</p>
 
-<h4>1.2.4 Konfiguracja modułu Scholar</h4>
+<h3>2.4 Konfiguracja modułu Scholar</h3>
 
 <p>Do ekranu konfiguracji modułu Scholar można dotrzeć za pomocą menu głównego idąc do
 <span class="nav">Administer &rarr; Site configuration &rarr; Scholar settings</span>,
-albo wchodząc w łącze <cite>Settings</cite> na głównej stronie modułu.</p>
+albo wchodząc w łącze <cite>Settings</cite> na stronie głównej modułu Scholar.</p>
 
-<p>Za pomocą formularza można skonfigurować następujące rzeczy:</p>
+<p>Za pomocą formularza można skonfigurować:</p>
 
-Szerokość obrazów wyświetlanych w preambule generowanych stron,
-Współdziałanie z dodatkiem Lightbox
-Formaty dat: dla daty pojednyczej, oraz zakresów dat w obrębie jednego miesiąca i w obrębie jednego roku ale w różnych miesiącach.
+<ul>
+ <li>szerokość obrazów wyświetlanych w preambule generowanych stron,</li>
+ <li>współdziałanie obrazów w preambule ze skryptem Lightbox</li>
+ <li>formaty dat pojedynczych oraz zakresów dat w obrębie jednego miesiąca, jak również w obrębie jednego roku ale w różnych miesiącach</li>
+ <li>format danych węzłów generowanych przez moduł</li>
+ <li>stan uruchomienia pamięci podręcznej generowanych węzłów</li>
+</ul>
 
+<h2>Automatyczne generowanie treści</h2>
 
-
-
+<p>Istotą modułu Scholar jest automatycznie generowanie wykazów aktywności naukowej
+na podstawie danych zawartych w bazie danych.</p>
 
 <h2>BBCode</h2>
 

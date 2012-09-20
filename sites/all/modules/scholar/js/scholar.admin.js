@@ -847,6 +847,8 @@ var Scholar = {
                 display: 'none',
                 overflow: 'hidden'
             }).appendTo('body').fadeIn('fast');
+            $('body').css('overflow', 'hidden');
+
             _modal.css('zIndex', 1 + _overlay.css('zIndex'));
             _centerModal();
 
@@ -871,6 +873,7 @@ var Scholar = {
             if (_modal) {
                 _modal.css('display', 'none');
                 _overlay.remove();
+                $('body').css('overflow', '');
 
                 jStatus = jButtons = null;
 

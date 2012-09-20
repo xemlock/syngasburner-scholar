@@ -171,7 +171,7 @@ fieldset.scholar.collapsible.collapsed legend a:hover {
   text-decoration: none;
 }
 fieldset.scholar.collapsible legend a {
-  color: #000;
+  color: #444;
 }
 html fieldset.scholar.collapsed legend a * {
   display: inline;
@@ -692,6 +692,7 @@ body.scholar-dialog form.scholar {
 .scholar-index table {
   border: none;
   margin: 0;
+  width: 100%;
 }
 .scholar-index tbody {
   border: none;
