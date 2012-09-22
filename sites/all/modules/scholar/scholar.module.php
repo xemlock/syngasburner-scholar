@@ -254,8 +254,21 @@ function scholar_nodeapi(&$node, $op)
 
             $rendered_body = '<div class="scholar-node">' . scholar_render_markup($bbcode) . '</div>';
 
+            // przygotuj zajawke, usun wszystkie tagi poza <sub> i <sup>
+            // zamien ciagi bialych znakow na pojedyncze spacje
+            $teaser = strip_tags($rendered_body, '<a><sub><sup>');
+            $teaser = trim($teaser);
+            $teaser = preg_replace('/\s+/', ' ', $teaser);
+
+            if (drupal_strlen($teaser) > 512) {
+                $teaser = drupal_substr($teaser, 0, 512);
+                if (substr($teaser, -1) != '.') {
+                    $teaser .= ' ...';
+                }
+            }
+
             db_query("UPDATE {node} SET changed = %d WHERE nid = %d", $timestamp, $node->nid);
-            db_query("UPDATE {node_revisions} SET body = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $rendered_body, $timestamp, $node->nid, $node->vid);
+            db_query("UPDATE {node_revisions} SET body = '%s', teaser = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $rendered_body, $teaser, $timestamp, $node->nid, $node->vid);
             db_query("UPDATE {scholar_nodes} SET last_rendered = %d WHERE node_id = %d", $timestamp, $node->nid);
 
             $node->body = $rendered_body;
