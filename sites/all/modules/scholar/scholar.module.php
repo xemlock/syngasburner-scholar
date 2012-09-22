@@ -212,6 +212,45 @@ function scholar_node_info() {
     );
 }
 
+/**
+ * Tworzy zajawkę na podstawie podanej treści. Z zajawki usunięte zostają
+ * wszystkie tagi HTML za wyjątkiem A, SUB i SUP.
+ *
+ * @param string $body
+ *     kod HTML do przetworzenia
+ * @param int $length
+ *     maksymalna długość zajawki, wartości mniejsze lub równe 0 znoszą
+ *     ograniczenie długości. Jeżeli wynikiem przetwarzania będzie ciąg
+ *     znaków o długości większej niż $length, zostanie on obcięty do
+ *     $length - 3 znaków, po czym zostanie do niego wielokropek (...).
+ * @return string
+ */
+function scholar_node_teaser($body, $length = 0) // {{{
+{
+    // przygotuj zajawke, wstaw spacje przed i po elementach blokowych
+    $teaser = preg_replace('/<(\/?)(address|blockquote|div|ul|ol|li|dl|dt|dd|h1|h2|h3|h4|h5|h6|p|table)/i', ' <\1\2', $body);
+
+    // usun wszystkie tagi poza <sub> i <sup>
+    $teaser = strip_tags($teaser, '<a><sub><sup>');
+
+    // usun otaczajace biale znaki, zamien ciagi bialych znakow
+    // na pojedyncze spacje
+    $teaser = trim($teaser);
+    $teaser = preg_replace('/\s+/', ' ', $teaser);
+
+    // przytnij tekst do okreslonej liczby znakow (jezeli wieksza
+    // od zera), jezeli tekst byl dluzszy zamien cztery ostatnie
+    // znaki na wielokropek poprzedzony spacja (zeby dopasowac wynik
+    // do zadanej dlugosci)
+    $length = max(0, $length);
+
+    if ($length && drupal_strlen($teaser) > $length) {
+        $teaser = $length > 3 ? drupal_substr($teaser, 0, $length - 3) . '...' : '...';
+    }
+
+    return $teaser;
+} // }}}
+
 function scholar_nodeapi(&$node, $op)
 {
     // dolacz pliki
@@ -253,19 +292,7 @@ function scholar_nodeapi(&$node, $op)
             $timestamp = time();
 
             $rendered_body = '<div class="scholar-node">' . scholar_render_markup($bbcode) . '</div>';
-
-            // przygotuj zajawke, usun wszystkie tagi poza <sub> i <sup>
-            // zamien ciagi bialych znakow na pojedyncze spacje
-            $teaser = strip_tags($rendered_body, '<a><sub><sup>');
-            $teaser = trim($teaser);
-            $teaser = preg_replace('/\s+/', ' ', $teaser);
-
-            if (drupal_strlen($teaser) > 512) {
-                $teaser = drupal_substr($teaser, 0, 512);
-                if (substr($teaser, -1) != '.') {
-                    $teaser .= ' ...';
-                }
-            }
+            $teaser = scholar_node_teaser($rendered_body, 512);
 
             db_query("UPDATE {node} SET changed = %d WHERE nid = %d", $timestamp, $node->nid);
             db_query("UPDATE {node_revisions} SET body = '%s', teaser = '%s', timestamp = %d WHERE nid = %d AND vid = %d", $rendered_body, $teaser, $timestamp, $node->nid, $node->vid);
@@ -362,9 +389,9 @@ function scholar_theme() // {{{
     // hook_theme jest wywolywany raz, podczas instalacji modulu. Wtedy
     // modul nie jest jeszcze aktywny, wiec hook_init nie jest wywolywany.
     // Wersja deweloperska wymaga do poprawnego dzialania uruchomienia
-    // __scholar_init, ladujacego niezbedne pliki. Stad koniecznosc
+    // scholar_init, ladujacego niezbedne pliki. Stad koniecznosc
     // jawnego wywolania tej funkcji.
-    __scholar_init();
+    scholar_init();
 
     $theme = array();
 
@@ -382,21 +409,24 @@ function scholar_theme() // {{{
     return $theme;
 } // }}}
 
-function __scholar_init() // {{{
-{
-    // ladowanie powiazanych plikow dopiero gdy srodowisko jest w pelni
-    // zainicjowane (zaleznosc od Zend Framework)
-    _scholar_include(array('include', 'models'));
-} // }}}
-
 function scholar_init() // {{{
 {
-    __scholar_init();
+    static $initialized = false;
+
+    if ($initialized) {
+        return;
+    }
+
+    // ladowanie powiazanych plikow dopiero gdy srodowisko jest w pelni
+    // zainicjowane (wymagane przez zaleznosc od Zend Framework)
+    _scholar_include(array('include', 'models'));
+
+    $initialized = true;
 } // }}}
 
 function scholar_menu() // {{{
 {
-    __scholar_init();
+    scholar_init();
 
     return _scholar_menu();
 } // }}}
