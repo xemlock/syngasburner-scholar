@@ -36,7 +36,10 @@ function scholar_generics_journal_form(&$form_state, $record = null) // {{{
         'files',  // pliki
         'nodes',  // dodatkowa wewnetrzna strona poswiecona ksiazce
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
-            'end_date'     => false,
+            'start_date' => array(
+                '#attributes' => array('class' => 'scholar-datepicker'),
+            ),
+            'end_date'   => false,
         ),
         'submit' => array(
             'title' => $record ? t('Save changes') : t('Add journal'),

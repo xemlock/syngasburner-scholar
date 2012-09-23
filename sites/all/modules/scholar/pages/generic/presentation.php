@@ -14,6 +14,7 @@ function scholar_generics_presentation_form(&$form_state, $record = null) // {{{
         ),
         'start_date' => array(
             '#title'       => t('Date'),
+            '#attributes' => array('class' => 'scholar-datepicker'),
         ),
         'authors' => array(
             '#title'       => t('Authors'),

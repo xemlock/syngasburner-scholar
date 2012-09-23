@@ -31,6 +31,9 @@ function scholar_generics_article_form(&$form_state, $record = null) // {{{
         'url',
         'files',
         'events' => array( // np. info o wydaniu ksiazki, bez daty koncowej
+            'start_date'   => array(
+                '#attributes' => array('class' => 'scholar-datepicker'),
+            ),
             'end_date'     => false,
         ),
         'submit' => array(

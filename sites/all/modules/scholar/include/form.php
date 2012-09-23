@@ -270,7 +270,6 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#maxlength' => 10, // YYYY-MM-DD
             '#size'      => 24,
             '#description' => t('Date format: YYYY-MM-DD.'),
-            '#attributes' => array('class' => 'form-date'),
         ),
         'end_date' => array(
             '#type'      => 'textfield',
@@ -278,7 +277,6 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#maxlength' => 10,
             '#size'      => 24,
             '#description' => t('Date format: YYYY-MM-DD.'),
-            '#attributes' => array('class' => 'form-date'),
         ),
         'locality' => array(
             '#type'      => 'textfield',
@@ -458,6 +456,11 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
 
     if ($record) {
         scholar_populate_form($form, $record);
+    }
+
+    if (module_exists('jquery_ui')) {
+        jquery_ui_add(array('ui.datepicker', 'i18n/ui.datepicker-' . scholar_language()));
+        drupal_add_css(jquery_ui_get_path() . '/themes/base/ui.all.css');
     }
 
     return $form;

@@ -24,12 +24,14 @@ function form_type_scholar_element_events_process($element) // {{{
             '#type'          => 'textfield',
             '#title'         => t('Start date'),
             '#maxlength'     => 10,
+            '#size'          => 24,
             '#description'   => t('Date format: YYYY-MM-DD.'),
         ),
         'end_date' => array(
             '#type'          => 'textfield',
             '#title'         => t('End date'),
             '#maxlength'     => 10,
+            '#size'          => 24,
             '#description'   => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
         'title' => array(

@@ -120,7 +120,7 @@ function form_type_scholar_element_timespan_process($element) // {{{
         '#type'      => 'textfield',
         '#maxlength' => 10,
         '#size'      => 16,
-        '#attributes' => array('class' => 'form-date'),
+        '#attributes' => array('class' => 'scholar-datepicker'),
         '#default_value' => isset($default_value['date']) ? $default_value['date'] : null,
     );
 

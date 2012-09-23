@@ -1728,6 +1728,19 @@ $(function() {
         update();
     }); // }}}
 
+    if ($.fn.datepicker) { // {{{
+        $('input[type="text"].scholar-datepicker').each(function() {
+            $(this).attr('autocomplete', 'off').datepicker({
+                showMonthAfterYear: false,
+                dateFormat: 'yy-mm-dd',
+                showButtonPanel: true,
+                showOn: 'focus',
+                showAnim: 'slideDown',
+                speed: 'fast'
+            });
+        });
+    } // }}}
+
     /**
      * Hack do tabledrag umozliwiajacy zablokowanie mozliwosci przenoszenia
      * wierszy miedzy regionami.

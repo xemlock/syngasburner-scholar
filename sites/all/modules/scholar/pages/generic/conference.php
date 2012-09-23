@@ -13,9 +13,13 @@ function scholar_generics_conference_form(&$form_state, $record = null) // {{{
             '#required' => true
         ),
         scholar_form_tablerow_open(),
-        'start_date',
+        'start_date' => array(
+            '#attributes' => array('class' => 'scholar-datepicker'),
+        ),
         scholar_form_tablerow_next(),
-        'end_date',
+        'end_date' => array(
+            '#attributes' => array('class' => 'scholar-datepicker'),
+        ),
         scholar_form_tablerow_close(),
         'locality' => array(
             '#description' => t('Name of city or village where this conference is held.'),

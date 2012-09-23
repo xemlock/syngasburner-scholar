@@ -10,9 +10,13 @@ function scholar_generics_training_form(&$form_state, $record = null) // {{{
             '#required' => true
         ),
         scholar_form_tablerow_open(),
-        'start_date',
+        'start_date' => array(
+            '#attributes' => array('class' => 'scholar-datepicker'),
+        ),
         scholar_form_tablerow_next(),
-        'end_date',
+        'end_date' => array(
+            '#attributes' => array('class' => 'scholar-datepicker'),
+        ),
         scholar_form_tablerow_close(),
         'suppinfo' => array(
             '#description' => t('Additional details about this training.'),
