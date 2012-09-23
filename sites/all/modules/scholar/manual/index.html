@@ -226,8 +226,9 @@ wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nop
     w przeciwnym razie wynik będzie pusty.
     Atrybuty:
     width={width} height={height} align={left|right} title={title}
-       <code></code>
-    </td>
+       <code>[img]etc13.png[/img]</code>
+   </td>
+   <td><img src="etc13.png" /></td>
   </tr>
   <tr>
       <td><code>[code]</code></td>
@@ -269,6 +270,24 @@ wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nop
  <td><span style="color:#0000FF">Niebieski tekst</span></td>
 </tr>
 <tr>
+ <td><code>[size]</code></td>
+ <td>Zmienia rozmiar tekstu. Nowy rozmiar tekstu należy podać w procentach.</td>
+ <td><div class="bbcode">[size="80%"]1[/size][size="120%"]2[/size][size="160%"]3[/size][size="200%"]4[/size]</div></td>
+ <td><span style="font-size:80%">1</span><span style="font-size:120%">2</span><span style="font-size:160%">3</span><span style="font-size:200%">4</span></td>
+</tr>
+<tr>
+ <td><code>[youtube]</code></td>
+ <td>Umieszcza film z serwisu YouTube.
+  Atrybuty:
+  width (domyślnie 640), height (domyślnie 360).
+  Trzeba podać oba, w przeciwym razie zostaną użyte wymiary domyślne.
+ </td>
+ <td><div class="bbcode">[youtube]Jie3noHnvG0[/youtube]</div></td>
+ <td><img src="youtube.png" /></td>
+</tr>
+
+<h4>Listy</h4>
+<tr>
  <td><code>[list]</code></td>
  <td>Może wystąpić w jednym
   [list] lista nienumerowana
@@ -286,26 +305,42 @@ wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nop
  <td><code>[*]</code></td>
  <td>Element listy, znacznik nie ma zamknięcia i kończy się na pierwszym napotkanym przejściu do nowego wiersza</td>
 </tr>
-<tr>
- <td><code>[size]</code></td>
- <td>Zmienia rozmiar tekstu. Nowy rozmiar tekstu należy podać w procentach.</td>
- <td><div class="bbcode">[size="80%"]1[/size][size="120%"]2[/size][size="160%"]3[/size][size="200%"]4[/size]</div></td>
- <td><span style="font-size:80%">1</span><span style="font-size:120%">2</span><span style="font-size:160%">3</span><span style="font-size:200%">4</span></td>
-</tr>
-<tr>
- <td><code>[youtube]</code></td>
- <td>Umieszcza film z serwisu YouTube.
-  Atrybuty:
-  width (domyślnie 640), height (domyślnie 360).
-  Trzeba podać oba, w przeciwym razie zostaną użyte wymiary domyślne.
- </td>
- <td><div class="bbcode">[youtube]Jie3noHnvG0[/youtube]</div></td>
- <td><img src="youtube.png" width="320" /></td>
-</tr>
 </table>
 
+<h3>Znaczniki niestandardowe</h3>
 
+[t]
+Tłumaczenie tekstu z wykorzystaniem mechanizmu tłumaczeń Drupala.
 
+[date]
+Data w postaci ISO 8601 (YYYY-MM-DD) lub zakres dat w postaci Open Date Range Format (YYYY-MM-DD/YYYY-MM-DD).
+
+[preface]
+Treść umieszczana przed automatycznie generowaną treścią węzła.
+
+[collapsible]
+Zwijalny blok treści opatrzony tytułem.
+
+[section]
+Nagłówek.
+
+[subsection]
+Nagłówek niższego poziomu.
+
+[entry]
+Blok treści, w lewej kolumnie umieszczana jest zwykle data lub nagłówek, w prawej jest treść.
+
+[box]
+Blok treści.
+
+[asset]
+Link do zasobu.
+
+[node]
+Link do węzła.
+
+[gallery-img]
+Miniatura obrazu z galerii wraz z odnośnikiem do pełnowymiarowego obrazu.
 
 </body>
 </html>
