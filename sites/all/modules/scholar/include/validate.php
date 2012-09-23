@@ -124,5 +124,27 @@ function scholar_validate_color($color) { // {{{
     return false;
 } // }}}
 
+/**
+ * @return false|string
+ */
+function scholar_validate_url($url) // {{{
+{
+    $url = trim($url);
+
+    if (false === strpos($url, '://')) {
+        // wzgledny URL
+        $url = valid_url($url, false) ? $url : false;
+        if ($url) {
+            // dolacz sciezke bazowa do wzglednego adresu
+            global $base_url;
+            $url = $base_url . '/' . ltrim($url, '/');
+        }
+    } else {
+        // absolutny URL
+        $url = valid_url($url, true) ? $url : false;
+    }
+
+    return $url;
+} // }}}
 
 // vim: fdm=marker

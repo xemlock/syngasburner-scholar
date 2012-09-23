@@ -171,24 +171,28 @@ Składnia:
  </thead>
  <tbody>
   <tr>
-   <td><code>[s]</code></td>
-   <td>Przekreśla podany tekst</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td><code>[u]</code></td>
-   <td>Podkreśla podany tekst</td>
-   <td></td>
+   <td><code>[b]</code></td>
+   <td>Pogrubia podany tekst</td>
+   <td>[b]Tekst pogrubiony[/b]</td>
+   <td><b>Tekst pogrubiony</b></td>
   </tr>
   <tr>
    <td><code>[i]</code></td>
    <td>Pochyla podany tekst</td>
-   <td></td>
+   <td>[i]Tekst pochylony[/i]</td>
+   <td><i>Tekst pochylony</i></td>
   </tr>
   <tr>
-   <td><code>[b]</code></td>
-   <td>Pogrubia podany tekst</td>
-   <td></td>
+   <td><code>[s]</code></td>
+   <td>Przekreśla podany tekst</td>
+   <td>[s]Tekst przekreślony[/s]</td>
+   <td><s>Tekst przekreślony</s></td>
+  </tr>
+  <tr>
+   <td><code>[u]</code></td>
+   <td>Podkreśla podany tekst</td>
+   <td>[u]Tekst podkreślony[/u]</td>
+   <td><u>Tekst podkreślony</u></td>
   </tr>
   <tr>
    <td><code>[sub]</code></td>
@@ -208,13 +212,24 @@ Składnia:
    <td>
     <code>[url]http://syngasburner.eu[/url]</code><br/>
     <code>[url="http://syngasburner.eu"]Strona projektu[/url]</code>
+    Podany cel odnośnika musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL,
+    w przeciwnym razie wynik będzie pusty.
    </td>
    <td><div class="rendering"><a href="http://syngasburner.eu">http://syngasburner.eu</a><br/><a href="http://syngasburner.eu">Strona projektu</a></div></td>
   </tr>
   <tr>
    <td><code>[img]</code></td>
    <td>Obraz</td>
-   
+   <td>
+    Podana ścieżka obrazu musi być poprawnym relatywnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL,
+    w przeciwnym razie wynik będzie pusty.
+    Atrybuty:
+    width={width} height={height} align={left|right} title={title}
+       <code></code>
+    </td>
+  </tr>
+  <tr>
+      <td><code>[code]</code></td>
   </tr>
 <tr>
  <td><code>[noparse]</code></td>
@@ -222,15 +237,50 @@ Składnia:
 </tr>
 <tr>
  <td><code>[br]</code></td>
- <td></td>
+ <td>Przechodzi do nowego wiersza</td>
 </tr>
 <tr>
  <td><code>[nonl2br]</code></td>
+ <td>Wyłącza tryb zamiany znaków nowego wiersza. Wszystkie przejścia do nowego wiersza między znacznikiem otwierającym i zamykającym zostają zignorowane.</td>
+ <td>1<br/>2<br/>[nonl2br]<br/>3<br/>4<br/>5<br/>[/nonl2br]</td>
+ <td>1<br/>2<br/>3 4 5</td>
+</tr>
+<tr>
+ <td><code>\[</code></td>
+ <td>Lewy nawias kwadratowy</td>
+</tr>
+<tr>
+ <td><code>\]</code></td>
+ <td>Prawy nawias kwadratowy</td>
+</tr>
+<tr>
+ <td><code>[color]</code></td>
+ <td></td>
+</tr>
+<tr>
+ <td><code>[list]</code></td>
+ <td></td>
+</tr>
+<tr>
+ <td><code>[item]</code></td>
+ <td></td>
+</tr>
+<tr>
+ <td><code>[*]</code></td>
+ <td></td>
+</tr>
+<tr>
+ <td><code>[size]</code></td>
+ <td></td>
+</tr>
+<tr>
+ <td><code>[youtube]</code></td>
  <td></td>
 </tr>
 </table>
+
+
+
+
 </body>
 </html>
-
-
-

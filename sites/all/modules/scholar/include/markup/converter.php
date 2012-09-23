@@ -103,8 +103,15 @@ function scholar_markup_converter_img(Zend_Markup_Token $token, $contents) // {{
     $height = max(0, $token->getAttribute('height'));
 
     $title = trim($token->getAttribute('title'));
+
+    // niepoprawny URL, nie tworz tagu obrazu
+    $url = scholar_validate_url($contents);
+    if (!$url) {
+        return '';
+    }
+
     $attrs = array(
-        'src'   => $contents,
+        'src'   => $url,
         'alt'   => $title,
     );
 
@@ -166,29 +173,11 @@ function scholar_markup_converter_url(Zend_Markup_Token $token, $contents) // {{
         $url = $contents;
     }
 
-    if (false === strpos($url, '://')) {
-        // wzgledny URL
-        $url = valid_url($url, false) ? $url : false;
-        if ($url) {
-            // dolacz sciezke bazowa do wzglednego adresu
-            global $base_url;
-            $url = $base_url . '/' . ltrim($url, '/');
-        }
-    } else {
-        // absolutny URL
-        $url = valid_url($url, true) ? $url : false;
-    }
+    $url = scholar_validate_url($url);
 
     if ($url) {
-        if ('_self' == $token->getAttribute('target')) {
-            $target = '_self';
-        } else {
-            $target = '_blank';
-        }
-
         $attrs = array(
             'href' => $url,
-            'target' => $target,
         );
 
         return '<a' . drupal_attributes($attrs) . '>' . $contents . '</a>';
