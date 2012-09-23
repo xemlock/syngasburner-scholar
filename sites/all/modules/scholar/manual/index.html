@@ -152,17 +152,85 @@ na podstawie danych zawartych w bazie danych.</p>
 
 <h2>BBCode</h2>
 
-<p>Do generowania treści stron moduł Scholar używa tagów BBCode. Dostępne tagi to:</p>
+<p>Do generowania treści stron moduł Scholar używa znaczników BBCode.</p>
 
+Składnia:
+
+[nazwa(=(wartość|"wartość"))( atrybut=(wartość|"wartość"))*]
+
+
+
+<h3>Obsługiwane znaczniki standardowe</h3>
 <table>
+ <thead>
+  <tr>
+   <th>Tag</th>
+   <th>Opis</th>
+   <th>Przykład</th>
+   <th>Wynik</th>
+ </thead>
+ <tbody>
+  <tr>
+   <td><code>[s]</code></td>
+   <td>Przekreśla podany tekst</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td><code>[u]</code></td>
+   <td>Podkreśla podany tekst</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td><code>[i]</code></td>
+   <td>Pochyla podany tekst</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td><code>[b]</code></td>
+   <td>Pogrubia podany tekst</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td><code>[sub]</code></td>
+   <td>Indeks dolny</td>
+   <td><code>CO[sub]2[/sub]</code></td>
+   <td><div class="rendering">CO<sub>2</sub></div></td>
+  </tr>
+  <tr>
+   <td><code>[sup]</code></td>
+   <td>Indeks górny</td>
+   <td><code>200 mg/Nm[sup]3[/sup]</code></td>
+   <td><div class="rendering">200 mg/Nm<sup>3</sup></div></td>
+  </tr>
+  <tr>
+   <td><code>[url]</code></td>
+   <td>Odnośnik</td>
+   <td>
+    <code>[url]http://syngasburner.eu[/url]</code><br/>
+    <code>[url="http://syngasburner.eu"]Strona projektu[/url]</code>
+   </td>
+   <td><div class="rendering"><a href="http://syngasburner.eu">http://syngasburner.eu</a><br/><a href="http://syngasburner.eu">Strona projektu</a></div></td>
+  </tr>
+  <tr>
+   <td><code>[img]</code></td>
+   <td>Obraz</td>
+   
+  </tr>
 <tr>
- <td colspan="2">Tagi standardowe</td>
+ <td><code>[noparse]</code></td>
+ <td></td>
 </tr>
 <tr>
- <td></td>
+ <td><code>[br]</code></td>
  <td></td>
 </tr>
-
+<tr>
+ <td><code>[nonl2br]</code></td>
+ <td></td>
+</tr>
+</table>
 </body>
 </html>
+
+
 

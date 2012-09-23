@@ -116,14 +116,6 @@ class scholar_markup_renderer
                 }
 
                 switch ($tagName) {
-                    case 'ldelim':
-                        $result[] = '[';
-                        break;
-
-                    case 'rdelim':
-                        $result[] = ']';
-                        break;
-
                     case 'noparse':
                         if ($token->hasChildren()) {
                             foreach ($token->getChildren() as $child) {
@@ -230,47 +222,36 @@ class scholar_markup_renderer
             case Zend_Markup_Token::TYPE_TAG:
                 $tagName = strtolower($token->getTag());
 
-                switch ($tagName) {
-                    // since ldelim and rdelim are internal names convert them
-                    // to escaped square brackets
-                    case 'ldelim':
-                        return '\[';
+                $tag = '[' . $tagName;
 
-                    case 'rdelim':
-                        return '\]';
-
-                    default:
-                        $tag = '[' . $tagName;
-
-                        // render tag attributes
-                        $attrs = array();
-                        foreach ($token->getAttributes() as $key => $value) {
-                            $attrs[strtolower($key)] = strval($value);
-                        }
-
-                        // append to tag default attribute
-                        if (isset($attrs[$tag])) {
-                            $tag .= '="' . $attrs[$tag] . '"';
-                            unset($attrs[$tag]);
-                        }
-
-                        foreach ($attrs as $key => $value) {
-                            $tag .= ' ' . $key . '="' . $value . '"';
-                        }
-
-                        $tag .= ']';
-
-                        // get tag contents
-                        $contents = array();
-
-                        if ($token->hasChildren()) {
-                            foreach ($token->getChildren() as $child) {
-                                $contents[] = $this->rawTag($child);
-                            }
-                        }
-
-                        return $tag . implode('', $contents) . $token->getStopper();
+                // render tag attributes
+                $attrs = array();
+                foreach ($token->getAttributes() as $key => $value) {
+                    $attrs[strtolower($key)] = strval($value);
                 }
+
+                // append to tag default attribute
+                if (isset($attrs[$tag])) {
+                    $tag .= '="' . $attrs[$tag] . '"';
+                    unset($attrs[$tag]);
+                }
+
+                foreach ($attrs as $key => $value) {
+                    $tag .= ' ' . $key . '="' . $value . '"';
+                }
+
+                $tag .= ']';
+
+                // get tag contents
+                $contents = array();
+
+                if ($token->hasChildren()) {
+                    foreach ($token->getChildren() as $child) {
+                        $contents[] = $this->rawTag($child);
+                    }
+                }
+
+                return $tag . implode('', $contents) . $token->getStopper();
 
             case Zend_Markup_Token::TYPE_NONE:
                 // content of a text token is stored in its _tag property

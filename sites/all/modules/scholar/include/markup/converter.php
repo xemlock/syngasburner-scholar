@@ -38,12 +38,6 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
         'br' => array(
             'start' => '<br />',
         ),
-        'hr' => array(
-            'start' => '<hr />',
-        ),
-        'rule' => array(
-            'start' => '<hr />',
-        ),
         'item' => array(
             'start' => '<li>',
             'end'   => '</li>',

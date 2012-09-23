@@ -11,14 +11,6 @@ class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
     {
         // no constructor in the parent class
         // parent::__construct();
-
-        // add tags for left and right square brackets. It is a shame that
-        // there is no other way to do this, than adding tags in overloaded
-        // constructor.
-        $this->addTag('ldelim', array('single' => true));
-        $this->addTag('rdelim', array('single' => true));
-        $this->addTag('br',     array('single' => true));
-        $this->addTag('noparse', array('parse_inside' => false));
     } // }}}
 
     /**
@@ -70,10 +62,14 @@ class scholar_markup_parser extends Zend_Markup_Parser_Bbcode
      */
     public function parse($value) // {{{
     {
-        // convert escaped square brackets to tags when using array arguments
-        // str_replace is faster than strtr, see:
+        // add [noparse] here, to be sure that it is available and unaltered
+        $this->addTag('noparse', array('parse_inside' => false));
+
+        // convert escaped square brackets to tags.
+        // when using array arguments str_replace is faster than strtr, see:
         // http://cznp.com/blog/3/strtr-vs-str_replace-a-battle-for-speed-and-dignity
-        $value = str_replace(array('\[', '\]'), array('[ldelim]', '[rdelim]'), $value);
+        $value = str_replace(array('\[', '\]'), array('[noparse][[/noparse]', '[noparse]][/noparse]'), $value);
+
         return parent::parse($value);
     } // }}}
 }
