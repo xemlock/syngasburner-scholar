@@ -156,9 +156,10 @@ na podstawie danych zawartych w bazie danych.</p>
 
 Składnia:
 
-[nazwa(=(wartość|"wartość"))( atrybut=(wartość|"wartość"))*]
+<pre>[nazwa(=(wartość|"wartość"))( atrybut=(wartość|"wartość"))*]</pre>
 
-
+Przejścia do nowego wiersza w kodzie zamieniane są na przejścia do nowego
+wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[noparse]</code> (czytaj niżej).
 
 <h3>Obsługiwane znaczniki standardowe</h3>
 <table>
@@ -233,11 +234,15 @@ Składnia:
   </tr>
 <tr>
  <td><code>[noparse]</code></td>
- <td></td>
+ <td>Wyłącza parsowanie znaczników w treści</td>
+ <td>Znacznik [noparse][b][/noparse] pogrubia tekst</td>
+ <td>Znacznik [b] pogrubia tekst</td>
 </tr>
 <tr>
  <td><code>[br]</code></td>
  <td>Przechodzi do nowego wiersza</td>
+ <td>1[br]2[br]3</td>
+ <td>1<br/>2<br/>3</td>
 </tr>
 <tr>
  <td><code>[nonl2br]</code></td>
@@ -246,36 +251,56 @@ Składnia:
  <td>1<br/>2<br/>3 4 5</td>
 </tr>
 <tr>
- <td><code>\[</code></td>
- <td>Lewy nawias kwadratowy</td>
-</tr>
-<tr>
- <td><code>\]</code></td>
- <td>Prawy nawias kwadratowy</td>
+ <td>
+  <code>\[</code><br/>
+  <code>\]</code>
+ </td>
+ <td>
+  Lewy nawias kwadratowy<br/>
+  Prawy nawias kwadratowy
+ </td>
+ <td>Znacznik \[b\] pogrubia tekst</td>
+ <td>Znacznik [b] pogrubia tekst</td>
 </tr>
 <tr>
  <td><code>[color]</code></td>
- <td></td>
+ <td>Zmienia kolor tekstu. Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href="http://www.w3.org/TR/css3-color/#svg-color">http://www.w3.org/TR/css3-color/#svg-color</a>), lub kolorem podanym jako <code>#rrggbb</code> lub <code>#rgb</code>.</td>
+ <td>[color="#0000FF"]Niebieski tekst[/color]</td>
+ <td><span style="color:#0000FF">Niebieski tekst</span></td>
 </tr>
 <tr>
  <td><code>[list]</code></td>
- <td></td>
+ <td>Może wystąpić w jednym
+  [list] lista nienumerowana
+  [list=1] lista numerowana, z numeracją rozpoczynającą się od 1 (ogólniej [list=n], jeżeli n jest liczbą całkowitą rozpoczyna numerację od n)
+  [list=A] lista indeksowana literami
+  [list=I] lista indeksowana cyframi rzymskimi
+ </td>
 </tr>
 <tr>
  <td><code>[item]</code></td>
+ <td>Element listy
  <td></td>
 </tr>
 <tr>
  <td><code>[*]</code></td>
- <td></td>
+ <td>Element listy, znacznik nie ma zamknięcia i kończy się na pierwszym napotkanym przejściu do nowego wiersza</td>
 </tr>
 <tr>
  <td><code>[size]</code></td>
- <td></td>
+ <td>Zmienia rozmiar tekstu. Nowy rozmiar tekstu należy podać w procentach.</td>
+ <td><div class="bbcode">[size="80%"]1[/size][size="120%"]2[/size][size="160%"]3[/size][size="200%"]4[/size]</div></td>
+ <td><span style="font-size:80%">1</span><span style="font-size:120%">2</span><span style="font-size:160%">3</span><span style="font-size:200%">4</span></td>
 </tr>
 <tr>
  <td><code>[youtube]</code></td>
- <td></td>
+ <td>Umieszcza film z serwisu YouTube.
+  Atrybuty:
+  width (domyślnie 640), height (domyślnie 360).
+  Trzeba podać oba, w przeciwym razie zostaną użyte wymiary domyślne.
+ </td>
+ <td><div class="bbcode">[youtube]Jie3noHnvG0[/youtube]</div></td>
+ <td><img src="youtube.png" width="320" /></td>
 </tr>
 </table>
 
