@@ -1,0 +1,33 @@
+{
+    "img": {
+        "syn": "[img]adres_obrazu[/img]",
+        "desc": "Obraz",
+        "notes": "Podany adres obrazu musi być poprawnym relatywnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+        "attrs": {
+            "width":  {"o":true, "d": "szerokość obrazu"},
+            "height": {"o":true, "d": "wysokość obrazu"},
+            "align":  {"o":true, "d": "wyrównanie obrazu do lewej lub prawej", "v": ["left", "right"]},
+            "title":  {"o":true, "d": "tytuł obrazu, umieszczony w atrybucie alt"}
+        },
+        "ex": "[img]etc13.png[/img]",
+        "res": "<img src=\"etc13.png\" />",
+    },
+    "url": {
+        "syn": [
+            "[url]adres[/url]",
+            "[url=\"adres\"]tytuł_odnośnika[/url]",
+        ],
+        "desc": "Odnośnik",
+        "notes": "Podany cel odnośnika musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+        "ex": [
+            "[url]http://syngasburner.eu[/url]",
+            "[url=\"http://syngasburner.eu\"]Strona projektu[/url]"
+        ],
+        "res": [
+            "<a href=\"http://syngasburner.eu\">http://syngasburner.eu</a>",
+            "<a href=\"http://syngasburner.eu\">Strona projektu</a>"
+        ]
+    },
+
+}
+
