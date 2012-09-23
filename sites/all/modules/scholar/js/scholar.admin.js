@@ -1736,7 +1736,27 @@ $(function() {
                 showButtonPanel: true,
                 showOn: 'focus',
                 showAnim: 'slideDown',
-                speed: 'fast'
+                speed: 'fast', // 200ms
+                beforeShow: function(input) {
+                    var io = $(input).offset();
+
+                    setTimeout(function() {
+                        var d = $('#ui-datepicker-div'),
+                            o = d.offset(),
+                            h = d.outerHeight();
+
+                        // jezeli kalendarz nachodzi na input (jest za malo miejsca
+                        // na pelne rozwiniecie kalendarza pod inputem), przesun kalendarz
+                        // do gory
+                        if (o.top < io.top) {
+                            var dy = o.top + h - io.top;
+                            if (dy > 0) {
+                                d.animate({top: o.top - dy}, 200);
+                            }
+                        }
+
+                    }, 500);
+                }
             });
         });
     } // }}}
