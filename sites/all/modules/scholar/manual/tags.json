@@ -1,33 +1,97 @@
 {
-    "img": {
-        "syn": "[img]adres_obrazu[/img]",
-        "desc": "Obraz",
-        "notes": "Podany adres obrazu musi być poprawnym relatywnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
-        "attrs": {
-            "width":  {"o":true, "d": "szerokość obrazu"},
-            "height": {"o":true, "d": "wysokość obrazu"},
-            "align":  {"o":true, "d": "wyrównanie obrazu do lewej lub prawej", "v": ["left", "right"]},
-            "title":  {"o":true, "d": "tytuł obrazu, umieszczony w atrybucie alt"}
+    "Formatowanie tekstu": {
+        "b": {
+            "syn": "[b]tekst[/b]",
+            "desc": "Pogrubia podany tekst",
+            "ex": "[b]Tekst pogrubiony[/b]",
+            "res": "<b>Tekst pogrubiony</b>",
         },
-        "ex": "[img]etc13.png[/img]",
-        "res": "<img src=\"etc13.png\" />",
+        "i": {
+            "syn": "[i]tekst[/i]",
+            "desc": "Pochyla podany tekst",
+            "ex": "[i]Tekst pochylony[/i]",
+            "res": "<i>Tekst pochylony</i>",
+        },
+        "s": {
+            "syn": "[s]tekst[/s]",
+            "desc": "Przekreśla podany tekst",
+            "ex": "[s]Tekst przekreślony[/s]",
+            "res": "<s>Tekst przekreślony</s>",
+        },
+        "u": {
+            "syn": "[u]tekst[/u]",
+            "desc": "Podkreśla podany tekst",
+            "ex": "[u]Tekst podkreślony[/u]",
+            "res": "<u>Tekst podkreślony</u>",
+        },
+        "sub": {
+            "syn": "[sub]tekst[/sub]",
+            "desc": "Indeks dolny",
+            "ex": "CO[sub]2[/sub]",
+            "res": "CO<sub>2</sub>",
+        },
+        "sup": {
+            "syn": "[sup]tekst[/sup]",
+            "desc": "Indeks górny",
+            "ex": "200 mg/Nm[sup]3[/sup]",
+            "res": "200 mg/Nm<sup>3</sup>",
+        },
+        "color": {
+            "syn": "[color]tekst[/color]",
+            "desc": "Kolor tekstu",
+            "notes": "Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href=\"http://www.w3.org/TR/css3-color\">http://www.w3.org/TR/css3-color</a>), lub kolorem w postaci <code>#rrggbb</code> lub <code>#rgb</code>.",
+            "ex": "[color=\"#0000FF\"]Niebieski tekst[/color]",
+            "res": "<span style=\"color:#0000FF\">Niebieski tekst</span>",
+        },
+        "size": {
+            "syn": "[size=\"rozmiar\"]tekst[/size]",
+            "desc": "Rozmiar tekstu",
+            "notes": "Nowy rozmiar tekstu musi być podany w procentach.",
+            "ex": "[size=\"80%\"]1[/size][size=\"120%\"]2[/size][size=\"160%\"]3[/size][size=\"200%\"]4[/size]",
+            "res": "<span style=\"font-size:80%\">1</span><span style=\"font-size:120%\">2</span><span style=\"font-size:160%\">3</span><span style=\"font-size:200%\">4</span>",
+        }
     },
-    "url": {
-        "syn": [
-            "[url]adres[/url]",
-            "[url=\"adres\"]tytuł_odnośnika[/url]",
-        ],
-        "desc": "Odnośnik",
-        "notes": "Podany cel odnośnika musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
-        "ex": [
-            "[url]http://syngasburner.eu[/url]",
-            "[url=\"http://syngasburner.eu\"]Strona projektu[/url]"
-        ],
-        "res": [
-            "<a href=\"http://syngasburner.eu\">http://syngasburner.eu</a>",
-            "<a href=\"http://syngasburner.eu\">Strona projektu</a>"
-        ]
+    "Odnośniki, obrazy i multimedia": {
+        "img": {
+            "syn": "[img]adres_obrazu[/img]",
+            "desc": "Obraz",
+            "notes": "Podany adres obrazu musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+            "attrs": {
+                "width":  {"o":true, "d": "szerokość obrazu"},
+                "height": {"o":true, "d": "wysokość obrazu"},
+                "align":  {"o":true, "d": "wyrównanie obrazu do lewej lub prawej", "v": ["left", "right"]},
+                "title":  {"o":true, "d": "tytuł obrazu, umieszczony w atrybucie alt"}
+            },
+            "ex": "[img]etc13.png[/img]",
+            "res": "<img src=\"etc13.png\" alt=\"\" />",
+        },
+        "url": {
+            "syn": [
+                "[url]adres[/url]",
+                "[url=\"adres\"]tytuł_odnośnika[/url]",
+            ],
+            "desc": "Odnośnik",
+            "notes": "Podany cel odnośnika musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+            "ex": [
+                "[url]http://syngasburner.eu[/url]",
+                "[url=\"http://syngasburner.eu\"]Strona projektu[/url]"
+            ],
+            "res": [
+                "<a href=\"http://syngasburner.eu\">http://syngasburner.eu</a>",
+                "<a href=\"http://syngasburner.eu\">Strona projektu</a>"
+            ]
+        },
+        "youtube": {
+            "syn": "[youtube]identyfikator_filmu[/youtube]",
+            "desc": "Film z serwisu YouTube",
+            "notes": "Aby zmienić wymiary filmu trzeba podać atrybuty width i height, w przeciwym razie zostaną użyte wymiary domyślne 640x360 px. Poprawny identyfikator filmu składa się z 11 znaków.",
+             "attrs": {
+                "width":  {"o":true, "d": "szerokość filmu"},
+                "height": {"o":true, "d": "wysokość filmu"}
+            },
+            "ex": "[youtube]Jie3noHnvG0[/youtube]",
+            "res": "<img src=\"youtube.png\" alt=\"\" />"
+        },
     },
-
+    "Listy": {}
 }
-

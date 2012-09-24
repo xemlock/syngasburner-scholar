@@ -184,46 +184,19 @@ wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nop
    <th>Przykład</th>
    <th>Wynik</th>
  </thead>
- <tbody>
   <tr>
-   <td><code>[b]</code></td>
-   <td>Pogrubia podany tekst</td>
-   <td>[b]Tekst pogrubiony[/b]</td>
-   <td><b>Tekst pogrubiony</b></td>
+   <td><code>[color]</code></td>
+   <td>Zmienia kolor tekstu. Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href="http://www.w3.org/TR/css3-color/#svg-color">http://www.w3.org/TR/css3-color/#svg-color</a>), lub kolorem podanym jako <code>#rrggbb</code> lub <code>#rgb</code>.</td>
+   <td>[color="#0000FF"]Niebieski tekst[/color]</td>
+   <td><span style="color:#0000FF">Niebieski tekst</span></td>
   </tr>
   <tr>
-   <td><code>[i]</code></td>
-   <td>Pochyla podany tekst</td>
-   <td>[i]Tekst pochylony[/i]</td>
-   <td><i>Tekst pochylony</i></td>
+   <td><code>[size]</code></td>
+   <td>Zmienia rozmiar tekstu. Nowy rozmiar tekstu należy podać w procentach.</td>
+   <td><div class="bbcode">[size="80%"]1[/size][size="120%"]2[/size][size="160%"]3[/size][size="200%"]4[/size]</div></td>
+   <td><span style="font-size:80%">1</span><span style="font-size:120%">2</span><span style="font-size:160%">3</span><span style="font-size:200%">4</span></td>
   </tr>
-  <tr>
-   <td><code>[s]</code></td>
-   <td>Przekreśla podany tekst</td>
-   <td>[s]Tekst przekreślony[/s]</td>
-   <td><s>Tekst przekreślony</s></td>
-  </tr>
-  <tr>
-   <td><code>[u]</code></td>
-   <td>Podkreśla podany tekst</td>
-   <td>[u]Tekst podkreślony[/u]</td>
-   <td><u>Tekst podkreślony</u></td>
-  </tr>
-  <tr>
-   <td><code>[sub]</code></td>
-   <td>Indeks dolny</td>
-   <td><code>CO[sub]2[/sub]</code></td>
-   <td><div class="rendering">CO<sub>2</sub></div></td>
-  </tr>
-  <tr>
-   <td><code>[sup]</code></td>
-   <td>Indeks górny</td>
-   <td><code>200 mg/Nm[sup]3[/sup]</code></td>
-   <td><div class="rendering">200 mg/Nm<sup>3</sup></div></td>
-  </tr> 
-  <tr>
-      <td><code>[code]</code></td>
-  </tr>
+
 <tr>
  <td><code>[noparse]</code></td>
  <td>Wyłącza parsowanie znaczników w treści</td>
@@ -254,28 +227,8 @@ wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nop
  <td>Znacznik \[b\] pogrubia tekst</td>
  <td>Znacznik [b] pogrubia tekst</td>
 </tr>
-<tr>
- <td><code>[color]</code></td>
- <td>Zmienia kolor tekstu. Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href="http://www.w3.org/TR/css3-color/#svg-color">http://www.w3.org/TR/css3-color/#svg-color</a>), lub kolorem podanym jako <code>#rrggbb</code> lub <code>#rgb</code>.</td>
- <td>[color="#0000FF"]Niebieski tekst[/color]</td>
- <td><span style="color:#0000FF">Niebieski tekst</span></td>
-</tr>
-<tr>
- <td><code>[size]</code></td>
- <td>Zmienia rozmiar tekstu. Nowy rozmiar tekstu należy podać w procentach.</td>
- <td><div class="bbcode">[size="80%"]1[/size][size="120%"]2[/size][size="160%"]3[/size][size="200%"]4[/size]</div></td>
- <td><span style="font-size:80%">1</span><span style="font-size:120%">2</span><span style="font-size:160%">3</span><span style="font-size:200%">4</span></td>
-</tr>
-<tr>
- <td><code>[youtube]</code></td>
- <td>Umieszcza film z serwisu YouTube.
-  Atrybuty:
-  width (domyślnie 640), height (domyślnie 360).
-  Trzeba podać oba, w przeciwym razie zostaną użyte wymiary domyślne.
- </td>
- <td><div class="bbcode">[youtube]Jie3noHnvG0[/youtube]</div></td>
- <td><img src="youtube.png" /></td>
-</tr>
+
+
 
 <h4>Listy</h4>
 <tr>
