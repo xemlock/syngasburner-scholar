@@ -849,7 +849,9 @@ var Scholar = {
             }).appendTo('body').fadeIn('fast');
             $('body').css('overflow', 'hidden');
 
-            _modal.css('zIndex', 1 + _overlay.css('zIndex'));
+            // duzy zIndex jest zwracany w notacji naukowej jako string.
+            // Funkcja parseInt obcina wykladnik, wiec trzeba uzyc parseFloat.
+            _modal.css('zIndex', 1 + parseFloat(_overlay.css('zIndex')));
             _centerModal();
 
             function _onload() {
