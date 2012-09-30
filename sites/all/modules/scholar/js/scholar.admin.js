@@ -590,8 +590,9 @@ var Scholar = {
         }
     }, // }}}
     /**
-     * Okienko.
+     * Okienko ogólnego zastosowania.
      * @constructor
+     * @version 2012-09-30
      */
     Dialog: function() { // {{{
         var $ = window.jQuery,
@@ -732,7 +733,7 @@ var Scholar = {
          */
         this.open = function(options) {
             options = $.extend({}, {
-                id:      'scholar-modal',
+                id:      'app-dialog',
                 title:   '',
                 content: '',
                 width:   320,
@@ -777,6 +778,9 @@ var Scholar = {
             c.width(options.width);
             c.height(options.height);
             tb.width(options.width + pl + pr);
+
+            // dodaj .parentDialog do kontenera przechowujacego tresc okna
+            c[0].parentDialog = self;
 
             if (options.iframe) {
                 // iframe: {url: string, expand: bool, load: function}
@@ -830,6 +834,9 @@ var Scholar = {
                 }
                 _modal.addClass('loading');
                 $.ajax(options.request);
+
+            } else if (options.content) {
+                self.content(options.content);
             }
 
             // nie polegaj na zadnej zewnetrznej bibliotece do overlayeringu,
@@ -849,8 +856,11 @@ var Scholar = {
             }).appendTo('body').fadeIn('fast');
             $('body').css('overflow', 'hidden');
 
-            // duzy zIndex jest zwracany w notacji naukowej jako string.
-            // Funkcja parseInt obcina wykladnik, wiec trzeba uzyc parseFloat.
+            // Od wersji jQuery 1.5 duzy zIndex jest zwracany jako string
+            // z liczba w notacji naukowej. W wersjach wczesniejszych wartosc
+            // zIndex byla zwracana jako string z liczba calkowita. Funkcja
+            // parseInt() obcina wykladnik, wiec aby zapewnic kompatybilnosc
+            // trzeba uzyc funkcji parseFloat().
             _modal.css('zIndex', 1 + parseFloat(_overlay.css('zIndex')));
             _centerModal();
 
@@ -899,14 +909,20 @@ var Scholar = {
 
         /**
          * Ustawia zawartość okienka modalnego.
-         * @param {object|string}
+         * @param {object|string|function}
          */
-        this.content = function(text) {
+        this.content = function(content) {
             if (_modal) {
-                if (typeof text == 'object') {
-                    _modal.children('.content').empty().append(text);
+                if (typeof content === 'function') {
+                    // jezeli jako zawartosc okienka podano funkcje, wywolaj
+                    // ja w kontekscie kontenera przechowujacego tresc
+                    content.apply(_modal.children('.content')[0]);
+                } else if (typeof content === 'object') {
+                    // jezeli podano obiekt ustaw go jako jedyne dziecko
+                    // kontenera tresci
+                    _modal.children('.content').empty().append(content);
                 } else {
-                    _modal.children('.content').html(text);
+                    _modal.children('.content').html(content);
                 }
             }
         }
