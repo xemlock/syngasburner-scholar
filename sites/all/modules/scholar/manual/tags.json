@@ -57,10 +57,10 @@
             "desc": "Obraz",
             "notes": "Podany adres obrazu musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
             "attrs": {
-                "width":  {"o":true, "d": "szerokość obrazu"},
-                "height": {"o":true, "d": "wysokość obrazu"},
-                "align":  {"o":true, "d": "wyrównanie obrazu do lewej lub prawej", "v": ["left", "right"]},
-                "title":  {"o":true, "d": "tytuł obrazu, umieszczony w atrybucie alt"}
+                "width":  {"optional":true, "desc": "szerokość obrazu"},
+                "height": {"optional":true, "desc": "wysokość obrazu"},
+                "align":  {"optional":true, "desc": "wyrównanie obrazu do lewej lub prawej", "values": ["left", "right"]},
+                "title":  {"optional":true, "desc": "tytuł obrazu, umieszczony w atrybucie alt"}
             },
             "ex": "[img]etc13.png[/img]",
             "res": "<img src=\"etc13.png\" alt=\"\" />",
@@ -86,12 +86,64 @@
             "desc": "Film z serwisu YouTube",
             "notes": "Aby zmienić wymiary filmu trzeba podać atrybuty width i height, w przeciwym razie zostaną użyte wymiary domyślne 640x360 px. Poprawny identyfikator filmu składa się z 11 znaków.",
              "attrs": {
-                "width":  {"o":true, "d": "szerokość filmu"},
-                "height": {"o":true, "d": "wysokość filmu"}
+                "width":  {"optional":true, "desc": "szerokość filmu"},
+                "height": {"optional":true, "desc": "wysokość filmu"}
             },
             "ex": "[youtube]Jie3noHnvG0[/youtube]",
             "res": "<img src=\"youtube.png\" alt=\"\" />"
         },
     },
-    "Listy": {}
+    "Listy": {
+        "*": {
+            "syn" : "[*] element",
+            "desc": "Jednolinijkowy element listy",
+            "ex"  : "[list]\n[*] Publikacje i prezentacja wyników\n[*]Wystąpienia na konferencjach, warsztatach i seminariach\n[/list]",
+            "res" : "<ul><li>Publikacje i prezentacja wyników</li><li>Wystąpienia na konferencjach, warsztatach i seminariach</li>"
+        },
+        "item": {
+            "syn" : "[item]element[/item]",
+            "desc": "Element listy (jedno- lub wielolinijkowy)",
+            "ex"  : "[list]\n[item][b]The International Conference on Thermochemical Conversion Science, tcbiomass2013[/b]\n03 - 06 września 2013, Chicago, USA[/item]\n[item][b]6th European Combustion Meeting ECM2013[/b]25 - 28 czwerca 2013, Lund, Szwecja[/item]\n[/list]",
+        },
+        "list": {
+            "syn" : "[list]\nelementy_listy\n[/list]",
+            "desc": "Lista wypunktowana",
+            
+        },
+        "list=1": {
+            "syn" : "[list=1]\nelementy_listy\n[/list]",
+            "desc": "Lista numerowana",
+            "notes": "Numerowanie listy rozpoczyna się od wartości 1. Aby rozpocząć numerację od innej wartości należy podać tę wartość jako argument znacznika (np. [list=10]).",
+            
+        },
+        "list=A": {
+            "syn" : "[list=A]\nelementy_listy\n[/list]",
+            "desc": "Lista numerowana wielkimi literami",
+            "attrs": {
+                "start": {"optional": true, "default": 1, "desc": "początek numeracji (1 odpowiada 'A', 2 &ndash; 'B', etc.)"},
+            },
+        },
+        "list=a": {
+            "syn" : "[list=a]\nelementy_listy\n[/list]",
+            "desc": "Lista numerowana małymi literami",
+            "attrs": {
+                "start": {"optional": true, "default": 1, "desc": "ppoczątek numeracji (1 odpowiada 'a', 2 &ndash; 'b', etc.)"},
+            },
+        },
+        "list=I": {
+            "syn" : "[list=I]\nelementy_listy\n[/list]",
+            "desc": "Lista numerowana cyframi rzymskimi",
+            "attrs": {
+                "start": {"optional": true, "default": 1, "desc": "początek numeracji (1 odpowiada 'I', 2 &ndash; 'II', etc.)"},
+            },
+        },
+        "list=i": {
+            "syn" : "[list=i]\nelementy_listy\n[/list]",
+            "desc": "Lista numerowana małymi cyframi rzymskimi",
+            "attrs": {
+                "start": {"optional": true, "default": 1, "desc": "początek numeracji (1 odpowiada 'i', 2 &ndash; 'ii', etc.)"},
+            },
+        },
+
+    }
 }
