@@ -41,10 +41,12 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
         'item' => array(
             'start' => '<li>',
             'end'   => '</li>',
+            'trim'  => true,
         ),
         '*' => array(
             'start' => '<li>',
             'end'   => '</li>',
+            'trim'  => true,
         ),
     );
 
@@ -54,6 +56,9 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
     if (isset($markup[$tagName])) {
         if (empty($markup[$tagName]['end'])) {
             return $markup[$tagName]['start'];
+        }
+        if (isset($markup[$tagName]['trim']) && $markup[$tagName]['trim']) {
+            $contents = trim($contents);
         }
         return $markup[$tagName]['start'] . $contents . $markup[$tagName]['end'];
     }
@@ -148,18 +153,44 @@ function scholar_markup_converter_list(Zend_Markup_Token $token, $contents) // {
 {
     $contents = trim($contents);
 
-    // make sure list contents are LI tags only
-    if (preg_match('/^<li[ >]/i', $contents) && preg_match('/<\/li>$/i', $contents)) {
+    if ($contents) {
+        // assume contents contain properly formed HTML tags (not necessarily
+        // semantically valid). Make sure list contents are LI tags only
+
+        // if contents don't start with an LI tag, add one to the beginning
+        if (!preg_match('/^<li[\s>]/i', $contents)) {
+            $contents = '<li>' . $contents;
+        }
+
+        // build list contents containing only LI tags
+        $contents = str_ireplace('</li>', '', $contents);
+        $contents = preg_split('/<li(?=[\s>])/', $contents, -1, PREG_SPLIT_NO_EMPTY);
+        $contents = array_map('trim', $contents);
+        $contents = '<li' . implode('</li><li', $contents) . '</li>';
+
         $type = $token->getAttribute('list');
+
         if (strlen($type)) {
+            // decimal numbers, start numbering from number given as type value
             if (ctype_digit($type)) {
                 return '<ol start="' . $type . '">' . $contents . '</ol>';
-            } else {
-                return '<ol type="' . $type . '">' . $contents . '</ol>';
             }
-        } else {
-            return '<ul>' . $contents . '</ul>';
+
+            // letters or roman numbers
+            if (in_array($type, array('A', 'a', 'I', 'i'))) {
+                $attrs = array(
+                    'type' => $type,
+                );
+
+                $start = (int) $token->getAttribute('start');
+                if ($start) {
+                    $attrs['start'] = $start;
+                }
+
+                return '<ol' . drupal_attributes($attrs) . '>' . $contents . '</ol>';
+            }
         }
+        return '<ul>' . $contents . '</ul>';
     }
 
     return '';
