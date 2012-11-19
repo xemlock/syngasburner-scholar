@@ -38,7 +38,7 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
         'br' => array(
             'start' => '<br />',
         ),
-        'item' => array(
+        'li' => array(
             'start' => '<li>',
             'end'   => '</li>',
             'trim'  => true,
@@ -173,13 +173,8 @@ function scholar_markup_converter_list(Zend_Markup_Token $token, $contents) // {
         $type = $token->getAttribute('list');
 
         if (strlen($type)) {
-            // decimal numbers, start numbering from number given as type value
-            if (ctype_digit($type)) {
-                return '<ol start="' . $type . '">' . $contents . '</ol>';
-            }
-
-            // letters or roman numbers
-            if (in_array($type, array('A', 'a', 'I', 'i'))) {
+            // decimal numbers, letters or roman numbers
+            if (in_array($type, array('1', 'A', 'a', 'I', 'i'))) {
                 $attrs = array(
                     'type' => $type,
                 );
@@ -190,6 +185,11 @@ function scholar_markup_converter_list(Zend_Markup_Token $token, $contents) // {
                 }
 
                 return '<ol' . drupal_attributes($attrs) . '>' . $contents . '</ol>';
+            }
+
+            // decimal numbers, start numbering from number given as type value
+            if (ctype_digit($type)) {
+                return '<ol start="' . $type . '">' . $contents . '</ol>';
             }
         }
         return '<ul>' . $contents . '</ul>';
