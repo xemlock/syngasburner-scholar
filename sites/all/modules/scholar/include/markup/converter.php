@@ -163,7 +163,9 @@ function scholar_markup_converter_list(Zend_Markup_Token $token, $contents) // {
         }
 
         // build list contents containing only LI tags
-        $contents = str_ireplace('</li>', '', $contents);
+        // replace LI close tags with spaces, to avoid merging with text
+        // contents not wrapped with LI tag.
+        $contents = str_ireplace('</li>', ' ', $contents);
         $contents = preg_split('/<li(?=[\s>])/', $contents, -1, PREG_SPLIT_NO_EMPTY);
         $contents = array_map('trim', $contents);
         $contents = '<li' . implode('</li><li', $contents) . '</li>';
