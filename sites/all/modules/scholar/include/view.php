@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Klasa abstrakcyjna, kapsułkująca ustawienia widoku, tak, by
- * nie można ich było zmodyfikować podczas renderingu widoku.
+ * Klasa abstrakcyjna, kapsułkująca ustawienia, tak, by nie
+ * można ich było zmodyfikować podczas renderingu widoku.
  */
 abstract class scholar_view_abstract
 {

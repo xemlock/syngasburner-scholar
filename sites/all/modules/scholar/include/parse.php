@@ -77,22 +77,31 @@ function scholar_parse_time($time) // {{{
 } // }}}
 
 /**
- * Wartość true zwracana jest dla następujących ciągów znaków: '1', 'y',
- * 'yes', 't', 'true'. Wartości false odpowiadają '0', 'n', 'no', 'f',
- * 'false'. Dla wszystkie innych wartości zwracany jest null.
+ * Wartość true zwracana jest dla następujących ciągów znaków: 'y', 'yes',
+ * 't', 'true' oraz dla napisów reprezentujących liczby różne od zera.
+ * Wartości false odpowiadają '0', 'n', 'no', 'f', 'false'. Dla wszystkich
+ * innych wartości zwracany jest null.
  *
  * @param string $value
  * @return null|bool
  */
 function scholar_parse_bool($value) // {{{
 {
-    switch (strtolower(trim($value)))
-    {
-        case '1': case 'y': case 'yes': case 't': case 'true':
-            return true;
+    $value = strtolower(trim($value));
 
-        case '0': case 'n': case 'no':  case 'f': case 'false':
-            return false;
+    if (strlen($value)) {
+        if (is_numeric($value)) {
+            // implicit conversion from string to number
+            return 0 != $value;
+        }
+
+        switch ($value) {
+            case 'y': case 'yes': case 't': case 'true':
+                return true;
+
+            case 'n': case 'no':  case 'f': case 'false':
+                return false;
+        }
     }
 
     return null;

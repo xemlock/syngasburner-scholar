@@ -139,30 +139,29 @@
     },
     "Formatowanie zaawansowane": {
         "code": {
-            "desc" : "The [code] tag switches to a fixed-width (monospace) font and preserves all spacing."
+            "syn"  : "[code]{kod_źródłowy}[/code]",
+            "desc" : "Wyświetla podany tekst jako blok kodu źródłowego zachowując formatowanie i używajac czcionki o ustalonej szerokości znaków.",
+            "ex"   : "[code]#ifdef __cplusplus\ntypedef bool boolean;\n#else\ntypedef enum {false, true} boolean;\n#endif[/code]",
+            "res"  : "<pre><code>#ifdef __cplusplus\ntypedef bool boolean;\n#else\ntypedef enum {false, true} boolean;\n#endif</code></pre>"
         },
         "quote": {
-            "syn" : [
-                "[quote]{cytat}[/quote]",
-                "[quote={autor}]{cytat}[/quote]"
-            ],
-            "desc" : "!!! The [quote] tag allows you to attribute text to someone else.",
-            "ex": [
-                "[quote]Artificial Intelligence is no match for natural stupidity.[/quote]",
-                "[quote=\"Albert Einstein\"]Make everything as simple as possible, but not simpler.[/quote]"
-            ],
-            "res" : [
-                "<div class=\"quote\"><blockquote><div>Artificial Intelligence is no match for natural stupidity.</div></blockquote></div>",
-                "<div class=\"quote\"><small class=\"author\">Albert Einstein napisał(a):</small><blockquote><div>Make everything as simple as possible, but not simpler.</div></blockquote></div>"
-            ]
+            "syn"  : "[quote]{tekst}[/quote]",
+            "desc" : "Wyświetla podany tekstu jako cytat.",
+            "ex"   : "[quote]Artificial Intelligence is no match for natural stupidity.[/quote]",
+            "res"  : "<div class=\"quote\"><blockquote><div>Artificial Intelligence is no match for natural stupidity.</div></blockquote></div>"
         },
         "noparse" : {
-            "desc" : "Wyłącza interpretowanie znaczników BBCode."
+            "syn"  : "[noparse]{tekst}[/noparse]",
+            "desc" : "Wyłącza interpretowanie znaczników BBCode.",
+            "ex"   : "[noparse][url]http://www.fuw.edu.pl[/url][/noparse]",
+            "res"  : "[url]http://www.fuw.edu.pl[/url]"
         },
         "nonl2br": {
+            "syn"  : "[nonl2br]{tekst}[/nonl2br]",
             "desc" : "Wszystkie przejścia do nowego wiersza między znacznikiem otwierającym i zamykającym zostają zignorowane. Nie dotyczy znaczników <code>[br]</code>."
         },
         "br": {
+            "syn"  : "[br]",
             "desc" : "Przejście do nowego wiersza."
         },
         "\\[": {

@@ -41,12 +41,22 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
         'li' => array(
             'start' => '<li>',
             'end'   => '</li>',
-            'trim'  => true,
         ),
         '*' => array(
             'start' => '<li>',
             'end'   => '</li>',
-            'trim'  => true,
+        ),
+        'quote' => array(
+            // element BLOCKQUOTE moze zawierac jedynie elementy blokowe:
+            // http://www.w3.org/TR/html4/struct/text.html#h-9.2.2
+            'start' => '<blockquote><div>',
+            'end'   => '</div></blockquote>',
+        ),
+        'c' => array(
+            // [c][/c] liniowy znacznik kodu zrodlowego
+            // http://www.phpbb.com/customise/db/bbcode/inline_bbcode/
+            'start' => '<code>',
+            'end'   => '</code>',
         ),
     );
 
@@ -82,41 +92,7 @@ function scholar_markup_converter_code(Zend_Markup_Token $token, $contents) // {
     $contents = htmlspecialchars($contents);
     $contents = nl2br($contents);
 
-    $output = '<code' . ($code ? ' class="' . $code . '"' : '') . '>' . $contents . '</code>';
-    $inline = scholar_parse_bool($token->getAttribute('inline'));
-
-    return !$inline ? '<pre>' . $output . '</pre>' : $output;
-} // }}}
-
-function scholar_markup_converter_quote(Zend_Markup_Token $token, $contents) // {{{
-{
-    $name = trim($token->getAttribute('quote'));
-
-    if ($name) {
-        // @name wrote:
-        // @name napisał(a):
-        // @nameさんが書きました:
-
-        $language = scholar_markup_converter___language();
-
-        // Small print typically features disclaimers, caveats, legal
-        // restrictions, or copyrights. Small print is also sometimes
-        // used for attribution, or for satisfying licensing
-        // requirements. See: http://html5doctor.com/small-hr-element
-        $author = '<small class="author">'
-                . t('@name wrote:', array('@name' => $name), $language)
-                . '</small>';
-    } else {
-        $author = '';
-    }
-
-    // blockquote element can only contain block-level elements, see:
-    // http://www.w3.org/TR/html4/struct/text.html#h-9.2.2
-
-    return '<div class="quote">'
-         . $author
-         . '<blockquote><div>' . $contents . '</div></blockquote>'
-         . '</div>';
+    return '<pre><code' . ($code ? ' class="' . $code . '"' : '') . '>' . $contents . '</code></pre>';
 } // }}}
 
 function scholar_markup_converter_color(Zend_Markup_Token $token, $contents) // {{{

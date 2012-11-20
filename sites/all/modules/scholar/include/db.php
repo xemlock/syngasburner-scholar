@@ -230,9 +230,9 @@ function scholar_db_country_name($column, $table) // {{{
         $alias  = '';
     }
 
-    // korzystamy z udostepnianej funkcji do escape'owania nazw tabel, ze wzgledu
-    // na dodawanie prefiksu do nazw tabel w db_query, ktore moze nie byc odporne
-    // na nazwy tabel otoczone znakami ograniczajacymi
+    // korzystamy z udostepnianej funkcji do escape'owania nazw tabel, ze
+    // wzgledu na dodawanie prefiksu do nazw tabel w db_query, ktore moze
+    // nie byc odporne na nazwy tabel otoczone znakami ograniczajacymi
     $table  = db_escape_table($table);
 
     if (empty($column) || empty($table)) {
