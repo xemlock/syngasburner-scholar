@@ -98,12 +98,25 @@ function scholar_markup_converter_quote(Zend_Markup_Token $token, $contents) // 
         // @nameさんが書きました:
 
         $language = scholar_markup_converter___language();
-        $contents = '<cite>'
-            . t('@name wrote:', array('@name' => $name), $language)
-            . '</cite>' . $contents;
+
+        // Small print typically features disclaimers, caveats, legal
+        // restrictions, or copyrights. Small print is also sometimes
+        // used for attribution, or for satisfying licensing
+        // requirements. See: http://html5doctor.com/small-hr-element
+        $author = '<small class="author">'
+                . t('@name wrote:', array('@name' => $name), $language)
+                . '</small>';
+    } else {
+        $author = '';
     }
 
-    return '<blockquote>' . $contents . '</blockquote>';
+    // blockquote element can only contain block-level elements, see:
+    // http://www.w3.org/TR/html4/struct/text.html#h-9.2.2
+
+    return '<div class="quote">'
+         . $author
+         . '<blockquote><div>' . $contents . '</div></blockquote>'
+         . '</div>';
 } // }}}
 
 function scholar_markup_converter_color(Zend_Markup_Token $token, $contents) // {{{

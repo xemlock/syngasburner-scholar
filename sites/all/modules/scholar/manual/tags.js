@@ -55,7 +55,7 @@
         "img": {
             "syn": "[img]{adres_obrazu}[/img]",
             "desc": "Obraz",
-            "notes": "Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+            "notes": "Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty. Jeżeli podano adres względny, zostanie on automatycznie przekształcony w bezwzględny poprzez dodanie do jego początku adresu bezwzględnego bieżącej instalacji Drupala.",
             "attrs": {
                 "width":  {"optional":true, "desc": "szerokość obrazu"},
                 "height": {"optional":true, "desc": "wysokość obrazu"},
@@ -71,7 +71,7 @@
                 "[url=\"{adres}\"]{tytuł_odnośnika}[/url]"
             ],
             "desc": "Odnośnik",
-            "notes": "Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL. Adres względny zostanie automatycznie przekształcony na absolutny rozpoczynający się od ścieżki ",
+            "notes": "Podany adres musi być poprawnym względnym lub bezwzględnym (rozpoczynającym się od http(s)://) adresem URL. Jeżeli podano adres względny, zostanie on automatycznie przekształcony w bezwzględny poprzez dodanie do jego początku adresu bezwzględnego bieżącej instalacji Drupala.",
             "ex": [
                 "[url]http://syngasburner.eu[/url]",
                 "[url=\"http://syngasburner.eu\"]Strona projektu[/url]"
@@ -84,10 +84,16 @@
         "youtube": {
             "syn": "[youtube]{identyfikator_filmu}[/youtube]",
             "desc": "Film z serwisu YouTube",
-            "notes": "Aby zmienić wymiary filmu trzeba podać atrybuty width i height, w przeciwym razie zostaną użyte wymiary domyślne 640x360 px. Poprawny identyfikator filmu składa się z 11 znaków.",
+            "notes": "Aby zmienić wymiary filmu trzeba podać atrybuty określające szerokość i wysokość filmu, w przeciwym razie zostaną użyte wymiary domyślne 640x360 px. Poprawny identyfikator filmu składa się z 11 znaków: cyfr, liter małych i wielkich, myślników oraz podkreśleń.",
              "attrs": {
-                "width":  {"optional":true, "desc": "szerokość filmu"},
-                "height": {"optional":true, "desc": "wysokość filmu"}
+                "width":  {
+                    "optional": true,
+                    "desc": "szerokość filmu"
+                },
+                "height": {
+                    "optional": true,
+                    "desc": "wysokość filmu"
+                }
             },
             "ex": "[youtube]Jie3noHnvG0[/youtube]",
             "res": "<img src=\"youtube.png\" alt=\"\" />"
@@ -109,7 +115,7 @@
                 "[list={typ_listy}]\n{elementy_listy}\n[/list]"
             ],
             "desc": "Lista wypunktowana lub numerowana",
-            "notes": "Jeżeli nie podano typu listy będzie ona wypunktowana. Typ listy numerowanej może przyjąć jedną z następujących wartości: 1 (numerowanie liczbami arabskimi), A (numerowanie wielkimi literami), a (numerowanie małymi literami), I (numerowanie liczbami rzymskimi), i (numerowanie małymi liczbami rzymskimi). Numerowanie listy rozpoczyna się od wartości 1. Aby rozpocząć numerację od innej wartości należy podać tę wartość w atrybucie start.",
+            "notes": "Jeżeli nie podano typu listy będzie ona wypunktowana. Typ listy numerowanej może przyjąć jedną z następujących wartości: 1 (numerowanie liczbami arabskimi), A (numerowanie wielkimi literami), a (numerowanie małymi literami), I (numerowanie liczbami rzymskimi), i (numerowanie małymi liczbami rzymskimi). Numerowanie listy rozpoczyna się od wartości 1. Aby rozpocząć numerację od innej wartości należy określić ją w atrybucie start.",
             "attrs": {
                 "start": {
                     "optional": true,
@@ -133,10 +139,22 @@
     },
     "Formatowanie zaawansowane": {
         "code": {
-            // The [code] tag switches to a fixed-width (monospace) font and preserves all spacing.
+            "desc" : "The [code] tag switches to a fixed-width (monospace) font and preserves all spacing."
         },
         "quote": {
-            // The [quote] tag allows you to attribute text to someone else.
+            "syn" : [
+                "[quote]{cytat}[/quote]",
+                "[quote={autor}]{cytat}[/quote]"
+            ],
+            "desc" : "!!! The [quote] tag allows you to attribute text to someone else.",
+            "ex": [
+                "[quote]Artificial Intelligence is no match for natural stupidity.[/quote]",
+                "[quote=\"Albert Einstein\"]Make everything as simple as possible, but not simpler.[/quote]"
+            ],
+            "res" : [
+                "<div class=\"quote\"><blockquote><div>Artificial Intelligence is no match for natural stupidity.</div></blockquote></div>",
+                "<div class=\"quote\"><small class=\"author\">Albert Einstein napisał(a):</small><blockquote><div>Make everything as simple as possible, but not simpler.</div></blockquote></div>"
+            ]
         },
         "noparse" : {
             "desc" : "Wyłącza interpretowanie znaczników BBCode."
@@ -145,7 +163,7 @@
             "desc" : "Wszystkie przejścia do nowego wiersza między znacznikiem otwierającym i zamykającym zostają zignorowane. Nie dotyczy znaczników <code>[br]</code>."
         },
         "br": {
-            "desc" : "Przechodzi do nowego wiersza.",
+            "desc" : "Przejście do nowego wiersza."
         },
         "\\[": {
             "syn"  : "\\[",
