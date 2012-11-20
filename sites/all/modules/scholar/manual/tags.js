@@ -39,7 +39,7 @@
         "color": {
             "syn": "[color]{tekst}[/color]",
             "desc": "Kolor tekstu",
-            "notes": "Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href=\"http://www.w3.org/TR/css3-color\">http://www.w3.org/TR/css3-color</a>), lub kolorem w postaci <code>#rrggbb</code> lub <code>#rgb</code>.",
+            "notes": "Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href=\"http://www.w3.org/TR/css3-color\">http://www.w3.org/TR/css3-color</a>), albo kolorem w postaci szesnastkowej <code>#rrggbb</code> lub <code>#rgb</code>.",
             "ex": "[color=\"#0000FF\"]Niebieski tekst[/color]",
             "res": "<span style=\"color:#0000FF\">Niebieski tekst</span>"
         },
@@ -55,7 +55,7 @@
         "img": {
             "syn": "[img]{adres_obrazu}[/img]",
             "desc": "Obraz",
-            "notes": "Podany adres obrazu musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
+            "notes": "Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty.",
             "attrs": {
                 "width":  {"optional":true, "desc": "szerokość obrazu"},
                 "height": {"optional":true, "desc": "wysokość obrazu"},
@@ -71,7 +71,7 @@
                 "[url=\"{adres}\"]{tytuł_odnośnika}[/url]"
             ],
             "desc": "Odnośnik",
-            "notes": "Podany adres odnośnika musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL.",
+            "notes": "Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL. Adres względny zostanie automatycznie przekształcony na absolutny rozpoczynający się od ścieżki ",
             "ex": [
                 "[url]http://syngasburner.eu[/url]",
                 "[url=\"http://syngasburner.eu\"]Strona projektu[/url]"
@@ -129,6 +129,33 @@
                 "<ol type=\"A\"><li>Punkt pierwszy</li><li>Punkt drugi</li><li>Punkt trzeci</li></ol>",
                 "<ol type=\"A\" start=\"4\"><li>Punkt czwarty</li><li>Punkt piąty</li><li>Punkt szósty</li></ol>"
             ]
+        }
+    },
+    "Formatowanie zaawansowane": {
+        "code": {
+            // The [code] tag switches to a fixed-width (monospace) font and preserves all spacing.
+        },
+        "quote": {
+            // The [quote] tag allows you to attribute text to someone else.
+        },
+        "noparse" : {
+            "desc" : "Wyłącza interpretowanie znaczników BBCode."
+        },
+        "nonl2br": {
+            "desc" : "Wszystkie przejścia do nowego wiersza między znacznikiem otwierającym i zamykającym zostają zignorowane. Nie dotyczy znaczników <code>[br]</code>."
+        },
+        "br": {
+            "desc" : "Przechodzi do nowego wiersza.",
+        },
+        "\\[": {
+            "syn"  : "\\[",
+            "desc" : "Lewy nawias kwadratowy",
+            "notes": "Równoznaczne z <code>[noparse][[/noparse]</code>."
+        },
+        "\\]": {
+            "syn"  : "\\]",
+            "desc" : "Prawy nawias kwadratowy",
+            "notes": "Równoznaczne z <code>[noparse]][/noparse]</code>."
         }
     }
 }

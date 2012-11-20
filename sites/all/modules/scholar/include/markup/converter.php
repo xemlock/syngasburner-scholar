@@ -77,7 +77,7 @@ function scholar_markup_converter(Zend_Markup_Token $token, $contents) // {{{
 function scholar_markup_converter_code(Zend_Markup_Token $token, $contents) // {{{
 {
     $code = $token->getAttribute('code');
-    $code = preg_replace('/[^_a-z0-9]/i', '', $code);
+    $code = preg_replace('/[^-_a-z0-9]/i', '', $code);
 
     $contents = htmlspecialchars($contents);
     $contents = nl2br($contents);
@@ -86,6 +86,24 @@ function scholar_markup_converter_code(Zend_Markup_Token $token, $contents) // {
     $inline = scholar_parse_bool($token->getAttribute('inline'));
 
     return !$inline ? '<pre>' . $output . '</pre>' : $output;
+} // }}}
+
+function scholar_markup_converter_quote(Zend_Markup_Token $token, $contents) // {{{
+{
+    $name = trim($token->getAttribute('quote'));
+
+    if ($name) {
+        // @name wrote:
+        // @name napisał(a):
+        // @nameさんが書きました:
+
+        $language = scholar_markup_converter___language();
+        $contents = '<cite>'
+            . t('@name wrote:', array('@name' => $name), $language)
+            . '</cite>' . $contents;
+    }
+
+    return '<blockquote>' . $contents . '</blockquote>';
 } // }}}
 
 function scholar_markup_converter_color(Zend_Markup_Token $token, $contents) // {{{
