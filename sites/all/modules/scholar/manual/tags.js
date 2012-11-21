@@ -174,7 +174,7 @@
             "desc" : "Przejście do nowej linii",
             "note" : "Znacznik ten nie posiada znacznika zamykającego.",
             "ex"   : "Ta część zdania znajduje się przed przejściem do nowej linii,[br]a ta po.",
-            "res"  : "Ta część zdania znajduje się przed przejściem do nowej linii,<br/>a ta po.",
+            "res"  : "Ta część zdania znajduje się przed przejściem do nowej linii,<br/>a ta po."
         },
         "\\[": {
             "syn"  : "\\[",
@@ -187,5 +187,7 @@
             "note" : "Równoznaczne z <code>[noparse]][/noparse]</code>."
         }
     },
-    
+    "Znaczniki niestandardowe": {
+        
+    }
 }

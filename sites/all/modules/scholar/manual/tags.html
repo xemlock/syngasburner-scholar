@@ -1,0 +1,170 @@
+<h3>Formatowanie tekstu</h3>
+
+<h4>[b]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[b]{tekst}[/b]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Pogrubia podany tekst</dd>
+</dl>
+<h4>[i]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[i]{tekst}[/i]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Pochyla podany tekst</dd>
+</dl>
+<h4>[s]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[s]{tekst}[/s]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Przekreśla podany tekst</dd>
+</dl>
+<h4>[u]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[u]{tekst}[/u]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Podkreśla podany tekst</dd>
+</dl>
+<h4>[sub]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[sub]{tekst}[/sub]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Indeks dolny</dd>
+</dl>
+<h4>[sup]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[sup]{tekst}[/sup]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Indeks górny</dd>
+</dl>
+<h4>[color]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[color]{tekst}[/color]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Kolor tekstu</dd>
+<p>Podany kolor może być nazwą koloru zdefiniowaną w CSS Level 3 (<a href="http://www.w3.org/TR/css3-color">http://www.w3.org/TR/css3-color</a>), albo kolorem w postaci szesnastkowej <code>#rrggbb</code> lub <code>#rgb</code>.</p>
+</dl>
+<h4>[size]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[size="{rozmiar}"]{tekst}[/size]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Rozmiar tekstu</dd>
+<p>Nowy rozmiar tekstu musi być podany w procentach.</p>
+</dl>
+<h3>Odnośniki, obrazy i multimedia</h3>
+
+<h4>[img]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[img]{adres_obrazu}[/img]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Obraz</dd>
+<p>Podany adres musi być poprawnym względnym lub absolutnym (rozpoczynającym się od http(s)://) adresem URL, w przeciwnym razie wynik będzie pusty. Jeżeli podano adres względny, zostanie on automatycznie przekształcony w bezwzględny poprzez dodanie do jego początku adresu bezwzględnego bieżącej instalacji Drupala.</p>
+</dl>
+<h4>[url]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>Array</code></dd>
+ <dt>Opis:</dt>
+ <dd>Odnośnik</dd>
+<p>Podany adres musi być poprawnym względnym lub bezwzględnym (rozpoczynającym się od http(s)://) adresem URL. Jeżeli podano adres względny, zostanie on automatycznie przekształcony w bezwzględny poprzez dodanie do jego początku adresu bezwzględnego bieżącej instalacji Drupala.</p>
+</dl>
+<h4>[youtube]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[youtube]{identyfikator_filmu}[/youtube]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Film z serwisu YouTube</dd>
+<p>Aby zmienić wymiary filmu trzeba podać atrybuty określające szerokość i wysokość filmu, w przeciwym razie zostaną użyte wymiary domyślne 640x360 px. Poprawny identyfikator filmu składa się z 11 znaków: cyfr, liter małych i wielkich, myślników oraz podkreśleń.</p>
+</dl>
+<h3>Listy</h3>
+
+<h4>[*]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[*]{tekst}</code></dd>
+ <dt>Opis:</dt>
+ <dd>Element listy</dd>
+<p>Treść elementu listy kończy się albo znakiem nowej linii, albo znacznikiem kolejnego elementu, albo znacznikiem zamykającym listę.</p>
+</dl>
+<h4>[li]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[li]{tekst}[/li]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Element listy</dd>
+</dl>
+<h4>[list]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>Array</code></dd>
+ <dt>Opis:</dt>
+ <dd>Lista wypunktowana lub numerowana</dd>
+<p>Jeżeli nie podano typu listy będzie ona wypunktowana. Typ listy numerowanej może przyjąć jedną z następujących wartości: 1 (numerowanie liczbami arabskimi), A (numerowanie wielkimi literami), a (numerowanie małymi literami), I (numerowanie liczbami rzymskimi), i (numerowanie małymi liczbami rzymskimi). Numerowanie listy rozpoczyna się od wartości 1. Aby rozpocząć numerację od innej wartości należy określić ją w atrybucie start.</p>
+</dl>
+<h3>Formatowanie zaawansowane</h3>
+
+<h4>[code]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[code]{kod_źródłowy}[/code]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Kod źródłowy</dd>
+<p>Wyświetla podany tekst jako blok kodu źródłowego zachowując formatowanie i używajac czcionki o ustalonej szerokości znaków.</p>
+</dl>
+<h4>[quote]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[quote]{tekst}[/quote]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Cytat</dd>
+<p>Wyświetla podany tekst jako wyróżniony blok cytatu.</p>
+</dl>
+<h4>[noparse]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[noparse]{tekst}[/noparse]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Wyłącza interpretowanie znaczników</dd>
+</dl>
+<h4>[nonl2br]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[nonl2br]{tekst}[/nonl2br]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Ignoruje znaki nowego wiersza</dd>
+<p>Wszystkie przejścia do nowego wiersza między znacznikiem otwierającym i zamykającym zostają zignorowane. Nie dotyczy znaczników <code>[br]</code>.</p>
+</dl>
+<h4>[br]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>[br]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Przejście do nowej linii</dd>
+<p>Znacznik ten nie posiada znacznika zamykającego.</p>
+</dl>
+<h4>\[</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>\[</code></dd>
+ <dt>Opis:</dt>
+ <dd>Lewy nawias kwadratowy</dd>
+<p>Równoznaczne z <code>[noparse][[/noparse]</code>.</p>
+</dl>
+<h4>\]</h4>
+<dl>
+ <dt>Składnia:</dt>
+ <dd><code>\]</code></dd>
+ <dt>Opis:</dt>
+ <dd>Prawy nawias kwadratowy</dd>
+<p>Równoznaczne z <code>[noparse]][/noparse]</code>.</p>
+</dl>
+<h3>Znaczniki niestandardowe</h3>
+
