@@ -159,21 +159,63 @@ albo wchodząc w łącze <cite>Settings</cite> na stronie głównej modułu Scho
  <li>stan uruchomienia pamięci podręcznej generowanych węzłów</li>
 </ul>
 
-<h2>Automatyczne generowanie treści</h2>
+
+<h2>3. Automatyczne generowanie treści</h2>
 
 <p>Istotą modułu Scholar jest automatycznie generowanie wykazów aktywności naukowej
 na podstawie danych zawartych w bazie danych.</p>
 
-<h2>BBCode</h2>
+<p>Do treści generowanej automatycznie można dodać (przed lub za) treść napisaną przez użytkownika.
+Treść ta musi byc sformatowana przy użyciu znaczników BBCode. Opis obsługiwanych znaczników
+znajduje się w rozdziale <strong>4</strong>.</p>
 
-<p>Do generowania treści stron moduł Scholar używa znaczników BBCode.</p>
+Jakie strony są automatycznie generowane
+Są trzy strony specjalne:
+Wystąpienia na konferencjach, warsztatach i seminariach
+Publikacje i prezentacja wyników
+Szkolenia
 
-Składnia:
+Lista zajęć w obrębie szkolenia
+Wykaz prezentacji w obrębie konferencji
 
-<pre>[nazwa(=(wartość|"wartość"))( atrybut=(wartość|"wartość"))*]</pre>
+Dla pojedynczej osoby:
+wykaz publikacji
+wykaz wystąpień na konferencjach
 
-Przejścia do nowego wiersza w kodzie zamieniane są na przejścia do nowego
-wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[noparse]</code> (czytaj niżej).
+
+
+<h2>4. BBCode</h2>
+
+<p>BBCode to sposób formatowania danych tekstowych wywodzący się z for dyskusyjnych.
+Jego składnia jest podobna do składni języka HTML, z tą różnicą, że znaczniki umieszcza się
+w nawiasach kwadratowych (zamiast w nawiasach kątowych).</p>
+
+<h3>4.1 Składnia</h3>
+
+<p>Fragment tekstu formatowany za pomocą BBCode musi być otoczony znacznikiem otwierającym oraz odpowiednim znacznikiem zamykającym.
+Znaczniki mogą być zagnieżdżane, nie mogą się jednak przeplatać, tzn. znacznik otwarty jako ostatni,
+musi być zamknięty jako pierwszy.</p>
+
+<p>Niektóre znaczniki występują wyłącznie samodzielnie, nie posiadają znacznika zamykającego
+i w konsekwencji nie mogą zawierać treści.</p>
+
+<h4>Atrybuty</h4>
+
+<p>Działanie znacznika może być modyfikowane przez jeden lub więcej atrybutów.
+Atrybuty, czyli pary nazwa-wartość umieszcza się bezpośrednio w znaczniku,
+rozdzielając wartość atrybutu od jego nazwy znakiem równości, zaś kolejne atrybuty oddziela się spacją.
+Szczególnym przypadkiem jest atrybut główny, którego wartość umieszcza się po znaku równości, bezpośrednio za nazwą znacznika
+(nie podaje się nazwy atrybutu).</p>
+
+<p>Wartość atrybutu musi być otoczona cydzysłowami gdy zawiera białe znaki, jeżeli ich nie zawiera, cudzysłowy można opuścić.</p>
+
+<h4>Białe znaki</h4>
+
+<p>Przejścia do nowego wiersza w kodzie zamieniane są na przejścia do nowego
+wiersza w wynikowym dokumencie. Wyjątkiem jest zawartość znacznika <code>[nonl2br]</code> (czytaj niżej).</p>
+
+
+<h3>4.2 Obsługiwane znaczniki</h3>
 
 <h3>Obsługiwane znaczniki standardowe</h3>
 <table>
