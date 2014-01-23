@@ -113,9 +113,14 @@ function scholar_save_record($model, &$record) // {{{
                     $event['url'] = $record->url;
                 }
 
-                // ustaw czas zdarzenia z danych powiazanego rekordu
-                $event['start_date'] = isset($record->start_date) ? $record->start_date : null;
-                $event['end_date'] = isset($record->end_date) ? $record->end_date : null;
+                // ustaw czas zdarzenia z danych powiazanego rekordu, jezeli
+                // nie zostaly ustawione
+                if (empty($event['start_date'])) {
+                    $event['start_date'] = isset($record->start_date) ? $record->start_date : null;
+                }
+                if (empty($event['end_date'])) {
+                    $event['end_date'] = isset($record->end_date) ? $record->end_date : null;
+                }
             }
             unset($event);
 
