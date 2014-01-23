@@ -336,7 +336,8 @@ form.scholar .form-radios {
 }
 
 .scholar-vtable .fullwidth,
-.scholar-vtable .resizable-textarea {
+.scholar-vtable .resizable-textarea,
+.scholar-vtable .form-autocomplete {
   display: block;
   width: 100%;
   -webkit-box-sizing: border-box;
