@@ -112,10 +112,13 @@ function scholar_tabledrag_handle() // {{{
 } // }}}
 
 /**
- * Generuje kod HTML elementu, ale tylko tego elementu bez zadnych
- * wrapperow.
+ * Generuje kod HTML znacznika SELECT na podstawie podanego elementu. Funkcja
+ * zwraca znacznik bez zadnych wrapperow.
+ *
+ * @param array $element
+ * @return string
  */
-function theme_scholar_select($element) // {{{
+function theme_scholar_select_tag($element) // {{{
 {
     scholar_element_set_class($element, 'form-select');
 
@@ -124,7 +127,14 @@ function theme_scholar_select($element) // {{{
     return '<select' . drupal_attributes($attrs) . '>' . form_select_options($element) . '</select>';
 } // }}}
 
-function theme_scholar_textfield($element) // {{{
+/**
+ * Generuje kod HTML znacznika INPUT na podstawie podanego elementu. Funkcja
+ * zwraca znacznik bez zadnych wrapperow.
+ *
+ * @param array $element
+ * @return string
+ */
+function theme_scholar_textfield_tag($element) // {{{
 {
     scholar_element_set_class($element, 'form-text');
 
@@ -141,6 +151,30 @@ function theme_scholar_label($title, $required = false) // {{{
     $required = $required ? '<span class="form-required" title="' . t('This field is required.') . '">*</span>' : '';
 
     return '<label>' . t('!title: !required', array('!title' => $title, '!required' => $required)) . '</label>';
+} // }}}
+
+function theme_scholar_textfield($element) // {{{
+{
+    if (isset($element['#fullwidth']) && $element['#fullwidth']) {
+        scholar_element_add_class($element, 'fullwidth');
+    }
+
+    $textarea = theme_textfield($element);
+    return $textarea;
+} // }}}
+
+function theme_scholar_textarea($element) // {{{
+{
+    if (isset($element['#bbcode']) && $element['#bbcode']) {
+        $element['#description'] .= t('Use BBCode markup, supported tags are listed <a href="#!">here</a>');
+    }
+
+    if (isset($element['#fullwidth']) && $element['#fullwidth']) {
+        scholar_element_add_class($element, 'fullwidth');
+    }
+
+    $textarea = theme_textarea($element);
+    return $textarea;
 } // }}}
 
 /**

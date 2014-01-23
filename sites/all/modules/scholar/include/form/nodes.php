@@ -36,22 +36,25 @@ function scholar_nodes_subform($record = null) // {{{
 
     foreach (scholar_languages() as $code => $name) {
         $container = array(
-            '#type'     => 'scholar_checkboxed_container',
-            '#title'    => t('Publish page in language: !language', array('!language' => scholar_language_label($code, $name))),
+            '#type'      => 'scholar_checkboxed_container',
+            '#title'     => t('Publish page in language: !language', array('!language' => scholar_language_label($code, $name))),
             '#checkbox_name' => 'status',
             '#default_value' => false,
-            '#tree'     => true,
+            '#tree'      => true,
         );
 
         $container['title'] = array(
-            '#type'     => 'textfield',
-            '#title'    => t('Title'),
+            '#type'      => 'scholar_textfield',
+            '#fullwidth' => true,
+            '#title'     => t('Title'),
             '#description' => t('Page title, if not given it will default to this person\'s full name.'),
         );
 
         $container['body'] = array(
-            '#type'     => 'scholar_textarea',
-            '#title'    => t('Body'),
+            '#type'      => 'scholar_textarea',
+            '#fullwidth' => true,
+            '#bbcode'    => true,
+            '#title'     => t('Body'),
         );
 
         $tags = isset($record->nodes[$code]->taxonomy)
@@ -61,17 +64,18 @@ function scholar_nodes_subform($record = null) // {{{
 
         if ($have_menu) {
             $container['menu'] = scholar_form_fieldset(array(
-                '#title'    => t('Menu settings'),
+                '#title'     => t('Menu settings'),
                 '#collapsible' => true,
                 '#collapsed' => true,
-                '#tree'     => true,
+                '#tree'      => true,
             ));
             $container['menu']['mlid'] = array(
-                '#type'     => 'hidden',
+                '#type'      => 'hidden',
             );
             $container['menu']['link_title'] = array(
-                '#type'     => 'textfield',
-                '#title'    => t('Menu link title'),
+                '#type'      => 'scholar_textfield',
+                '#fullwidth' => true,
+                '#title'     => t('Menu link title'),
                 '#description' => t('The link text corresponding to this item that should appear in the menu. Leave blank if you do not wish to add this post to the menu.'),
             );
             $container['menu']['parent'] = array(
@@ -91,13 +95,14 @@ function scholar_nodes_subform($record = null) // {{{
 
         if ($have_path) {
             $container['path'] = scholar_form_fieldset(array(
-                '#title'    => t('URL path settings'),
+                '#title'     => t('URL path settings'),
                 '#collapsible' => true,
                 '#collapsed' => true,
             ));
             $container['path']['path'] = array(
-                '#type'     => 'textfield',
-                '#title'    => t('URL path alias'),
+                '#type'      => 'scholar_textfield',
+                '#fullwidth' => true,
+                '#title'     => t('URL path alias'),
                 '#description' => t('Optionally specify an alternative URL by which this node can be accessed.'),
             );
         }

@@ -16,10 +16,3 @@ function form_type_scholar_textarea_value($element, $post = false) // {{{
     return strlen($value) ? $value : '';
 } // }}}
 
-function theme_scholar_textarea($element) // {{{
-{
-    $element['#description'] .= t('Use BBCode markup, supported tags are listed <a href="#!">here</a>').
-
-    $textarea = theme_textarea($element);
-    return $textarea;
-} // }}}

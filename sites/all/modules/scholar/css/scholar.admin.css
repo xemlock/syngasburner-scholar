@@ -326,10 +326,22 @@ form.scholar .form-radios {
 }
 
 .scholar-vtable .form-text,
-.scholar-vtable .form-textarea
-.scholar-vtable .resizable-textarea,
+.scholar-vtable .form-textarea,
 .scholar-vtable .scholar-sortable-multiselect {
   width: auto;
+  max-width: 100%;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+.scholar-vtable .fullwidth,
+.scholar-vtable .resizable-textarea {
+  display: block;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
 }
 
 .scholar .field-suffix label {

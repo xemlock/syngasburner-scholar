@@ -38,8 +38,15 @@ function scholar_elements() // {{{
 {
     $elements = array();
 
+    $elements['scholar_textfield'] = array(
+        '#input'            => true,
+        '#fullwidth'        => false,
+    );
+
     $elements['scholar_textarea'] = array(
         '#input'            => true,
+        '#fullwidth'        => false,
+        '#bbcode'           => false,
     );
 
     $elements['scholar_country'] = array(
@@ -242,27 +249,32 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
     // predefiniowane pola sekcji record formularza
     $record_fields = array(
         'first_name' => array(
-            '#type'     => 'textfield',
-            '#title'    => t('First name'),
+            '#type'      => 'scholar_textfield',
+            '#title'     => t('First name'),
+            '#fullwidth' => true,
         ),
         'last_name' => array(
-            '#type'     => 'textfield',
-            '#title'    => t('Last name'),
+            '#type'      => 'scholar_textfield',
+            '#title'     => t('Last name'),
+            '#fullwidth' => true,
         ),
         'title' => array(
-            '#type'      => 'textfield',
+            '#type'      => 'scholar_textfield',
             '#title'     => t('Title'),
             '#maxlength' => 255,
+            '#fullwidth' => true,
         ),
         'bib_details' => array(
-            '#type'      => 'textfield',
+            '#type'      => 'scholar_textfield',
             '#title'     => t('Bibliographic details'), // Szczegóły bibliograficzne
             '#maxlength' => 255,
+            '#fullwidth' => true,
         ),
         'suppinfo' => array(
             '#type'      => 'scholar_element_langtext',
             '#title'     => t('Supplementary information'),
             '#maxlength' => 255,
+            '#fullwidth' => true,
         ),
         'start_date' => array(
             '#type'      => 'textfield',
@@ -279,9 +291,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#description' => t('Date format: YYYY-MM-DD.'),
         ),
         'locality' => array(
-            '#type'      => 'textfield',
+            '#type'      => 'scholar_textfield',
             '#title'     => t('Locality'),
             '#maxlength' => 128,
+            '#fullwidth' => true,
         ),
         'country' => array(
             '#type'      => 'scholar_country',
@@ -293,9 +306,10 @@ function scholar_generic_form($fields = array(), $record = null) // {{{
             '#options'   => array(),
         ),
         'url' => array(
-            '#type'      => 'textfield',
+            '#type'      => 'scholar_textfield',
             '#title'     => t('URL'),
             '#maxlength' => 255,
+            '#fullwidth' => true,
             '#description' => t('Adres URL zewnętrznej strony ze szczegółowymi informacjami (musi zaczynać się od http:// lub https://).'),
             '#element_validate' => array('scholar_form_validate_url'),
         ),
@@ -612,11 +626,20 @@ function scholar_element_attributes($element) // {{{
     return $attrs;
 } // }}}
 
-// drupalowy _form_set_class nie dość że jest funkcją wewnętrzną, to
-// jeszcze nieodsluguje zagniezdzenia elementow. Tzn. jak ustawie error
-// dla jakiegos poziomu, to wszystkie potomne tez powinny miec errora.
-// Funkcja przeznaczona dla elementów formularza złożonych z innych pól.
-function scholar_element_set_class(&$element, $class = array()) // {{{
+/**
+ * Ustawia klasy CSS dla podanego elementu formularza.
+ *
+ * Drupalowa funkcja _form_set_class() nie dość że jest funkcją wewnętrzną,
+ * to jeszcze nieodsluguje zagniezdzenia elementow. Tzn. jak ustawie error
+ * dla jakiegos poziomu, to wszystkie potomne tez powinny miec errora.
+ * Funkcja przeznaczona jest przede wszystkim dla elementów formularza
+ * złożonych z innych pól.
+ *
+ * @param array &$element
+ * @param string|array $class
+ * @return void
+ */
+function scholar_element_set_class(&$element, $class = null) // {{{
 {
     $class = (array) $class;
 
@@ -629,11 +652,31 @@ function scholar_element_set_class(&$element, $class = array()) // {{{
         $class[] = 'error';
     }
 
+    if (isset($element['#fullwidth']) && $element['#fullwidth']) {
+        $class[] = 'fullwidth';
+    }
+
     if (isset($element['#attributes']['class'])) {
         $class[] = $element['#attributes']['class'];
     }
 
     $element['#attributes']['class'] = implode(' ', $class);
+} // }}}
+
+/**
+ * @param array &$element
+ * @param string $class
+ * @return void
+ */
+function scholar_element_add_class(&$element, $class) // {{{
+{
+    if (isset($element['#attributes']['class'])) {
+        $element_class = $element['#attributes']['class'] . ' ' . $class;
+    } else {
+        $element_class = $class;
+    }
+
+    $element['#attributes']['class'] = $class;
 } // }}}
 
 function scholar_element_get_error($element) // {{{

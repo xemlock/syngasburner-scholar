@@ -22,26 +22,28 @@ function form_type_scholar_element_events_process($element) // {{{
     $fields = array(
         'start_date' => array(
             '#type'          => 'textfield',
-            '#title'         => t('Start date'),
             '#maxlength'     => 10,
             '#size'          => 24,
+            '#title'         => t('Start date'),
             '#description'   => t('Date format: YYYY-MM-DD.'),
         ),
         'end_date' => array(
             '#type'          => 'textfield',
-            '#title'         => t('End date'),
             '#maxlength'     => 10,
             '#size'          => 24,
+            '#title'         => t('End date'),
             '#description'   => t('Date format: YYYY-MM-DD. Leave empty if it is the same as the start date.'),
         ),
         'title' => array(
-            '#type'          => 'textfield',
-            '#title'         => t('Title'),
+            '#type'          => 'scholar_textfield',
             '#maxlength'     => 255,
+            '#fullwidth'     => true,
+            '#title'         => t('Title'),
             '#description'   => t('If not given title of referenced record will be used.'),
         ),
         'body' => array(
             '#type'          => 'scholar_textarea',
+            '#fullwidth'     => true,
             '#title'         => t('Description'),
             '#description'   => t('Detailed description about this event.'),
         ),

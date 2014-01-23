@@ -414,7 +414,7 @@ function scholar_generics_weight_form(&$form, $records, $callback, $region_locke
                 );
 
                 // zastap zawartosc komorki elementem SELECT z wyborem wagi
-                $cell = theme_scholar_select(array(
+                $cell = theme_scholar_select_tag(array(
                     '#parents'    => array('weight', $row['id']),
                     '#value'      => $row['weight'],
                     '#options'    => $weight_options,

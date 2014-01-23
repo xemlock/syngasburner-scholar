@@ -104,8 +104,8 @@ function form_type_scholar_element_time_validate($element, &$form_state) // {{{
 
 function theme_scholar_element_time($element) // {{{
 {
-    $value = theme_scholar_select($element['hour']) . ':'
-           . theme_scholar_select($element['minute']);
+    $value = theme_scholar_select_tag($element['hour']) . ':'
+           . theme_scholar_select_tag($element['minute']);
 
     return theme_form_element($element, $value);
 } // }}}
@@ -197,7 +197,7 @@ function form_type_scholar_element_timespan_validate($element, &$form_state) // 
 
         if ($start && $end) {
             $diff  = 60 * $end['hour'] + $end['minute']
-                   - 60 * $start['hour'] + $start['minute'];
+                   - 60 * $start['hour'] - $start['minute'];
 
             if ($date && $diff > 0) {
                 return true;
@@ -210,11 +210,11 @@ function form_type_scholar_element_timespan_validate($element, &$form_state) // 
 
 function theme_scholar_element_timespan($element) // {{{
 {
-    $output = theme_scholar_textfield($element['date'])
+    $output = theme_scholar_textfield_tag($element['date'])
             . ' &nbsp; '
-            . theme_scholar_select($element['start']['hour']) . ':' . theme_scholar_select($element['start']['minute'])
+            . theme_scholar_select_tag($element['start']['hour']) . ':' . theme_scholar_select_tag($element['start']['minute'])
             . ' &ndash; '
-            . theme_scholar_select($element['end']['hour']) . ':' . theme_scholar_select($element['end']['minute']);
+            . theme_scholar_select_tag($element['end']['hour']) . ':' . theme_scholar_select_tag($element['end']['minute']);
 
     return theme_form_element($element, $output);
 } // }}}
