@@ -57,7 +57,7 @@ function scholar_presave_generics_record(&$generic) // {{{
 
     // wyznacz liczbe znaczacych znakow w datach, dopelnij niepuste daty
     // do pelnych wartosci typu DATETIME (YYYY-MM-DD HH:MM:SS),
-    // 1000-01-01 00:00:00 jest minimalna wartoscia dla tego typu
+    // 1000-01-01 00:00:00 jest minimalna poprawna wartoscia dla tego typu
     // w MySQL.
     $dates = array(
         'start_date' => $generic->start_date,

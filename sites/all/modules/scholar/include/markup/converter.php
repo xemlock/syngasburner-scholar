@@ -404,6 +404,7 @@ function scholar_markup_converter_asset(Zend_Markup_Token $token, $contents) // 
 
     $attrs = array(
         'href' => $asset,
+        'target' => '_blank',
     );
 
     if (strlen($details)) {

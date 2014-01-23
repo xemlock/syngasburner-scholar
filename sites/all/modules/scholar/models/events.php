@@ -85,9 +85,10 @@ function scholar_save_events($row_id, $table_name, &$events) // {{{
             }
 
             // jezeli nie podano wymaganej daty poczatku zdarzenia uzyj czasu 
-            // epoki Uniksa
+            // epoki Uniksa i usun date koncowa
             if (empty($event_data['start_date'])) {
                 $event_data['start_date'] = date('Y-m-d H:i:s', 0);
+                $event_data['end_date'] = null;
             }
 
             // skopiuj dane do eventu...
