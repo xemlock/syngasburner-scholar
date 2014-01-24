@@ -5,6 +5,7 @@
  * generycznych.
  *
  * @param string $subtype
+ * @return void
  */
 function _scholar_generics_include($subtype) // {{{
 {
@@ -145,9 +146,19 @@ function scholar_generics_form(&$form_state, $subtype, $id = null) // {{{
 } // }}}
 
 /**
- * Jeżeli isnieje funkcja _scholar_podtyp_form_process_values
- * zostanie ona uruchomiona (jako arguyment dostanie referencję
- * do tablicy z wartościami pól formularza.
+ * Funkcja przygotowuje wartości pól do nadania istniejącemu rekordowi
+ * (przekazanemu w kluczu #record formularza), bądź gdy ten nie istnieje,
+ * rekordowi do utworzenia a następnie zapisuje rekord do bazy danych.
+ *
+ * Jeżeli funkcja _scholar_{subtype}_form_process_values istnieje, wtedy po
+ * przygotowaniu tablicy z wartościami rekordu, zostanie ona wywołana
+ * przed zapisem rekordu do bazy. Jej argumentem będzie referencja do tablicy
+ * wartości rekordu. Podtyp użyty w nazwie funkcji brany jest z klucza
+ * #subtype formularza.
+ *
+ * @param array $form
+ * @param array &$form_state
+ * @return void
  */
 function _scholar_generics_form_submit($form, &$form_state) // {{{
 {
@@ -198,6 +209,15 @@ function _scholar_generics_form_submit($form, &$form_state) // {{{
 
             $event['title']    = $event_title;
             $event['image_id'] = $image_id;
+
+            // jezeli nie zostaly ustawione daty zdarzenia, pobierz czas
+            // z odpowiednich pol najwyzszego poziomu formularza
+            if (empty($event['start_date']) && isset($values['start_date'])) {
+                $event['start_date'] = $values['start_date'];
+            }
+            if (empty($event['end_date']) && isset($values['end_date'])) {
+                $event['end_date'] = $values['end_date'];
+            }
         }
         unset($event);
     }
@@ -273,6 +293,7 @@ function scholar_generics_delete_form_submit($form, &$form_state) // {{{
  * @param string $subtype
  * @param int $id
  * @param string $children_subtype
+ * @return array
  */
 function scholar_generics_details_form(&$form_state, $subtype, $id) // {{{
 {
@@ -289,11 +310,15 @@ function scholar_generics_details_form(&$form_state, $subtype, $id) // {{{
     }
 
     drupal_set_message("Unable to retrieve details form for subtype: '$subtype'", 'error');
-    return '';
+    return null;
 } // }}}
 
 /**
  * Zapisuje wagi rekordów potomnych.
+ *
+ * @param array $form
+ * @param array &$form_state
+ * @return void
  */
 function scholar_generics_details_form_submit($form, &$form_state) // {{{
 {
@@ -350,8 +375,7 @@ function _scholar_generics_theme_bib_authors($bib_authors, $suffix = '') // {{{
  *     tabeli.
  * @param bool $region_locked
  *     czy wiersze można przenosić pomiędzy regionami.
- * @return &array
- *     referencja do tablicy przekazanej jako pierwszy parametr funkcji
+ * @return void
  */
 function scholar_generics_weight_form(&$form, $records, $callback, $region_locked = false) // {{{
 {

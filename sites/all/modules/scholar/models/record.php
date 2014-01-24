@@ -60,7 +60,12 @@ function scholar_load_record($model, $id, $redirect = false) // {{{
 } // }}}
 
 /**
- * Zapisuje rekord do bazy danych.
+ * Zapisuje do bazy danych rekord oraz powiązane z nim rekordy autorów,
+ * plików, węzłów oraz wydarzeń.
+ *
+ * Jeżeli z rekordem zostały powiązane węzły, do kolumny 'url' każdego
+ * z powiązanych zostanie wpisany adres URL odpowiadającego węzła, lub
+ * gdy takowy nie istnieje, użyta zostanie wartość z pola 'url' rekordu.
  *
  * @param string $model
  * @param object &$record
@@ -103,23 +108,14 @@ function scholar_save_record($model, &$record) // {{{
         // zapisz zmiany w powiazanych wydarzeniach, korzystajac w miare
         // potrzeby z danych uprzednio zapisanych wezlow
         if (isset($record->events) && is_array($record->events)) {
+            // jezeli zostaly powiazane wezly, ustaw url eventu wskazujacy
+            // na opublikowany wezel, w przeciwnym razie skopiuj pole url
+            // rekordu (o ile istnieje)
             foreach ($record->events as $language => &$event) {
-                // jezeli zostaly powiazane wezly, ustaw url eventu wskazujacy
-                // na opublikowany wezel, w przeciwnym razie skopiuj pole url
-                // rekordu (o ile istnieje)
                 if ($record->nodes[$language]['nid'] && $record->nodes[$language]['status']) {
                     $event['url'] = scholar_node_url($record->nodes[$language]['nid'], true);
                 } else if (isset($record->url)) {
                     $event['url'] = $record->url;
-                }
-
-                // ustaw czas zdarzenia z danych powiazanego rekordu, jezeli
-                // nie zostaly ustawione
-                if (empty($event['start_date'])) {
-                    $event['start_date'] = isset($record->start_date) ? $record->start_date : null;
-                }
-                if (empty($event['end_date'])) {
-                    $event['end_date'] = isset($record->end_date) ? $record->end_date : null;
                 }
             }
             unset($event);

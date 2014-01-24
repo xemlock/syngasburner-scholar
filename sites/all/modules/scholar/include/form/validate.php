@@ -32,9 +32,9 @@ function scholar_form_validate_publication_date($element, &$form_state) // {{{
  * @param array $element2
  * @return false|array
  *     jeżeli walidacja się powiedzie zwrócona zostaje tablica dwuelementowa
- *     zawierająca odpowiednio datę początku i datę końca w formacie YYYY-MM-DD>
+ *     zawierająca odpowiednio datę początku i datę końca w formacie YYYY-MM-DD
  */
-function scholar_form_validate_date_range($element1, $element2)
+function scholar_form_validate_date_range($element1, $element2) // {{{
 {
     $value1 = (string) $element1['#value'];
     $value2 = (string) $element2['#value'];
@@ -75,6 +75,6 @@ function scholar_form_validate_date_range($element1, $element2)
     }
 
     return false;
-}
+} // }}}
 
 // vim: ft=php
