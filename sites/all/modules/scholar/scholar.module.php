@@ -213,6 +213,83 @@ function scholar_node_info() {
 }
 
 /**
+ * @param string $html
+ * @return string
+ */
+function scholar_sanitize_html($html) // {{{
+{
+    preg_match_all('/<(?P<tag>\/?[-_a-z0-9]+)[\s>]/i', $html,
+        $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+
+    if ($matches) {
+        $tag_stack = array();
+
+        // znaczniki nie wymagajace zamkniecia, zgodnie z:
+        // http://www.w3.org/TR/html4/index/elements.html
+        $empty_tags = array(
+            'area', 'base', 'basefont', 'br', 'col', 'frame',
+            'hr', 'img', 'input', 'isindex', 'link', 'meta',
+            'param',
+        );
+
+        foreach ($matches as $match) {
+            $tag = strtolower($match['tag'][0]);
+            $pos = $match['tag'][1];
+
+            if (substr($tag, 0, 1) === '/') {
+                $last_tag = end($tag_stack);
+
+                if (empty($last_tag)) {
+                    // zamkniecie znacznika wystapilo przed otwarciem, uznaj
+                    // tresc za niepoprawna skladniowo, a przez to potencjalnie
+                    // niebezpieczna
+                    $teaser = '';
+                    break;
+                }
+
+                if (substr($tag, 1) !== $last_tag['tag']) {
+                    // niepoprawnie zamkniety tag, przytnij tresc do tego
+                    // miejsca i przerwij przetwarzanie.
+                    // Pozycja jest zmniejszona o 1, poniewaz $pos jest pozycja
+                    // odpowiadajaca ukosnikowi w nazwie taga, a tresc musi
+                    // zostac przycieta do nawiasu katowego otwierajacego tag.
+                    // Do przycinania uzyta jest funkcja substr() a nie
+                    // drupal_substr(), poniewaz matchowanie w preg_match_all()
+                    // jest jednobajtowe (brak modyfikatora /u)
+                    $html = substr($html, 0, $pos - 1);
+                    break;
+                }
+
+                // zdejmij znacznik ze stosu
+                array_pop($tag_stack);
+
+            } else {
+                // zignoruj otwarcie tagow bez tresci
+                if (in_array(strtolower($tag), $empty_tags)) {
+                    continue;
+                }
+                $tag_stack[] = compact('tag', 'pos');
+            }
+        }
+
+        if ($tag_stack) {
+            // niezamkniety znacznik, usun ostatni ze stosu i pozamykaj
+            // pozostale. Nie zamykaj ostatniego, bo nie mamy pewnosci,
+            // czy ten znacznik jest w ogole kompletny, tzn. zakonczony
+            // prawym nawiasem katowym.
+            $last_tag = array_pop($tag_stack);
+
+            $html = substr($html, 0, $last_tag['pos'] - 1);
+            while ($last_tag = array_pop($tag_stack)) {
+                $html .= '</' . $last_tag['tag'] . '>';
+            }
+        }
+    }
+
+    return $html;
+} // }}}
+
+/**
  * Tworzy zajawkę na podstawie podanej treści. Z zajawki usunięte zostają
  * wszystkie tagi HTML za wyjątkiem A, SUB i SUP.
  *
@@ -222,15 +299,19 @@ function scholar_node_info() {
  *     maksymalna długość zajawki, wartości mniejsze lub równe 0 znoszą
  *     ograniczenie długości. Jeżeli wynikiem przetwarzania będzie ciąg
  *     znaków o długości większej niż $length, zostanie on obcięty do
- *     $length - 3 znaków, po czym zostanie do niego wielokropek (...).
+ *     $length - strlen($ellipsis) znaków, po czym zostanie do niego
+ *     dopisany parametr $ellipsis.
+ * @param string $ellipsis
+ *     Opcjonalny przyrostek dopisywany do przyciętej treści zajawki.
+ *     Domyślnie jest to wielokropek ('...').
  * @return string
  */
-function scholar_node_teaser($body, $length = 0) // {{{
+function scholar_node_teaser($body, $length = 0, $ellipsis = '...') // {{{
 {
     // przygotuj zajawke, wstaw spacje przed i po elementach blokowych
     $teaser = preg_replace('/<(\/?)(address|blockquote|div|ul|ol|li|dl|dt|dd|h1|h2|h3|h4|h5|h6|p|table)/i', ' <\1\2', $body);
 
-    // usun wszystkie tagi poza <sub> i <sup>
+    // usun wszystkie tagi poza <a>, <sub> i <sup>
     $teaser = strip_tags($teaser, '<a><sub><sup>');
 
     // usun otaczajace biale znaki, zamien ciagi bialych znakow
@@ -245,7 +326,15 @@ function scholar_node_teaser($body, $length = 0) // {{{
     $length = max(0, $length);
 
     if ($length && drupal_strlen($teaser) > $length) {
-        $teaser = $length > 3 ? drupal_substr($teaser, 0, $length - 3) . '...' : '...';
+        if ($length <= strlen($ellipsis)) {
+            $teaser = $ellipsis;
+        } else {
+            $teaser = drupal_substr($teaser, 0, $length - strlen($ellipsis));
+            $teaser = scholar_sanitize_html($teaser);
+            $teaser .= $ellipsis;
+        }
+    } else {
+        $teaser = scholar_sanitize_html($teaser);
     }
 
     return $teaser;
