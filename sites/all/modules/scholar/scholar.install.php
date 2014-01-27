@@ -424,6 +424,12 @@ function scholar_install() // {{{
     // mkdir() tworzy katalog sa modyfikowane przez umask.
     chmod($dir, 0777);
 
+    file_put_contents($dir . '/.htaccess',
+        "<IfModule mod_headers.c>\n" .
+        "Header set Content-Disposition \"attachment\"\n" .
+        "</IfModule>"
+    );
+
     drupal_install_schema('scholar');
 
     // raz utworzone strony nie moga zostac usuniete
