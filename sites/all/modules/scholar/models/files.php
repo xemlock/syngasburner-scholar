@@ -325,7 +325,7 @@ function scholar_delete_file(&$file) // {{{
  */
 function scholar_file_allowed_extensions() // {{{
 {
-    return 'bib gif jpg pdf png ps txt zip';
+    return 'bib gif gz jpg pdf png ps tar tgz txt zip';
 } // }}}
 
 /**
