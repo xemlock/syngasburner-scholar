@@ -42,7 +42,9 @@
   font-weight: normal;
   margin: 1em 0 .75em;
 }
-
+.scholar-entry + .scholar-subsection {
+  margin-top: 2em;
+}
 
 
 .scholar-collapsible {
@@ -106,6 +108,10 @@
 .scholar-entry-content {
   margin-left: 128px;
 }
+.scholar-entry-content:first-child {
+  margin-left: 0;
+}
+
 
 .scholar-node .authors {
   font-weight: bold;
@@ -172,25 +178,26 @@
 .scholar-node .training-class-files {
   margin-top: .35em;
 }
-
+.scholar-node .training-class-files .scholar-asset {
+  float: left;
+  margin-right: 3px;
+  margin-bottom: 3px;
+}
 
 .scholar-asset {
   overflow: hidden;
-  background: #a2d976; /* #027AC6; */
+  background: #6eb640; /* #a2d976; /* #027AC6; */
   padding: 2px 6px 1px;
-  border-radius: 2px;
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
   color: #fff;
-  margin-left: 2px;
+  margin: 0;
   font-size: 11px;
+  -webkit-border-radius: 3px;
+     -moz-border-radius: 3px;
+          border-radius: 3px;
   display: -moz-inline-box;
   display: inline-block;
   *display: inline;
   zoom:1;
-}
-.scholar-asset:first-child {
-  margin-left: 0;
 }
 .scholar-asset a,
 .scholar-asset a:hover,
@@ -201,7 +208,7 @@
   background: none;
 }
 .scholar-asset:hover {
-  background: #71b33c;
+  background: #3d9e00; /* #71b33c; */
 }
 
 
