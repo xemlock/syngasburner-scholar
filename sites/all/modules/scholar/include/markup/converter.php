@@ -385,7 +385,7 @@ function scholar_markup_converter_entry(Zend_Markup_Token $token, $contents) // 
 
 function scholar_markup_converter_box(Zend_Markup_Token $token, $contents) // {{{
 {
-    return '<div>' . trim($contents) . '</div>';
+    return '<div class="scholar-box">' . trim($contents) . '</div>';
 } // }}}
 
 function scholar_markup_converter_asset(Zend_Markup_Token $token, $contents) // {{{

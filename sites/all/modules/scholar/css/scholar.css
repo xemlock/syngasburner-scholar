@@ -15,7 +15,19 @@
   overflow: hidden;
 }
 
-
+.scholar-box {
+  margin: 0 0 1em;
+  *zoom: 1;  
+}
+.scholar-box:before,
+.scholar-box:after {
+  display: table;
+  content: '';
+  line-height: 0;
+}
+.scholar-box:after {
+  clear: both;
+}
 
 
 .scholar-section {
@@ -23,14 +35,12 @@
   font-size: 1.5em;
   font-weight: normal;
   margin: 1em 0 .75em;
-  clear: both;
 }
 .scholar-subsection {
   color: #222;
   font-size: 1.35em;
   font-weight: normal;
   margin: 1em 0 .75em;
-  clear: both;
 }
 
 
