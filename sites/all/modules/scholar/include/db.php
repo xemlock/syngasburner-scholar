@@ -131,7 +131,7 @@ function scholar_db_quote_identifier($identifier) // {{{
     static $db_type = null;
 
     if (null === $db_type) {
-        $db_type = array_shift(explode(':', $db_url));
+        $db_type = substr($db_url, 0, strpos($db_url, ':'));
     }
 
     // PostgreSQL: "Quoted identifiers can contain any character, except
