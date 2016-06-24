@@ -196,7 +196,7 @@ function scholar_schema() // {{{
                                                              // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
             'start_date' => array(
                 'type'        => 'varchar',
-                'length'      => 20,
+                'length'      => 24,
             ),
             'start_date_len' => _scholar_schema_type('counter', array(
                 'description' => 'number of relevant start date characters',
@@ -204,7 +204,7 @@ function scholar_schema() // {{{
             )), 
             'end_date' => array(
                 'type'        => 'varchar',
-                'length'      => 20,
+                'length'      => 24,
             ),
             'end_date_len' => _scholar_schema_type('counter', array(
                 'description' => 'number of relevant end date characters',
