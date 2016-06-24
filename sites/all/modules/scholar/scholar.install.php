@@ -195,14 +195,16 @@ function scholar_schema() // {{{
             'category_id' => _scholar_schema_type('optional_id_ref'), // REFERENCES scholar_categories (id)
                                                              // kategoria podtypu, np. podtypem conference jest konferencja, warsztaty lub seminarium
             'start_date' => array(
-                'type'        => 'datetime',
+                'type'        => 'varchar',
+                'length'      => 20,
             ),
             'start_date_len' => _scholar_schema_type('counter', array(
                 'description' => 'number of relevant start date characters',
                 'size'        => 'tiny',
             )), 
             'end_date' => array(
-                'type'        => 'datetime',
+                'type'        => 'varchar',
+                'length'      => 20,
             ),
             'end_date_len' => _scholar_schema_type('counter', array(
                 'description' => 'number of relevant end date characters',
