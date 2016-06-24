@@ -163,7 +163,7 @@ function scholar_report_publications($language) // {{{
         ORDER BY
             CASE WHEN g2.start_date IS NULL THEN NULL ELSE c.name END ASC,
             g2.start_date DESC,
-            CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE -g.weight END DESC
+            CASE WHEN g2.start_date IS NULL THEN g.start_date ELSE CAST(-g.weight AS VARCHAR) END DESC
     ", $language, $language);
 
     // Reviewed papers / Publikacje w czasopismach recenzowanych
